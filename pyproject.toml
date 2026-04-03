@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kaiten-cli"
+version = "0.1.0"
+description = "LLM-oriented CLI for Kaiten"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "httpx>=0.27.0",
+    "platformdirs>=4.2.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-timeout>=2.3",
+    "pytest-socket>=0.7",
+    "respx>=0.22",
+]
+dev = [
+    "kaiten-cli[test]",
+]
+
+[project.scripts]
+kaiten = "kaiten_cli.app:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = ["--disable-socket", "--allow-unix-socket", "-m", "not live"]
+markers = [
+    "live: uses the sandbox Kaiten API and is excluded from default test runs",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
