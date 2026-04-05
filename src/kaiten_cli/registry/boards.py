@@ -114,12 +114,18 @@ TOOLS = (
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "board_id": {"type": "integer", "description": "Board ID"},
+                "force": {"type": "boolean", "description": "Force deletion when the board contains child entities"},
             },
             "required": ["space_id", "board_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/spaces/{space_id}/boards/{board_id}", path_fields=("space_id", "board_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/spaces/{space_id}/boards/{board_id}",
+            path_fields=("space_id", "board_id"),
+            query_fields=("force",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten boards delete --space-id 1 --board-id 10", description="Delete a board."),
+            ExampleSpec(command="kaiten boards delete --space-id 1 --board-id 10 --force", description="Delete a board."),
         ),
     ),
 )

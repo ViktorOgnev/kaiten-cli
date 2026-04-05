@@ -50,6 +50,16 @@ class ToolSpec:
     response_policy: ResponsePolicy = field(default_factory=ResponsePolicy)
     examples: tuple[ExampleSpec, ...] = ()
 
+    @property
+    def namespace_segments(self) -> tuple[str, ...]:
+        if not self.namespace:
+            return ()
+        return tuple(segment for segment in self.namespace.split(".") if segment)
+
+    @property
+    def command_segments(self) -> tuple[str, ...]:
+        return self.namespace_segments + (self.action,)
+
 
 @dataclass(slots=True)
 class GlobalOptions:
@@ -78,4 +88,3 @@ def format_schema_type(schema: dict[str, Any]) -> str:
 
 def example_commands(examples: Sequence[ExampleSpec]) -> list[str]:
     return [example.command for example in examples]
-

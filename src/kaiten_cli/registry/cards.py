@@ -346,4 +346,75 @@ TOOLS = (
             ExampleSpec(command="kaiten cards archive --card-id 123", description="Archive a card."),
         ),
     ),
+    make_tool(
+        canonical_name="cards.move",
+        mcp_alias="kaiten_move_card",
+        description="Move a Kaiten card to a different board, column, or lane.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": ["integer", "string"], "description": "Card ID or key"},
+                "board_id": {"type": "integer", "description": "Target board ID"},
+                "column_id": {"type": "integer", "description": "Target column ID"},
+                "lane_id": {"type": "integer", "description": "Target lane ID"},
+                "sort_order": {"type": "number", "description": "Position in cell"},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields (avatars, nested user objects)",
+                    "default": False,
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep in the response. Example: 'id,title,state'",
+                },
+            },
+            "required": ["card_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/cards/{card_id}",
+            path_fields=("card_id",),
+            body_fields=("board_id", "column_id", "lane_id", "sort_order"),
+        ),
+        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        examples=(
+            ExampleSpec(command="kaiten cards move --card-id 123 --column-id 10 --json", description="Move a card."),
+        ),
+    ),
+    make_tool(
+        canonical_name="cards.list-all",
+        mcp_alias="kaiten_list_all_cards",
+        description="Fetch all cards matching filters with automatic pagination.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                **LIST_CARD_SCHEMA["properties"],
+                "owner_ids": {"type": "string", "description": "Comma-separated owner IDs"},
+                "responsible_ids": {"type": "string", "description": "Comma-separated responsible IDs"},
+                "column_ids": {"type": "string", "description": "Comma-separated column IDs"},
+                "type_ids": {"type": "string", "description": "Comma-separated type IDs"},
+                "page_size": {"type": "integer", "description": "Cards per page (default 100, max 100)"},
+                "max_pages": {"type": "integer", "description": "Safety limit on pages to fetch (default 50)"},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields (default true for bulk)",
+                    "default": True,
+                },
+                "relations": {
+                    "type": "string",
+                    "description": "Relations to include or 'none' to exclude all nested objects (default 'none' for bulk).",
+                    "default": "none",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return per card after pagination.",
+                },
+            },
+        },
+        operation=OperationSpec(method="GET", path_template="/cards"),
+        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list", heavy=True),
+        examples=(
+            ExampleSpec(command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json", description="Fetch all matching cards with bounded pagination."),
+        ),
+    ),
 )

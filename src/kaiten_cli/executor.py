@@ -5,10 +5,15 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from kaiten_cli.audit_support import fetch_all_space_activity
+from kaiten_cli.cards_support import fetch_all_cards
 from kaiten_cli.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT, KaitenClient
+from kaiten_cli.document_support import prepare_document_body
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.models import ResolvedProfile, ToolSpec
+from kaiten_cli.project_support import fetch_project_cards
 from kaiten_cli.profiles import resolve_profile
+from kaiten_cli.tree_support import build_tree, fetch_all_entities, list_children
 from kaiten_cli.transforms import compact_response, select_fields, strip_base64
 
 
@@ -38,9 +43,32 @@ def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[st
         body = {"card_id": body["parent_card_id"]}
     if tool.canonical_name == "time-logs.create" and body:
         body.setdefault("role_id", -1)
+    if tool.canonical_name in {"documents.create", "documents.update", "document-groups.create"} and body:
+        body = prepare_document_body(tool.canonical_name, body)
+    if tool.canonical_name == "custom-properties.select-values.delete":
+        body = {"deleted": True}
+    if tool.canonical_name == "column-subscribers.add" and body:
+        body.setdefault("type", 1)
+    if tool.canonical_name == "automations.copy" and body and "target_space_id" in body:
+        body["targetSpaceId"] = body.pop("target_space_id")
+    if tool.canonical_name == "service-desk.services.delete":
+        body = {"archived": True}
+    if tool.canonical_name == "boards.delete" and "force" in payload:
+        query = dict(query or {})
+        query["force"] = payload["force"]
+        body = {"force": payload["force"]}
+    if tool.canonical_name == "saved-filters.create" and body and "name" in body:
+        body["title"] = body.pop("name")
+    if tool.canonical_name == "saved-filters.update" and body and "name" in body:
+        body["title"] = body.pop("name")
     if "limit" in tool.operation.query_fields and tool.response_policy.default_limit is not None:
         query = dict(query or {})
         query.setdefault("limit", tool.response_policy.default_limit)
+    if tool.canonical_name == "service-desk.stats.get" and query:
+        if "date_from" in query:
+            query["date-from"] = query.pop("date_from")
+        if "date_to" in query:
+            query["date-to"] = query.pop("date_to")
     if tool.canonical_name in {"comments.create", "comments.update"} and body:
         format_value = body.pop("format", None)
         if format_value == "html":
@@ -83,6 +111,18 @@ async def execute_tool(tool: ToolSpec, payload: dict[str, Any], *, profile_name:
             else:
                 blocker_id = payload["blocker_id"]
                 result = next((item for item in blockers if isinstance(item, dict) and item.get("id") == blocker_id), None)
+        elif tool.canonical_name == "tree.children.list":
+            entities = await fetch_all_entities(client, timeout=timeout)
+            result = list_children(entities, payload.get("parent_entity_uid"))
+        elif tool.canonical_name == "tree.get":
+            entities = await fetch_all_entities(client, timeout=timeout)
+            result = build_tree(entities, payload.get("root_uid"), payload.get("depth", 0))
+        elif tool.canonical_name == "projects.cards.list":
+            result = await fetch_project_cards(client, str(payload["project_id"]), timeout=timeout)
+        elif tool.canonical_name == "cards.list-all":
+            result = await fetch_all_cards(client, payload, timeout=timeout)
+        elif tool.canonical_name == "space-activity-all.get":
+            result = await fetch_all_space_activity(client, payload, timeout=timeout)
         elif method == "GET":
             result = await client.get(path, params=query, timeout=timeout)
         elif method == "POST":
@@ -96,8 +136,13 @@ async def execute_tool(tool: ToolSpec, payload: dict[str, Any], *, profile_name:
     finally:
         await client.close()
 
+    compact_enabled = bool(payload.get("compact", False))
+    if tool.canonical_name == "cards.list-all" and "compact" not in payload:
+        compact_enabled = True
+    if tool.canonical_name == "space-activity-all.get" and "compact" not in payload:
+        compact_enabled = True
     if tool.response_policy.compact_supported:
-        result = compact_response(result, bool(payload.get("compact", False)))
+        result = compact_response(result, compact_enabled)
     if tool.response_policy.fields_supported:
         result = select_fields(result, payload.get("fields"))
     result, _ = strip_base64(result)

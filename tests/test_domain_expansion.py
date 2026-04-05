@@ -35,6 +35,18 @@ def test_help_shows_new_namespaces(runner):
     assert "user-timers" in result.output
 
 
+def test_help_shows_nested_project_card_group(runner):
+    top_level = runner.invoke(cli, ["projects", "--help"])
+    nested = runner.invoke(cli, ["projects", "cards", "--help"])
+
+    assert top_level.exit_code == 0
+    assert nested.exit_code == 0
+    assert "cards" in top_level.output
+    assert "list" in nested.output
+    assert "add" in nested.output
+    assert "remove" in nested.output
+
+
 def test_resolve_new_aliases():
     assert resolve_tool("kaiten_list_columns").canonical_name == "columns.list"
     assert resolve_tool("kaiten_create_lane").canonical_name == "lanes.create"
@@ -146,6 +158,17 @@ def test_build_request_for_create_user_timer():
     assert body == {"card_id": 10}
 
 
+def test_build_request_for_delete_board_force():
+    tool = resolve_tool("boards.delete")
+    payload = merge_inputs(tool, {"space_id": 10, "board_id": 20, "force": True})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/spaces/10/boards/20"
+    assert query == {"force": True}
+    assert body == {"force": True}
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_list_columns(monkeypatch):
@@ -172,6 +195,22 @@ def test_cli_columns_alias_and_canonical_match(runner):
 
     canonical = runner.invoke(cli, ["--json", "columns", "list", "--board-id", "10"], env=env)
     alias = runner.invoke(cli, ["--json", "kaiten_list_columns", "--board-id", "10"], env=env)
+
+    assert canonical.exit_code == 0
+    assert alias.exit_code == 0
+    assert json.loads(canonical.output) == json.loads(alias.output)
+    assert route.called
+
+
+@respx.mock
+def test_cli_project_cards_alias_and_nested_canonical_match(runner):
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/projects/p1/cards").mock(
+        return_value=Response(200, json=[{"id": 1, "title": "Task"}])
+    )
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    canonical = runner.invoke(cli, ["--json", "projects", "cards", "list", "--project-id", "p1"], env=env)
+    alias = runner.invoke(cli, ["--json", "kaiten_list_project_cards", "--project-id", "p1"], env=env)
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
@@ -231,6 +270,33 @@ async def test_execute_list_project_cards_compact(monkeypatch):
 
     assert route.called
     assert result == [{"id": 1, "title": "Task", "owner": {"id": 7, "full_name": "Alice"}}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_list_project_cards_falls_back_to_project_payload_on_405(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    direct_route = respx.get("https://sandbox.kaiten.ru/api/latest/projects/p1/cards").mock(
+        return_value=Response(405, json={"message": "Method Not Allowed"})
+    )
+    project_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/projects/p1",
+        params={"with_cards_data": "true"},
+    ).mock(
+        return_value=Response(
+            200,
+            json={"project": {"cards": [{"id": 1, "title": "Task", "description": "hidden"}]}},
+        )
+    )
+
+    tool = resolve_tool("projects.cards.list")
+    payload = merge_inputs(tool, {"project_id": "p1", "compact": True})
+    result = await execute_tool(tool, payload)
+
+    assert direct_route.called
+    assert project_route.called
+    assert result == [{"id": 1, "title": "Task"}]
 
 
 @pytest.mark.asyncio

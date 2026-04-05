@@ -15,7 +15,7 @@ from kaiten_cli.input import merge_inputs
 from kaiten_cli.models import GlobalOptions, ToolSpec, UNSET, format_schema_type
 from kaiten_cli.output import render_error, render_success
 from kaiten_cli.profiles import add_profile, list_profiles, remove_profile, show_profile, use_profile
-from kaiten_cli.registry import iter_namespaces, iter_tools, resolve_tool
+from kaiten_cli.registry import iter_tools, resolve_tool
 
 
 def _ctx_options(ctx: click.Context) -> GlobalOptions:
@@ -110,6 +110,21 @@ def _make_command(tool: ToolSpec, *, hidden: bool = False) -> click.Command:
         callback=_dynamic_callback(tool),
         hidden=hidden,
     )
+
+
+def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
+    group = root
+    for segment in segments:
+        existing = group.commands.get(segment)
+        if existing is None:
+            nested = click.Group(name=segment)
+            group.add_command(nested)
+            group = nested
+            continue
+        if not isinstance(existing, click.Group):  # pragma: no cover - defensive
+            raise RuntimeError(f"Command path collision at {segment}")
+        group = existing
+    return group
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -258,12 +273,10 @@ def profile_remove_command(ctx: click.Context, name: str) -> None:
         _emit_internal(ctx, "profile.remove", exc)
 
 
-for namespace, tools in iter_namespaces().items():
-    group = click.Group(name=namespace)
-    for tool in tools:
-        group.add_command(_make_command(tool))
-        cli.add_command(_make_command(tool, hidden=True), name=tool.mcp_alias)
-    cli.add_command(group)
+for tool in iter_tools():
+    group = _ensure_group(cli, tool.namespace_segments)
+    group.add_command(_make_command(tool))
+    cli.add_command(_make_command(tool, hidden=True), name=tool.mcp_alias)
 
 
 def main(argv: list[str] | None = None) -> int:

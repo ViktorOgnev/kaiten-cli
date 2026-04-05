@@ -5,3 +5,5 @@ __pycache__/
 .ruff_cache/
 .claude-flow/
 *.pyc
+.env
+.env_stage

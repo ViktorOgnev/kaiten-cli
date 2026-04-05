@@ -9,6 +9,48 @@ from kaiten_cli.transforms import DEFAULT_LIMIT
 
 TOOLS = (
     make_tool(
+        canonical_name="api-keys.list",
+        mcp_alias="kaiten_list_api_keys",
+        description="List all API keys for the current user.",
+        input_schema={"type": "object", "properties": {}},
+        operation=OperationSpec(method="GET", path_template="/api-keys"),
+        examples=(
+            ExampleSpec(command="kaiten api-keys list --json", description="List API keys."),
+        ),
+    ),
+    make_tool(
+        canonical_name="api-keys.create",
+        mcp_alias="kaiten_create_api_key",
+        description="Create a new API key.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Name for the API key"},
+            },
+            "required": ["name"],
+        },
+        operation=OperationSpec(method="POST", path_template="/api-keys", body_fields=("name",)),
+        examples=(
+            ExampleSpec(command='kaiten api-keys create --name "local-dev" --json', description="Create an API key."),
+        ),
+    ),
+    make_tool(
+        canonical_name="api-keys.delete",
+        mcp_alias="kaiten_delete_api_key",
+        description="Delete an API key.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "key_id": {"type": "integer", "description": "API key ID"},
+            },
+            "required": ["key_id"],
+        },
+        operation=OperationSpec(method="DELETE", path_template="/api-keys/{key_id}", path_fields=("key_id",)),
+        examples=(
+            ExampleSpec(command="kaiten api-keys delete --key-id 1 --json", description="Delete an API key."),
+        ),
+    ),
+    make_tool(
         canonical_name="company.current",
         mcp_alias="kaiten_get_company",
         description="Get current company information.",
@@ -16,6 +58,21 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/companies/current"),
         examples=(
             ExampleSpec(command="kaiten company current --json", description="Get current company information."),
+        ),
+    ),
+    make_tool(
+        canonical_name="company.update",
+        mcp_alias="kaiten_update_company",
+        description="Update current company information.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Company name"},
+            },
+        },
+        operation=OperationSpec(method="PATCH", path_template="/companies/current", body_fields=("name",)),
+        examples=(
+            ExampleSpec(command='kaiten company update --name "Acme" --json', description="Update current company information."),
         ),
     ),
     make_tool(
@@ -49,6 +106,40 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/calendars/{calendar_id}", path_fields=("calendar_id",)),
         examples=(
             ExampleSpec(command="kaiten calendars get --calendar-id cal-1 --json", description="Get a calendar by ID."),
+        ),
+    ),
+    make_tool(
+        canonical_name="removed-cards.list",
+        mcp_alias="kaiten_list_removed_cards",
+        description="List removed cards from the recycle bin.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Max results"},
+                "offset": {"type": "integer", "description": "Pagination offset"},
+            },
+        },
+        operation=OperationSpec(method="GET", path_template="/removed/cards", query_fields=("limit", "offset")),
+        response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
+        examples=(
+            ExampleSpec(command="kaiten removed-cards list --json", description="List removed cards."),
+        ),
+    ),
+    make_tool(
+        canonical_name="removed-boards.list",
+        mcp_alias="kaiten_list_removed_boards",
+        description="List removed boards from the recycle bin.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Max results"},
+                "offset": {"type": "integer", "description": "Pagination offset"},
+            },
+        },
+        operation=OperationSpec(method="GET", path_template="/removed/boards", query_fields=("limit", "offset")),
+        response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
+        examples=(
+            ExampleSpec(command="kaiten removed-boards list --json", description="List removed boards."),
         ),
     ),
     make_tool(

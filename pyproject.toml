@@ -34,6 +34,7 @@ asyncio_mode = "auto"
 addopts = ["--disable-socket", "--allow-unix-socket", "-m", "not live"]
 markers = [
     "live: uses the sandbox Kaiten API and is excluded from default test runs",
+    "full_live_coverage: requires full command-surface accounting in the sandbox live suite",
 ]
 
 [tool.ruff]

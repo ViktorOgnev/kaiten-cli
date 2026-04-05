@@ -7,40 +7,62 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 from kaiten_cli.models import ToolSpec
+from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS
 from kaiten_cli.registry.card_relations import TOOLS as CARD_RELATION_TOOLS
 from kaiten_cli.registry.cards import TOOLS as CARD_TOOLS
+from kaiten_cli.registry.card_types import TOOLS as CARD_TYPE_TOOLS
+from kaiten_cli.registry.charts import TOOLS as CHART_TOOLS
 from kaiten_cli.registry.checklists import TOOLS as CHECKLIST_TOOLS
 from kaiten_cli.registry.columns import TOOLS as COLUMN_TOOLS
 from kaiten_cli.registry.comments import TOOLS as COMMENT_TOOLS
+from kaiten_cli.registry.custom_properties import TOOLS as CUSTOM_PROPERTY_TOOLS
+from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
 from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
 from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
+from kaiten_cli.registry.roles_and_groups import TOOLS as ROLE_AND_GROUP_TOOLS
+from kaiten_cli.registry.service_desk import TOOLS as SERVICE_DESK_TOOLS
+from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
 from kaiten_cli.registry.spaces import TOOLS as SPACE_TOOLS
+from kaiten_cli.registry.subscribers import TOOLS as SUBSCRIBER_TOOLS
 from kaiten_cli.registry.tags import TOOLS as TAG_TOOLS
 from kaiten_cli.registry.time_logs import TOOLS as TIME_LOG_TOOLS
+from kaiten_cli.registry.tree import TOOLS as TREE_TOOLS
 from kaiten_cli.registry.utilities import TOOLS as UTILITY_TOOLS
+from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 
 TOOL_SET: tuple[ToolSpec, ...] = (
     SPACE_TOOLS
+    + AUTOMATION_TOOLS
     + BOARD_TOOLS
     + CARD_TOOLS
+    + CARD_TYPE_TOOLS
+    + CHART_TOOLS
     + BLOCKER_TOOLS
     + CARD_RELATION_TOOLS
     + COLUMN_TOOLS
     + LANE_TOOLS
     + CHECKLIST_TOOLS
     + COMMENT_TOOLS
+    + CUSTOM_PROPERTY_TOOLS
+    + DOCUMENT_TOOLS
     + EXTERNAL_LINK_TOOLS
     + FILE_TOOLS
     + TAG_TOOLS
     + MEMBER_TOOLS
     + PROJECT_TOOLS
+    + ROLE_AND_GROUP_TOOLS
+    + SERVICE_DESK_TOOLS
+    + AUDIT_AND_ANALYTICS_TOOLS
     + TIME_LOG_TOOLS
+    + SUBSCRIBER_TOOLS
+    + TREE_TOOLS
     + UTILITY_TOOLS
+    + WEBHOOK_TOOLS
 )
 TOOLS_BY_CANONICAL: dict[str, ToolSpec] = {tool.canonical_name: tool for tool in TOOL_SET}
 TOOLS_BY_ALIAS: dict[str, ToolSpec] = {tool.mcp_alias: tool for tool in TOOL_SET}

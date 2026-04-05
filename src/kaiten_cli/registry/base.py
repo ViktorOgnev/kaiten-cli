@@ -15,11 +15,11 @@ def make_tool(
     response_policy: ResponsePolicy | None = None,
     examples: tuple[ExampleSpec, ...] = (),
 ) -> ToolSpec:
-    namespace, action = canonical_name.split(".", 1)
+    *namespace_segments, action = canonical_name.split(".")
     return ToolSpec(
         canonical_name=canonical_name,
         mcp_alias=mcp_alias,
-        namespace=namespace,
+        namespace=".".join(namespace_segments),
         action=action,
         description=description,
         input_schema=input_schema,
@@ -27,4 +27,3 @@ def make_tool(
         response_policy=response_policy or ResponsePolicy(),
         examples=examples,
     )
-

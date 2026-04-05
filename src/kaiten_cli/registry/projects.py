@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.transforms import DEFAULT_LIMIT
 
 
 TOOLS = (
@@ -120,7 +121,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/projects/{project_id}/cards", path_fields=("project_id",)),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten projects.cards list --project-id p1 --compact --json", description="List project cards."),
+            ExampleSpec(command="kaiten projects cards list --project-id p1 --compact --json", description="List project cards."),
         ),
     ),
     make_tool(
@@ -142,7 +143,7 @@ TOOLS = (
             body_fields=("card_id",),
         ),
         examples=(
-            ExampleSpec(command="kaiten projects.cards add --project-id p1 --card-id 10 --json", description="Add a card to a project."),
+            ExampleSpec(command="kaiten projects cards add --project-id p1 --card-id 10 --json", description="Add a card to a project."),
         ),
     ),
     make_tool(
@@ -159,7 +160,114 @@ TOOLS = (
         },
         operation=OperationSpec(method="DELETE", path_template="/projects/{project_id}/cards/{card_id}", path_fields=("project_id", "card_id")),
         examples=(
-            ExampleSpec(command="kaiten projects.cards remove --project-id p1 --card-id 10 --json", description="Remove a card from a project."),
+            ExampleSpec(command="kaiten projects cards remove --project-id p1 --card-id 10 --json", description="Remove a card from a project."),
+        ),
+    ),
+    make_tool(
+        canonical_name="sprints.list",
+        mcp_alias="kaiten_list_sprints",
+        description="List Kaiten sprints.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "active": {"type": "boolean", "description": "Filter by active/inactive"},
+                "limit": {"type": "integer", "description": "Max results (max 100)"},
+                "offset": {"type": "integer", "description": "Pagination offset"},
+            },
+        },
+        operation=OperationSpec(method="GET", path_template="/sprints", query_fields=("active", "limit", "offset")),
+        response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
+        examples=(
+            ExampleSpec(command="kaiten sprints list --json", description="List sprints."),
+        ),
+    ),
+    make_tool(
+        canonical_name="sprints.create",
+        mcp_alias="kaiten_create_sprint",
+        description="Create a new Kaiten sprint.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Sprint title"},
+                "board_id": {"type": "integer", "description": "Board ID for the sprint"},
+                "goal": {"type": "string", "description": "Sprint goal"},
+                "start_date": {"type": "string", "description": "Start date (ISO 8601)"},
+                "finish_date": {"type": "string", "description": "Finish date (ISO 8601)"},
+            },
+            "required": ["title", "board_id"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/sprints",
+            body_fields=("title", "board_id", "goal", "start_date", "finish_date"),
+        ),
+        examples=(
+            ExampleSpec(command='kaiten sprints create --title "Sprint 1" --board-id 10 --json', description="Create a sprint."),
+        ),
+    ),
+    make_tool(
+        canonical_name="sprints.get",
+        mcp_alias="kaiten_get_sprint",
+        description="Get a Kaiten sprint by ID.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "sprint_id": {"type": "integer", "description": "Sprint ID"},
+                "exclude_deleted_cards": {"type": "boolean", "description": "Exclude deleted cards from the sprint summary"},
+            },
+            "required": ["sprint_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/sprints/{sprint_id}",
+            path_fields=("sprint_id",),
+            query_fields=("exclude_deleted_cards",),
+        ),
+        examples=(
+            ExampleSpec(command="kaiten sprints get --sprint-id 1 --json", description="Get a sprint."),
+        ),
+    ),
+    make_tool(
+        canonical_name="sprints.update",
+        mcp_alias="kaiten_update_sprint",
+        description="Update a Kaiten sprint.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "sprint_id": {"type": "integer", "description": "Sprint ID"},
+                "title": {"type": "string", "description": "Sprint title"},
+                "goal": {"type": "string", "description": "Sprint goal"},
+                "start_date": {"type": "string", "description": "Start date (ISO 8601)"},
+                "finish_date": {"type": "string", "description": "Finish date (ISO 8601)"},
+                "active": {"type": "boolean", "description": "Set to false to finish/complete the sprint"},
+                "archive_done_cards": {"type": "boolean", "description": "Archive completed cards when finishing a sprint"},
+            },
+            "required": ["sprint_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/sprints/{sprint_id}",
+            path_fields=("sprint_id",),
+            body_fields=("title", "goal", "start_date", "finish_date", "active", "archive_done_cards"),
+        ),
+        examples=(
+            ExampleSpec(command="kaiten sprints update --sprint-id 1 --active false --json", description="Update a sprint."),
+        ),
+    ),
+    make_tool(
+        canonical_name="sprints.delete",
+        mcp_alias="kaiten_delete_sprint",
+        description="Delete a Kaiten sprint.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "sprint_id": {"type": "integer", "description": "Sprint ID"},
+            },
+            "required": ["sprint_id"],
+        },
+        operation=OperationSpec(method="DELETE", path_template="/sprints/{sprint_id}", path_fields=("sprint_id",)),
+        examples=(
+            ExampleSpec(command="kaiten sprints delete --sprint-id 1 --json", description="Delete a sprint."),
         ),
     ),
 )
