@@ -39,23 +39,30 @@ python -m kaiten_cli --help
 
 ## Runtime Configuration
 
-Required environment variables:
+Recommended persistent setup:
 
 ```bash
-export KAITEN_DOMAIN=sandbox
-export KAITEN_TOKEN=your-api-token
+kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile show
+```
+
+Sandbox example:
+
+```bash
+kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
+```
+
+Temporary environment fallback:
+
+```bash
+export KAITEN_DOMAIN=<company-subdomain>
+export KAITEN_TOKEN=<api-token>
 ```
 
 Safe first call:
 
 ```bash
 kaiten --json spaces list --compact --fields id,title
-```
-
-Reusable local profile:
-
-```bash
-kaiten profile add sandbox --domain sandbox --token "$KAITEN_TOKEN" --sandbox --set-active
 ```
 
 ## Safety

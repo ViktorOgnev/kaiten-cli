@@ -7,10 +7,11 @@ from dataclasses import asdict
 from typing import Any
 
 import click
+from click.exceptions import NoArgsIsHelpError
 
 from kaiten_cli import __version__
 from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
-from kaiten_cli.errors import CliError, ConfigError, InternalError
+from kaiten_cli.errors import CliError, ConfigError, InternalError, ValidationError
 from kaiten_cli.executor import execute_tool_sync
 from kaiten_cli.input import merge_inputs
 from kaiten_cli.models import GlobalOptions, ToolSpec, UNSET, format_schema_type
@@ -118,7 +119,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     for segment in segments:
         existing = group.commands.get(segment)
         if existing is None:
-            nested = click.Group(name=segment)
+            nested = click.Group(name=segment, no_args_is_help=True)
             group.add_command(nested)
             group = nested
             continue
@@ -128,7 +129,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     return group
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(context_settings={"help_option_names": ["-h", "--help"]}, no_args_is_help=True)
 @click.version_option(version=__version__, prog_name="kaiten")
 @click.option("--json", "json_mode", is_flag=True, default=False, help="Emit machine-readable JSON output.")
 @click.option("--profile", "profile_name", type=click.STRING, default=None, help="Configuration profile to use.")
@@ -199,7 +200,7 @@ def examples_command(ctx: click.Context, identifier: str) -> None:
         _emit_internal(ctx, "examples", exc)
 
 
-@cli.group("profile")
+@cli.group("profile", no_args_is_help=True)
 def profile_group() -> None:
     """Manage profiles."""
 
@@ -287,6 +288,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         cli.main(args=args, prog_name="kaiten", standalone_mode=False)
         return 0
+    except NoArgsIsHelpError as error:
+        sys.stdout.write(error.format_message() + "\n")
+        return 0
+    except click.UsageError as error:
+        cli_error = ValidationError(error.format_message())
+        stream = sys.stdout if json_mode else sys.stderr
+        stream.write(render_error(None, cli_error, json_mode) + "\n")
+        return cli_error.exit_code
     except CliError as error:
         stream = sys.stdout if json_mode else sys.stderr
         stream.write(render_error(None, error, json_mode) + "\n")

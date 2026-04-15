@@ -73,22 +73,51 @@ python -m kaiten_cli --help
 
 CLI читает переменные окружения только из текущего процесса или из сохранённого profile-конфига.
 
-## Первые команды
+## Настройка доступа
 
-Read-only smoke после настройки окружения:
+Рекомендуемый путь: сохранить профиль и сделать его активным.
 
 ```bash
-export KAITEN_DOMAIN=sandbox
-export KAITEN_TOKEN=your-api-token
+kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile show
+```
 
+Если работаешь с sandbox:
+
+```bash
+kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
+```
+
+Временный fallback через переменные окружения:
+
+```bash
+export KAITEN_DOMAIN=<company-subdomain>
+export KAITEN_TOKEN=<api-token>
+```
+
+## Первые команды
+
+Read-only smoke после настройки доступа:
+
+```bash
 kaiten --json spaces list --compact --fields id,title
 kaiten describe cards.create
 ```
 
-Если нужен постоянный локальный профиль:
+## Troubleshooting
+
+Если видишь `Missing Kaiten credentials`:
 
 ```bash
-kaiten profile add sandbox --domain sandbox --token "$KAITEN_TOKEN" --sandbox --set-active
+kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile show
+```
+
+Если профиль уже сохранён, но не активен:
+
+```bash
+kaiten profile list
+kaiten profile use <name>
 ```
 
 ## Тесты

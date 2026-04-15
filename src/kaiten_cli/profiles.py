@@ -22,6 +22,73 @@ def config_path() -> Path:
     return user_config_path("kaiten-cli") / "config.json"
 
 
+def _profile_setup_command() -> str:
+    return "kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active"
+
+
+def _sandbox_setup_command() -> str:
+    return "kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active"
+
+
+def _config_guidance(*, include_profile_list: bool) -> str:
+    lines = [
+        f"Config file: {config_path()}",
+        "Recommended persistent setup:",
+        f"  {_profile_setup_command()}",
+        "Sandbox example:",
+        f"  {_sandbox_setup_command()}",
+    ]
+    if include_profile_list:
+        lines.extend(
+            [
+                "Saved profiles:",
+                "  kaiten profile list",
+                "Activate one:",
+                "  kaiten profile use <name>",
+            ]
+        )
+    lines.extend(
+        [
+            "Temporary shell environment:",
+            "  export KAITEN_DOMAIN=<company-subdomain>",
+            "  export KAITEN_TOKEN=<api-token>",
+            "Check current setup:",
+            "  kaiten profile show",
+            "First read-only call:",
+            "  kaiten --json spaces list --compact --fields id,title",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def missing_credentials_message(*, has_profiles: bool) -> str:
+    return "\n".join(
+        [
+            "Missing Kaiten credentials.",
+            _config_guidance(include_profile_list=has_profiles),
+        ]
+    )
+
+
+def unknown_profile_message(name: str, *, has_profiles: bool) -> str:
+    lines = [
+        f"Unknown profile: {name}",
+        f"Config file: {config_path()}",
+        "List saved profiles:",
+        "  kaiten profile list",
+        "Create and activate a profile:",
+        f"  {_profile_setup_command()}",
+    ]
+    if has_profiles:
+        lines.extend(
+            [
+                "Or activate an existing one:",
+                "  kaiten profile use <name>",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def load_config() -> dict[str, Any]:
     path = config_path()
     if not path.exists():
@@ -135,6 +202,5 @@ def resolve_profile(profile_name: str | None = None) -> ResolvedProfile:
         return ResolvedProfile(name=None, domain=env_domain, token=env_token, sandbox=env_sandbox)
 
     if selected_name and selected_name not in profiles:
-        raise ConfigError(f"Unknown profile: {selected_name}")
-    raise ConfigError("Missing Kaiten credentials. Configure a profile or set KAITEN_DOMAIN and KAITEN_TOKEN.")
-
+        raise ConfigError(unknown_profile_message(selected_name, has_profiles=bool(profiles)))
+    raise ConfigError(missing_credentials_message(has_profiles=bool(profiles)))
