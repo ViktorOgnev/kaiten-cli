@@ -49,8 +49,16 @@ jobs:
         run: echo "${GITHUB_WORKSPACE}/.bin" >> "$GITHUB_PATH"
       - name: Smoke test build
         run: python -m build
+      - name: Compute pipx git spec
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "PIPX_GIT_SPEC=git+${{ github.event.pull_request.head.repo.clone_url }}@${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+          else
+            echo "PIPX_GIT_SPEC=git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.sha }}" >> "$GITHUB_ENV"
+          fi
       - name: Install from git via pipx
-        run: python -m pipx install "git+file://${GITHUB_WORKSPACE}"
+        run: python -m pipx install "$PIPX_GIT_SPEC"
       - name: Verify pipx-installed CLI
         run: |
           kaiten --version
