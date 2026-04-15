@@ -188,18 +188,26 @@ def resolve_profile(profile_name: str | None = None) -> ResolvedProfile:
     selected_name = profile_name or config.get("active_profile")
     if selected_name and selected_name in profiles:
         selected = profiles[selected_name]
+        source = "explicit_profile" if profile_name else "active_profile"
         return ResolvedProfile(
             name=selected_name,
             domain=str(selected.get("domain", "")),
             token=str(selected.get("token", "")),
             sandbox=bool(selected.get("sandbox", False)),
+            source=source,
         )
 
     env_domain = os.environ.get("KAITEN_DOMAIN", "")
     env_token = os.environ.get("KAITEN_TOKEN", "")
     env_sandbox = env_domain == "sandbox"
     if env_domain and env_token:
-        return ResolvedProfile(name=None, domain=env_domain, token=env_token, sandbox=env_sandbox)
+        return ResolvedProfile(
+            name=None,
+            domain=env_domain,
+            token=env_token,
+            sandbox=env_sandbox,
+            source="environment",
+        )
 
     if selected_name and selected_name not in profiles:
         raise ConfigError(unknown_profile_message(selected_name, has_profiles=bool(profiles)))

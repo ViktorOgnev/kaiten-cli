@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec
+from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import default_role_time_log_request
 
 
 TOOLS = (
@@ -46,6 +47,7 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("time_spent", "role_id", "for_date", "comment"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=default_role_time_log_request),
         examples=(
             ExampleSpec(command='kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json', description="Create a time log entry."),
         ),

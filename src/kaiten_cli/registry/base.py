@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, ToolSpec
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior, ToolSpec
 
 
 def make_tool(
@@ -13,6 +13,7 @@ def make_tool(
     input_schema: dict,
     operation: OperationSpec,
     response_policy: ResponsePolicy | None = None,
+    runtime_behavior: RuntimeBehavior | None = None,
     examples: tuple[ExampleSpec, ...] = (),
 ) -> ToolSpec:
     *namespace_segments, action = canonical_name.split(".")
@@ -25,5 +26,6 @@ def make_tool(
         input_schema=input_schema,
         operation=operation,
         response_policy=response_policy or ResponsePolicy(),
+        runtime_behavior=runtime_behavior or RuntimeBehavior(),
         examples=examples,
     )

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import column_subscriber_default_type_request
 
 
 TOOLS = (
@@ -91,6 +92,7 @@ TOOLS = (
             "required": ["column_id", "user_id"],
         },
         operation=OperationSpec(method="POST", path_template="/columns/{column_id}/subscribers", path_fields=("column_id",), body_fields=("user_id", "type")),
+        runtime_behavior=RuntimeBehavior(request_shaper=column_subscriber_default_type_request),
         examples=(
             ExampleSpec(command="kaiten column-subscribers add --column-id 10 --user-id 7 --json", description="Add a column subscriber."),
         ),

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import comment_format_request
 
 
 TOOLS = (
@@ -53,6 +54,7 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("text", "format", "internal"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
             ExampleSpec(command='kaiten comments create --card-id 10 --text "Looks good" --json', description="Create a markdown comment."),
         ),
@@ -81,6 +83,7 @@ TOOLS = (
             path_fields=("card_id", "comment_id"),
             body_fields=("text", "format"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
             ExampleSpec(command='kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json', description="Update a comment."),
         ),

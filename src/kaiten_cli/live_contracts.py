@@ -249,6 +249,10 @@ def iter_special_live_contracts() -> tuple[tuple[str, LiveContract], ...]:
     return tuple(sorted(_SPECIAL_CONTRACTS.items()))
 
 
+def has_special_live_contract(canonical_name: str) -> bool:
+    return canonical_name in _SPECIAL_CONTRACTS
+
+
 LIVE_POLICY_EXCLUSIONS = {
     name: contract.note
     for name, contract in _SPECIAL_CONTRACTS.items()

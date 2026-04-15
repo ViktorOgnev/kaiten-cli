@@ -6,6 +6,7 @@ from typing import Any
 
 from kaiten_cli.client import KaitenClient
 from kaiten_cli.errors import ApiError
+from kaiten_cli.models import DebugReporter
 
 
 def extract_project_cards(payload: Any) -> list[Any] | None:
@@ -32,7 +33,13 @@ def extract_project_cards(payload: Any) -> list[Any] | None:
     return None
 
 
-async def fetch_project_cards(client: KaitenClient, project_id: str, *, timeout: float) -> list[Any]:
+async def fetch_project_cards(
+    client: KaitenClient,
+    project_id: str,
+    *,
+    timeout: float,
+    reporter: DebugReporter | None = None,
+) -> list[Any]:
     try:
         result = await client.get(f"/projects/{project_id}/cards", timeout=timeout)
         if isinstance(result, list):
@@ -41,6 +48,8 @@ async def fetch_project_cards(client: KaitenClient, project_id: str, *, timeout:
     except ApiError as exc:
         if exc.status_code != 405:
             raise
+        if reporter is not None:
+            reporter("fallback: GET /projects/{id}/cards returned 405, retrying with with_cards_data=true")
         project = await client.get(
             f"/projects/{project_id}",
             params={"with_cards_data": True},

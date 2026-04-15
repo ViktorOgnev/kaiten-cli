@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import select_value_soft_delete_request
 
 
 TOOLS = (
@@ -305,6 +306,7 @@ TOOLS = (
             path_template="/company/custom-properties/{property_id}/select-values/{value_id}",
             path_fields=("property_id", "value_id"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=select_value_soft_delete_request),
         examples=(
             ExampleSpec(command="kaiten custom-properties select-values delete --property-id 3 --value-id 10 --json", description="Soft-delete a select value."),
         ),

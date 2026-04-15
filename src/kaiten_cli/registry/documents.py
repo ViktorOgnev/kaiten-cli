@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import prepare_document_request
 
 
 TOOLS = (
@@ -46,6 +47,7 @@ TOOLS = (
             path_template="/documents",
             body_fields=("title", "text", "data", "parent_entity_uid", "sort_order", "key"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(command='kaiten documents create --title "Spec" --text "# Header" --json', description="Create a document from markdown."),
         ),
@@ -89,6 +91,7 @@ TOOLS = (
             path_fields=("document_uid",),
             body_fields=("title", "text", "data", "parent_entity_uid", "sort_order", "key"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(command='kaiten documents update --document-uid doc-1 --text "**bold**" --json', description="Update a document body."),
         ),
@@ -145,6 +148,7 @@ TOOLS = (
             path_template="/document-groups",
             body_fields=("title", "parent_entity_uid", "sort_order"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(command='kaiten document-groups create --title "Engineering" --json', description="Create a document group."),
         ),

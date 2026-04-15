@@ -6,7 +6,7 @@ import pytest
 import respx
 from httpx import Response
 
-from kaiten_cli.app import cli
+from kaiten_cli.app import cli, main
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.executor import build_request, execute_tool
 from kaiten_cli.input import merge_inputs
@@ -57,8 +57,19 @@ def test_build_request_injects_default_limit_for_list_tools():
     assert query["limit"] == 50
 
 
+def test_build_request_applies_runtime_request_shaper():
+    tool = resolve_tool("boards.delete")
+    payload = merge_inputs(tool, {"space_id": 3, "board_id": 7, "force": True})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/spaces/3/boards/7"
+    assert query == {"force": True}
+    assert body == {"force": True}
+
+
 @pytest.mark.asyncio
-async def test_execute_mutation_rejects_non_sandbox(monkeypatch):
+async def test_execute_mutation_rejects_non_sandbox(config_env, monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     tool = resolve_tool("cards.create")
@@ -90,3 +101,24 @@ def test_cli_cards_list_alias_and_canonical_use_numeric_options(runner):
     assert alias.exit_code == 0
     assert canonical.output == alias.output
     assert route.called
+
+
+@respx.mock
+def test_cli_verbose_writes_diagnostics_to_stderr_only(capsys):
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards", params={"board_id": "10", "limit": "5"}).mock(
+        return_value=Response(200, json=[{"id": 1, "title": "Task", "state": 2}])
+    )
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        for key, value in env.items():
+            monkeypatch.setenv(key, value)
+        exit_code = main(["--json", "--verbose", "cards", "list", "--board-id", "10", "--limit", "5"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert route.called
+    assert json.loads(captured.out)["success"] is True
+    assert "[verbose] profile:" in captured.err
+    assert "[verbose] request: method=GET path=/cards" in captured.err

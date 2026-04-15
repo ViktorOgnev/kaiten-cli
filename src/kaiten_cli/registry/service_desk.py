@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import archive_service_request, service_desk_stats_query_request
 from kaiten_cli.transforms import DEFAULT_LIMIT
 
 
@@ -88,6 +89,7 @@ TOOLS = (
         description="Archive a Service Desk service.",
         input_schema={"type": "object", "properties": {"service_id": {"type": "integer", "description": "Service ID"}}, "required": ["service_id"]},
         operation=OperationSpec(method="PATCH", path_template="/service-desk/services/{service_id}", path_fields=("service_id",)),
+        runtime_behavior=RuntimeBehavior(request_shaper=archive_service_request),
         examples=(ExampleSpec(command="kaiten service-desk services delete --service-id 1 --json", description="Archive a service."),),
     ),
     make_tool(
@@ -331,6 +333,7 @@ TOOLS = (
         description="Get Service Desk statistics.",
         input_schema={"type": "object", "properties": {"date_from": {"type": "string", "description": "Start date (ISO format)"}, "date_to": {"type": "string", "description": "End date (ISO format)"}, "service_id": {"type": "integer", "description": "Service ID"}, "report": {"type": "boolean", "description": "Enable report mode"}}},
         operation=OperationSpec(method="GET", path_template="/service-desk/stats", query_fields=("date_from", "date_to", "service_id", "report")),
+        runtime_behavior=RuntimeBehavior(request_shaper=service_desk_stats_query_request),
         examples=(ExampleSpec(command="kaiten service-desk stats get --date-from 2026-01-01 --json", description="Get Service Desk statistics."),),
     ),
     make_tool(

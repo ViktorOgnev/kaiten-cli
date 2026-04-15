@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import archive_card_request, execute_cards_list_all
 from kaiten_cli.transforms import DEFAULT_LIMIT
 
 
@@ -342,6 +343,7 @@ TOOLS = (
             body_fields=("condition",),
         ),
         response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        runtime_behavior=RuntimeBehavior(request_shaper=archive_card_request),
         examples=(
             ExampleSpec(command="kaiten cards archive --card-id 123", description="Archive a card."),
         ),
@@ -413,6 +415,11 @@ TOOLS = (
         },
         operation=OperationSpec(method="GET", path_template="/cards"),
         response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_cards_list_all,
+            compact_default=True,
+        ),
         examples=(
             ExampleSpec(command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json", description="Fetch all matching cards with bounded pagination."),
         ),

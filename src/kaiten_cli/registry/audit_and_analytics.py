@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import execute_space_activity_all, saved_filter_title_request
 from kaiten_cli.transforms import DEFAULT_LIMIT
 
 
@@ -172,6 +173,11 @@ TOOLS = (
         },
         operation=OperationSpec(method="GET", path_template="/spaces/{space_id}/activity", path_fields=("space_id",)),
         response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_space_activity_all,
+            compact_default=True,
+        ),
         examples=(
             ExampleSpec(command="kaiten space-activity-all get --space-id 1 --page-size 20 --max-pages 2 --json", description="Fetch all space activity with bounded pagination."),
         ),
@@ -207,6 +213,7 @@ TOOLS = (
             "required": ["name", "filter"],
         },
         operation=OperationSpec(method="POST", path_template="/saved-filters", body_fields=("name", "filter", "shared")),
+        runtime_behavior=RuntimeBehavior(request_shaper=saved_filter_title_request),
         examples=(
             ExampleSpec(command="kaiten saved-filters create --name MyFilter --filter '{}' --json", description="Create a saved filter."),
         ),
@@ -245,6 +252,7 @@ TOOLS = (
             path_fields=("filter_id",),
             body_fields=("name", "filter", "shared"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=saved_filter_title_request),
         examples=(
             ExampleSpec(command="kaiten saved-filters update --filter-id 1 --name Renamed --json", description="Update a saved filter."),
         ),

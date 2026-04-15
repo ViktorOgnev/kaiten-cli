@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec
+from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import execute_blockers_get
 
 
 TOOLS = (
@@ -36,6 +37,7 @@ TOOLS = (
             "required": ["card_id", "blocker_id"],
         },
         operation=OperationSpec(method="GET", path_template="/cards/{card_id}/blockers", path_fields=("card_id",)),
+        runtime_behavior=RuntimeBehavior(execution_mode="custom", custom_executor=execute_blockers_get),
         examples=(
             ExampleSpec(command="kaiten blockers get --card-id 10 --blocker-id 20 --json", description="Get a blocker by filtering the blocker list."),
         ),

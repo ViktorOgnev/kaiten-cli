@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 
 class _Unset:
@@ -38,6 +39,26 @@ class ResponsePolicy:
     result_kind: str = "entity"
 
 
+DebugReporter = Callable[[str], None]
+RequestShape = tuple[str, dict[str, Any] | None, dict[str, Any] | None]
+RequestShaper = Callable[
+    ["ToolSpec", dict[str, Any], str, dict[str, Any] | None, dict[str, Any] | None],
+    RequestShape,
+]
+CustomExecutor = Callable[
+    [Any, "ToolSpec", dict[str, Any], str, dict[str, Any] | None, dict[str, Any] | None, float, DebugReporter | None],
+    Awaitable[Any],
+]
+
+
+@dataclass(slots=True, frozen=True)
+class RuntimeBehavior:
+    execution_mode: str = "direct_http"
+    request_shaper: RequestShaper | None = None
+    custom_executor: CustomExecutor | None = None
+    compact_default: bool | None = None
+
+
 @dataclass(slots=True, frozen=True)
 class ToolSpec:
     canonical_name: str
@@ -48,6 +69,7 @@ class ToolSpec:
     input_schema: dict[str, Any]
     operation: OperationSpec
     response_policy: ResponsePolicy = field(default_factory=ResponsePolicy)
+    runtime_behavior: RuntimeBehavior = field(default_factory=RuntimeBehavior)
     examples: tuple[ExampleSpec, ...] = ()
 
     @property
@@ -59,6 +81,14 @@ class ToolSpec:
     @property
     def command_segments(self) -> tuple[str, ...]:
         return self.namespace_segments + (self.action,)
+
+    @property
+    def execution_mode(self) -> str:
+        return self.runtime_behavior.execution_mode
+
+    @property
+    def is_mutation(self) -> bool:
+        return self.operation.method.upper() in {"POST", "PATCH", "DELETE"}
 
 
 @dataclass(slots=True)
@@ -77,6 +107,7 @@ class ResolvedProfile:
     domain: str
     token: str
     sandbox: bool = False
+    source: str = "unknown"
 
 
 def format_schema_type(schema: dict[str, Any]) -> str:

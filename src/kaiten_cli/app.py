@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import asdict
 from typing import Any
 
 import click
@@ -14,10 +13,10 @@ from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
 from kaiten_cli.errors import CliError, ConfigError, InternalError, ValidationError
 from kaiten_cli.executor import execute_tool_sync
 from kaiten_cli.input import merge_inputs
-from kaiten_cli.models import GlobalOptions, ToolSpec, UNSET, format_schema_type
+from kaiten_cli.models import GlobalOptions, ToolSpec
 from kaiten_cli.output import render_error, render_success
 from kaiten_cli.profiles import add_profile, list_profiles, remove_profile, show_profile, use_profile
-from kaiten_cli.registry import iter_tools, resolve_tool
+from kaiten_cli.registry import iter_tools
 
 
 def _ctx_options(ctx: click.Context) -> GlobalOptions:
@@ -39,11 +38,23 @@ def _emit_internal(ctx: click.Context, command: str | None, exc: Exception) -> N
     _fail(ctx, command, InternalError(f"{type(exc).__name__}: {exc}"))
 
 
+def _make_debug_reporter(ctx: click.Context):
+    options = _ctx_options(ctx)
+    if not options.verbose:
+        return None
+
+    def reporter(message: str) -> None:
+        click.echo(f"[verbose] {message}", err=True)
+
+    return reporter
+
+
 def _dynamic_callback(tool: ToolSpec):
     @click.pass_context
     def callback(ctx: click.Context, **kwargs: Any) -> None:
         options = _ctx_options(ctx)
         stdin_text = click.get_text_stream("stdin").read() if options.stdin_json else None
+        reporter = _make_debug_reporter(ctx)
         try:
             payload = merge_inputs(
                 tool,
@@ -52,7 +63,12 @@ def _dynamic_callback(tool: ToolSpec):
                 stdin_json=options.stdin_json,
                 stdin_text=stdin_text,
             )
-            result = execute_tool_sync(tool, payload, profile_name=options.profile_name)
+            result = execute_tool_sync(
+                tool,
+                payload,
+                profile_name=options.profile_name,
+                reporter=reporter,
+            )
             _echo_result(ctx, tool.canonical_name, result)
         except CliError as error:
             _fail(ctx, tool.canonical_name, error)
@@ -80,7 +96,6 @@ def _command_params(tool: ToolSpec) -> list[click.Parameter]:
     params: list[click.Parameter] = []
     for field_name, schema in tool.input_schema.get("properties", {}).items():
         option_name = f"--{field_name.replace('_', '-')}"
-        default = UNSET
         description = schema.get("description", "")
         allowed = schema.get("type")
         allowed_types = allowed if isinstance(allowed, list) else [allowed]
@@ -147,6 +162,8 @@ def cli(
     verbose: bool,
     no_color: bool,
 ) -> None:
+    if no_color:
+        ctx.color = False
     ctx.obj = GlobalOptions(
         json_mode=json_mode,
         profile_name=profile_name,

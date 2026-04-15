@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import execute_project_cards_list, project_title_to_name_request
 from kaiten_cli.transforms import DEFAULT_LIMIT
 
 
@@ -38,6 +39,7 @@ TOOLS = (
             path_template="/projects",
             body_fields=("title", "description", "work_calendar_id", "settings", "properties"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
             ExampleSpec(command='kaiten projects create --title "Platform" --json', description="Create a project."),
         ),
@@ -82,6 +84,7 @@ TOOLS = (
             path_fields=("project_id",),
             body_fields=("title", "description", "condition", "work_calendar_id", "settings", "properties"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
             ExampleSpec(command='kaiten projects update --project-id p1 --title "Platform" --json', description="Update a project."),
         ),
@@ -120,6 +123,7 @@ TOOLS = (
         },
         operation=OperationSpec(method="GET", path_template="/projects/{project_id}/cards", path_fields=("project_id",)),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        runtime_behavior=RuntimeBehavior(execution_mode="synthetic", custom_executor=execute_project_cards_list),
         examples=(
             ExampleSpec(command="kaiten projects cards list --project-id p1 --compact --json", description="List project cards."),
         ),

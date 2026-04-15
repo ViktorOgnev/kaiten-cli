@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import difflib
-from collections import defaultdict
-from collections.abc import Iterable
 
-from kaiten_cli.models import ToolSpec
+from kaiten_cli.models import ToolSpec, example_commands, format_schema_type
+from kaiten_cli.live_contracts import get_live_contract, has_special_live_contract
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS
@@ -72,13 +71,6 @@ def iter_tools() -> tuple[ToolSpec, ...]:
     return TOOL_SET
 
 
-def iter_namespaces() -> dict[str, list[ToolSpec]]:
-    grouped: dict[str, list[ToolSpec]] = defaultdict(list)
-    for tool in TOOL_SET:
-        grouped[tool.namespace].append(tool)
-    return {key: sorted(value, key=lambda item: item.action) for key, value in grouped.items()}
-
-
 def resolve_tool(identifier: str) -> ToolSpec:
     if identifier in TOOLS_BY_CANONICAL:
         return TOOLS_BY_CANONICAL[identifier]
@@ -118,24 +110,36 @@ def search(query: str, limit: int = 5) -> list[ToolSpec]:
 
 def examples_for(identifier: str) -> list[str]:
     tool = resolve_tool(identifier)
-    return [example.command for example in tool.examples]
+    return example_commands(tool.examples)
 
 
 def describe(identifier: str) -> dict:
     tool = resolve_tool(identifier)
     properties = tool.input_schema.get("properties", {})
     required = set(tool.input_schema.get("required", []))
-    return {
+    payload = {
         "canonical_name": tool.canonical_name,
         "mcp_alias": tool.mcp_alias,
         "description": tool.description,
         "method": tool.operation.method,
+        "mutation": tool.is_mutation,
+        "execution_mode": tool.execution_mode,
         "path_template": tool.operation.path_template,
+        "input_modes": ["options", "from_file", "stdin_json"],
+        "response_policy": {
+            "compact_supported": tool.response_policy.compact_supported,
+            "fields_supported": tool.response_policy.fields_supported,
+            "default_limit": tool.response_policy.default_limit,
+            "heavy": tool.response_policy.heavy,
+            "result_kind": tool.response_policy.result_kind,
+            "compact_default": tool.runtime_behavior.compact_default,
+        },
         "arguments": [
             {
                 "name": name,
                 "required": name in required,
                 "type": definition.get("type"),
+                "type_display": format_schema_type(definition),
                 "enum": definition.get("enum"),
                 "description": definition.get("description", ""),
             }
@@ -143,3 +147,11 @@ def describe(identifier: str) -> dict:
         ],
         "examples": examples_for(identifier),
     }
+    if has_special_live_contract(tool.canonical_name):
+        contract = get_live_contract(tool.canonical_name)
+        payload["live_contract"] = {
+            "status": contract.status,
+            "note": contract.note,
+            "expected_statuses": list(contract.expected_statuses),
+        }
+    return payload

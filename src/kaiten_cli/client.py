@@ -10,6 +10,7 @@ from typing import Any
 import httpx
 
 from kaiten_cli.errors import ApiError, ConfigError, TransportError
+from kaiten_cli.models import DebugReporter
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +25,22 @@ HEAVY_TIMEOUT = 60.0
 class KaitenClient:
     """Async HTTP client for Kaiten with low-load defaults."""
 
-    def __init__(self, *, domain: str, token: str):
+    def __init__(self, *, domain: str, token: str, reporter: DebugReporter | None = None):
         if not domain:
             raise ConfigError("KAITEN_DOMAIN is required")
         if not token:
             raise ConfigError("KAITEN_TOKEN is required")
         self.domain = domain
         self.token = token
+        self._reporter = reporter
         self.base_url = f"https://{domain}.kaiten.ru/api/{API_VERSION}"
         self._client: httpx.AsyncClient | None = None
         self._last_request_time = 0.0
         self._rate_lock = asyncio.Lock()
+
+    def _debug(self, message: str) -> None:
+        if self._reporter is not None:
+            self._reporter(message)
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
@@ -78,9 +84,15 @@ class KaitenClient:
                     if retry_after:
                         with contextlib.suppress(ValueError):
                             delay = float(retry_after)
+                            self._debug(
+                                f"retry: rate-limited on {method} {path}, waiting {delay:.1f}s from Retry-After"
+                            )
                             logger.warning("Rate limited, retrying after %.1fs", delay)
                             await asyncio.sleep(delay)
                             continue
+                    self._debug(
+                        f"retry: rate-limited on {method} {path}, waiting {RETRY_DELAY * (attempt + 1):.1f}s"
+                    )
                     await asyncio.sleep(RETRY_DELAY * (attempt + 1))
                     continue
 
@@ -103,10 +115,18 @@ class KaitenClient:
             except httpx.TimeoutException as exc:
                 if attempt == MAX_RETRIES - 1:
                     raise TransportError(f"Timeout calling Kaiten API: {exc}") from exc
+                self._debug(
+                    f"retry: timeout on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
+                    f"waiting {RETRY_DELAY * (attempt + 1):.1f}s"
+                )
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
             except httpx.HTTPError as exc:
                 if attempt == MAX_RETRIES - 1:
                     raise TransportError(f"Connection error: {exc}") from exc
+                self._debug(
+                    f"retry: transport error on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
+                    f"waiting {RETRY_DELAY * (attempt + 1):.1f}s"
+                )
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
 
         raise TransportError("Rate limit retries exhausted")
@@ -126,4 +146,3 @@ class KaitenClient:
     async def close(self) -> None:
         if self._client is not None and not self._client.is_closed:
             await self._client.aclose()
-

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import board_delete_force_request
 
 
 TOOLS = (
@@ -124,6 +125,7 @@ TOOLS = (
             path_fields=("space_id", "board_id"),
             query_fields=("force",),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=board_delete_force_request),
         examples=(
             ExampleSpec(command="kaiten boards delete --space-id 1 --board-id 10 --force", description="Delete a board."),
         ),

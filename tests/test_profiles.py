@@ -3,7 +3,16 @@ from __future__ import annotations
 import pytest
 
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.profiles import add_profile, config_path, list_profiles, remove_profile, resolve_profile, show_profile, use_profile
+from kaiten_cli.profiles import (
+    add_profile,
+    config_path,
+    list_profiles,
+    remove_profile,
+    resolve_profile,
+    save_config,
+    show_profile,
+    use_profile,
+)
 
 
 def test_profile_lifecycle(config_env):
@@ -21,6 +30,7 @@ def test_profile_lifecycle(config_env):
     resolved = resolve_profile()
     assert resolved.domain == "sandbox"
     assert resolved.sandbox is True
+    assert resolved.source == "active_profile"
 
     use_profile("sandbox")
     removed = remove_profile("sandbox")
@@ -33,6 +43,59 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     resolved = resolve_profile()
     assert resolved.domain == "sandbox"
     assert resolved.token == "env-token"
+    assert resolved.source == "environment"
+
+
+def test_resolve_profile_explicit_profile_beats_active_and_env(config_env, monkeypatch):
+    add_profile("main", domain="active-tenant", token="active-token", set_active=True)
+    add_profile("sandbox", domain="sandbox", token="sandbox-token", sandbox=True)
+    monkeypatch.setenv("KAITEN_DOMAIN", "env-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+
+    resolved = resolve_profile("sandbox")
+
+    assert resolved.name == "sandbox"
+    assert resolved.domain == "sandbox"
+    assert resolved.token == "sandbox-token"
+    assert resolved.sandbox is True
+    assert resolved.source == "explicit_profile"
+
+
+def test_resolve_profile_active_profile_beats_env(config_env, monkeypatch):
+    add_profile("main", domain="active-tenant", token="active-token", set_active=True)
+    monkeypatch.setenv("KAITEN_DOMAIN", "env-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+
+    resolved = resolve_profile()
+
+    assert resolved.name == "main"
+    assert resolved.domain == "active-tenant"
+    assert resolved.token == "active-token"
+    assert resolved.source == "active_profile"
+
+
+def test_resolve_profile_uses_env_when_profiles_exist_but_none_active(config_env, monkeypatch):
+    save_config(
+        {
+            "active_profile": None,
+            "profiles": {
+                "main": {
+                    "domain": "active-tenant",
+                    "token": "active-token",
+                    "sandbox": False,
+                }
+            },
+        }
+    )
+    monkeypatch.setenv("KAITEN_DOMAIN", "env-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+
+    resolved = resolve_profile()
+
+    assert resolved.name is None
+    assert resolved.domain == "env-tenant"
+    assert resolved.token == "env-token"
+    assert resolved.source == "environment"
 
 
 def test_resolve_profile_guides_setup_when_missing(config_env, monkeypatch):

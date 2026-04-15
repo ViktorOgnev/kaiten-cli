@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec
+from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import (
+    card_child_add_request,
+    card_parent_add_request,
+    planned_relation_add_request,
+)
 
 
 TOOLS = (
@@ -41,6 +46,7 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("child_card_id",),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=card_child_add_request),
         examples=(
             ExampleSpec(command="kaiten card-children add --card-id 10 --child-card-id 11 --json", description="Add a child card relation."),
         ),
@@ -96,6 +102,7 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("parent_card_id",),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=card_parent_add_request),
         examples=(
             ExampleSpec(command="kaiten card-parents add --card-id 10 --parent-card-id 11 --json", description="Add a parent card relation."),
         ),
@@ -143,6 +150,7 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("target_card_id", "type"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=planned_relation_add_request),
         examples=(
             ExampleSpec(
                 command="kaiten planned-relations add --card-id 10 --target-card-id 11 --json",

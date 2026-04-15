@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime_behaviors import automation_copy_request
 
 
 TOOLS = (
@@ -135,6 +136,7 @@ TOOLS = (
             path_fields=("space_id", "automation_id"),
             body_fields=("target_space_id",),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=automation_copy_request),
         examples=(
             ExampleSpec(command="kaiten automations copy --space-id 1 --automation-id auto-1 --target-space-id 2 --json", description="Copy an automation."),
         ),
