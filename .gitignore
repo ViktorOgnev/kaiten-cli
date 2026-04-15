@@ -4,6 +4,13 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .claude-flow/
+build/
+dist/
+*.egg-info/
 *.pyc
 .env
 .env_stage
+PARITY_CHECKLIST.md
+PLAN.md
+PLAN_EXTERNAL_REVIEW.md
+PLAN_TRIZ_VERIFICATION.md
