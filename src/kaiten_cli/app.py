@@ -8,6 +8,7 @@ from typing import Any
 
 import click
 
+from kaiten_cli import __version__
 from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
 from kaiten_cli.errors import CliError, ConfigError, InternalError
 from kaiten_cli.executor import execute_tool_sync
@@ -128,6 +129,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(version=__version__, prog_name="kaiten")
 @click.option("--json", "json_mode", is_flag=True, default=False, help="Emit machine-readable JSON output.")
 @click.option("--profile", "profile_name", type=click.STRING, default=None, help="Configuration profile to use.")
 @click.option("--from-file", type=click.Path(exists=True, dir_okay=False, path_type=str), default=None, help="Load the full JSON payload from a file.")

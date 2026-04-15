@@ -1,14 +1,52 @@
 # kaiten-cli
 
-Нативный CLI для работы с [Kaiten](https://kaiten.ru), построенный как отдельный execution surface поверх того же доменного слоя, который раньше использовался для `kaiten-mcp`.
+Нативный git-installable CLI для работы с [Kaiten](https://kaiten.ru), построенный как отдельный execution surface поверх того же доменного слоя, который раньше использовался для `kaiten-mcp`.
 
 Проект не является MCP proxy и не импортирует `kaiten-mcp` в runtime.  
 Источник истины для CLI — локальный registry в `src/kaiten_cli/registry/`.
+
+## Быстрый старт
+
+### Установка из git
+
+Рекомендуемый путь:
+
+```bash
+uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
+```
+
+Альтернатива:
+
+```bash
+pipx install git+https://github.com/ViktorOgnev/kaiten-cli.git
+```
+
+Fallback в локальную virtualenv:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git"
+```
+
+### Проверка установки
+
+```bash
+kaiten --version
+kaiten --help
+kaiten search-tools cards
+```
+
+Если пакет установлен в текущий Python environment, доступен и module entrypoint:
+
+```bash
+python -m kaiten_cli --help
+```
 
 ## Что уже есть
 
 - canonical commands: `kaiten <namespace...> <action>`
 - MCP-compatible aliases: `kaiten kaiten_list_cards`
+- `--version` и module entrypoint: `python -m kaiten_cli`
 - `--json` с жёстким success/error envelope
 - discovery-команды: `search-tools`, `describe`, `examples`
 - profiles и sandbox mutation guard
@@ -33,29 +71,24 @@
 | `KAITEN_LIVE` | Нет | `1` для opt-in live validation |
 | `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
 
-## Установка
+CLI читает переменные окружения только из текущего процесса или из сохранённого profile-конфига.
+
+## Первые команды
+
+Read-only smoke после настройки окружения:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e .
+export KAITEN_DOMAIN=sandbox
+export KAITEN_TOKEN=your-api-token
+
+kaiten --json spaces list --compact --fields id,title
+kaiten describe cards.create
 ```
 
-После установки доступны:
+Если нужен постоянный локальный профиль:
 
 ```bash
-.venv/bin/kaiten --help
-.venv/bin/kaiten --json spaces list
-.venv/bin/kaiten describe cards.create
-```
-
-## Примеры
-
-```bash
-.venv/bin/kaiten --json spaces list --compact --fields id,title
-.venv/bin/kaiten --json boards list --space-id 679103 --compact
-.venv/bin/kaiten --json cards create --title "Live task" --board-id 1540185
-.venv/bin/kaiten --json projects cards list --project-id <uuid> --compact
-.venv/bin/kaiten --json planned-relations add --card-id 10 --target-card-id 11
+kaiten profile add sandbox --domain sandbox --token "$KAITEN_TOKEN" --sandbox --set-active
 ```
 
 ## Тесты
@@ -74,11 +107,11 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
   tests/live/test_sandbox_live_full.py
 ```
 
-Подробности и статусные классы см. в:
+Дополнительные инженерные заметки:
 
-- [PLAN.md](/Users/name/work/kaiten-cli/PLAN.md)
 - [LIVE_VALIDATION.md](/Users/name/work/kaiten-cli/LIVE_VALIDATION.md)
 - [API_BEHAVIOR_MATRIX.md](/Users/name/work/kaiten-cli/API_BEHAVIOR_MATRIX.md)
+- [AGENTS.md](/Users/name/work/kaiten-cli/AGENTS.md)
 
 ## Дисклеймер
 

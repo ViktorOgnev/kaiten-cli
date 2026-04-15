@@ -1,9 +1,13 @@
 .venv/
+.verify-venv/
 __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .claude-flow/
+.bin/
+.pipx/
+.uv-tools/
 build/
 dist/
 *.egg-info/

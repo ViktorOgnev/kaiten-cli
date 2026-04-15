@@ -4,14 +4,34 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kaiten-cli"
-version = "0.1.0"
+dynamic = ["version"]
 description = "LLM-oriented CLI for Kaiten"
+readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    { name = "Viktor Ognev" },
+]
+keywords = ["kaiten", "cli", "api", "automation", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+]
 dependencies = [
     "click>=8.1",
     "httpx>=0.27.0",
     "platformdirs>=4.2.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ViktorOgnev/kaiten-cli"
+Repository = "https://github.com/ViktorOgnev/kaiten-cli"
+Issues = "https://github.com/ViktorOgnev/kaiten-cli/issues"
 
 [project.optional-dependencies]
 test = [
@@ -27,6 +47,23 @@ dev = [
 
 [project.scripts]
 kaiten = "kaiten_cli.app:main"
+
+[tool.hatch.version]
+path = "src/kaiten_cli/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kaiten_cli"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/AGENTS.md",
+    "/LIVE_VALIDATION.md",
+    "/API_BEHAVIOR_MATRIX.md",
+    "/pyproject.toml",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
