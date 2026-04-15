@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from kaiten_cli.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT
-from kaiten_cli.executor import timeout_for_tool
+from kaiten_cli.runtime.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT
+from kaiten_cli.runtime.executor import timeout_for_tool
 from kaiten_cli.models import OperationSpec, ResponsePolicy
 from kaiten_cli.registry import resolve_tool
 from kaiten_cli.registry.base import make_tool
@@ -22,4 +22,3 @@ def test_timeout_heavy_for_heavy_tool():
         response_policy=ResponsePolicy(heavy=True),
     )
     assert timeout_for_tool(tool) == HEAVY_TIMEOUT
-

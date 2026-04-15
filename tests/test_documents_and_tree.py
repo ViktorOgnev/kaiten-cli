@@ -7,8 +7,8 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli
-from kaiten_cli.executor import build_request, execute_tool
-from kaiten_cli.input import merge_inputs
+from kaiten_cli.runtime.executor import build_request, execute_tool
+from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
 
 
@@ -32,7 +32,7 @@ def test_resolve_document_and_tree_aliases():
 
 
 def test_build_request_for_create_document_text_sets_sort_order(monkeypatch):
-    monkeypatch.setattr("kaiten_cli.document_support.time.time", lambda: 1234)
+    monkeypatch.setattr("kaiten_cli.runtime.support.documents.time.time", lambda: 1234)
     tool = resolve_tool("documents.create")
     payload = merge_inputs(tool, {"title": "Spec", "text": "# Header"})
 

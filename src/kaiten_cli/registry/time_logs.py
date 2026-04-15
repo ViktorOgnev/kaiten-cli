@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime_behaviors import default_role_time_log_request
+from kaiten_cli.runtime.behaviors import default_role_time_log_request
 
 
 TOOLS = (

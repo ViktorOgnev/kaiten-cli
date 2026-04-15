@@ -8,8 +8,8 @@ from httpx import Response
 
 from kaiten_cli.app import cli, main
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.executor import build_request, execute_tool
-from kaiten_cli.input import merge_inputs
+from kaiten_cli.runtime.executor import build_request, execute_tool
+from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
 
 

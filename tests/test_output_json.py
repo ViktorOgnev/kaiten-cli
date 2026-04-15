@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.output import render_error, render_success
+from kaiten_cli.runtime.output import render_error, render_success
 
 
 def test_render_success_json():
@@ -18,4 +18,3 @@ def test_render_error_json():
     assert payload["success"] is False
     assert payload["command"] == "cards.list"
     assert payload["error"]["type"] == "config_error"
-

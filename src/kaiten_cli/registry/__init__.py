@@ -5,7 +5,7 @@ from __future__ import annotations
 import difflib
 
 from kaiten_cli.models import ToolSpec, example_commands, format_schema_type
-from kaiten_cli.live_contracts import get_live_contract, has_special_live_contract
+from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS

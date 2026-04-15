@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from kaiten_cli.live_contracts import has_special_live_contract
 from kaiten_cli.registry import describe, examples_for, search
+from kaiten_cli.registry.live_contracts import has_special_live_contract
 
 
 def search_tools(query: str, limit: int = 5) -> list[dict]:

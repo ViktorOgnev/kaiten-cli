@@ -1,87 +1,52 @@
 # kaiten-cli for Agents
 
-## Install from Git
+This file only captures agent-specific guidance.
 
-Recommended:
+For install, human-oriented usage, and the full docs map, start with [README.md](README.md).  
+For the system map, use [ARCHITECTURE.md](ARCHITECTURE.md).
 
-```bash
-uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
-```
+## Discovery-first flow
 
-Alternative:
-
-```bash
-pipx install git+https://github.com/ViktorOgnev/kaiten-cli.git
-```
-
-Fallback if `uv` and `pipx` are unavailable:
+Prefer this sequence before calling mutations or heavy commands:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git"
-```
-
-## Smoke Check
-
-These commands do not need Kaiten credentials:
-
-```bash
-kaiten --version
 kaiten --help
 kaiten search-tools cards
+kaiten describe cards.list
+kaiten examples cards.list
 ```
 
-If the package is installed into the current Python environment, this fallback also works:
-
-```bash
-python -m kaiten_cli --help
-```
-
-## Update
-
-Branch-based installs do not update automatically.
-
-```bash
-uv tool upgrade kaiten-cli
-pipx upgrade kaiten-cli
-```
-
-Pinned release install:
-
-```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.1"
-```
-
-## Runtime Configuration
-
-Recommended persistent setup:
-
-```bash
-kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
-kaiten profile show
-```
-
-Sandbox example:
-
-```bash
-kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
-```
-
-Temporary environment fallback:
-
-```bash
-export KAITEN_DOMAIN=<company-subdomain>
-export KAITEN_TOKEN=<api-token>
-```
-
-Safe first call:
+Use `--json` by default for machine-safe parsing:
 
 ```bash
 kaiten --json spaces list --compact --fields id,title
 ```
 
-## Safety
+## Config and precedence
+
+Credential resolution order:
+
+1. `--profile <name>`
+2. active profile from config
+3. `KAITEN_DOMAIN` + `KAITEN_TOKEN`
+
+Recommended persistent setup:
+
+```bash
+kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+```
+
+Sandbox setup:
+
+```bash
+kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
+```
+
+## Safety and efficiency
 
 - Start with read-only commands.
-- Mutations are blocked unless the selected profile is marked as sandbox or uses the `sandbox` domain.
-- Live validation is opt-in and requires `KAITEN_LIVE=1`.
+- Mutations are blocked unless the selected profile is marked sandbox or uses the `sandbox` domain.
+- Prefer `--compact` and `--fields` to reduce payload and token cost.
+- Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
+- Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.
+- Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).

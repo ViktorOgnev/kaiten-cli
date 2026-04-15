@@ -41,8 +41,8 @@
 
 Файлы:
 
-- [tests/live/conftest.py](/Users/name/work/kaiten-cli/tests/live/conftest.py)
-- [tests/live/test_sandbox_live_full.py](/Users/name/work/kaiten-cli/tests/live/test_sandbox_live_full.py)
+- [tests/live/conftest.py](tests/live/conftest.py)
+- [tests/live/test_sandbox_live_full.py](tests/live/test_sandbox_live_full.py)
 
 Harness делает следующее:
 
@@ -111,7 +111,7 @@ Harness делает следующее:
 - `service-desk.users.set-temp-password` может либо успешно отработать, либо вернуть `403/404/405`
 - `service-desk.organization-users.update` может либо успешно отработать, либо вернуть `400/403/404/405` даже после успешного `organization-users.add`
 
-Точные статусы и примечания см. в [API_BEHAVIOR_MATRIX.md](/Users/name/work/kaiten-cli/API_BEHAVIOR_MATRIX.md).
+Точные статусы и примечания см. в [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md).
 
 ## Запуск
 
@@ -125,5 +125,5 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
 
 1. Сначала определить, это runtime bug, live API limitation или synthetic-fallback candidate.
 2. Если это runtime bug — добавить/обновить offline test и чинить CLI.
-3. Если это корректный expected error — зафиксировать его в `API_BEHAVIOR_MATRIX.md` и `PLAN.md`.
+3. Если это корректный expected error — зафиксировать его в `API_BEHAVIOR_MATRIX.md` и, если меняется объяснение системы, в `ARCHITECTURE.md`.
 4. Если это честный synthetic candidate — сначала добавить failing offline test, потом реализовать fallback.

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from kaiten_cli.client import KaitenClient
 from kaiten_cli.errors import ApiError
 from kaiten_cli.models import DebugReporter
+from kaiten_cli.runtime.client import KaitenClient
 
 
 def extract_project_cards(payload: Any) -> list[Any] | None:

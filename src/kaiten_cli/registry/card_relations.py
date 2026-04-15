@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime_behaviors import (
+from kaiten_cli.runtime.behaviors import (
     card_child_add_request,
     card_parent_add_request,
     planned_relation_add_request,

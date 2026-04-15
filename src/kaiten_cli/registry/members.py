@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.transforms import DEFAULT_LIMIT
+from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
 TOOLS = (

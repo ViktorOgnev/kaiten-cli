@@ -5,7 +5,7 @@ import json
 import pytest
 
 from kaiten_cli.errors import ValidationError
-from kaiten_cli.input import merge_inputs
+from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.models import UNSET
 from kaiten_cli.registry import resolve_tool
 

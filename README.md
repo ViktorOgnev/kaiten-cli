@@ -71,6 +71,19 @@ python -m kaiten_cli --help
 - strict alias-set regression против checked-in snapshot
 - full live validation campaign на sandbox с teardown discipline
 
+## Структура репозитория
+
+- `src/kaiten_cli/registry/`
+  Каталог всех инструментов. Здесь объявляются `ToolSpec`, canonical names, aliases, schemas и metadata.
+- `src/kaiten_cli/runtime/`
+  Исполняемый слой: request building, HTTP client, transforms, synthetic и aggregated execution.
+- `src/kaiten_cli/runtime/support/`
+  Вспомогательные bounded helper-модули для runtime.
+- `src/kaiten_cli/`
+  Stable package surface и shared core: `app.py`, `discovery.py`, `profiles.py`, `models.py`, `errors.py`.
+
+Если коротко: `registry` описывает инструменты, `runtime` их исполняет.
+
 ## Требования
 
 - Python >= 3.11
@@ -194,14 +207,15 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
   tests/live/test_sandbox_live_full.py
 ```
 
-Дополнительные инженерные заметки:
+Карта документации:
 
-- [ARCHITECTURE_REVIEW.md](/Users/name/work/kaiten-cli/ARCHITECTURE_REVIEW.md)
-- [LIVE_VALIDATION.md](/Users/name/work/kaiten-cli/LIVE_VALIDATION.md)
-- [API_BEHAVIOR_MATRIX.md](/Users/name/work/kaiten-cli/API_BEHAVIOR_MATRIX.md)
-- [AGENTS.md](/Users/name/work/kaiten-cli/AGENTS.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [AGENTS.md](AGENTS.md)
+- [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
+- [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
+- [docs/archive/](docs/archive/README.md)
 
-`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. `ARCHITECTURE_REVIEW.md` описывает устройство системы и tradeoffs. Исторические `PLAN*.md` стоит воспринимать как engineering record, а не как runtime documentation.
+`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. Архитектурная карта живёт в `ARCHITECTURE.md`. Исторические plan/review артефакты вынесены в `docs/archive/`.
 
 Релизная политика:
 

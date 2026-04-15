@@ -12,7 +12,7 @@ import pytest
 from click.testing import CliRunner
 
 from kaiten_cli.app import cli
-from kaiten_cli.live_contracts import LIVE_POLICY_EXCLUSIONS
+from kaiten_cli.registry.live_contracts import LIVE_POLICY_EXCLUSIONS
 from kaiten_cli.registry import iter_tools, resolve_tool
 
 NORMAL_PAUSE_SECONDS = 0.5

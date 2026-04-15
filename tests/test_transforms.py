@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from kaiten_cli.transforms import compact_response, select_fields, strip_base64
+from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
 
 def test_compact_response_simplifies_and_strips():
@@ -24,4 +24,3 @@ def test_strip_base64_replaces_payload():
 def test_select_fields_filters_dict_and_list():
     data = [{"id": 1, "title": "A", "state": 2}]
     assert select_fields(data, "id,title") == [{"id": 1, "title": "A"}]
-

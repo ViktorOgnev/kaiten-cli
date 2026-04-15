@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime_behaviors import execute_space_activity_all, saved_filter_title_request
-from kaiten_cli.transforms import DEFAULT_LIMIT
+from kaiten_cli.runtime.behaviors import execute_space_activity_all, saved_filter_title_request
+from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
 TOOLS = (

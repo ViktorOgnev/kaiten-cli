@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from kaiten_cli.errors import ValidationError
-from kaiten_cli.output import render_error, render_success
+from kaiten_cli.runtime.output import render_error, render_success
 
 
 def test_render_success_human_dict():
@@ -13,4 +13,3 @@ def test_render_error_human():
     output = render_error("cards.get", ValidationError("bad field"), False)
     assert "Validation error" in output
     assert "bad field" in output
-

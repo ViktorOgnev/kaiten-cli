@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from kaiten_cli.live_contracts import (
+from kaiten_cli.registry.live_contracts import (
     LIVE_POLICY_EXCLUSIONS,
     VALID_LIVE_STATUSES,
     get_live_contract,

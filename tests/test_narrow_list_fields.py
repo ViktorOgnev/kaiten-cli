@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from kaiten_cli.input import merge_inputs
+from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
 
 

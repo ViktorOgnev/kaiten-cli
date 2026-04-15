@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from kaiten_cli.client import KaitenClient
+from kaiten_cli.runtime.client import KaitenClient
 
 
 class _FakeLoop:
