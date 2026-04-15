@@ -37,6 +37,21 @@ If the package is installed into the current Python environment, this fallback a
 python -m kaiten_cli --help
 ```
 
+## Update
+
+Branch-based installs do not update automatically.
+
+```bash
+uv tool upgrade kaiten-cli
+pipx upgrade kaiten-cli
+```
+
+Pinned release install:
+
+```bash
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.1"
+```
+
 ## Runtime Configuration
 
 Recommended persistent setup:

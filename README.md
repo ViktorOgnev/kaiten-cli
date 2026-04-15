@@ -36,6 +36,21 @@ kaiten --help
 kaiten search-tools cards
 ```
 
+### Обновление
+
+Если CLI уже установлен из branch-based git URL, обновление подтягивается вручную:
+
+```bash
+uv tool upgrade kaiten-cli
+pipx upgrade kaiten-cli
+```
+
+По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
+
+```bash
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.1"
+```
+
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
 
 ```bash
@@ -141,6 +156,12 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
 - [LIVE_VALIDATION.md](/Users/name/work/kaiten-cli/LIVE_VALIDATION.md)
 - [API_BEHAVIOR_MATRIX.md](/Users/name/work/kaiten-cli/API_BEHAVIOR_MATRIX.md)
 - [AGENTS.md](/Users/name/work/kaiten-cli/AGENTS.md)
+
+Релизная политика:
+
+- каждый пользовательский релиз сопровождается bump версии в CLI и git tag вида `vX.Y.Z`
+- branch-based install не обновляется автоматически; нужен явный `uv tool upgrade kaiten-cli` или `pipx upgrade kaiten-cli`
+- install с `@vX.Y.Z` считается pinned и сам на следующий tag не переключается
 
 ## Дисклеймер
 
