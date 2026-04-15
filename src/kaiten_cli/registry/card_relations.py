@@ -1,4 +1,4 @@
-"""Card child and parent relation tool specs."""
+"""Card relation tool specs."""
 
 from __future__ import annotations
 
@@ -115,6 +115,97 @@ TOOLS = (
         operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/parents/{parent_id}", path_fields=("card_id", "parent_id")),
         examples=(
             ExampleSpec(command="kaiten card-parents remove --card-id 10 --parent-id 11 --json", description="Remove a parent card relation."),
+        ),
+    ),
+    make_tool(
+        canonical_name="planned-relations.add",
+        mcp_alias="kaiten_add_planned_relation",
+        description=(
+            "Create a planned relation (successor link) between two cards on Timeline/Gantt. "
+            "The source card becomes a predecessor and the target card becomes its successor."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
+                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card."},
+                "type": {
+                    "type": "string",
+                    "enum": ["end-start"],
+                    "description": "Relation type. Defaults to 'end-start'.",
+                },
+            },
+            "required": ["card_id", "target_card_id"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_id}/planned-relation",
+            path_fields=("card_id",),
+            body_fields=("target_card_id", "type"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten planned-relations add --card-id 10 --target-card-id 11 --json",
+                description="Create a finish-to-start planned relation.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="planned-relations.update",
+        mcp_alias="kaiten_update_planned_relation",
+        description="Update the lag/lead gap of a planned relation between two cards.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
+                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card."},
+                "gap": {
+                    "type": ["integer", "null"],
+                    "description": "Distance between cards (-1000..1000). Positive = lag, negative = lead. null to clear.",
+                },
+                "gap_type": {
+                    "type": ["string", "null"],
+                    "enum": ["hours", "days"],
+                    "description": "Unit of the gap: 'hours', 'days', or null to clear.",
+                },
+            },
+            "required": ["card_id", "target_card_id", "gap", "gap_type"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/cards/{card_id}/planned-relation/{target_card_id}",
+            path_fields=("card_id", "target_card_id"),
+            body_fields=("gap", "gap_type"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days --json",
+                description="Set a 2-day lag for a planned relation.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="planned-relations.remove",
+        mcp_alias="kaiten_remove_planned_relation",
+        description="Remove a planned relation (successor link) between two cards.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
+                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card to unlink."},
+            },
+            "required": ["card_id", "target_card_id"],
+        },
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/planned-relation/{target_card_id}",
+            path_fields=("card_id", "target_card_id"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten planned-relations remove --card-id 10 --target-card-id 11 --json",
+                description="Remove a planned relation.",
+            ),
         ),
     ),
 )

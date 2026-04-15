@@ -28,6 +28,7 @@ def test_help_shows_new_namespaces(runner):
     assert "files" in result.output
     assert "card-children" in result.output
     assert "card-parents" in result.output
+    assert "planned-relations" in result.output
     assert "projects" in result.output
     assert "time-logs" in result.output
     assert "company" in result.output
@@ -60,6 +61,9 @@ def test_resolve_new_aliases():
     assert resolve_tool("kaiten_create_card_file").canonical_name == "files.create"
     assert resolve_tool("kaiten_add_card_child").canonical_name == "card-children.add"
     assert resolve_tool("kaiten_add_card_parent").canonical_name == "card-parents.add"
+    assert resolve_tool("kaiten_add_planned_relation").canonical_name == "planned-relations.add"
+    assert resolve_tool("kaiten_update_planned_relation").canonical_name == "planned-relations.update"
+    assert resolve_tool("kaiten_remove_planned_relation").canonical_name == "planned-relations.remove"
     assert resolve_tool("kaiten_create_project").canonical_name == "projects.create"
     assert resolve_tool("kaiten_create_time_log").canonical_name == "time-logs.create"
     assert resolve_tool("kaiten_get_company").canonical_name == "company.current"
@@ -123,6 +127,39 @@ def test_build_request_for_add_card_child():
     assert path == "/cards/10/children"
     assert query is None
     assert body == {"card_id": 11}
+
+
+def test_build_request_for_add_planned_relation_defaults_type():
+    tool = resolve_tool("planned-relations.add")
+    payload = merge_inputs(tool, {"card_id": 10, "target_card_id": 11})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/cards/10/planned-relation"
+    assert query is None
+    assert body == {"target_card_id": 11, "type": "end-start"}
+
+
+def test_build_request_for_update_planned_relation():
+    tool = resolve_tool("planned-relations.update")
+    payload = merge_inputs(tool, {"card_id": 10, "target_card_id": 11, "gap": 2, "gap_type": "days"})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/cards/10/planned-relation/11"
+    assert query is None
+    assert body == {"gap": 2, "gap_type": "days"}
+
+
+def test_build_request_for_remove_planned_relation():
+    tool = resolve_tool("planned-relations.remove")
+    payload = merge_inputs(tool, {"card_id": 10, "target_card_id": 11})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/cards/10/planned-relation/11"
+    assert query is None
+    assert body is None
 
 
 def test_build_request_for_create_project_maps_title_to_name():
@@ -211,6 +248,56 @@ def test_cli_project_cards_alias_and_nested_canonical_match(runner):
 
     canonical = runner.invoke(cli, ["--json", "projects", "cards", "list", "--project-id", "p1"], env=env)
     alias = runner.invoke(cli, ["--json", "kaiten_list_project_cards", "--project-id", "p1"], env=env)
+
+    assert canonical.exit_code == 0
+    assert alias.exit_code == 0
+    assert json.loads(canonical.output) == json.loads(alias.output)
+    assert route.called
+
+
+@respx.mock
+def test_cli_planned_relation_add_alias_and_canonical_match(runner):
+    route = respx.post(
+        "https://sandbox.kaiten.ru/api/latest/cards/10/planned-relation",
+        json={"target_card_id": 11, "type": "end-start"},
+    ).mock(return_value=Response(200, json={"source_id": 10, "target_id": 11, "type": "end-start"}))
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    canonical = runner.invoke(
+        cli,
+        ["--json", "planned-relations", "add", "--card-id", "10", "--target-card-id", "11"],
+        env=env,
+    )
+    alias = runner.invoke(
+        cli,
+        ["--json", "kaiten_add_planned_relation", "--card-id", "10", "--target-card-id", "11"],
+        env=env,
+    )
+
+    assert canonical.exit_code == 0
+    assert alias.exit_code == 0
+    assert json.loads(canonical.output) == json.loads(alias.output)
+    assert route.called
+
+
+@respx.mock
+def test_cli_planned_relation_update_alias_and_canonical_match(runner):
+    route = respx.patch(
+        "https://sandbox.kaiten.ru/api/latest/cards/10/planned-relation/11",
+        json={"gap": 2, "gap_type": "days"},
+    ).mock(return_value=Response(200, json={"source_id": 10, "target_id": 11, "gap": 2, "gap_type": "days"}))
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    canonical = runner.invoke(
+        cli,
+        ["--json", "planned-relations", "update", "--card-id", "10", "--target-card-id", "11", "--gap", "2", "--gap-type", "days"],
+        env=env,
+    )
+    alias = runner.invoke(
+        cli,
+        ["--json", "kaiten_update_planned_relation", "--card-id", "10", "--target-card-id", "11", "--gap", "2", "--gap-type", "days"],
+        env=env,
+    )
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0

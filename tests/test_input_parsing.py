@@ -45,6 +45,24 @@ def test_merge_inputs_parses_nullable_null_literal():
     assert result["description"] is None
 
 
+def test_merge_inputs_accepts_nullable_enum_null_literal():
+    tool = resolve_tool("planned-relations.update")
+    result = merge_inputs(
+        tool,
+        {"card_id": 10, "target_card_id": 11, "gap": "null", "gap_type": "null"},
+    )
+
+    assert result["gap"] is None
+    assert result["gap_type"] is None
+
+
+def test_merge_inputs_rejects_invalid_nullable_enum_value():
+    tool = resolve_tool("planned-relations.update")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_id": 10, "target_card_id": 11, "gap": 2, "gap_type": "weeks"})
+
+
 def test_merge_inputs_rejects_unknown_fields(tmp_path):
     tool = resolve_tool("spaces.create")
     payload_file = tmp_path / "payload.json"
@@ -52,4 +70,3 @@ def test_merge_inputs_rejects_unknown_fields(tmp_path):
 
     with pytest.raises(ValidationError):
         merge_inputs(tool, {"title": UNSET}, from_file=str(payload_file))
-

@@ -15,6 +15,30 @@ from kaiten_cli.input import merge_inputs
 from kaiten_cli.registry import TOOLS_BY_ALIAS, resolve_tool
 
 
+def _mcp_tool_aliases(mcp_repo: Path) -> set[str]:
+    aliases: set[str] = set()
+
+    for path in sorted(mcp_repo.glob("*.py")):
+        if path.name in {"__init__.py", "compact.py"}:
+            continue
+        module = ast.parse(path.read_text())
+        for node in ast.walk(module):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_tool"):
+                continue
+            name: str | None = None
+            if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                name = node.args[0].value
+            if name is None:
+                for keyword in node.keywords:
+                    if keyword.arg == "name" and isinstance(keyword.value, ast.Constant) and isinstance(keyword.value.value, str):
+                        name = keyword.value.value
+                        break
+            if name is not None:
+                aliases.add(name)
+
+    return aliases
+
+
 def test_help_shows_completion_tail_namespaces(runner):
     result = runner.invoke(cli, ["--help"])
 
@@ -114,19 +138,13 @@ def test_cli_sprints_alias_and_canonical_match(runner):
 
 def test_mcp_tool_alias_parity_against_local_reference():
     mcp_repo = Path("/Users/name/work/kaiten-mcp/src/kaiten_mcp/tools")
-    missing: dict[str, list[str]] = {}
+    cli_aliases = set(TOOLS_BY_ALIAS)
+    mcp_aliases = _mcp_tool_aliases(mcp_repo)
+    missing = sorted(mcp_aliases - cli_aliases)
+    extra = sorted(cli_aliases - mcp_aliases)
 
-    for path in sorted(mcp_repo.glob("*.py")):
-        if path.name in {"__init__.py", "compact.py"}:
-            continue
-        module = ast.parse(path.read_text())
-        aliases: list[str] = []
-        for node in ast.walk(module):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_tool":
-                if node.args and isinstance(node.args[0], ast.Constant):
-                    aliases.append(node.args[0].value)
-        gap = [name for name in aliases if name not in TOOLS_BY_ALIAS]
-        if gap:
-            missing[path.stem] = gap
-
-    assert missing == {}
+    assert not missing and not extra, (
+        "CLI/MCP alias sets differ.\n"
+        f"Missing: {missing}\n"
+        f"Extra: {extra}"
+    )

@@ -35,6 +35,8 @@ def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[st
         body = {"condition": 2}
     if tool.canonical_name == "cards.list" and body:
         body = None
+    if tool.canonical_name == "planned-relations.add" and body:
+        body.setdefault("type", "end-start")
     if tool.canonical_name in {"projects.create", "projects.update"} and body and "title" in body:
         body["name"] = body.pop("title")
     if tool.canonical_name == "card-children.add" and body:

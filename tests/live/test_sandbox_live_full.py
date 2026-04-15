@@ -370,6 +370,35 @@ def _exercise_card_adjacent(h) -> None:
     h.push_cleanup("remove parent relation", "card-parents.remove", card_id=h.state["extra_card_id"], parent_id=h.state["parent_card_id"])
     h.run_tool("card-parents.list", card_id=h.state["extra_card_id"])
 
+    h.run_tool(
+        "cards.update",
+        card_id=h.state["parent_card_id"],
+        planned_start=_iso_datetime(-1),
+        planned_end=_iso_datetime(0),
+    )
+    h.run_tool(
+        "cards.update",
+        card_id=h.state["child_card_id"],
+        planned_start=_iso_datetime(1),
+        planned_end=_iso_datetime(2),
+    )
+    h.run_tool("planned-relations.add", card_id=h.state["parent_card_id"], target_card_id=h.state["child_card_id"])
+    h.run_tool(
+        "planned-relations.update",
+        card_id=h.state["parent_card_id"],
+        target_card_id=h.state["child_card_id"],
+        gap=2,
+        gap_type="days",
+    )
+    h.run_tool(
+        "planned-relations.update",
+        card_id=h.state["parent_card_id"],
+        target_card_id=h.state["child_card_id"],
+        gap=None,
+        gap_type=None,
+    )
+    h.run_tool("planned-relations.remove", card_id=h.state["parent_card_id"], target_card_id=h.state["child_card_id"])
+
 
 def _exercise_projects_documents_and_tree(h) -> None:
     projects = h.run_tool("projects.list")

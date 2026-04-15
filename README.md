@@ -14,7 +14,8 @@
 - profiles и sandbox mutation guard
 - low-load HTTP client: throttling, bounded retry, explicit timeouts
 - локальные transforms: `compact`, `fields`, strip-base64
-- полный functional parity с текущим `kaiten-mcp`
+- полный паритет по набору инструментов с текущим sibling `kaiten-mcp`
+- strict alias-set regression против sibling `kaiten-mcp` registry
 - full live validation campaign на sandbox с teardown discipline
 
 ## Требования
@@ -54,6 +55,7 @@ python3 -m venv .venv
 .venv/bin/kaiten --json boards list --space-id 679103 --compact
 .venv/bin/kaiten --json cards create --title "Live task" --board-id 1540185
 .venv/bin/kaiten --json projects cards list --project-id <uuid> --compact
+.venv/bin/kaiten --json planned-relations add --card-id 10 --target-card-id 11
 ```
 
 ## Тесты

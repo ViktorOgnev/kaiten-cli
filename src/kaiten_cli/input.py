@@ -146,5 +146,5 @@ def validate_payload(tool: ToolSpec, payload: dict[str, Any]) -> None:
         if not any(_type_matches(value, expected) for expected in allowed_types):
             raise ValidationError(f"Field {field_name} has invalid type.")
         enum_values = schema.get("enum")
-        if enum_values and value not in enum_values:
+        if enum_values and value is not None and value not in enum_values:
             raise ValidationError(f"Field {field_name} must be one of: {', '.join(map(str, enum_values))}")
