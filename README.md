@@ -67,8 +67,8 @@ python -m kaiten_cli --help
 - profiles и sandbox mutation guard
 - low-load HTTP client: throttling, bounded retry, explicit timeouts
 - локальные transforms: `compact`, `fields`, strip-base64
-- полный паритет по набору инструментов с текущим sibling `kaiten-mcp`
-- strict alias-set regression против sibling `kaiten-mcp` registry
+- полный паритет по набору инструментов с текущим локальным registry snapshot
+- strict alias-set regression против checked-in snapshot
 - full live validation campaign на sandbox с teardown discipline
 
 ## Требования
@@ -110,6 +110,40 @@ export KAITEN_DOMAIN=<company-subdomain>
 export KAITEN_TOKEN=<api-token>
 ```
 
+### Приоритет конфигурации
+
+CLI резолвит credentials в таком порядке:
+
+1. `--profile <name>`
+2. активный profile из config
+3. `KAITEN_DOMAIN` + `KAITEN_TOKEN` из environment
+
+Это важно и для локального использования, и для агентов: сохранённый active profile имеет приоритет над env fallback, если явно не передан другой `--profile`.
+
+## Ввод и shaping ответа
+
+CLI поддерживает три режима входного payload:
+
+- обычные CLI options: `kaiten cards list --board-id 10 --limit 5`
+- `--from-file payload.json` для полного JSON payload из файла
+- `--stdin-json` для JSON payload из stdin
+
+Для сложных объектов и массивов можно передавать JSON прямо в option-значении или вынести их в файл. Если нужно дословно передать большое тело запроса, `--from-file` обычно надёжнее и дешевле для LLM-агента, чем длинная строка аргументов.
+
+Для уменьшения latency, размера ответа и downstream token cost:
+
+- используйте `--compact`, если команда его поддерживает
+- ограничивайте поля через `--fields id,title,...`
+- учитывайте, что base64-поля автоматически срезаются из ответа
+
+Часть команд работает не как прямой single-request passthrough:
+
+- `direct_http`: один HTTP-вызов к Kaiten API
+- `synthetic`: результат собирается из fallback или shape-specific runtime logic
+- `aggregated`: CLI делает bounded pagination или несколько чтений и агрегирует результат
+
+`describe <tool>` и `search-tools <query>` показывают эти metadata, что полезно перед вызовом тяжёлых команд.
+
 ## Первые команды
 
 Read-only smoke после настройки доступа:
@@ -117,7 +151,16 @@ Read-only smoke после настройки доступа:
 ```bash
 kaiten --json spaces list --compact --fields id,title
 kaiten describe cards.create
+kaiten search-tools "project cards"
 ```
+
+Если нужна диагностика без загрязнения JSON stdout:
+
+```bash
+kaiten --json --verbose cards list --board-id 10 --limit 5
+```
+
+Verbose diagnostics пишутся в `stderr` и показывают resolved profile source, request path, timeout class и custom execution path.
 
 ## Troubleshooting
 
@@ -153,9 +196,12 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
 
 Дополнительные инженерные заметки:
 
+- [ARCHITECTURE_REVIEW.md](/Users/name/work/kaiten-cli/ARCHITECTURE_REVIEW.md)
 - [LIVE_VALIDATION.md](/Users/name/work/kaiten-cli/LIVE_VALIDATION.md)
 - [API_BEHAVIOR_MATRIX.md](/Users/name/work/kaiten-cli/API_BEHAVIOR_MATRIX.md)
 - [AGENTS.md](/Users/name/work/kaiten-cli/AGENTS.md)
+
+`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. `ARCHITECTURE_REVIEW.md` описывает устройство системы и tradeoffs. Исторические `PLAN*.md` стоит воспринимать как engineering record, а не как runtime documentation.
 
 Релизная политика:
 
