@@ -58,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.4"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.5"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
