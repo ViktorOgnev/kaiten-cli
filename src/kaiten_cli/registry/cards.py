@@ -6,7 +6,9 @@ from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, Runtim
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import (
     archive_card_request,
+    execute_cards_batch_get,
     execute_cards_list_all,
+    validate_cards_batch_get,
     validate_cards_list_all_selection,
 )
 from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
@@ -124,6 +126,41 @@ TOOLS = (
         examples=(
             ExampleSpec(command="kaiten cards get --card-id 123", description="Get a card by numeric ID."),
             ExampleSpec(command="kaiten cards get --card-id 123 --compact --fields id,title,state --json", description="Get a narrow card response."),
+        ),
+        usage_notes=(
+            "This is a per-card entity read and becomes expensive when repeated over large card populations.",
+            "For detail enrichment after candidate reduction, prefer cards.batch-get over one-card-at-a-time loops.",
+        ),
+        bulk_alternative="cards.batch-get",
+    ),
+    make_tool(
+        canonical_name="cards.batch-get",
+        mcp_alias="kaiten_batch_get_cards",
+        description="Fetch multiple cards by ID with bounded worker concurrency.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to fetch"},
+                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
+                "compact": {"type": "boolean", "description": "Strip heavy nested fields from card payloads"},
+                "fields": {"type": "string", "description": "Comma-separated card field names to keep"},
+            },
+            "required": ["card_ids"],
+        },
+        operation=OperationSpec(method="GET", path_template="/cards/batch"),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            payload_validator=validate_cards_batch_get,
+            custom_executor=execute_cards_batch_get,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten cards batch-get --card-ids '[1,2,3]' --json", description="Fetch several cards in one CLI call."),
+            ExampleSpec(command="kaiten cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description --json", description="Fetch narrowed card detail payloads with bounded concurrency."),
+        ),
+        usage_notes=(
+            "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Use this bulk path for detail enrichment after local candidate reduction or before building evidence-heavy snapshots.",
         ),
     ),
     make_tool(

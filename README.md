@@ -42,9 +42,9 @@ kaiten search-tools cards
 Если агент работает с этим CLI через git-репозиторий, оптимальные workflow описаны в skills format, а не размазаны по длинным prose docs:
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)  
-  Как не строить N+1 path, как выбирать bulk tools, shaping, trace и cache mode для тяжёлых чтений.
+  Как не строить N+1 path, когда идти в bulk reads, а когда уже пора собирать локальный snapshot.
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)  
-  Как собирать Kanban-метрики через текущий CLI без поштучных history loops.
+  Как собирать Kanban-метрики через snapshot/query слой и не возвращаться к per-card history loops.
 
 ### Обновление
 
@@ -77,6 +77,8 @@ python -m kaiten_cli --help
 - profiles и sandbox mutation guard
 - request-scoped GET cache внутри одного execution path
 - opt-in persistent disk cache с коротким TTL для safe reference/entity reads
+- persistent local sqlite snapshots для headless analytics и repeated report workflows
+- local-only `query cards` / `query metrics` поверх snapshot storage
 - low-load HTTP client: throttling, bounded retry, explicit timeouts
 - локальные transforms: `compact`, `fields`, strip-base64
 - полный паритет по набору инструментов с текущим локальным registry snapshot
@@ -88,7 +90,7 @@ python -m kaiten_cli --help
 - `src/kaiten_cli/registry/`
   Каталог всех инструментов. Здесь объявляются `ToolSpec`, canonical names, aliases, schemas и metadata.
 - `src/kaiten_cli/runtime/`
-  Исполняемый слой: request building, HTTP client, transforms, synthetic и aggregated execution.
+  Исполняемый слой: request building, HTTP client, cache, trace, local snapshot store, synthetic и aggregated execution.
 - `src/kaiten_cli/runtime/support/`
   Вспомогательные bounded helper-модули для runtime.
 - `src/kaiten_cli/`
@@ -228,6 +230,7 @@ Persistent cache deliberately conservative:
 - полезен для типичных `*.get` и небольших discovery list-команд;
 - не предназначен для polling и volatile reads;
 - очищается после успешных mutation-команд для текущего profile/domain.
+- при несовместимой локальной sqlite-схеме или повреждённом файле persistent cache автоматически удаляется и создаётся заново.
 
 Ключ кэша строится по raw API request: `profile/domain + method + path + params`. `compact` и `fields` в ключ не входят, потому что это post-processing уже после ответа API.
 
@@ -258,6 +261,8 @@ kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --worke
 Если сценарий требует сотни однотипных чтений, не спаунь `kaiten` отдельным процессом на каждый объект.
 
 - Для массовой истории перемещений используйте `card-location-history.batch-get`, а не цикл из `card-location-history.get`.
+- Для detail enrichment по карточкам используйте `cards.batch-get`, а не цикл из `cards.get`.
+- Для work-log analytics используйте `time-logs.batch-list`, а не цикл из `time-logs.list`.
 - Для relation-heavy расследований используйте `card-children.batch-list`, а не цикл из `card-children.list`.
 - Для comment-heavy расследований используйте `comments.batch-list`, а не цикл из `comments.list`.
 - Для bulk population по карточкам используйте `cards.list-all --selection all|active_only|archived_only`.
@@ -269,6 +274,8 @@ kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --worke
 
 ```bash
 kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2
+kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description
+kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date
 kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title
 kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
 kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state
@@ -282,6 +289,8 @@ kaiten --json --cache-mode readwrite cards get --card-id 101 --compact --fields 
 
 - `space-topology.get` для boards + columns + lanes в одном CLI вызове
 - `cards.list-all` для population
+- `cards.batch-get` для detail enrichment только после локального сужения candidate set
+- `time-logs.batch-list` для work logs без per-card loops
 - `space-activity-all.get` вместо ручной пагинации вокруг `space-activity.get`
 - `card-children.batch-list` и `comments.batch-list` вместо per-card relation/comment loops
 - `card-location-history.batch-get` только когда действительно нужна история перемещений
@@ -294,6 +303,53 @@ kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --s
 
 Trace пишет JSONL со временем выполнения, количеством реальных HTTP-запросов, retry/cache counters и batch metadata вроде `requested_count` / `unique_count` / `workers`.
 
+## Local-first analytics and headless workflows
+
+Если нужно много раз читать одну и ту же рабочую выборку, не задавай Kaiten API один и тот же вопрос заново на каждом шаге. Собери локальный snapshot один раз, дальше считай и фильтруй локально:
+
+1. `snapshot build` для сборки working set в локальный sqlite
+2. `query cards --view summary` для локальной выборки по фильтрам и candidate reduction
+3. `query metrics` для локальных count / WIP / throughput / lead time / cycle time / aging
+4. `query cards --view detail|evidence` только для уже narrowed candidate set
+5. Только потом, если нужно, отдельные mutation-команды Kaiten API
+
+Базовый пример:
+
+```bash
+kaiten --json snapshot build --name team-basic --space-id 10 --preset basic
+kaiten --json query cards --snapshot team-basic --view summary --filter '{"board_ids":[10],"has_comments":true}' --fields id,title,has_comments
+```
+
+Аналитический пример с окном:
+
+```bash
+kaiten --json snapshot build \
+  --name team-q1 \
+  --space-id 10 \
+  --preset analytics \
+  --window-start 2026-01-01T00:00:00Z \
+  --window-end 2026-03-31T23:59:59Z
+
+kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by board_id
+```
+
+Что важно:
+
+- `snapshot build` и `snapshot refresh` читают Kaiten API один раз на выбранный scope и сохраняют datasets локально.
+- `snapshot refresh` в v1 rebuild-oriented: он пересобирает snapshot целиком, а не делает incremental sync.
+- `snapshot show` и `snapshot list` показывают `schema_version`, чтобы локальная схема была versioned и пригодной для будущих migrations.
+- snapshot storage считается derived local state: если локальный sqlite store несовместим с новой схемой CLI или повреждён, он автоматически пересоздаётся. Старые snapshots в таком случае теряются.
+- `query cards` и `query metrics` не ходят в Kaiten API вообще.
+- `query cards` по умолчанию работает в `summary` view; `detail` и `evidence` используются только когда нужно раскрыть narrowed candidate set.
+- `basic` preset сохраняет topology + card population summary.
+- `analytics` добавляет space activity, card location history и time logs.
+- `evidence` добавляет detail-enriched cards, child relations и comments.
+- `full` объединяет analytics + evidence.
+- `query metrics` в текущем виде generic: это локальный общий metric layer, а не tenant-specific flow profile engine.
+- Local-first path остаётся explicit. Обычные transport-команды не подменяются snapshot behavior автоматически.
+
+Для LLM и headless scripts это preferred path, когда вопросы повторяются над одной и той же группой карточек.
+
 ## Первые команды
 
 Read-only smoke после настройки доступа:
@@ -302,6 +358,7 @@ Read-only smoke после настройки доступа:
 kaiten --json spaces list --compact --fields id,title
 kaiten describe cards.create
 kaiten search-tools "project cards"
+kaiten snapshot list --json
 ```
 
 Если нужна диагностика без загрязнения JSON stdout:
@@ -351,6 +408,16 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
   .venv/bin/pytest -m live -o addopts='--disable-socket --allow-unix-socket' \
   tests/live/test_sandbox_live_full.py
 ```
+
+## Performance reference workflows
+
+Для воспроизводимого сравнения `naive loop -> bulk transport -> snapshot/query` есть repo-level harness:
+
+```bash
+.venv/bin/python scripts/benchmark_reference_workflows.py --spec path/to/workflows.json
+```
+
+Он запускает заданные CLI-команды, собирает stdout bytes, wall time и trace JSONL, чтобы сравнивать не только latency, но и реальный `http_request_count`.
 
 Карта документации:
 

@@ -72,6 +72,59 @@ async def test_execute_comments_batch_list_shapes_nested_payloads(monkeypatch):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_execute_cards_batch_get_shapes_card_payloads(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
+        return_value=Response(
+            200,
+            json={"id": 1, "title": "Alpha", "description": "detail", "owner": {"id": 7, "full_name": "Alice"}, "avatar": "data:image/png;base64,abc"},
+        )
+    )
+
+    tool = resolve_tool("cards.batch-get")
+    payload = merge_inputs(tool, {"card_ids": "[1,1]", "fields": "id,title,description"})
+    result = await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+    assert result["meta"]["requested_count"] == 2
+    assert result["meta"]["unique_count"] == 1
+    assert result["items"] == [
+        {"card_id": 1, "card": {"id": 1, "title": "Alpha", "description": "detail"}}
+    ]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_time_logs_batch_list_propagates_query_and_shapes_payloads(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/time-logs",
+        params={"for_date": "2026-04-01", "personal": "true"},
+    ).mock(
+        return_value=Response(
+            200,
+            json=[{"id": 10, "time_spent": 30, "for_date": "2026-04-01", "comment": "analysis", "author": {"id": 7}}],
+        )
+    )
+
+    tool = resolve_tool("time-logs.batch-list")
+    payload = merge_inputs(
+        tool,
+        {"card_ids": "[1]", "for_date": "2026-04-01", "personal": True, "fields": "id,time_spent,for_date"},
+    )
+    result = await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+    assert result["items"] == [
+        {"card_id": 1, "time_logs": [{"id": 10, "time_spent": 30, "for_date": "2026-04-01"}]}
+    ]
+    assert result["errors"] == []
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_execute_space_topology_get_returns_board_details(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")

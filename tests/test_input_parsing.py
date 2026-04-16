@@ -84,3 +84,17 @@ def test_merge_inputs_rejects_history_batch_workers_above_limit():
 
     with pytest.raises(ValidationError):
         merge_inputs(tool, {"card_ids": "[1,2]", "workers": 7})
+
+
+def test_merge_inputs_rejects_empty_cards_batch_ids():
+    tool = resolve_tool("cards.batch-get")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_ids": "[]"})
+
+
+def test_merge_inputs_rejects_time_logs_batch_workers_above_limit():
+    tool = resolve_tool("time-logs.batch-list")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_ids": "[1,2]", "workers": 7})

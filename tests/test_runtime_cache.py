@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 
 import pytest
 import respx
@@ -8,7 +9,7 @@ from httpx import Response
 
 from kaiten_cli.app import cli
 from kaiten_cli.models import ResolvedProfile
-from kaiten_cli.runtime.cache import ExecutionContext
+from kaiten_cli.runtime.cache import ExecutionContext, HTTP_CACHE_DB_SCHEMA_VERSION
 from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import merge_inputs
@@ -96,6 +97,92 @@ async def test_persistent_cache_hits_across_separate_execute_calls(monkeypatch, 
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_persistent_cache_resets_incompatible_store(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    with sqlite3.connect(cache_path) as conn:
+        conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
+        conn.execute("PRAGMA user_version = 99")
+        conn.commit()
+
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    first = await execute_tool(tool, payload, cache_mode="readwrite")
+    second = await execute_tool(tool, payload, cache_mode="readwrite")
+
+    with sqlite3.connect(cache_path) as conn:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+
+    assert route.call_count == 1
+    assert first == second == {"id": 123, "title": "Task"}
+    assert version == HTTP_CACHE_DB_SCHEMA_VERSION
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_persistent_cache_resets_corrupt_store(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    cache_path.write_text("not-a-sqlite-db", encoding="utf-8")
+
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    await execute_tool(tool, payload, cache_mode="readwrite")
+    await execute_tool(tool, payload, cache_mode="readwrite")
+
+    with sqlite3.connect(cache_path) as conn:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+
+    assert route.call_count == 1
+    assert version == HTTP_CACHE_DB_SCHEMA_VERSION
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_persistent_cache_reset_failure_falls_back_to_bypass(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    with sqlite3.connect(cache_path) as conn:
+        conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
+        conn.execute("PRAGMA user_version = 99")
+        conn.commit()
+
+    def fail_reset(self, reason: str):
+        return None
+
+    monkeypatch.setattr("kaiten_cli.runtime.cache.PersistentCache._reset_store", fail_reset)
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    first = await execute_tool(tool, payload, cache_mode="readwrite")
+    second = await execute_tool(tool, payload, cache_mode="readwrite")
+
+    assert route.call_count == 2
+    assert first == second == {"id": 123, "title": "Task"}
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_cache_mode_refresh_bypasses_disk_read_and_rewrites(monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
@@ -140,6 +227,35 @@ async def test_successful_mutation_invalidates_persistent_cache(monkeypatch, tmp
 
     assert patch_route.call_count == 1
     assert get_route.call_count == 2
+
+
+@respx.mock
+def test_cli_verbose_reports_cache_reset(capsys, monkeypatch, tmp_path):
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    with sqlite3.connect(cache_path) as conn:
+        conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
+        conn.execute("PRAGMA user_version = 99")
+        conn.commit()
+
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    with pytest.MonkeyPatch.context() as patch_env:
+        for key, value in env.items():
+            patch_env.setenv(key, value)
+        from kaiten_cli.app import main
+
+        exit_code = main(["--json", "--verbose", "--cache-mode", "readwrite", "cards", "get", "--card-id", "123"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert route.call_count == 1
+    assert "cache: local store dropped store=http-cache reason=incompatible-schema:99" in captured.err
+    assert "cache: local store recreated store=http-cache" in captured.err
 
 
 @respx.mock

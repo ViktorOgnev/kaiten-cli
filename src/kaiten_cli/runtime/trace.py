@@ -74,6 +74,8 @@ def bulk_trace_meta(data: Any) -> dict[str, Any]:
     for key in ("requested_count", "unique_count", "workers", "succeeded", "failed"):
         if key in meta:
             payload[key] = meta[key]
+    if "trace" in meta:
+        payload["stage_trace"] = meta["trace"]
     return payload
 
 

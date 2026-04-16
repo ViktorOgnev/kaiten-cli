@@ -16,6 +16,8 @@ def test_help_shows_top_level_commands(runner):
     assert "describe" in result.output
     assert "examples" in result.output
     assert "profile" in result.output
+    assert "snapshot" in result.output
+    assert "query" in result.output
     assert "cards" in result.output
     assert "spaces" in result.output
     assert "boards" in result.output
@@ -86,6 +88,7 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert payload["data"]["summary"] == "Kaiten API CLI optimized for humans and agents."
     assert payload["data"]["llm_bootstrap"]
     assert payload["data"]["llm_bootstrap"][0].startswith("Discover first:")
+    assert any("snapshot" in line for line in payload["data"]["llm_bootstrap"])
     assert payload["data"]["quickstart"]
     assert payload["data"]["docs"]["repository"] == "https://github.com/ViktorOgnev/kaiten-cli"
     assert payload["data"]["docs"]["skills"]["heavy_data"].endswith("/skills/kaiten-cli-heavy-data/SKILL.md")
@@ -98,4 +101,5 @@ def test_agent_help_human_output_is_bootstrap_focused(runner):
     assert "Kaiten agent bootstrap" in result.output
     assert "LLM bootstrap:" in result.output
     assert 'discover: kaiten search-tools "wip cards"' in result.output
+    assert "snapshot once for repeated analytics" in result.output
     assert "skills heavy-data:" in result.output

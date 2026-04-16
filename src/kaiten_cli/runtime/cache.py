@@ -24,6 +24,8 @@ from kaiten_cli.models import (
 )
 from kaiten_cli.runtime.trace import ExecutionStats
 
+HTTP_CACHE_DB_SCHEMA_VERSION = 1
+
 
 def persistent_cache_path() -> Path:
     return user_cache_path("kaiten-cli") / "http-cache.sqlite3"
@@ -46,12 +48,18 @@ class RequestCacheKey:
 class PersistentCache:
     """Small sqlite-backed cache for opt-in cross-process GET reuse."""
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, reporter: DebugReporter | None = None):
         self.path = path
+        self.reporter = reporter
 
-    def _connect(self) -> sqlite3.Connection:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(self.path)
+    def _debug(self, message: str) -> None:
+        if self.reporter is not None:
+            self.reporter(message)
+
+    def _open_connection(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.path)
+
+    def _initialize_schema(self, conn: sqlite3.Connection) -> None:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS responses (
@@ -66,11 +74,57 @@ class PersistentCache:
             )
             """
         )
-        return conn
+        conn.execute(f"PRAGMA user_version = {HTTP_CACHE_DB_SCHEMA_VERSION}")
+        conn.commit()
+
+    def _close_quietly(self, conn: sqlite3.Connection | None) -> None:
+        if conn is None:
+            return
+        try:
+            conn.close()
+        except sqlite3.Error:
+            return
+
+    def _reset_store(self, reason: str) -> sqlite3.Connection | None:
+        self._debug(f"cache: local store dropped store=http-cache reason={reason}")
+        try:
+            self.path.unlink(missing_ok=True)
+        except OSError as exc:
+            self._debug(f"cache: reset bypass store=http-cache reason={type(exc).__name__}")
+            return None
+        conn: sqlite3.Connection | None = None
+        try:
+            conn = self._open_connection()
+            self._initialize_schema(conn)
+            self._debug("cache: local store recreated store=http-cache")
+            return conn
+        except sqlite3.Error as exc:
+            self._close_quietly(conn)
+            self._debug(f"cache: reset bypass store=http-cache reason={type(exc).__name__}")
+            return None
+
+    def _connect(self) -> sqlite3.Connection | None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        existing = self.path.exists()
+        conn: sqlite3.Connection | None = None
+        try:
+            conn = self._open_connection()
+            version = int(conn.execute("PRAGMA user_version").fetchone()[0])
+            if existing and version != HTTP_CACHE_DB_SCHEMA_VERSION:
+                self._close_quietly(conn)
+                return self._reset_store(f"incompatible-schema:{version}")
+            self._initialize_schema(conn)
+            return conn
+        except sqlite3.Error as exc:
+            self._close_quietly(conn)
+            return self._reset_store(type(exc).__name__)
 
     def get(self, key: RequestCacheKey) -> tuple[str, Any | None]:
         now = time.time()
-        with self._connect() as conn:
+        conn = self._connect()
+        if conn is None:
+            return "miss", None
+        with conn:
             row = conn.execute(
                 """
                 SELECT payload_json, expires_at
@@ -100,7 +154,10 @@ class PersistentCache:
         payload_json = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         now = time.time()
         expires_at = now + ttl_seconds
-        with self._connect() as conn:
+        conn = self._connect()
+        if conn is None:
+            return
+        with conn:
             conn.execute(
                 """
                 INSERT INTO responses (scope, method, path, params_json, payload_json, expires_at, updated_at)
@@ -116,9 +173,11 @@ class PersistentCache:
             conn.commit()
 
     def clear_scope(self, scope: str) -> None:
-        with self._connect() as conn:
+        conn = self._connect()
+        if conn is None:
+            return
+        with conn:
             conn.execute("DELETE FROM responses WHERE scope = ?", (scope,))
-            conn.commit()
 
 
 @dataclass(slots=True)
@@ -135,7 +194,7 @@ class ExecutionContext:
     def for_profile(cls, profile: ResolvedProfile, reporter: DebugReporter | None = None) -> ExecutionContext:
         persistent = None
         if profile.cache_mode in {CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}:
-            persistent = PersistentCache(persistent_cache_path())
+            persistent = PersistentCache(persistent_cache_path(), reporter=reporter)
         return cls(profile=profile, reporter=reporter, persistent_cache=persistent)
 
     @property

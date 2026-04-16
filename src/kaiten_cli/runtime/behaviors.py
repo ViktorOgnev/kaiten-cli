@@ -10,12 +10,13 @@ from kaiten_cli.runtime.support.audit import (
     fetch_all_space_activity,
     fetch_card_location_histories,
 )
-from kaiten_cli.runtime.support.cards import fetch_all_cards
+from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_get
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
 from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
 from kaiten_cli.runtime.support.spaces import fetch_space_topology
 from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
+from kaiten_cli.runtime.support.time_logs import fetch_time_logs_batch
 from kaiten_cli.runtime.support.tree import build_tree, fetch_all_entities, list_children
 
 Query = dict[str, Any] | None
@@ -162,6 +163,8 @@ def validate_card_id_batch(tool, payload: dict[str, Any]) -> None:
 
 
 validate_history_batch_get = validate_card_id_batch
+validate_cards_batch_get = validate_card_id_batch
+validate_time_logs_batch_list = validate_card_id_batch
 
 
 async def execute_blockers_get(
@@ -327,6 +330,46 @@ async def execute_card_children_batch_list(
     return result
 
 
+async def execute_cards_batch_get(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if reporter:
+        reporter(
+            "execution: aggregated batch card read over /cards/{card_id} "
+            f"with workers={workers}"
+        )
+    result = await fetch_cards_batch_get(
+        domain=client.domain,
+        token=client.token,
+        card_ids=list(payload["card_ids"]),
+        workers=workers,
+        compact=bool(payload.get("compact", False)),
+        fields=payload.get("fields"),
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=client.execution_context,
+        cache_policy=client.cache_policy,
+    )
+    if reporter:
+        meta = result["meta"]
+        reporter(
+            "batch-cards: "
+            f"requested={meta['requested_count']} unique={meta['unique_count']} "
+            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+        )
+    if result["meta"]["succeeded"] == 0:
+        raise BatchExecutionError("Failed to fetch cards for all requested card IDs.", result)
+    return result
+
+
 async def execute_comments_batch_list(
     client,
     tool,
@@ -364,6 +407,48 @@ async def execute_comments_batch_list(
         )
     if result["meta"]["succeeded"] == 0:
         raise BatchExecutionError("Failed to fetch comments for all requested cards.", result)
+    return result
+
+
+async def execute_time_logs_batch_list(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if reporter:
+        reporter(
+            "execution: aggregated batch time-log fetch over /cards/{card_id}/time-logs "
+            f"with workers={workers}"
+        )
+    result = await fetch_time_logs_batch(
+        domain=client.domain,
+        token=client.token,
+        card_ids=list(payload["card_ids"]),
+        workers=workers,
+        for_date=payload.get("for_date"),
+        personal=payload.get("personal"),
+        compact=bool(payload.get("compact", False)),
+        fields=payload.get("fields"),
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=client.execution_context,
+        cache_policy=client.cache_policy,
+    )
+    if reporter:
+        meta = result["meta"]
+        reporter(
+            "batch-time-logs: "
+            f"requested={meta['requested_count']} unique={meta['unique_count']} "
+            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+        )
+    if result["meta"]["succeeded"] == 0:
+        raise BatchExecutionError("Failed to fetch time logs for all requested cards.", result)
     return result
 
 

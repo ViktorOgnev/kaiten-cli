@@ -11,6 +11,8 @@ Use this skill when the task smells like bulk reads, exports, audits, migrations
 
 - Start with discovery: `kaiten search-tools ...` and `kaiten describe ...`.
 - Prefer one bulk CLI call over many one-shot CLI processes.
+- If the workflow will reuse the same population more than once, prefer `snapshot build` once and then local `query cards` / `query metrics`.
+- Keep local card reads in `query cards --view summary` by default; switch to `detail` or `evidence` only after narrowing the candidate set.
 - Treat `aggregated` and `synthetic` tools as more expensive than `direct_http`.
 - Reduce response size before asking the LLM to inspect it.
 
@@ -21,8 +23,26 @@ Use this skill when the task smells like bulk reads, exports, audits, migrations
 - Do not fetch full card objects for metrics or audits if `--fields` is enough.
 - Do not repeat identical safe GET reads across multiple CLI calls without considering cache.
 - Do not assume `cards.list` is the right bulk path; check `cards.list-all`.
+- Do not rebuild the same space/board working set from Kaiten API if a local snapshot would answer the next questions.
 
 ## Preferred command choices
+
+### Repeated read-heavy workflows
+
+Use:
+
+```bash
+kaiten --json snapshot build --name team-basic --space-id 10 --preset basic
+kaiten --json query cards --snapshot team-basic --view summary --filter '{"board_ids":[10]}' --fields id,title,state
+```
+
+Notes:
+
+- Build the snapshot once when the report, audit, or export will ask several follow-up questions about the same working set.
+- `query cards` does not call the Kaiten API.
+- `summary` is the default local card view; use `detail` or `evidence` only for narrowed candidates.
+- Escalate to `query metrics` when the follow-up questions are mostly aggregate rather than per-card.
+- This path is explicit; ordinary transport commands are not silently rewritten to snapshot-backed reads.
 
 ### Bulk card population
 
@@ -50,6 +70,20 @@ Notes:
 - Prefer this over repeating `card-location-history get`.
 - The batch path keeps partial per-card failures in-band.
 - Duplicate `card_id` values are deduplicated before network fetch.
+
+### Bulk card details and work logs
+
+Use:
+
+```bash
+kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description
+kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date
+```
+
+Notes:
+
+- Prefer `cards.batch-get` over repeating `cards.get` after local candidate reduction.
+- Prefer `time-logs.batch-list` over repeating `time-logs.list` when work-log analytics spans many cards.
 
 ### Relation and comment evidence
 
@@ -135,9 +169,12 @@ Trace helps explain real HTTP cost when outer agent logs only show the wrapper s
 ## Quick decision rule
 
 - Need many cards: `cards list-all`
+- Need many card details for narrowed candidates: `cards batch-get`
+- Need many work-log reads: `time-logs batch-list`
 - Need many child relations: `card-children batch-list`
 - Need many comment reads: `comments batch-list`
 - Need one space topology snapshot: `space-topology get`
 - Need many card histories: `card-location-history batch-get`
+- Need many follow-up questions on one working set: `snapshot build` -> `query cards` / `query metrics`
 - Need one entity many times across multiple CLI calls: enable `--cache-mode readwrite`
 - Need to understand the path first: `describe <tool>`

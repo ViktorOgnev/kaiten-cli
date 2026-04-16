@@ -48,6 +48,10 @@ def test_describe_tool_includes_usage_notes_and_bulk_alternative():
     bulk_description = describe_tool("cards.list-all")
     assert any("selection=all|active_only|archived_only" in note for note in bulk_description["usage_notes"])
 
+    card_get = describe_tool("cards.get")
+    assert card_get["bulk_alternative"] == "cards.batch-get"
+    assert any("per-card entity read" in note for note in card_get["usage_notes"])
+
     children = describe_tool("card-children.list")
     assert children["bulk_alternative"] == "card-children.batch-list"
     assert any("per-card read" in note for note in children["usage_notes"])
@@ -55,6 +59,10 @@ def test_describe_tool_includes_usage_notes_and_bulk_alternative():
     comments = describe_tool("comments.list")
     assert comments["bulk_alternative"] == "comments.batch-list"
     assert any("per-card read" in note for note in comments["usage_notes"])
+
+    time_logs = describe_tool("time-logs.list")
+    assert time_logs["bulk_alternative"] == "time-logs.batch-list"
+    assert any("per-card read" in note for note in time_logs["usage_notes"])
 
     activity = describe_tool("space-activity.get")
     assert activity["bulk_alternative"] == "space-activity-all.get"

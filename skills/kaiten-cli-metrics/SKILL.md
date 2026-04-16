@@ -10,9 +10,12 @@ Use this skill for lead time, cycle time, throughput, WIP, due-date performance,
 ## Source selection
 
 - Prefer `cards list-all` when the metric can be computed from card fields.
+- Prefer `snapshot build` plus `query metrics` when the same metric space will be queried repeatedly.
+- Keep local card inspection in `query cards --view summary` by default; only escalate to `detail` or `evidence` for narrowed candidates.
 - Prefer `space-topology get` to resolve board/column/lane structure before collecting metric data.
 - Prefer `space-activity-all get` over manual offset loops around `space-activity get`.
 - Use `card-location-history batch-get` only when the metric truly needs per-card movement history.
+- Use `time-logs batch-list` when the metric truly depends on per-card work logs.
 - Use chart tools when Kaiten already computes the metric server-side.
 
 ## Default workflow
@@ -26,7 +29,26 @@ kaiten describe cards.list-all
 kaiten describe card-location-history.batch-get
 ```
 
-### 2. Start with bulk cards
+### 2. If the workflow repeats, snapshot first
+
+For repeated report generation or headless analytics:
+
+```bash
+kaiten --json snapshot build \
+  --name team-q1 \
+  --space-id 10 \
+  --preset analytics \
+  --window-start 2026-01-01T00:00:00Z \
+  --window-end 2026-03-31T23:59:59Z
+
+kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by board_id
+```
+
+`query metrics` is local-only after the snapshot is built.
+Its semantics are intentionally generic in this phase; tenant-specific flow profiles should be layered on top later rather than guessed automatically.
+`analytics` snapshots now include local time-log data, so repeated work-log questions should stay on the snapshot/query path.
+
+### 3. Start with bulk cards when a snapshot is too expensive or unnecessary
 
 For most metrics, begin with:
 
@@ -40,7 +62,7 @@ kaiten --json cards list-all \
 
 Use `active_only` for WIP-oriented reads and `archived_only` for completion-oriented reads.
 
-### 3. Escalate only if card fields are not enough
+### 4. Escalate only if card fields are not enough
 
 If the metric depends on detailed movement history:
 
@@ -56,6 +78,13 @@ If the metric depends on relation or comment evidence across many cards:
 ```bash
 kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title
 kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
+```
+
+If the metric depends on work logs or you need detail enrichment for a narrowed candidate set:
+
+```bash
+kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date
+kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description
 ```
 
 ## Anti-patterns
@@ -106,6 +135,9 @@ The trace reveals real HTTP request counts even when the outer agent log only se
 ## Quick decision rule
 
 - WIP, throughput, lead/cycle time from card timestamps: `cards list-all`
+- Repeated report or dashboard iterations on one window: `snapshot build` -> `query metrics`
+- Need work logs across many cards: `time-logs batch-list`
+- Need detail enrichment after local narrowing: `cards batch-get`
 - Topology bootstrap: `space-topology get`
 - Activity window export: `space-activity-all get`
 - Relation/comment evidence across many cards: `card-children batch-list` / `comments batch-list`

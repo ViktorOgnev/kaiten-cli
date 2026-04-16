@@ -23,10 +23,12 @@ from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
 from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
+from kaiten_cli.registry.query import TOOLS as QUERY_TOOLS
 from kaiten_cli.registry.roles_and_groups import TOOLS as ROLE_AND_GROUP_TOOLS
 from kaiten_cli.registry.service_desk import TOOLS as SERVICE_DESK_TOOLS
 from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
 from kaiten_cli.registry.spaces import TOOLS as SPACE_TOOLS
+from kaiten_cli.registry.snapshot import TOOLS as SNAPSHOT_TOOLS
 from kaiten_cli.registry.subscribers import TOOLS as SUBSCRIBER_TOOLS
 from kaiten_cli.registry.tags import TOOLS as TAG_TOOLS
 from kaiten_cli.registry.time_logs import TOOLS as TIME_LOG_TOOLS
@@ -54,9 +56,11 @@ TOOL_SET: tuple[ToolSpec, ...] = (
     + TAG_TOOLS
     + MEMBER_TOOLS
     + PROJECT_TOOLS
+    + QUERY_TOOLS
     + ROLE_AND_GROUP_TOOLS
     + SERVICE_DESK_TOOLS
     + AUDIT_AND_ANALYTICS_TOOLS
+    + SNAPSHOT_TOOLS
     + TIME_LOG_TOOLS
     + SUBSCRIBER_TOOLS
     + TREE_TOOLS

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from kaiten_cli.runtime.support.batch import DEFAULT_BATCH_WORKERS, fetch_card_entity_batch
+from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
+
 MAX_CARD_PAGES = 50
 MAX_CARD_PAGE_SIZE = 100
 
@@ -94,3 +97,39 @@ async def fetch_all_cards(client, args: dict[str, Any], *, timeout: float) -> li
         ]
 
     return await _fetch_cards(client, base_params, page_size=page_size, max_pages=max_pages, timeout=timeout)
+
+
+def _shape_card_entity(item: dict[str, Any], *, compact: bool, fields: str | None) -> dict[str, Any]:
+    shaped = compact_response(item, compact)
+    shaped = select_fields(shaped, fields)
+    shaped, _ = strip_base64(shaped)
+    return shaped
+
+
+async def fetch_cards_batch_get(
+    *,
+    domain: str,
+    token: str,
+    card_ids: list[int],
+    workers: int = DEFAULT_BATCH_WORKERS,
+    compact: bool = False,
+    fields: str | None = None,
+    timeout: float,
+    reporter,
+    execution_context=None,
+    cache_policy: str = "request_scope",
+) -> dict[str, Any]:
+    return await fetch_card_entity_batch(
+        domain=domain,
+        token=token,
+        card_ids=card_ids,
+        workers=workers,
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=execution_context,
+        cache_policy=cache_policy,
+        path_for_card=lambda card_id: f"/cards/{card_id}",
+        result_field="card",
+        transform_item=lambda item: _shape_card_entity(item, compact=compact, fields=fields),
+        worker_label="batch-cards",
+    )

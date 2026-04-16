@@ -36,6 +36,8 @@ Quick start:
   kaiten search-tools "wip cards"
   kaiten describe cards.list-all
   kaiten examples cards.list-all
+  kaiten snapshot build --name team-basic --space-id 10 --preset basic
+  kaiten query cards --snapshot team-basic --view summary --fields id,title,state
   kaiten --json spaces list --compact --fields id,title
   kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
 
@@ -43,6 +45,8 @@ Quick start:
 Principles:
   - use --json for automation and LLM workflows
   - prefer search-tools -> describe -> examples before heavy commands
+  - for repeated analytics/report reads, prefer snapshot build -> query cards/query metrics
+  - keep local queries summary-first; escalate to detail/evidence only after candidate reduction
   - prefer bulk tools over per-entity loops
   - use --compact and --fields to shrink payloads
   - use --trace-file for long investigations and report runs
@@ -121,6 +125,8 @@ def _agent_help_payload() -> dict[str, Any]:
             'Discover first: kaiten search-tools "wip cards"',
             "Inspect one tool: kaiten describe cards.list-all",
             "Check examples: kaiten examples cards.list-all",
+            "For repeated analytics or report runs, build a local snapshot first.",
+            "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates.",
             "Use --json for automation and LLM workflows.",
             "Prefer bulk tools over per-entity loops.",
             "Shrink payloads with --compact and --fields.",
@@ -130,13 +136,17 @@ def _agent_help_payload() -> dict[str, Any]:
             'Discover commands: kaiten search-tools "wip cards"',
             "Inspect one tool: kaiten describe cards.list-all",
             "See examples: kaiten examples cards.list-all",
+            "Build a local read snapshot: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
+            "Query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
             "Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title",
             "Configure credentials: kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active",
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",
             "Prefer search-tools -> describe -> examples before heavy commands.",
-            "Prefer bulk tools like cards.list-all, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
+            "For repeated report or analytics workflows, snapshot once and query locally before touching the API again.",
+            "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
+            "Keep query cards summary-first; use detail/evidence only after local candidate reduction.",
             "Use --compact and --fields to reduce payload and token cost.",
             "Use --cache-mode readwrite only for short-lived cross-process safe GET reuse.",
             "Use --trace-file for long investigations when you need real HTTP cost visibility.",
@@ -164,15 +174,21 @@ def _agent_help_text() -> str:
             "2. inspect: kaiten describe cards.list-all",
             "3. examples: kaiten examples cards.list-all",
             "4. use --json for automation and LLM workflows",
-            "5. prefer bulk tools over per-entity loops",
-            "6. shrink payloads with --compact and --fields",
-            "7. use --trace-file for long investigations",
+            "5. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
+            "6. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
+            "7. only escalate to --view detail or --view evidence after local narrowing",
+            "8. shrink payloads with --compact and --fields",
+            "9. use --trace-file for long investigations",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
+            "  kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description",
+            "  kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date",
             "  kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title",
             "  kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text",
             "  kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id",
+            "  kaiten --json snapshot build --name team-basic --space-id 10 --preset basic",
+            "  kaiten --json query metrics --snapshot team-basic --metric count --group-by board_id",
             "",
             "Docs:",
             f"  repo: {REPOSITORY_URL}",

@@ -28,3 +28,4 @@ def test_primary_docs_and_archive_layout_are_explicit():
         assert (root / "docs" / "archive" / name).is_file(), name
 
     assert (root / "docs" / "archive" / "README.md").is_file()
+    assert (root / "scripts" / "benchmark_reference_workflows.py").is_file()

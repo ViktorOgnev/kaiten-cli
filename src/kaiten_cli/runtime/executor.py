@@ -83,26 +83,33 @@ async def execute_tool_with_diagnostics(
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
 ) -> tuple[Any, ExecutionStats]:
-    profile = resolve_profile(
-        profile_name,
-        cache_mode_override=cache_mode,
-        cache_ttl_seconds_override=cache_ttl_seconds,
-    )
-    enforce_mutation_safety(tool, profile)
-    _emit_debug(
-        reporter,
-        "profile: "
-        f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
-        f"sandbox={profile.sandbox} cache_mode={profile.cache_mode} cache_ttl_seconds={profile.cache_ttl_seconds}",
-    )
-    context = ExecutionContext.for_profile(profile, reporter=reporter)
-    client = KaitenClient(
-        domain=profile.domain,
-        token=profile.token,
-        reporter=reporter,
-        execution_context=context,
-        cache_policy=tool.cache_policy,
-    )
+    profile: ResolvedProfile | None = None
+    context: ExecutionContext | None = None
+    client: KaitenClient | None = None
+    if tool.runtime_behavior.requires_profile:
+        profile = resolve_profile(
+            profile_name,
+            cache_mode_override=cache_mode,
+            cache_ttl_seconds_override=cache_ttl_seconds,
+        )
+        if tool.runtime_behavior.enforce_mutation_guard:
+            enforce_mutation_safety(tool, profile)
+        _emit_debug(
+            reporter,
+            "profile: "
+            f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
+            f"sandbox={profile.sandbox} cache_mode={profile.cache_mode} cache_ttl_seconds={profile.cache_ttl_seconds}",
+        )
+        context = ExecutionContext.for_profile(profile, reporter=reporter)
+        client = KaitenClient(
+            domain=profile.domain,
+            token=profile.token,
+            reporter=reporter,
+            execution_context=context,
+            cache_policy=tool.cache_policy,
+        )
+    else:
+        _emit_debug(reporter, "profile: not required for this command")
     path, query, body = build_request(tool, payload)
     timeout = timeout_for_tool(tool)
     _emit_debug(
@@ -121,6 +128,8 @@ async def execute_tool_with_diagnostics(
             result = await tool.runtime_behavior.custom_executor(
                 client, tool, payload, path, query, body, timeout, reporter
             )
+        elif client is None:
+            raise ConfigError("This command requires a custom executor.")
         elif method == "GET":
             result = await client.get(path, params=query, timeout=timeout)
         elif method == "POST":
@@ -132,20 +141,23 @@ async def execute_tool_with_diagnostics(
         else:  # pragma: no cover - impossible with current registry
             raise ConfigError(f"Unsupported method: {method}")
     except Exception as exc:
-        setattr(exc, "_kaiten_trace_stats", context.stats)
+        if context is not None:
+            setattr(exc, "_kaiten_trace_stats", context.stats)
         raise
     finally:
-        await client.close()
+        if client is not None:
+            await client.close()
 
-    compact_enabled = bool(payload.get("compact", False))
-    if tool.runtime_behavior.compact_default is not None and "compact" not in payload:
-        compact_enabled = tool.runtime_behavior.compact_default
-    if tool.response_policy.compact_supported:
-        result = compact_response(result, compact_enabled)
-    if tool.response_policy.fields_supported:
-        result = select_fields(result, payload.get("fields"))
-    result, _ = strip_base64(result)
-    return result, context.stats
+    if tool.runtime_behavior.apply_common_transforms:
+        compact_enabled = bool(payload.get("compact", False))
+        if tool.runtime_behavior.compact_default is not None and "compact" not in payload:
+            compact_enabled = tool.runtime_behavior.compact_default
+        if tool.response_policy.compact_supported:
+            result = compact_response(result, compact_enabled)
+        if tool.response_policy.fields_supported:
+            result = select_fields(result, payload.get("fields"))
+        result, _ = strip_base64(result)
+    return result, context.stats if context is not None else ExecutionStats()
 
 
 def execute_tool_sync(

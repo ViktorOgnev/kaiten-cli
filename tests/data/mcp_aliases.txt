@@ -102,6 +102,7 @@ kaiten_detach_card_sla
 kaiten_get_all_space_activity
 kaiten_get_automation
 kaiten_get_board
+kaiten_batch_get_cards
 kaiten_get_calendar
 kaiten_get_card
 kaiten_get_card_activity
@@ -153,6 +154,7 @@ kaiten_list_card_files
 kaiten_list_card_members
 kaiten_list_card_parents
 kaiten_list_card_subscribers
+kaiten_batch_list_time_logs
 kaiten_list_card_time_logs
 kaiten_list_card_types
 kaiten_list_cards
@@ -248,3 +250,10 @@ kaiten_update_time_log
 kaiten_update_user_timer
 kaiten_update_webhook
 kaiten_update_workflow
+kaiten_query_cards
+kaiten_query_metrics
+kaiten_snapshot_build
+kaiten_snapshot_delete
+kaiten_snapshot_list
+kaiten_snapshot_refresh
+kaiten_snapshot_show

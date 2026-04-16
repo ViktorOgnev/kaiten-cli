@@ -26,6 +26,13 @@ Use `--json` by default for machine-safe parsing:
 kaiten --json spaces list --compact --fields id,title
 ```
 
+If the workflow will ask many questions about the same space or board set, switch early to the local-first path:
+
+```bash
+kaiten --json snapshot build --name team-basic --space-id 10 --preset basic
+kaiten --json query cards --snapshot team-basic --view summary --fields id,title,state
+```
+
 ## Config and precedence
 
 Credential resolution order:
@@ -57,5 +64,8 @@ kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.
 - For high-cardinality reads, follow the heavy-data skill instead of inventing a per-entity loop.
 - For metrics workflows, follow the metrics skill instead of reconstructing raw history one card at a time.
-- Prefer `space-topology.get`, `space-activity-all.get`, `card-children.batch-list`, `comments.batch-list`, and `card-location-history.batch-get` over manual orchestration loops.
+- For repeated report or analytics questions on one working set, prefer `snapshot build` plus `query cards` / `query metrics` over re-fetching the same population.
+- Keep `query cards` in `summary` view by default; use `detail` or `evidence` only after local candidate reduction.
+- Treat `query metrics` as a generic local metrics layer unless a workflow explicitly defines tenant-specific flow semantics outside the CLI.
+- Prefer `space-topology.get`, `cards.batch-get`, `time-logs.batch-list`, `space-activity-all.get`, `card-children.batch-list`, `comments.batch-list`, and `card-location-history.batch-get` over manual orchestration loops.
 - Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).

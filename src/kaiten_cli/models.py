@@ -78,6 +78,9 @@ class RuntimeBehavior:
     custom_executor: CustomExecutor | None = None
     compact_default: bool | None = None
     cache_policy: str | None = None
+    requires_profile: bool = True
+    enforce_mutation_guard: bool = True
+    apply_common_transforms: bool = True
 
 
 @dataclass(slots=True, frozen=True)

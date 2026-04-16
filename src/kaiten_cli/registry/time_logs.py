@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import default_role_time_log_request
+from kaiten_cli.runtime.behaviors import (
+    default_role_time_log_request,
+    execute_time_logs_batch_list,
+    validate_time_logs_batch_list,
+)
 
 
 TOOLS = (
@@ -18,12 +22,52 @@ TOOLS = (
                 "card_id": {"type": "integer", "description": "ID of the card."},
                 "for_date": {"type": "string", "description": "Filter by date (YYYY-MM-DD)."},
                 "personal": {"type": "boolean", "description": "Return only the current user's time logs."},
+                "compact": {"type": "boolean", "description": "Strip heavy nested fields from time-log payloads."},
+                "fields": {"type": "string", "description": "Comma-separated field names to keep for each time log."},
             },
             "required": ["card_id"],
         },
         operation=OperationSpec(method="GET", path_template="/cards/{card_id}/time-logs", path_fields=("card_id",), query_fields=("for_date", "personal")),
+        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(command="kaiten time-logs list --card-id 10 --json", description="List time logs on a card."),
+        ),
+        usage_notes=(
+            "This is a per-card read and becomes expensive when repeated across large card populations.",
+            "For analytics snapshots and work-log investigations, prefer time-logs.batch-list over one-card-at-a-time loops.",
+        ),
+        bulk_alternative="time-logs.batch-list",
+    ),
+    make_tool(
+        canonical_name="time-logs.batch-list",
+        mcp_alias="kaiten_batch_list_time_logs",
+        description="Fetch time logs for multiple cards with bounded worker concurrency.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to inspect"},
+                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
+                "for_date": {"type": "string", "description": "Optional YYYY-MM-DD filter passed to each per-card request."},
+                "personal": {"type": "boolean", "description": "Only include the current user's time logs."},
+                "compact": {"type": "boolean", "description": "Strip heavy nested fields from time-log payloads"},
+                "fields": {"type": "string", "description": "Comma-separated field names to keep for each time log"},
+            },
+            "required": ["card_ids"],
+        },
+        operation=OperationSpec(method="GET", path_template="/cards/time-logs/batch"),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            payload_validator=validate_time_logs_batch_list,
+            custom_executor=execute_time_logs_batch_list,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten time-logs batch-list --card-ids '[1,2,3]' --json", description="Fetch time logs for several cards in one CLI call."),
+            ExampleSpec(command="kaiten time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date --json", description="Fetch narrowed time-log payloads with bounded concurrency."),
+        ),
+        usage_notes=(
+            "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Use this bulk path for work-log analytics and snapshot builds instead of repeating time-logs.list for every card.",
         ),
     ),
     make_tool(
