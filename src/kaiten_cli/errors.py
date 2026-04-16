@@ -53,3 +53,13 @@ class InternalError(CliError):
     def __init__(self, message: str):
         super().__init__(message=message, exit_code=70, error_type="internal_error")
 
+
+class BatchExecutionError(CliError):
+    def __init__(self, message: str, data: Any):
+        super().__init__(message=message, exit_code=5, error_type="batch_execution_error")
+        self.data = data
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = super().to_dict()
+        payload["data"] = self.data
+        return payload

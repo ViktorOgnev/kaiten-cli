@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import archive_card_request, execute_cards_list_all
+from kaiten_cli.runtime.behaviors import (
+    archive_card_request,
+    execute_cards_list_all,
+    validate_cards_list_all_selection,
+)
 from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
@@ -395,6 +399,11 @@ TOOLS = (
                 "responsible_ids": {"type": "string", "description": "Comma-separated responsible IDs"},
                 "column_ids": {"type": "string", "description": "Comma-separated column IDs"},
                 "type_ids": {"type": "string", "description": "Comma-separated type IDs"},
+                "selection": {
+                    "type": "string",
+                    "enum": ["all", "active_only", "archived_only"],
+                    "description": "Normalized bulk selection: all, active_only, or archived_only.",
+                },
                 "page_size": {"type": "integer", "description": "Cards per page (default 100, max 100)"},
                 "max_pages": {"type": "integer", "description": "Safety limit on pages to fetch (default 50)"},
                 "compact": {
@@ -417,11 +426,17 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list", heavy=True),
         runtime_behavior=RuntimeBehavior(
             execution_mode="aggregated",
+            payload_validator=validate_cards_list_all_selection,
             custom_executor=execute_cards_list_all,
             compact_default=True,
         ),
         examples=(
             ExampleSpec(command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json", description="Fetch all matching cards with bounded pagination."),
+            ExampleSpec(command="kaiten cards list-all --board-id 10 --selection active_only --fields id,title --json", description="Fetch only active cards via normalized bulk selection."),
+        ),
+        usage_notes=(
+            "For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.",
+            "active_only is computed as all_cards minus the archived subset to match the documented bulk CLI behavior.",
         ),
     ),
 )

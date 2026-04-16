@@ -107,6 +107,7 @@ kaiten_get_card
 kaiten_get_card_activity
 kaiten_get_card_blocker
 kaiten_get_card_location_history
+kaiten_batch_get_card_location_history
 kaiten_get_card_sla_measurements
 kaiten_get_card_type
 kaiten_get_chart_boards

@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import execute_space_activity_all, saved_filter_title_request
+from kaiten_cli.runtime.behaviors import (
+    execute_card_location_history_batch_get,
+    execute_space_activity_all,
+    saved_filter_title_request,
+    validate_history_batch_get,
+)
 from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
@@ -150,6 +155,40 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(command="kaiten card-location-history get --card-id 1 --json", description="Get card location history."),
+        ),
+        usage_notes=(
+            "This is a per-card read and becomes expensive when repeated hundreds of times.",
+            "For high-cardinality reads, use card-location-history.batch-get instead of spawning one CLI process per card.",
+        ),
+        bulk_alternative="card-location-history.batch-get",
+    ),
+    make_tool(
+        canonical_name="card-location-history.batch-get",
+        mcp_alias="kaiten_batch_get_card_location_history",
+        description="Fetch location history for multiple cards with bounded worker concurrency.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to fetch"},
+                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
+                "fields": {"type": "string", "description": "Comma-separated field names to keep for each history row"},
+            },
+            "required": ["card_ids"],
+        },
+        operation=OperationSpec(method="GET", path_template="/cards/location-history/batch"),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            payload_validator=validate_history_batch_get,
+            custom_executor=execute_card_location_history_batch_get,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten card-location-history batch-get --card-ids '[1,2,3]' --json", description="Fetch history for several cards in one CLI call."),
+            ExampleSpec(command="kaiten card-location-history batch-get --card-ids '[1,2,3]' --workers 2 --fields changed,column_id,subcolumn_id --json", description="Fetch projected history rows with bounded concurrency."),
+        ),
+        usage_notes=(
+            "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Use conservative workers to avoid shifting the bottleneck from process startup to API rate limiting.",
         ),
     ),
     make_tool(

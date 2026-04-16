@@ -30,6 +30,7 @@ def test_resolve_audit_aliases():
     assert resolve_tool("kaiten_list_audit_logs").canonical_name == "audit-logs.list"
     assert resolve_tool("kaiten_get_space_activity").canonical_name == "space-activity.get"
     assert resolve_tool("kaiten_get_all_space_activity").canonical_name == "space-activity-all.get"
+    assert resolve_tool("kaiten_batch_get_card_location_history").canonical_name == "card-location-history.batch-get"
     assert resolve_tool("kaiten_create_saved_filter").canonical_name == "saved-filters.create"
 
 
@@ -98,6 +99,66 @@ async def test_execute_space_activity_all_paginates_and_compacts_by_default(monk
     assert first.called
     assert second.called
     assert result == [{"id": 1}, {"id": 2}, {"id": 3}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_card_location_history_batch_get_returns_items_errors_and_meta(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    first = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-04-15T10:00:00Z", "column_id": 10, "subcolumn_id": 11}])
+    )
+    second = respx.get("https://sandbox.kaiten.ru/api/latest/cards/2/location-history").mock(
+        return_value=Response(404, json={"message": "missing"})
+    )
+    third = respx.get("https://sandbox.kaiten.ru/api/latest/cards/3/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-04-15T11:00:00Z", "column_id": 20, "subcolumn_id": 21}])
+    )
+
+    tool = resolve_tool("card-location-history.batch-get")
+    payload = merge_inputs(tool, {"card_ids": "[1,2,3]", "workers": 2, "fields": "changed,column_id"})
+    result = await execute_tool(tool, payload)
+
+    assert first.called
+    assert second.called
+    assert third.called
+    assert result["meta"] == {
+        "requested": 3,
+        "requested_count": 3,
+        "unique_count": 3,
+        "succeeded": 2,
+        "failed": 1,
+        "workers": 2,
+    }
+    assert result["items"] == [
+        {"card_id": 1, "history": [{"changed": "2026-04-15T10:00:00Z", "column_id": 10}]},
+        {"card_id": 3, "history": [{"changed": "2026-04-15T11:00:00Z", "column_id": 20}]},
+    ]
+    assert result["errors"] == [
+        {"card_id": 2, "error_type": "api_error", "message": "missing", "status_code": 404}
+    ]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_card_location_history_batch_get_deduplicates_repeated_card_ids(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-04-15T10:00:00Z", "column_id": 10}])
+    )
+
+    tool = resolve_tool("card-location-history.batch-get")
+    payload = merge_inputs(tool, {"card_ids": "[1,1,1]", "workers": 2, "fields": "changed,column_id"})
+    result = await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+    assert result["meta"]["requested_count"] == 3
+    assert result["meta"]["unique_count"] == 1
+    assert result["items"] == [
+        {"card_id": 1, "history": [{"changed": "2026-04-15T10:00:00Z", "column_id": 10}]}
+    ]
 
 
 @respx.mock

@@ -10,7 +10,8 @@ from typing import Any
 import httpx
 
 from kaiten_cli.errors import ApiError, ConfigError, TransportError
-from kaiten_cli.models import DebugReporter
+from kaiten_cli.models import CACHE_POLICY_NONE, DebugReporter
+from kaiten_cli.runtime.cache import ExecutionContext
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,15 @@ HEAVY_TIMEOUT = 60.0
 class KaitenClient:
     """Async HTTP client for Kaiten with low-load defaults."""
 
-    def __init__(self, *, domain: str, token: str, reporter: DebugReporter | None = None):
+    def __init__(
+        self,
+        *,
+        domain: str,
+        token: str,
+        reporter: DebugReporter | None = None,
+        execution_context: ExecutionContext | None = None,
+        cache_policy: str = CACHE_POLICY_NONE,
+    ):
         if not domain:
             raise ConfigError("KAITEN_DOMAIN is required")
         if not token:
@@ -33,6 +42,8 @@ class KaitenClient:
         self.domain = domain
         self.token = token
         self._reporter = reporter
+        self.execution_context = execution_context
+        self.cache_policy = cache_policy
         self.base_url = f"https://{domain}.kaiten.ru/api/{API_VERSION}"
         self._client: httpx.AsyncClient | None = None
         self._last_request_time = 0.0
@@ -132,16 +143,33 @@ class KaitenClient:
         raise TransportError("Rate limit retries exhausted")
 
     async def get(self, path: str, *, params: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT) -> Any:
-        return await self._request("GET", path, params=params, timeout=timeout)
+        if self.execution_context is None:
+            return await self._request("GET", path, params=params, timeout=timeout)
+        return await self.execution_context.get_json(
+            method="GET",
+            path=path,
+            params=params,
+            cache_policy=self.cache_policy,
+            fetch=lambda: self._request("GET", path, params=params, timeout=timeout),
+        )
 
     async def post(self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT) -> Any:
-        return await self._request("POST", path, json=json, timeout=timeout)
+        result = await self._request("POST", path, json=json, timeout=timeout)
+        if self.execution_context is not None:
+            await self.execution_context.invalidate_after_mutation()
+        return result
 
     async def patch(self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT) -> Any:
-        return await self._request("PATCH", path, json=json, timeout=timeout)
+        result = await self._request("PATCH", path, json=json, timeout=timeout)
+        if self.execution_context is not None:
+            await self.execution_context.invalidate_after_mutation()
+        return result
 
     async def delete(self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT) -> Any:
-        return await self._request("DELETE", path, json=json, timeout=timeout)
+        result = await self._request("DELETE", path, json=json, timeout=timeout)
+        if self.execution_context is not None:
+            await self.execution_context.invalidate_after_mutation()
+        return result
 
     async def close(self) -> None:
         if self._client is not None and not self._client.is_closed:

@@ -36,6 +36,15 @@ kaiten --help
 kaiten search-tools cards
 ```
 
+### Skills для LLM и агентов
+
+Если агент работает с этим CLI через git-репозиторий, оптимальные workflow описаны в skills format, а не размазаны по длинным prose docs:
+
+- [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)  
+  Как не строить N+1 path, как выбирать bulk tools, shaping и cache mode для тяжёлых чтений.
+- [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)  
+  Как собирать Kanban-метрики через текущий CLI без поштучных history loops.
+
 ### Обновление
 
 Если CLI уже установлен из branch-based git URL, обновление подтягивается вручную:
@@ -65,6 +74,8 @@ python -m kaiten_cli --help
 - `--json` с жёстким success/error envelope
 - discovery-команды: `search-tools`, `describe`, `examples`
 - profiles и sandbox mutation guard
+- request-scoped GET cache внутри одного execution path
+- opt-in persistent disk cache с коротким TTL для safe reference/entity reads
 - low-load HTTP client: throttling, bounded retry, explicit timeouts
 - локальные transforms: `compact`, `fields`, strip-base64
 - полный паритет по набору инструментов с текущим локальным registry snapshot
@@ -116,6 +127,17 @@ kaiten profile show
 kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
 ```
 
+Если нужен opt-in persistent cache для этого profile:
+
+```bash
+kaiten profile add main \
+  --domain <company-subdomain> \
+  --token <api-token> \
+  --cache-mode readwrite \
+  --cache-ttl-seconds 60 \
+  --set-active
+```
+
 Временный fallback через переменные окружения:
 
 ```bash
@@ -156,6 +178,95 @@ CLI поддерживает три режима входного payload:
 - `aggregated`: CLI делает bounded pagination или несколько чтений и агрегирует результат
 
 `describe <tool>` и `search-tools <query>` показывают эти metadata, что полезно перед вызовом тяжёлых команд.
+
+## Как работает кэш
+
+В CLI есть два разных кэша.
+
+- `request-scoped`
+  Работает автоматически внутри одного запуска `kaiten`.
+- `persistent`
+  Живёт между разными CLI-процессами и включается только через `--cache-mode` или profile defaults.
+
+### Что происходит без флагов
+
+Если запустить обычную команду вроде:
+
+```bash
+kaiten --json cards get --card-id 123
+```
+
+то persistent cache не используется. При этом safe GET reads внутри одного execution path всё равно защищены request-scoped cache и in-flight dedup. Это особенно полезно для `synthetic` и `aggregated` команд, где CLI сам может прийти к одному и тому же `GET` несколько раз.
+
+### Когда пользователь реально видит выгоду
+
+- `single call`
+  Для обычного one-shot `GET` кэш почти незаметен.
+- `aggregated` или `synthetic`
+  Встроенный request-scoped cache экономит повторные чтения внутри одного запуска.
+- `shell/LLM workflow`
+  Если один и тот же safe `GET` вызывается много раз из разных CLI-процессов, имеет смысл включать persistent cache.
+
+### Режимы persistent cache
+
+- `--cache-mode off`
+  Только request-scoped cache внутри текущего запуска. Это default.
+- `--cache-mode readwrite`
+  Читать и записывать короткоживущий persistent disk cache.
+- `--cache-mode refresh`
+  Игнорировать disk read, сходить в API и перезаписать cache.
+- `--cache-ttl-seconds`
+  TTL для persistent cache. Можно задавать на команду или сохранить в profile.
+
+### Что кэшируется и что нет
+
+Persistent cache deliberately conservative:
+
+- подходит для safe reference/entity reads;
+- полезен для типичных `*.get` и небольших discovery list-команд;
+- не предназначен для polling и volatile reads;
+- очищается после успешных mutation-команд для текущего profile/domain.
+
+Ключ кэша строится по raw API request: `profile/domain + method + path + params`. `compact` и `fields` в ключ не входят, потому что это post-processing уже после ответа API.
+
+### Примеры
+
+Включить short-lived persistent cache для repeated reads:
+
+```bash
+kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 cards get --card-id 123 --compact --fields id,title,state
+```
+
+Принудительно обновить stale read:
+
+```bash
+kaiten --json --cache-mode refresh spaces list --compact --fields id,title
+```
+
+Сценарий, где обычно достаточно встроенного request-scoped behavior:
+
+```bash
+kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
+```
+
+Для bulk/read-heavy workflows смотри [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md), для аналитических сценариев — [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md).
+
+## High-cardinality reads
+
+Если сценарий требует сотни однотипных чтений, не спаунь `kaiten` отдельным процессом на каждый объект.
+
+- Для массовой истории перемещений используйте `card-location-history.batch-get`, а не цикл из `card-location-history.get`.
+- Для bulk population по карточкам используйте `cards.list-all --selection all|active_only|archived_only`.
+- `cards.list-all --selection active_only` нормализован в CLI как `all_cards - archived_subset`, чтобы не перекладывать эту логику на внешний скрипт.
+- Если workflow состоит из многих повторных reference/entity GET, включайте `--cache-mode readwrite` с коротким TTL вместо повторных identical reads.
+
+Примеры:
+
+```bash
+kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2
+kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state
+kaiten --json --cache-mode readwrite cards get --card-id 101 --compact --fields id,title,state
+```
 
 ## Первые команды
 
@@ -211,6 +322,8 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [AGENTS.md](AGENTS.md)
+- [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
+- [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
 - [docs/archive/](docs/archive/README.md)

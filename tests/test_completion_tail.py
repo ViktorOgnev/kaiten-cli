@@ -84,6 +84,47 @@ async def test_execute_list_all_cards_paginates_and_compacts_by_default(monkeypa
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_execute_list_all_cards_selection_active_only_subtracts_archived_subset(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    archived_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards",
+        params={"relations": "none", "board_id": "10", "archived": "true", "limit": "100", "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 2, "title": "B"}]))
+    all_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards",
+        params={"relations": "none", "board_id": "10", "limit": "100", "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 1, "title": "A"}, {"id": 2, "title": "B"}, {"id": 3, "title": "C"}]))
+
+    tool = resolve_tool("cards.list-all")
+    payload = merge_inputs(tool, {"board_id": 10, "selection": "active_only", "fields": "id,title"})
+    result = await execute_tool(tool, payload)
+
+    assert all_route.called
+    assert archived_route.called
+    assert result == [{"id": 1, "title": "A"}, {"id": 3, "title": "C"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_list_all_cards_selection_archived_only_uses_archived_subset(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    archived_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards",
+        params={"relations": "none", "board_id": "10", "archived": "true", "limit": "100", "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 2, "title": "B"}]))
+
+    tool = resolve_tool("cards.list-all")
+    payload = merge_inputs(tool, {"board_id": 10, "selection": "archived_only", "fields": "id,title"})
+    result = await execute_tool(tool, payload)
+
+    assert archived_route.called
+    assert result == [{"id": 2, "title": "B"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_execute_list_sprints_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")

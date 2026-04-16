@@ -204,6 +204,7 @@ def _exercise_foundation(h) -> None:
         lane_id=h.state["lane_id"],
     )
     h.run_tool("cards.list-all", board_id=h.state["board_id"], page_size=5, max_pages=1, compact=True)
+    h.run_tool("cards.list-all", board_id=h.state["board_id"], selection="active_only", page_size=5, max_pages=1, compact=True)
 
     time_log = h.run_tool("time-logs.create", card_id=h.state["parent_card_id"], time_spent=15, comment="live")
     h.state["time_log_id"] = time_log["id"]
@@ -813,6 +814,7 @@ def _exercise_analytics_and_jobs(h) -> None:
     h.run_tool("space-activity-all.get", space_id=h.state["space_id"], page_size=5, max_pages=1, compact=True)
     h.run_tool("card-activity.get", card_id=h.state["parent_card_id"], limit=5)
     h.run_tool("card-location-history.get", card_id=h.state["parent_card_id"])
+    h.run_tool("card-location-history.batch-get", card_ids=[h.state["parent_card_id"]], workers=1)
 
     saved_filter = h.run_tool(
         "saved-filters.create",

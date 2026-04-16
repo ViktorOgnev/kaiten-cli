@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from kaiten_cli.runtime.support.audit import fetch_all_space_activity
+from kaiten_cli.errors import BatchExecutionError, ValidationError
+from kaiten_cli.runtime.support.audit import (
+    DEFAULT_HISTORY_WORKERS,
+    MAX_HISTORY_WORKERS,
+    fetch_all_space_activity,
+    fetch_card_location_histories,
+)
 from kaiten_cli.runtime.support.cards import fetch_all_cards
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
@@ -136,6 +142,23 @@ def comment_format_request(
     return path, query, shaped
 
 
+def validate_cards_list_all_selection(tool, payload: dict[str, Any]) -> None:
+    selection = payload.get("selection")
+    if selection is None:
+        return
+    if "archived" in payload or "condition" in payload:
+        raise ValidationError("Field selection cannot be combined with archived or condition.")
+
+
+def validate_history_batch_get(tool, payload: dict[str, Any]) -> None:
+    card_ids = payload.get("card_ids")
+    if not isinstance(card_ids, list) or not card_ids:
+        raise ValidationError("Field card_ids must be a non-empty array.")
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if workers < 1 or workers > MAX_HISTORY_WORKERS:
+        raise ValidationError(f"Field workers must be between 1 and {MAX_HISTORY_WORKERS}.")
+
+
 async def execute_blockers_get(
     client,
     tool,
@@ -218,6 +241,45 @@ async def execute_cards_list_all(
     if reporter:
         reporter("execution: aggregated bounded pagination over /cards")
     return await fetch_all_cards(client, payload, timeout=timeout)
+
+
+async def execute_card_location_history_batch_get(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if reporter:
+        reporter(
+            "execution: aggregated batch history fetch over /cards/{card_id}/location-history "
+            f"with workers={workers}"
+        )
+    result = await fetch_card_location_histories(
+        domain=client.domain,
+        token=client.token,
+        card_ids=list(payload["card_ids"]),
+        workers=workers,
+        fields=payload.get("fields"),
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=client.execution_context,
+        cache_policy=client.cache_policy,
+    )
+    if reporter:
+        meta = result["meta"]
+        reporter(
+            "batch-history: "
+            f"requested={meta['requested_count']} unique={meta['unique_count']} "
+            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+        )
+    if result["meta"]["succeeded"] == 0:
+        raise BatchExecutionError("Failed to fetch location history for all requested cards.", result)
+    return result
 
 
 async def execute_space_activity_all(

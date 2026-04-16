@@ -67,6 +67,8 @@ def _dynamic_callback(tool: ToolSpec):
                 tool,
                 payload,
                 profile_name=options.profile_name,
+                cache_mode=options.cache_mode,
+                cache_ttl_seconds=options.cache_ttl_seconds,
                 reporter=reporter,
             )
             _echo_result(ctx, tool.canonical_name, result)
@@ -151,6 +153,18 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 @click.option("--from-file", type=click.Path(exists=True, dir_okay=False, path_type=str), default=None, help="Load the full JSON payload from a file.")
 @click.option("--stdin-json", is_flag=True, default=False, help="Read the full JSON payload from stdin.")
 @click.option("--verbose", is_flag=True, default=False, help="Enable verbose diagnostics.")
+@click.option(
+    "--cache-mode",
+    type=click.Choice(["off", "readwrite", "refresh"]),
+    default=None,
+    help="Persistent cache mode. Request-scoped cache stays enabled for safe GETs.",
+)
+@click.option(
+    "--cache-ttl-seconds",
+    type=click.INT,
+    default=None,
+    help="TTL for persistent cache entries in seconds.",
+)
 @click.option("--no-color", is_flag=True, default=False, help="Disable colorized output.")
 @click.pass_context
 def cli(
@@ -160,6 +174,8 @@ def cli(
     from_file: str | None,
     stdin_json: bool,
     verbose: bool,
+    cache_mode: str | None,
+    cache_ttl_seconds: int | None,
     no_color: bool,
 ) -> None:
     if no_color:
@@ -171,6 +187,8 @@ def cli(
         stdin_json=stdin_json,
         verbose=verbose,
         no_color=no_color,
+        cache_mode=cache_mode,
+        cache_ttl_seconds=cache_ttl_seconds,
     )
 
 
@@ -227,6 +245,8 @@ def profile_group() -> None:
 @click.option("--domain", required=True, type=click.STRING)
 @click.option("--token", required=True, type=click.STRING)
 @click.option("--sandbox/--no-sandbox", default=False)
+@click.option("--cache-mode", type=click.Choice(["off", "readwrite", "refresh"]), default=None)
+@click.option("--cache-ttl-seconds", type=click.INT, default=None)
 @click.option("--set-active/--no-set-active", default=False)
 @click.pass_context
 def profile_add_command(
@@ -235,10 +255,20 @@ def profile_add_command(
     domain: str,
     token: str,
     sandbox: bool,
+    cache_mode: str | None,
+    cache_ttl_seconds: int | None,
     set_active: bool,
 ) -> None:
     try:
-        result = add_profile(name, domain=domain, token=token, sandbox=sandbox, set_active=set_active)
+        result = add_profile(
+            name,
+            domain=domain,
+            token=token,
+            sandbox=sandbox,
+            cache_mode=cache_mode,
+            cache_ttl_seconds=cache_ttl_seconds,
+            set_active=set_active,
+        )
         _echo_result(ctx, "profile.add", result)
     except CliError as error:
         _fail(ctx, "profile.add", error)

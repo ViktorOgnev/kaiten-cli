@@ -11,6 +11,7 @@ def test_search_tools_finds_cards():
     assert results[0]["mutation"] is False
     assert results[0]["heavy"] is False
     assert results[0]["execution_mode"] == "direct_http"
+    assert results[0]["cache_policy"] == "request_scope"
     assert results[0]["has_special_live_contract"] is False
 
 
@@ -19,6 +20,7 @@ def test_describe_tool_contains_alias_and_arguments():
     assert description["mcp_alias"] == "kaiten_create_card"
     assert description["mutation"] is True
     assert description["execution_mode"] == "direct_http"
+    assert description["cache_policy"] == "none"
     assert description["input_modes"] == ["options", "from_file", "stdin_json"]
     assert "compact_supported" in description["response_policy"]
     assert description["response_policy"]["result_kind"] == "entity"
@@ -34,6 +36,26 @@ def test_describe_tool_includes_live_contract_and_response_policy_metadata():
     assert description["response_policy"]["heavy"] is False
     assert description["live_contract"]["status"] == "live_passed_with_runtime_fix"
     assert "force flag" in description["live_contract"]["note"]
+
+
+def test_describe_tool_includes_usage_notes_and_bulk_alternative():
+    description = describe_tool("card-location-history.get")
+
+    assert description["bulk_alternative"] == "card-location-history.batch-get"
+    assert description["cache_policy"] == "request_scope"
+    assert any("per-card read" in note for note in description["usage_notes"])
+
+    bulk_description = describe_tool("cards.list-all")
+    assert any("selection=all|active_only|archived_only" in note for note in bulk_description["usage_notes"])
+
+
+def test_describe_tool_includes_persistent_cache_policy_for_safe_entity_reads():
+    description = describe_tool("cards.get")
+
+    assert description["cache_policy"] == "persistent_opt_in"
+
+    compute_job = describe_tool("compute-jobs.get")
+    assert compute_job["cache_policy"] == "none"
 
 
 def test_tool_examples_non_empty():

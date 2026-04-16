@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
 
 _HEAVY = ResponsePolicy(heavy=True)
@@ -340,6 +340,7 @@ TOOLS = (
             "required": ["job_id"],
         },
         operation=OperationSpec(method="GET", path_template="/users/current/compute-jobs/{job_id}", path_fields=("job_id",)),
+        runtime_behavior=RuntimeBehavior(cache_policy="none"),
         examples=(
             ExampleSpec(command="kaiten compute-jobs get --job-id 1 --json", description="Get compute job status."),
         ),

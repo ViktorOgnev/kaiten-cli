@@ -19,6 +19,8 @@ def test_profile_lifecycle(config_env):
     added = add_profile("sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True)
     assert added["active"] is True
     assert added["sandbox"] is True
+    assert added["cache_mode"] == "off"
+    assert added["cache_ttl_seconds"] == 60
     assert added["token_masked"].endswith("oken")
 
     listed = list_profiles()
@@ -31,6 +33,8 @@ def test_profile_lifecycle(config_env):
     assert resolved.domain == "sandbox"
     assert resolved.sandbox is True
     assert resolved.source == "active_profile"
+    assert resolved.cache_mode == "off"
+    assert resolved.cache_ttl_seconds == 60
 
     use_profile("sandbox")
     removed = remove_profile("sandbox")
@@ -44,6 +48,45 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     assert resolved.domain == "sandbox"
     assert resolved.token == "env-token"
     assert resolved.source == "environment"
+    assert resolved.cache_mode == "off"
+    assert resolved.cache_ttl_seconds == 60
+
+
+def test_profile_add_and_resolve_cache_settings(config_env):
+    add_profile(
+        "main",
+        domain="sandbox",
+        token="secret-token",
+        sandbox=True,
+        cache_mode="readwrite",
+        cache_ttl_seconds=120,
+        set_active=True,
+    )
+
+    shown = show_profile("main")
+    resolved = resolve_profile()
+
+    assert shown["cache_mode"] == "readwrite"
+    assert shown["cache_ttl_seconds"] == 120
+    assert resolved.cache_mode == "readwrite"
+    assert resolved.cache_ttl_seconds == 120
+
+
+def test_resolve_profile_cli_cache_overrides_profile_defaults(config_env):
+    add_profile(
+        "main",
+        domain="sandbox",
+        token="secret-token",
+        sandbox=True,
+        cache_mode="readwrite",
+        cache_ttl_seconds=120,
+        set_active=True,
+    )
+
+    resolved = resolve_profile("main", cache_mode_override="refresh", cache_ttl_seconds_override=15)
+
+    assert resolved.cache_mode == "refresh"
+    assert resolved.cache_ttl_seconds == 15
 
 
 def test_resolve_profile_explicit_profile_beats_active_and_env(config_env, monkeypatch):

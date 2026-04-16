@@ -10,9 +10,10 @@ from typing import Any
 from platformdirs import user_config_path
 
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.models import ResolvedProfile
+from kaiten_cli.models import CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH, ResolvedProfile
 
 CONFIG_ENV = "KAITEN_CLI_CONFIG_PATH"
+CACHE_MODE_VALUES = {CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
 
 
 def config_path() -> Path:
@@ -110,6 +111,28 @@ def redact_token(token: str | None) -> str | None:
     return "*" * (len(token) - 4) + token[-4:]
 
 
+def _normalize_cache_mode(value: str | None) -> str:
+    if value is None:
+        return CACHE_MODE_OFF
+    normalized = str(value).strip().lower()
+    if normalized not in CACHE_MODE_VALUES:
+        allowed = ", ".join(sorted(CACHE_MODE_VALUES))
+        raise ConfigError(f"Invalid cache mode: {value}. Expected one of: {allowed}.")
+    return normalized
+
+
+def _normalize_cache_ttl_seconds(value: int | str | None) -> int:
+    if value is None:
+        return 60
+    try:
+        ttl = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(f"Invalid cache TTL seconds: {value}") from exc
+    if ttl < 1:
+        raise ConfigError("Cache TTL seconds must be >= 1.")
+    return ttl
+
+
 def add_profile(
     name: str,
     *,
@@ -117,13 +140,20 @@ def add_profile(
     token: str,
     sandbox: bool = False,
     set_active: bool = False,
+    cache_mode: str | None = None,
+    cache_ttl_seconds: int | None = None,
 ) -> dict[str, Any]:
     config = load_config()
-    config.setdefault("profiles", {})[name] = {
+    profile = {
         "domain": domain,
         "token": token,
         "sandbox": sandbox,
     }
+    if cache_mode is not None:
+        profile["cache_mode"] = _normalize_cache_mode(cache_mode)
+    if cache_ttl_seconds is not None:
+        profile["cache_ttl_seconds"] = _normalize_cache_ttl_seconds(cache_ttl_seconds)
+    config.setdefault("profiles", {})[name] = profile
     if set_active or not config.get("active_profile"):
         config["active_profile"] = name
     save_config(config)
@@ -165,7 +195,15 @@ def show_profile(name: str | None = None) -> dict[str, Any]:
     if name is None:
         name = config.get("active_profile")
     if not name:
-        return {"name": None, "active": False, "domain": None, "sandbox": False, "token_masked": None}
+        return {
+            "name": None,
+            "active": False,
+            "domain": None,
+            "sandbox": False,
+            "token_masked": None,
+            "cache_mode": CACHE_MODE_OFF,
+            "cache_ttl_seconds": 60,
+        }
     profiles = config.get("profiles", {})
     if name not in profiles:
         raise ConfigError(f"Unknown profile: {name}")
@@ -179,10 +217,17 @@ def sanitized_profile(name: str, raw: dict[str, Any], *, active: bool) -> dict[s
         "domain": raw.get("domain"),
         "sandbox": bool(raw.get("sandbox", False)),
         "token_masked": redact_token(raw.get("token")),
+        "cache_mode": _normalize_cache_mode(raw.get("cache_mode")),
+        "cache_ttl_seconds": _normalize_cache_ttl_seconds(raw.get("cache_ttl_seconds")),
     }
 
 
-def resolve_profile(profile_name: str | None = None) -> ResolvedProfile:
+def resolve_profile(
+    profile_name: str | None = None,
+    *,
+    cache_mode_override: str | None = None,
+    cache_ttl_seconds_override: int | None = None,
+) -> ResolvedProfile:
     config = load_config()
     profiles = config.get("profiles", {})
     selected_name = profile_name or config.get("active_profile")
@@ -195,6 +240,12 @@ def resolve_profile(profile_name: str | None = None) -> ResolvedProfile:
             token=str(selected.get("token", "")),
             sandbox=bool(selected.get("sandbox", False)),
             source=source,
+            cache_mode=_normalize_cache_mode(cache_mode_override or selected.get("cache_mode")),
+            cache_ttl_seconds=_normalize_cache_ttl_seconds(
+                cache_ttl_seconds_override
+                if cache_ttl_seconds_override is not None
+                else selected.get("cache_ttl_seconds")
+            ),
         )
 
     env_domain = os.environ.get("KAITEN_DOMAIN", "")
@@ -207,6 +258,8 @@ def resolve_profile(profile_name: str | None = None) -> ResolvedProfile:
             token=env_token,
             sandbox=env_sandbox,
             source="environment",
+            cache_mode=_normalize_cache_mode(cache_mode_override),
+            cache_ttl_seconds=_normalize_cache_ttl_seconds(cache_ttl_seconds_override),
         )
 
     if selected_name and selected_name not in profiles:

@@ -16,6 +16,7 @@ def search_tools(query: str, limit: int = 5) -> list[dict]:
             "mutation": tool.is_mutation,
             "heavy": tool.response_policy.heavy,
             "execution_mode": tool.execution_mode,
+            "cache_policy": tool.cache_policy,
             "has_special_live_contract": has_special_live_contract(tool.canonical_name),
         }
         for tool in search(query, limit=limit)

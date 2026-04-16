@@ -124,6 +124,7 @@ def describe(identifier: str) -> dict:
         "method": tool.operation.method,
         "mutation": tool.is_mutation,
         "execution_mode": tool.execution_mode,
+        "cache_policy": tool.cache_policy,
         "path_template": tool.operation.path_template,
         "input_modes": ["options", "from_file", "stdin_json"],
         "response_policy": {
@@ -154,4 +155,8 @@ def describe(identifier: str) -> dict:
             "note": contract.note,
             "expected_statuses": list(contract.expected_statuses),
         }
+    if tool.usage_notes:
+        payload["usage_notes"] = list(tool.usage_notes)
+    if tool.bulk_alternative is not None:
+        payload["bulk_alternative"] = tool.bulk_alternative
     return payload

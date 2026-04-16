@@ -14,6 +14,24 @@ class _Unset:
 
 UNSET = _Unset()
 
+CACHE_POLICY_NONE = "none"
+CACHE_POLICY_REQUEST_SCOPE = "request_scope"
+CACHE_POLICY_PERSISTENT_OPT_IN = "persistent_opt_in"
+
+CACHE_MODE_OFF = "off"
+CACHE_MODE_READWRITE = "readwrite"
+CACHE_MODE_REFRESH = "refresh"
+
+PERSISTENT_CACHE_DISCOVERY_ALLOWLIST = frozenset(
+    {
+        "spaces.list",
+        "boards.list",
+        "columns.list",
+        "lanes.list",
+        "card-types.list",
+    }
+)
+
 
 @dataclass(slots=True, frozen=True)
 class ExampleSpec:
@@ -45,6 +63,7 @@ RequestShaper = Callable[
     ["ToolSpec", dict[str, Any], str, dict[str, Any] | None, dict[str, Any] | None],
     RequestShape,
 ]
+PayloadValidator = Callable[["ToolSpec", dict[str, Any]], None]
 CustomExecutor = Callable[
     [Any, "ToolSpec", dict[str, Any], str, dict[str, Any] | None, dict[str, Any] | None, float, DebugReporter | None],
     Awaitable[Any],
@@ -55,8 +74,10 @@ CustomExecutor = Callable[
 class RuntimeBehavior:
     execution_mode: str = "direct_http"
     request_shaper: RequestShaper | None = None
+    payload_validator: PayloadValidator | None = None
     custom_executor: CustomExecutor | None = None
     compact_default: bool | None = None
+    cache_policy: str | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -71,6 +92,8 @@ class ToolSpec:
     response_policy: ResponsePolicy = field(default_factory=ResponsePolicy)
     runtime_behavior: RuntimeBehavior = field(default_factory=RuntimeBehavior)
     examples: tuple[ExampleSpec, ...] = ()
+    usage_notes: tuple[str, ...] = ()
+    bulk_alternative: str | None = None
 
     @property
     def namespace_segments(self) -> tuple[str, ...]:
@@ -87,6 +110,25 @@ class ToolSpec:
         return self.runtime_behavior.execution_mode
 
     @property
+    def cache_policy(self) -> str:
+        if self.is_mutation:
+            return CACHE_POLICY_NONE
+        if self.runtime_behavior.cache_policy is not None:
+            return self.runtime_behavior.cache_policy
+        if (
+            self.operation.method.upper() == "GET"
+            and self.execution_mode == "direct_http"
+            and self.response_policy.result_kind == "entity"
+            and self.action == "get"
+        ):
+            return CACHE_POLICY_PERSISTENT_OPT_IN
+        if self.canonical_name in PERSISTENT_CACHE_DISCOVERY_ALLOWLIST:
+            return CACHE_POLICY_PERSISTENT_OPT_IN
+        if self.operation.method.upper() == "GET":
+            return CACHE_POLICY_REQUEST_SCOPE
+        return CACHE_POLICY_NONE
+
+    @property
     def is_mutation(self) -> bool:
         return self.operation.method.upper() in {"POST", "PATCH", "DELETE"}
 
@@ -99,6 +141,8 @@ class GlobalOptions:
     stdin_json: bool = False
     verbose: bool = False
     no_color: bool = False
+    cache_mode: str | None = None
+    cache_ttl_seconds: int | None = None
 
 
 @dataclass(slots=True)
@@ -108,6 +152,8 @@ class ResolvedProfile:
     token: str
     sandbox: bool = False
     source: str = "unknown"
+    cache_mode: str = CACHE_MODE_OFF
+    cache_ttl_seconds: int = 60
 
 
 def format_schema_type(schema: dict[str, Any]) -> str:

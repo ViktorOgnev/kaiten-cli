@@ -8,12 +8,16 @@ Runtime flow:
 
 `registry -> discovery/app -> input merge -> executor -> client -> transforms/output`
 
+For high-cardinality reads there is one more path:
+
+`registry -> discovery/app -> input merge -> executor -> execution context -> runtime behavior -> bulk worker pool -> per-worker clients`
+
 Main layers:
 
 - `src/kaiten_cli/registry/`
   Source of truth for the command catalog. Each tool is declared as a `ToolSpec` with canonical name, MCP alias, schema, examples, request metadata, response policy, and optional runtime behavior.
 - `src/kaiten_cli/runtime/`
-  Execution layer. Builds requests, applies sandbox safety rules, runs HTTP calls, handles synthetic and aggregated reads, and shapes responses.
+  Execution layer. Builds requests, resolves profiles and cache settings, applies sandbox safety rules, runs HTTP calls, handles synthetic and aggregated reads, and shapes responses.
 - `src/kaiten_cli/runtime/support/`
   Domain-specific helpers used by runtime behaviors for documents, projects, tree aggregation, cards bulk pagination, and activity pagination.
 - top-level `src/kaiten_cli/`
@@ -36,6 +40,17 @@ That means:
 
 The command catalog stays centralized even when runtime semantics differ.
 
+## Execution Context and Cache
+
+Each CLI invocation builds one execution context for the selected profile.
+
+- request-scoped cache is always enabled for safe GET reads
+- identical in-flight GETs are deduplicated inside the same execution context
+- persistent disk cache is opt-in through `--cache-mode` or profile defaults
+- successful mutations clear persistent cache for the current profile/domain scope
+
+This keeps the default one-shot CLI behavior intact, while reducing repeated entity reads in synthetic, aggregated, and worker-pooled paths.
+
 ## Execution Modes
 
 - `direct_http`
@@ -47,12 +62,15 @@ The command catalog stays centralized even when runtime semantics differ.
 - `custom`
   Runtime uses a dedicated executor because the API contract does not map cleanly to a simple request/response flow.
 
+Bulk reads are still registry-defined tools. The difference is that some aggregated tools now use a dedicated bulk execution path instead of repeated one-shot CLI invocations.
+
 ## Docs Map
 
 Primary docs:
 
 - [README.md](README.md) for install, usage, config, and operator guidance
 - [AGENTS.md](AGENTS.md) for agent-specific usage and safety shortcuts
+- `skills/` for repo-local LLM workflows in `SKILL.md` format
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md) for live test process
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md) for documented sandbox contracts
 - `ARCHITECTURE.md` for the system map
@@ -67,5 +85,6 @@ Historical artifacts:
 
 - The manual registry is easy to inspect, but large and maintenance-heavy.
 - Runtime behaviors are now explicit, but still centralized in one behavior module.
-- The CLI favors boundedness and predictability over maximum raw throughput.
+- Request-scoped cache is built in, but persistent cache deliberately stays conservative and opt-in.
+- The CLI favors boundedness and predictability over maximum raw throughput, so bulk execution stays conservative by default.
 - Live validation is explicit and well-documented, but sandbox contracts remain inherently unstable.

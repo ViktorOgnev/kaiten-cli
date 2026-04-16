@@ -107,6 +107,8 @@ def merge_inputs(
         merged[field_name] = coerce_value(raw_value, schema, stdin_text=stdin_text, label=field_name)
 
     validate_payload(tool, merged)
+    if tool.runtime_behavior.payload_validator is not None:
+        tool.runtime_behavior.payload_validator(tool, merged)
     return merged
 
 

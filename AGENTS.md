@@ -4,6 +4,10 @@ This file only captures agent-specific guidance.
 
 For install, human-oriented usage, and the full docs map, start with [README.md](README.md).  
 For the system map, use [ARCHITECTURE.md](ARCHITECTURE.md).
+For optimized LLM workflows, start with:
+
+- [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
+- [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
 
 ## Discovery-first flow
 
@@ -47,6 +51,9 @@ kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-
 - Start with read-only commands.
 - Mutations are blocked unless the selected profile is marked sandbox or uses the `sandbox` domain.
 - Prefer `--compact` and `--fields` to reduce payload and token cost.
+- Request-scoped cache for safe GETs is built in; enable `--cache-mode readwrite` only when you want short-lived cross-process reuse.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.
+- For high-cardinality reads, follow the heavy-data skill instead of inventing a per-entity loop.
+- For metrics workflows, follow the metrics skill instead of reconstructing raw history one card at a time.
 - Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).

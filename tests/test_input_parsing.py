@@ -70,3 +70,17 @@ def test_merge_inputs_rejects_unknown_fields(tmp_path):
 
     with pytest.raises(ValidationError):
         merge_inputs(tool, {"title": UNSET}, from_file=str(payload_file))
+
+
+def test_merge_inputs_rejects_empty_history_batch_ids():
+    tool = resolve_tool("card-location-history.batch-get")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_ids": "[]"})
+
+
+def test_merge_inputs_rejects_history_batch_workers_above_limit():
+    tool = resolve_tool("card-location-history.batch-get")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_ids": "[1,2]", "workers": 7})

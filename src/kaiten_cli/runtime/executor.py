@@ -8,6 +8,7 @@ from typing import Any
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
+from kaiten_cli.runtime.cache import ExecutionContext
 from kaiten_cli.runtime.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT, KaitenClient
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
@@ -57,20 +58,37 @@ async def execute_tool(
     payload: dict[str, Any],
     *,
     profile_name: str | None = None,
+    cache_mode: str | None = None,
+    cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
 ) -> Any:
-    profile = resolve_profile(profile_name)
+    profile = resolve_profile(
+        profile_name,
+        cache_mode_override=cache_mode,
+        cache_ttl_seconds_override=cache_ttl_seconds,
+    )
     enforce_mutation_safety(tool, profile)
     _emit_debug(
         reporter,
-        f"profile: source={profile.source} name={profile.name or '-'} domain={profile.domain} sandbox={profile.sandbox}",
+        "profile: "
+        f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
+        f"sandbox={profile.sandbox} cache_mode={profile.cache_mode} cache_ttl_seconds={profile.cache_ttl_seconds}",
     )
-    client = KaitenClient(domain=profile.domain, token=profile.token, reporter=reporter)
+    context = ExecutionContext.for_profile(profile, reporter=reporter)
+    client = KaitenClient(
+        domain=profile.domain,
+        token=profile.token,
+        reporter=reporter,
+        execution_context=context,
+        cache_policy=tool.cache_policy,
+    )
     path, query, body = build_request(tool, payload)
     timeout = timeout_for_tool(tool)
     _emit_debug(
         reporter,
-        f"request: method={tool.operation.method.upper()} path={path} timeout={timeout:.1f}s execution_mode={tool.execution_mode}",
+        "request: "
+        f"method={tool.operation.method.upper()} path={path} timeout={timeout:.1f}s "
+        f"execution_mode={tool.execution_mode} cache_policy={tool.cache_policy}",
     )
     if tool.runtime_behavior.request_shaper is not None:
         _emit_debug(reporter, f"request-shaper: {tool.runtime_behavior.request_shaper.__name__}")
@@ -110,6 +128,17 @@ def execute_tool_sync(
     payload: dict[str, Any],
     *,
     profile_name: str | None = None,
+    cache_mode: str | None = None,
+    cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
 ) -> Any:
-    return asyncio.run(execute_tool(tool, payload, profile_name=profile_name, reporter=reporter))
+    return asyncio.run(
+        execute_tool(
+            tool,
+            payload,
+            profile_name=profile_name,
+            cache_mode=cache_mode,
+            cache_ttl_seconds=cache_ttl_seconds,
+            reporter=reporter,
+        )
+    )

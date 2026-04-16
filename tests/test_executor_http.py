@@ -7,7 +7,7 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli, main
-from kaiten_cli.errors import ConfigError
+from kaiten_cli.errors import BatchExecutionError, ConfigError, ValidationError
 from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
@@ -55,6 +55,13 @@ def test_build_request_injects_default_limit_for_list_tools():
     assert query is not None
     assert query["board_id"] == 10
     assert query["limit"] == 50
+
+
+def test_merge_inputs_rejects_cards_list_all_selection_with_archived():
+    tool = resolve_tool("cards.list-all")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"board_id": 10, "selection": "active_only", "archived": True})
 
 
 def test_build_request_applies_runtime_request_shaper():
@@ -122,3 +129,33 @@ def test_cli_verbose_writes_diagnostics_to_stderr_only(capsys):
     assert json.loads(captured.out)["success"] is True
     assert "[verbose] profile:" in captured.err
     assert "[verbose] request: method=GET path=/cards" in captured.err
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_history_batch_all_failed_raises_structured_error(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/location-history").mock(
+        return_value=Response(404, json={"message": "not found"})
+    )
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/2/location-history").mock(
+        return_value=Response(404, json={"message": "not found"})
+    )
+
+    tool = resolve_tool("card-location-history.batch-get")
+    payload = merge_inputs(tool, {"card_ids": "[1,2]"})
+
+    with pytest.raises(BatchExecutionError) as exc_info:
+        await execute_tool(tool, payload)
+
+    error = exc_info.value
+    assert error.data["meta"] == {
+        "requested": 2,
+        "requested_count": 2,
+        "unique_count": 2,
+        "succeeded": 0,
+        "failed": 2,
+        "workers": 2,
+    }
+    assert [item["card_id"] for item in error.data["errors"]] == [1, 2]
