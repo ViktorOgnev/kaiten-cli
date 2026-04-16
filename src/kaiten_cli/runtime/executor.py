@@ -10,6 +10,7 @@ from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
 from kaiten_cli.runtime.cache import ExecutionContext
 from kaiten_cli.runtime.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT, KaitenClient
+from kaiten_cli.runtime.trace import ExecutionStats
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
 
@@ -62,6 +63,26 @@ async def execute_tool(
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
 ) -> Any:
+    result, _ = await execute_tool_with_diagnostics(
+        tool,
+        payload,
+        profile_name=profile_name,
+        cache_mode=cache_mode,
+        cache_ttl_seconds=cache_ttl_seconds,
+        reporter=reporter,
+    )
+    return result
+
+
+async def execute_tool_with_diagnostics(
+    tool: ToolSpec,
+    payload: dict[str, Any],
+    *,
+    profile_name: str | None = None,
+    cache_mode: str | None = None,
+    cache_ttl_seconds: int | None = None,
+    reporter: DebugReporter | None = None,
+) -> tuple[Any, ExecutionStats]:
     profile = resolve_profile(
         profile_name,
         cache_mode_override=cache_mode,
@@ -92,6 +113,7 @@ async def execute_tool(
     )
     if tool.runtime_behavior.request_shaper is not None:
         _emit_debug(reporter, f"request-shaper: {tool.runtime_behavior.request_shaper.__name__}")
+    result: Any
     try:
         method = tool.operation.method.upper()
         if tool.runtime_behavior.custom_executor is not None:
@@ -109,6 +131,9 @@ async def execute_tool(
             result = await client.delete(path, json=body, timeout=timeout)
         else:  # pragma: no cover - impossible with current registry
             raise ConfigError(f"Unsupported method: {method}")
+    except Exception as exc:
+        setattr(exc, "_kaiten_trace_stats", context.stats)
+        raise
     finally:
         await client.close()
 
@@ -120,7 +145,7 @@ async def execute_tool(
     if tool.response_policy.fields_supported:
         result = select_fields(result, payload.get("fields"))
     result, _ = strip_base64(result)
-    return result
+    return result, context.stats
 
 
 def execute_tool_sync(
@@ -132,8 +157,28 @@ def execute_tool_sync(
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
 ) -> Any:
+    result, _ = execute_tool_sync_with_diagnostics(
+        tool,
+        payload,
+        profile_name=profile_name,
+        cache_mode=cache_mode,
+        cache_ttl_seconds=cache_ttl_seconds,
+        reporter=reporter,
+    )
+    return result
+
+
+def execute_tool_sync_with_diagnostics(
+    tool: ToolSpec,
+    payload: dict[str, Any],
+    *,
+    profile_name: str | None = None,
+    cache_mode: str | None = None,
+    cache_ttl_seconds: int | None = None,
+    reporter: DebugReporter | None = None,
+) -> tuple[Any, ExecutionStats]:
     return asyncio.run(
-        execute_tool(
+        execute_tool_with_diagnostics(
             tool,
             payload,
             profile_name=profile_name,

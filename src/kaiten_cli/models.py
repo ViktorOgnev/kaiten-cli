@@ -143,6 +143,7 @@ class GlobalOptions:
     no_color: bool = False
     cache_mode: str | None = None
     cache_ttl_seconds: int | None = None
+    trace_file: str | None = None
 
 
 @dataclass(slots=True)

@@ -6,6 +6,10 @@ from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, Runtim
 from kaiten_cli.registry.base import make_tool
 
 _HEAVY = ResponsePolicy(heavy=True)
+_CHART_USAGE_NOTES = (
+    "Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.",
+    "If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.",
+)
 
 _COMMON_CHART_PROPS = {
     "space_id": {"type": "integer", "description": "Space ID"},
@@ -75,6 +79,7 @@ def _chart_create(
             examples=(
                 ExampleSpec(command=f"kaiten {' '.join(canonical_name.split('.'))} --json", description=description),
             ),
+            usage_notes=_CHART_USAGE_NOTES,
         ),
     )
 
@@ -124,6 +129,7 @@ TOOLS = (
                 description="Get a done-card summary.",
             ),
         ),
+        usage_notes=_CHART_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="charts.block-resolution.get",
@@ -150,6 +156,7 @@ TOOLS = (
         examples=(
             ExampleSpec(command="kaiten charts block-resolution get --space-id 1 --json", description="Get blocker resolution data."),
         ),
+        usage_notes=_CHART_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="charts.due-dates.get",
@@ -214,6 +221,7 @@ TOOLS = (
                 description="Get due-date analysis.",
             ),
         ),
+        usage_notes=_CHART_USAGE_NOTES,
     ),
     *_chart_create(
         canonical_name="charts.cfd.create",

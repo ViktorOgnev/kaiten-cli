@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import sys
+import time
 from typing import Any
 
 import click
@@ -10,13 +12,55 @@ from click.exceptions import NoArgsIsHelpError
 
 from kaiten_cli import __version__
 from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
-from kaiten_cli.errors import CliError, ConfigError, InternalError, ValidationError
+from kaiten_cli.errors import BatchExecutionError, CliError, ConfigError, InternalError, ValidationError
 from kaiten_cli.models import GlobalOptions, ToolSpec
 from kaiten_cli.profiles import add_profile, list_profiles, remove_profile, show_profile, use_profile
 from kaiten_cli.registry import iter_tools
-from kaiten_cli.runtime.executor import execute_tool_sync
+from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
+from kaiten_cli.runtime.trace import TraceRecorder, bulk_trace_meta
+
+
+_CURRENT_ARGV: list[str] | None = None
+REPOSITORY_URL = "https://github.com/ViktorOgnev/kaiten-cli"
+README_URL = f"{REPOSITORY_URL}/blob/master/README.md"
+ARCHITECTURE_URL = f"{REPOSITORY_URL}/blob/master/ARCHITECTURE.md"
+AGENTS_URL = f"{REPOSITORY_URL}/blob/master/AGENTS.md"
+HEAVY_DATA_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-heavy-data/SKILL.md"
+METRICS_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-metrics/SKILL.md"
+CLI_HELP = """Kaiten API CLI optimized for humans and agents.
+
+\b
+Quick start:
+  kaiten search-tools "wip cards"
+  kaiten describe cards.list-all
+  kaiten examples cards.list-all
+  kaiten --json spaces list --compact --fields id,title
+  kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+
+\b
+Principles:
+  - use --json for automation and LLM workflows
+  - prefer search-tools -> describe -> examples before heavy commands
+  - prefer bulk tools over per-entity loops
+  - use --compact and --fields to shrink payloads
+  - use --trace-file for long investigations and report runs
+
+\b
+More guided onboarding:
+  kaiten agent-help
+"""
+CLI_EPILOG = f"""\b
+Documentation:
+  Repo: {REPOSITORY_URL}
+  README: {README_URL}
+  Architecture: {ARCHITECTURE_URL}
+  Agent guide: {AGENTS_URL}
+  Skills:
+    heavy-data: {HEAVY_DATA_SKILL_URL}
+    metrics: {METRICS_SKILL_URL}
+"""
 
 
 def _ctx_options(ctx: click.Context) -> GlobalOptions:
@@ -49,6 +93,140 @@ def _make_debug_reporter(ctx: click.Context):
     return reporter
 
 
+def _trace_recorder(ctx: click.Context) -> TraceRecorder | None:
+    options = _ctx_options(ctx)
+    if not options.trace_file:
+        return None
+    return TraceRecorder(options.trace_file)
+
+
+def _current_argv(ctx: click.Context) -> list[str]:
+    root = ctx.find_root()
+    argv = root.meta.get("argv")
+    if isinstance(argv, list):
+        return list(argv)
+    return list(_CURRENT_ARGV or sys.argv[1:])
+
+
+def _trace_bulk_meta(data: Any) -> dict[str, Any]:
+    if isinstance(data, BatchExecutionError):
+        return bulk_trace_meta(data.data)
+    return bulk_trace_meta(data)
+
+
+def _agent_help_payload() -> dict[str, Any]:
+    return {
+        "summary": "Kaiten API CLI optimized for humans and agents.",
+        "llm_bootstrap": [
+            'Discover first: kaiten search-tools "wip cards"',
+            "Inspect one tool: kaiten describe cards.list-all",
+            "Check examples: kaiten examples cards.list-all",
+            "Use --json for automation and LLM workflows.",
+            "Prefer bulk tools over per-entity loops.",
+            "Shrink payloads with --compact and --fields.",
+            "Use --trace-file for long investigations.",
+        ],
+        "quickstart": [
+            'Discover commands: kaiten search-tools "wip cards"',
+            "Inspect one tool: kaiten describe cards.list-all",
+            "See examples: kaiten examples cards.list-all",
+            "Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title",
+            "Configure credentials: kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active",
+        ],
+        "principles": [
+            "Use --json for automation and LLM workflows.",
+            "Prefer search-tools -> describe -> examples before heavy commands.",
+            "Prefer bulk tools like cards.list-all, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
+            "Use --compact and --fields to reduce payload and token cost.",
+            "Use --cache-mode readwrite only for short-lived cross-process safe GET reuse.",
+            "Use --trace-file for long investigations when you need real HTTP cost visibility.",
+        ],
+        "docs": {
+            "repository": REPOSITORY_URL,
+            "readme": README_URL,
+            "architecture": ARCHITECTURE_URL,
+            "agent_guide": AGENTS_URL,
+            "skills": {
+                "heavy_data": HEAVY_DATA_SKILL_URL,
+                "metrics": METRICS_SKILL_URL,
+            },
+        },
+    }
+
+
+def _agent_help_text() -> str:
+    return "\n".join(
+        [
+            "Kaiten agent bootstrap",
+            "",
+            "LLM bootstrap:",
+            '1. discover: kaiten search-tools "wip cards"',
+            "2. inspect: kaiten describe cards.list-all",
+            "3. examples: kaiten examples cards.list-all",
+            "4. use --json for automation and LLM workflows",
+            "5. prefer bulk tools over per-entity loops",
+            "6. shrink payloads with --compact and --fields",
+            "7. use --trace-file for long investigations",
+            "",
+            "Good bulk defaults:",
+            "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
+            "  kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title",
+            "  kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text",
+            "  kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id",
+            "",
+            "Docs:",
+            f"  repo: {REPOSITORY_URL}",
+            f"  readme: {README_URL}",
+            f"  architecture: {ARCHITECTURE_URL}",
+            f"  agents: {AGENTS_URL}",
+            f"  skills heavy-data: {HEAVY_DATA_SKILL_URL}",
+            f"  skills metrics: {METRICS_SKILL_URL}",
+        ]
+    )
+
+
+def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback):
+    recorder = _trace_recorder(ctx)
+    start = time.perf_counter()
+    try:
+        result, stats = callback()
+        if recorder is not None:
+            recorder.write(
+                canonical_name=command,
+                execution_mode=execution_mode,
+                argv=_current_argv(ctx),
+                exit_code=0,
+                duration_ms=(time.perf_counter() - start) * 1000.0,
+                stats=stats,
+                bulk_meta=_trace_bulk_meta(result),
+            )
+        return result
+    except CliError as error:
+        if recorder is not None:
+            recorder.write(
+                canonical_name=command,
+                execution_mode=execution_mode,
+                argv=_current_argv(ctx),
+                exit_code=error.exit_code,
+                duration_ms=(time.perf_counter() - start) * 1000.0,
+                stats=getattr(error, "_kaiten_trace_stats", None),
+                bulk_meta=_trace_bulk_meta(error),
+            )
+        raise
+    except Exception as exc:
+        if recorder is not None:
+            recorder.write(
+                canonical_name=command,
+                execution_mode=execution_mode,
+                argv=_current_argv(ctx),
+                exit_code=70,
+                duration_ms=(time.perf_counter() - start) * 1000.0,
+                stats=getattr(exc, "_kaiten_trace_stats", None),
+                bulk_meta={},
+            )
+        raise
+
+
 def _dynamic_callback(tool: ToolSpec):
     @click.pass_context
     def callback(ctx: click.Context, **kwargs: Any) -> None:
@@ -56,20 +234,24 @@ def _dynamic_callback(tool: ToolSpec):
         stdin_text = click.get_text_stream("stdin").read() if options.stdin_json else None
         reporter = _make_debug_reporter(ctx)
         try:
-            payload = merge_inputs(
-                tool,
-                kwargs,
-                from_file=options.from_file,
-                stdin_json=options.stdin_json,
-                stdin_text=stdin_text,
-            )
-            result = execute_tool_sync(
-                tool,
-                payload,
-                profile_name=options.profile_name,
-                cache_mode=options.cache_mode,
-                cache_ttl_seconds=options.cache_ttl_seconds,
-                reporter=reporter,
+            result = _run_traced(
+                ctx,
+                tool.canonical_name,
+                tool.execution_mode,
+                lambda: execute_tool_sync_with_diagnostics(
+                    tool,
+                    merge_inputs(
+                        tool,
+                        kwargs,
+                        from_file=options.from_file,
+                        stdin_json=options.stdin_json,
+                        stdin_text=stdin_text,
+                    ),
+                    profile_name=options.profile_name,
+                    cache_mode=options.cache_mode,
+                    cache_ttl_seconds=options.cache_ttl_seconds,
+                    reporter=reporter,
+                ),
             )
             _echo_result(ctx, tool.canonical_name, result)
         except CliError as error:
@@ -146,7 +328,12 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     return group
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]}, no_args_is_help=True)
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+    help=CLI_HELP,
+    epilog=CLI_EPILOG,
+)
 @click.version_option(version=__version__, prog_name="kaiten")
 @click.option("--json", "json_mode", is_flag=True, default=False, help="Emit machine-readable JSON output.")
 @click.option("--profile", "profile_name", type=click.STRING, default=None, help="Configuration profile to use.")
@@ -165,6 +352,12 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     default=None,
     help="TTL for persistent cache entries in seconds.",
 )
+@click.option(
+    "--trace-file",
+    type=click.Path(dir_okay=False, path_type=str),
+    default=None,
+    help="Append compact execution traces as JSONL.",
+)
 @click.option("--no-color", is_flag=True, default=False, help="Disable colorized output.")
 @click.pass_context
 def cli(
@@ -176,10 +369,12 @@ def cli(
     verbose: bool,
     cache_mode: str | None,
     cache_ttl_seconds: int | None,
+    trace_file: str | None,
     no_color: bool,
 ) -> None:
     if no_color:
         ctx.color = False
+    ctx.meta["argv"] = list(_CURRENT_ARGV or sys.argv[1:])
     ctx.obj = GlobalOptions(
         json_mode=json_mode,
         profile_name=profile_name,
@@ -189,6 +384,7 @@ def cli(
         no_color=no_color,
         cache_mode=cache_mode,
         cache_ttl_seconds=cache_ttl_seconds,
+        trace_file=trace_file or os.environ.get("KAITEN_TRACE_FILE"),
     )
 
 
@@ -197,7 +393,7 @@ def cli(
 @click.pass_context
 def search_tools_command(ctx: click.Context, query: str) -> None:
     try:
-        result = search_tools(query)
+        result = _run_traced(ctx, "search-tools", "meta", lambda: (search_tools(query), None))
         _echo_result(ctx, "search-tools", result)
     except CliError as error:
         _fail(ctx, "search-tools", error)
@@ -210,7 +406,7 @@ def search_tools_command(ctx: click.Context, query: str) -> None:
 @click.pass_context
 def describe_command(ctx: click.Context, identifier: str) -> None:
     try:
-        result = describe_tool(identifier)
+        result = _run_traced(ctx, "describe", "meta", lambda: (describe_tool(identifier), None))
         _echo_result(ctx, "describe", result)
     except KeyError:
         _fail(ctx, "describe", ConfigError(f"Unknown command: {identifier}"))
@@ -225,7 +421,7 @@ def describe_command(ctx: click.Context, identifier: str) -> None:
 @click.pass_context
 def examples_command(ctx: click.Context, identifier: str) -> None:
     try:
-        result = {"examples": tool_examples(identifier)}
+        result = _run_traced(ctx, "examples", "meta", lambda: ({"examples": tool_examples(identifier)}, None))
         _echo_result(ctx, "examples", result)
     except KeyError:
         _fail(ctx, "examples", ConfigError(f"Unknown command: {identifier}"))
@@ -233,6 +429,22 @@ def examples_command(ctx: click.Context, identifier: str) -> None:
         _fail(ctx, "examples", error)
     except Exception as exc:  # pragma: no cover
         _emit_internal(ctx, "examples", exc)
+
+
+@cli.command("agent-help")
+@click.pass_context
+def agent_help_command(ctx: click.Context) -> None:
+    try:
+        result = _run_traced(ctx, "agent-help", "meta", lambda: (_agent_help_payload(), None))
+        options = _ctx_options(ctx)
+        if options.json_mode:
+            _echo_result(ctx, "agent-help", result)
+        else:
+            click.echo(_agent_help_text())
+    except CliError as error:
+        _fail(ctx, "agent-help", error)
+    except Exception as exc:  # pragma: no cover
+        _emit_internal(ctx, "agent-help", exc)
 
 
 @cli.group("profile", no_args_is_help=True)
@@ -260,14 +472,22 @@ def profile_add_command(
     set_active: bool,
 ) -> None:
     try:
-        result = add_profile(
-            name,
-            domain=domain,
-            token=token,
-            sandbox=sandbox,
-            cache_mode=cache_mode,
-            cache_ttl_seconds=cache_ttl_seconds,
-            set_active=set_active,
+        result = _run_traced(
+            ctx,
+            "profile.add",
+            "meta",
+            lambda: (
+                add_profile(
+                    name,
+                    domain=domain,
+                    token=token,
+                    sandbox=sandbox,
+                    cache_mode=cache_mode,
+                    cache_ttl_seconds=cache_ttl_seconds,
+                    set_active=set_active,
+                ),
+                None,
+            ),
         )
         _echo_result(ctx, "profile.add", result)
     except CliError as error:
@@ -281,7 +501,7 @@ def profile_add_command(
 @click.pass_context
 def profile_use_command(ctx: click.Context, name: str) -> None:
     try:
-        _echo_result(ctx, "profile.use", use_profile(name))
+        _echo_result(ctx, "profile.use", _run_traced(ctx, "profile.use", "meta", lambda: (use_profile(name), None)))
     except CliError as error:
         _fail(ctx, "profile.use", error)
     except Exception as exc:  # pragma: no cover
@@ -292,7 +512,7 @@ def profile_use_command(ctx: click.Context, name: str) -> None:
 @click.pass_context
 def profile_list_command(ctx: click.Context) -> None:
     try:
-        _echo_result(ctx, "profile.list", list_profiles())
+        _echo_result(ctx, "profile.list", _run_traced(ctx, "profile.list", "meta", lambda: (list_profiles(), None)))
     except CliError as error:
         _fail(ctx, "profile.list", error)
     except Exception as exc:  # pragma: no cover
@@ -304,7 +524,7 @@ def profile_list_command(ctx: click.Context) -> None:
 @click.pass_context
 def profile_show_command(ctx: click.Context, name: str | None) -> None:
     try:
-        _echo_result(ctx, "profile.show", show_profile(name))
+        _echo_result(ctx, "profile.show", _run_traced(ctx, "profile.show", "meta", lambda: (show_profile(name), None)))
     except CliError as error:
         _fail(ctx, "profile.show", error)
     except Exception as exc:  # pragma: no cover
@@ -316,7 +536,7 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
 @click.pass_context
 def profile_remove_command(ctx: click.Context, name: str) -> None:
     try:
-        _echo_result(ctx, "profile.remove", remove_profile(name))
+        _echo_result(ctx, "profile.remove", _run_traced(ctx, "profile.remove", "meta", lambda: (remove_profile(name), None)))
     except CliError as error:
         _fail(ctx, "profile.remove", error)
     except Exception as exc:  # pragma: no cover
@@ -333,6 +553,8 @@ def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     json_mode = "--json" in args
     try:
+        global _CURRENT_ARGV
+        _CURRENT_ARGV = list(args)
         cli.main(args=args, prog_name="kaiten", standalone_mode=False)
         return 0
     except NoArgsIsHelpError as error:
@@ -352,6 +574,8 @@ def main(argv: list[str] | None = None) -> int:
         stream = sys.stdout if json_mode else sys.stderr
         stream.write(render_error(None, cli_error, json_mode) + "\n")
         return cli_error.exit_code
+    finally:
+        _CURRENT_ARGV = None
 
 
 if __name__ == "__main__":  # pragma: no cover

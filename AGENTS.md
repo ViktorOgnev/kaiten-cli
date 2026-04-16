@@ -53,7 +53,9 @@ kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-
 - Prefer `--compact` and `--fields` to reduce payload and token cost.
 - Request-scoped cache for safe GETs is built in; enable `--cache-mode readwrite` only when you want short-lived cross-process reuse.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
+- Use `--trace-file` or `KAITEN_TRACE_FILE` when you need a JSONL trace of real command cost across a longer workflow.
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.
 - For high-cardinality reads, follow the heavy-data skill instead of inventing a per-entity loop.
 - For metrics workflows, follow the metrics skill instead of reconstructing raw history one card at a time.
+- Prefer `space-topology.get`, `space-activity-all.get`, `card-children.batch-list`, `comments.batch-list`, and `card-location-history.batch-get` over manual orchestration loops.
 - Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).

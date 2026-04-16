@@ -34,6 +34,7 @@ def test_help_shows_new_namespaces(runner):
     assert "company" in result.output
     assert "calendars" in result.output
     assert "user-timers" in result.output
+    assert "space-topology" in result.output
 
 
 def test_help_shows_nested_project_card_group(runner):
@@ -60,15 +61,18 @@ def test_resolve_new_aliases():
     assert resolve_tool("kaiten_get_card_blocker").canonical_name == "blockers.get"
     assert resolve_tool("kaiten_create_card_file").canonical_name == "files.create"
     assert resolve_tool("kaiten_add_card_child").canonical_name == "card-children.add"
+    assert resolve_tool("kaiten_batch_list_card_children").canonical_name == "card-children.batch-list"
     assert resolve_tool("kaiten_add_card_parent").canonical_name == "card-parents.add"
     assert resolve_tool("kaiten_add_planned_relation").canonical_name == "planned-relations.add"
     assert resolve_tool("kaiten_update_planned_relation").canonical_name == "planned-relations.update"
     assert resolve_tool("kaiten_remove_planned_relation").canonical_name == "planned-relations.remove"
+    assert resolve_tool("kaiten_batch_list_comments").canonical_name == "comments.batch-list"
     assert resolve_tool("kaiten_create_project").canonical_name == "projects.create"
     assert resolve_tool("kaiten_create_time_log").canonical_name == "time-logs.create"
     assert resolve_tool("kaiten_get_company").canonical_name == "company.current"
     assert resolve_tool("kaiten_list_calendars").canonical_name == "calendars.list"
     assert resolve_tool("kaiten_create_user_timer").canonical_name == "user-timers.create"
+    assert resolve_tool("kaiten_get_space_topology").canonical_name == "space-topology.get"
 
 
 def test_build_request_for_create_checklist_item():

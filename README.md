@@ -33,6 +33,7 @@ python3 -m venv .venv
 ```bash
 kaiten --version
 kaiten --help
+kaiten agent-help
 kaiten search-tools cards
 ```
 
@@ -41,7 +42,7 @@ kaiten search-tools cards
 Если агент работает с этим CLI через git-репозиторий, оптимальные workflow описаны в skills format, а не размазаны по длинным prose docs:
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)  
-  Как не строить N+1 path, как выбирать bulk tools, shaping и cache mode для тяжёлых чтений.
+  Как не строить N+1 path, как выбирать bulk tools, shaping, trace и cache mode для тяжёлых чтений.
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)  
   Как собирать Kanban-метрики через текущий CLI без поштучных history loops.
 
@@ -57,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.3"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.4"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
@@ -109,6 +110,7 @@ python -m kaiten_cli --help
 | `KAITEN_TOKEN` | Да | API-токен пользователя |
 | `KAITEN_LIVE` | Нет | `1` для opt-in live validation |
 | `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
+| `KAITEN_TRACE_FILE` | Нет | JSONL-файл для append-only command trace |
 
 CLI читает переменные окружения только из текущего процесса или из сохранённого profile-конфига.
 
@@ -256,7 +258,10 @@ kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --worke
 Если сценарий требует сотни однотипных чтений, не спаунь `kaiten` отдельным процессом на каждый объект.
 
 - Для массовой истории перемещений используйте `card-location-history.batch-get`, а не цикл из `card-location-history.get`.
+- Для relation-heavy расследований используйте `card-children.batch-list`, а не цикл из `card-children.list`.
+- Для comment-heavy расследований используйте `comments.batch-list`, а не цикл из `comments.list`.
 - Для bulk population по карточкам используйте `cards.list-all --selection all|active_only|archived_only`.
+- Для topology scaffolding используйте `space-topology.get`, а не связку из `boards.list`, `columns.list` и `lanes.list`.
 - `cards.list-all --selection active_only` нормализован в CLI как `all_cards - archived_subset`, чтобы не перекладывать эту логику на внешний скрипт.
 - Если workflow состоит из многих повторных reference/entity GET, включайте `--cache-mode readwrite` с коротким TTL вместо повторных identical reads.
 
@@ -264,9 +269,30 @@ kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --worke
 
 ```bash
 kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2
+kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title
+kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
 kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state
+kaiten --json space-topology get --space-id 10
 kaiten --json --cache-mode readwrite cards get --card-id 101 --compact --fields id,title,state
 ```
+
+## Investigation and report workflows
+
+Если агент или внешний скрипт строит отчёт, сначала собери дешёвые bulk primitives, а уже потом переходи к постобработке:
+
+- `space-topology.get` для boards + columns + lanes в одном CLI вызове
+- `cards.list-all` для population
+- `space-activity-all.get` вместо ручной пагинации вокруг `space-activity.get`
+- `card-children.batch-list` и `comments.batch-list` вместо per-card relation/comment loops
+- `card-location-history.batch-get` только когда действительно нужна история перемещений
+
+Если нужно потом разбирать, почему путь оказался дорогим или неоптимальным, включай command trace:
+
+```bash
+kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --selection active_only
+```
+
+Trace пишет JSONL со временем выполнения, количеством реальных HTTP-запросов, retry/cache counters и batch metadata вроде `requested_count` / `unique_count` / `workers`.
 
 ## Первые команды
 
@@ -285,6 +311,14 @@ kaiten --json --verbose cards list --board-id 10 --limit 5
 ```
 
 Verbose diagnostics пишутся в `stderr` и показывают resolved profile source, request path, timeout class и custom execution path.
+
+Если нужна post-hoc трассировка длинного сценария:
+
+```bash
+kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get --card-ids '[101,102,103]'
+```
+
+Это не меняет stdout-ответ команды: trace уходит только в отдельный JSONL-файл.
 
 ## Troubleshooting
 

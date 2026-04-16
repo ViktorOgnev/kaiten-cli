@@ -22,6 +22,7 @@ from kaiten_cli.models import (
     DebugReporter,
     ResolvedProfile,
 )
+from kaiten_cli.runtime.trace import ExecutionStats
 
 
 def persistent_cache_path() -> Path:
@@ -125,6 +126,7 @@ class ExecutionContext:
     profile: ResolvedProfile
     reporter: DebugReporter | None = None
     persistent_cache: PersistentCache | None = None
+    stats: ExecutionStats = field(default_factory=ExecutionStats)
     _request_cache: dict[RequestCacheKey, Any] = field(default_factory=dict, init=False)
     _inflight: dict[RequestCacheKey, asyncio.Task[Any]] = field(default_factory=dict, init=False)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
@@ -165,16 +167,25 @@ class ExecutionContext:
         if cache_policy == CACHE_POLICY_NONE:
             return None
         if self.persistent_cache is None or cache_policy != CACHE_POLICY_PERSISTENT_OPT_IN:
+            self.stats.disk_cache_bypasses += 1
             self._debug(f"cache: disk bypass method={key.method} path={key.path}")
             return None
         if self.profile.cache_mode == CACHE_MODE_REFRESH:
+            self.stats.disk_cache_bypasses += 1
             self._debug(f"cache: disk bypass refresh method={key.method} path={key.path}")
             return None
         try:
             status, payload = self.persistent_cache.get(key)
         except (OSError, sqlite3.Error, ValueError, json.JSONDecodeError) as exc:
+            self.stats.disk_cache_bypasses += 1
             self._debug(f"cache: disk bypass method={key.method} path={key.path} reason={type(exc).__name__}")
             return None
+        if status == "hit":
+            self.stats.disk_cache_hits += 1
+        elif status == "miss":
+            self.stats.disk_cache_misses += 1
+        elif status == "expired":
+            self.stats.disk_cache_expired += 1
         self._debug(f"cache: disk {status} method={key.method} path={key.path}")
         return payload
 
@@ -221,16 +232,19 @@ class ExecutionContext:
         key = self._make_key(method, path, params)
         async with self._lock:
             if key in self._request_cache:
+                self.stats.request_cache_hits += 1
                 self._debug(f"cache: request hit method={key.method} path={key.path}")
                 return copy.deepcopy(self._request_cache[key])
             task = self._inflight.get(key)
             if task is None:
+                self.stats.request_cache_misses += 1
                 self._debug(f"cache: request miss method={key.method} path={key.path}")
                 task = asyncio.create_task(
                     self._load_or_fetch(key, cache_policy=cache_policy, fetch=fetch)
                 )
                 self._inflight[key] = task
             else:
+                self.stats.inflight_dedup_hits += 1
                 self._debug(f"cache: inflight dedup hit method={key.method} path={key.path}")
 
         try:

@@ -83,6 +83,8 @@ class KaitenClient:
         timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         client = await self._get_client()
+        if self.execution_context is not None:
+            self.execution_context.stats.http_request_count += 1
         if params:
             params = {key: value for key, value in params.items() if value is not None}
 
@@ -99,11 +101,15 @@ class KaitenClient:
                                 f"retry: rate-limited on {method} {path}, waiting {delay:.1f}s from Retry-After"
                             )
                             logger.warning("Rate limited, retrying after %.1fs", delay)
+                            if self.execution_context is not None:
+                                self.execution_context.stats.retry_count += 1
                             await asyncio.sleep(delay)
                             continue
                     self._debug(
                         f"retry: rate-limited on {method} {path}, waiting {RETRY_DELAY * (attempt + 1):.1f}s"
                     )
+                    if self.execution_context is not None:
+                        self.execution_context.stats.retry_count += 1
                     await asyncio.sleep(RETRY_DELAY * (attempt + 1))
                     continue
 
@@ -130,6 +136,8 @@ class KaitenClient:
                     f"retry: timeout on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
                     f"waiting {RETRY_DELAY * (attempt + 1):.1f}s"
                 )
+                if self.execution_context is not None:
+                    self.execution_context.stats.retry_count += 1
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
             except httpx.HTTPError as exc:
                 if attempt == MAX_RETRIES - 1:
@@ -138,6 +146,8 @@ class KaitenClient:
                     f"retry: transport error on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
                     f"waiting {RETRY_DELAY * (attempt + 1):.1f}s"
                 )
+                if self.execution_context is not None:
+                    self.execution_context.stats.retry_count += 1
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
 
         raise TransportError("Rate limit retries exhausted")

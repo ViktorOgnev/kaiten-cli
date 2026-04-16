@@ -48,6 +48,21 @@ def test_describe_tool_includes_usage_notes_and_bulk_alternative():
     bulk_description = describe_tool("cards.list-all")
     assert any("selection=all|active_only|archived_only" in note for note in bulk_description["usage_notes"])
 
+    children = describe_tool("card-children.list")
+    assert children["bulk_alternative"] == "card-children.batch-list"
+    assert any("per-card read" in note for note in children["usage_notes"])
+
+    comments = describe_tool("comments.list")
+    assert comments["bulk_alternative"] == "comments.batch-list"
+    assert any("per-card read" in note for note in comments["usage_notes"])
+
+    activity = describe_tool("space-activity.get")
+    assert activity["bulk_alternative"] == "space-activity-all.get"
+    assert any("manual offset loops" in note for note in activity["usage_notes"])
+
+    chart = describe_tool("charts.summary.get")
+    assert any("card-location-history.batch-get" in note for note in chart["usage_notes"])
+
 
 def test_describe_tool_includes_persistent_cache_policy_for_safe_entity_reads():
     description = describe_tool("cards.get")
@@ -62,3 +77,11 @@ def test_tool_examples_non_empty():
     examples = tool_examples("cards.list")
     assert examples
     assert examples[0].startswith("kaiten cards list")
+
+
+def test_search_tools_exposes_usage_notes_and_bulk_alternative():
+    results = search_tools("card-children.batch-list")
+    assert results
+    assert results[0]["canonical_name"] == "card-children.batch-list"
+    assert results[0]["usage_notes"]
+    assert results[0]["bulk_alternative"] is None

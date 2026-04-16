@@ -7,13 +7,15 @@ from typing import Any
 from kaiten_cli.errors import BatchExecutionError, ValidationError
 from kaiten_cli.runtime.support.audit import (
     DEFAULT_HISTORY_WORKERS,
-    MAX_HISTORY_WORKERS,
     fetch_all_space_activity,
     fetch_card_location_histories,
 )
 from kaiten_cli.runtime.support.cards import fetch_all_cards
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
+from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
+from kaiten_cli.runtime.support.spaces import fetch_space_topology
+from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
 from kaiten_cli.runtime.support.tree import build_tree, fetch_all_entities, list_children
 
 Query = dict[str, Any] | None
@@ -150,13 +152,16 @@ def validate_cards_list_all_selection(tool, payload: dict[str, Any]) -> None:
         raise ValidationError("Field selection cannot be combined with archived or condition.")
 
 
-def validate_history_batch_get(tool, payload: dict[str, Any]) -> None:
+def validate_card_id_batch(tool, payload: dict[str, Any]) -> None:
     card_ids = payload.get("card_ids")
     if not isinstance(card_ids, list) or not card_ids:
         raise ValidationError("Field card_ids must be a non-empty array.")
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
-    if workers < 1 or workers > MAX_HISTORY_WORKERS:
-        raise ValidationError(f"Field workers must be between 1 and {MAX_HISTORY_WORKERS}.")
+    if workers < 1 or workers > MAX_BATCH_WORKERS:
+        raise ValidationError(f"Field workers must be between 1 and {MAX_BATCH_WORKERS}.")
+
+
+validate_history_batch_get = validate_card_id_batch
 
 
 async def execute_blockers_get(
@@ -282,6 +287,86 @@ async def execute_card_location_history_batch_get(
     return result
 
 
+async def execute_card_children_batch_list(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if reporter:
+        reporter(
+            "execution: aggregated batch relation fetch over /cards/{card_id}/children "
+            f"with workers={workers}"
+        )
+    result = await fetch_card_children_batch(
+        domain=client.domain,
+        token=client.token,
+        card_ids=list(payload["card_ids"]),
+        workers=workers,
+        compact=bool(payload.get("compact", False)),
+        fields=payload.get("fields"),
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=client.execution_context,
+        cache_policy=client.cache_policy,
+    )
+    if reporter:
+        meta = result["meta"]
+        reporter(
+            "batch-children: "
+            f"requested={meta['requested_count']} unique={meta['unique_count']} "
+            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+        )
+    if result["meta"]["succeeded"] == 0:
+        raise BatchExecutionError("Failed to fetch child cards for all requested cards.", result)
+    return result
+
+
+async def execute_comments_batch_list(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
+    if reporter:
+        reporter(
+            "execution: aggregated batch comment fetch over /cards/{card_id}/comments "
+            f"with workers={workers}"
+        )
+    result = await fetch_comments_batch(
+        domain=client.domain,
+        token=client.token,
+        card_ids=list(payload["card_ids"]),
+        workers=workers,
+        compact=bool(payload.get("compact", False)),
+        fields=payload.get("fields"),
+        timeout=timeout,
+        reporter=reporter,
+        execution_context=client.execution_context,
+        cache_policy=client.cache_policy,
+    )
+    if reporter:
+        meta = result["meta"]
+        reporter(
+            "batch-comments: "
+            f"requested={meta['requested_count']} unique={meta['unique_count']} "
+            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+        )
+    if result["meta"]["succeeded"] == 0:
+        raise BatchExecutionError("Failed to fetch comments for all requested cards.", result)
+    return result
+
+
 async def execute_space_activity_all(
     client,
     tool,
@@ -295,3 +380,18 @@ async def execute_space_activity_all(
     if reporter:
         reporter("execution: aggregated bounded pagination over /spaces/{space_id}/activity")
     return await fetch_all_space_activity(client, payload, timeout=timeout)
+
+
+async def execute_space_topology_get(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    if reporter:
+        reporter("execution: aggregated topology read over /spaces/{space_id}/boards and /boards/{board_id}")
+    return await fetch_space_topology(client, payload["space_id"], timeout=timeout)

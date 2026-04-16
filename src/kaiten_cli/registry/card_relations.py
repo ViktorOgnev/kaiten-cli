@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import (
     card_child_add_request,
     card_parent_add_request,
+    execute_card_children_batch_list,
     planned_relation_add_request,
+    validate_card_id_batch,
 )
 
 
@@ -26,6 +28,41 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/cards/{card_id}/children", path_fields=("card_id",)),
         examples=(
             ExampleSpec(command="kaiten card-children list --card-id 10 --json", description="List child cards."),
+        ),
+        usage_notes=(
+            "This is a per-card read and becomes expensive when repeated across many parent cards.",
+            "For investigation and reporting workflows, prefer card-children.batch-list over one-card-at-a-time loops.",
+        ),
+        bulk_alternative="card-children.batch-list",
+    ),
+    make_tool(
+        canonical_name="card-children.batch-list",
+        mcp_alias="kaiten_batch_list_card_children",
+        description="Fetch child-card relations for multiple parent cards with bounded worker concurrency.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Parent card IDs to inspect"},
+                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
+                "compact": {"type": "boolean", "description": "Strip heavy nested fields from child card payloads"},
+                "fields": {"type": "string", "description": "Comma-separated field names to keep for each child card"},
+            },
+            "required": ["card_ids"],
+        },
+        operation=OperationSpec(method="GET", path_template="/cards/children/batch"),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            payload_validator=validate_card_id_batch,
+            custom_executor=execute_card_children_batch_list,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten card-children batch-list --card-ids '[1,2,3]' --json", description="Fetch child-card relations for several parent cards."),
+            ExampleSpec(command="kaiten card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title --json", description="Fetch narrowed child-card payloads with bounded concurrency."),
+        ),
+        usage_notes=(
+            "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Use this bulk path for relation-heavy investigations instead of per-parent card-children.list loops.",
         ),
     ),
     make_tool(

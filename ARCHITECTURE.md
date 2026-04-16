@@ -19,7 +19,7 @@ Main layers:
 - `src/kaiten_cli/runtime/`
   Execution layer. Builds requests, resolves profiles and cache settings, applies sandbox safety rules, runs HTTP calls, handles synthetic and aggregated reads, and shapes responses.
 - `src/kaiten_cli/runtime/support/`
-  Domain-specific helpers used by runtime behaviors for documents, projects, tree aggregation, cards bulk pagination, and activity pagination.
+  Domain-specific helpers used by runtime behaviors for documents, projects, tree aggregation, cards bulk pagination, relation/comment batch reads, activity pagination, and space topology aggregation.
 - top-level `src/kaiten_cli/`
   Stable package surface and shared core: `app.py`, `discovery.py`, `profiles.py`, `models.py`, `errors.py`, entrypoints.
 
@@ -48,8 +48,11 @@ Each CLI invocation builds one execution context for the selected profile.
 - identical in-flight GETs are deduplicated inside the same execution context
 - persistent disk cache is opt-in through `--cache-mode` or profile defaults
 - successful mutations clear persistent cache for the current profile/domain scope
+- optional JSONL trace output can be appended through `--trace-file` or `KAITEN_TRACE_FILE`
 
 This keeps the default one-shot CLI behavior intact, while reducing repeated entity reads in synthetic, aggregated, and worker-pooled paths.
+
+The trace layer records command-level facts such as duration, real HTTP request count, retry/cache counters, and bulk metadata. It exists because outer Codex/session logs do not reliably see internal Kaiten subprocess calls from higher-level scripts.
 
 ## Execution Modes
 
@@ -62,7 +65,7 @@ This keeps the default one-shot CLI behavior intact, while reducing repeated ent
 - `custom`
   Runtime uses a dedicated executor because the API contract does not map cleanly to a simple request/response flow.
 
-Bulk reads are still registry-defined tools. The difference is that some aggregated tools now use a dedicated bulk execution path instead of repeated one-shot CLI invocations.
+Bulk reads are still registry-defined tools. The difference is that some aggregated tools now use a dedicated bulk execution path instead of repeated one-shot CLI invocations. Current examples include `cards.list-all`, `space-activity-all.get`, `space-topology.get`, `card-children.batch-list`, `comments.batch-list`, and `card-location-history.batch-get`.
 
 ## Docs Map
 

@@ -17,6 +17,7 @@ Use this skill when the task smells like bulk reads, exports, audits, migrations
 ## Anti-patterns
 
 - Do not spawn `kaiten` once per card when a bulk tool exists.
+- Do not loop over `card-children list` or `comments list` for every card in an investigation.
 - Do not fetch full card objects for metrics or audits if `--fields` is enough.
 - Do not repeat identical safe GET reads across multiple CLI calls without considering cache.
 - Do not assume `cards.list` is the right bulk path; check `cards.list-all`.
@@ -49,6 +50,33 @@ Notes:
 - Prefer this over repeating `card-location-history get`.
 - The batch path keeps partial per-card failures in-band.
 - Duplicate `card_id` values are deduplicated before network fetch.
+
+### Relation and comment evidence
+
+Use:
+
+```bash
+kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title
+kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
+```
+
+Notes:
+
+- Prefer these over per-card `card-children list` and `comments list`.
+- Both batch paths keep partial per-card failures in-band.
+
+### Space topology
+
+Use:
+
+```bash
+kaiten --json space-topology get --space-id 10
+```
+
+Notes:
+
+- Prefer this over a script that separately calls `boards list`, `columns list`, and `lanes list`.
+- Use it at the start of report scaffolding to lock board/column/lane IDs once.
 
 ## Response shaping
 
@@ -96,9 +124,20 @@ Check for:
 - `cache: disk hit/miss/bypass`
 - `retry:` messages
 
+For longer workflows, record a command trace:
+
+```bash
+kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --selection active_only
+```
+
+Trace helps explain real HTTP cost when outer agent logs only show the wrapper script.
+
 ## Quick decision rule
 
 - Need many cards: `cards list-all`
+- Need many child relations: `card-children batch-list`
+- Need many comment reads: `comments batch-list`
+- Need one space topology snapshot: `space-topology get`
 - Need many card histories: `card-location-history batch-get`
 - Need one entity many times across multiple CLI calls: enable `--cache-mode readwrite`
 - Need to understand the path first: `describe <tool>`

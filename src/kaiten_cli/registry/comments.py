@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import comment_format_request
+from kaiten_cli.runtime.behaviors import (
+    comment_format_request,
+    execute_comments_batch_list,
+    validate_card_id_batch,
+)
 
 
 TOOLS = (
@@ -28,6 +32,41 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(command="kaiten comments list --card-id 10 --compact --json", description="List comments on a card."),
+        ),
+        usage_notes=(
+            "This is a per-card read and becomes expensive when repeated across large card populations.",
+            "For report and investigation workflows, prefer comments.batch-list over one-card-at-a-time loops.",
+        ),
+        bulk_alternative="comments.batch-list",
+    ),
+    make_tool(
+        canonical_name="comments.batch-list",
+        mcp_alias="kaiten_batch_list_comments",
+        description="Fetch comments for multiple cards with bounded worker concurrency.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to inspect"},
+                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
+                "compact": {"type": "boolean", "description": "Strip heavy fields from comment payloads"},
+                "fields": {"type": "string", "description": "Comma-separated field names to keep for each comment"},
+            },
+            "required": ["card_ids"],
+        },
+        operation=OperationSpec(method="GET", path_template="/cards/comments/batch"),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            payload_validator=validate_card_id_batch,
+            custom_executor=execute_comments_batch_list,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten comments batch-list --card-ids '[1,2,3]' --json", description="Fetch comments for several cards in one CLI call."),
+            ExampleSpec(command="kaiten comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text --json", description="Fetch narrowed comment payloads with bounded concurrency."),
+        ),
+        usage_notes=(
+            "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Use this bulk path when you need comment evidence across many cards.",
         ),
     ),
     make_tool(

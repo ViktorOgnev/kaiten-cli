@@ -18,17 +18,28 @@ def test_repo_contains_expected_skill_files():
 
     assert "name: kaiten-cli-heavy-data" in heavy_text
     assert "card-location-history batch-get" in heavy_text
+    assert "card-children batch-list" in heavy_text
+    assert "comments batch-list" in heavy_text
+    assert "--trace-file" in heavy_text
     assert "--cache-mode readwrite" in heavy_text
 
     assert "name: kaiten-cli-metrics" in metrics_text
     assert "cards list-all" in metrics_text
+    assert "space-topology get" in metrics_text
     assert "compute-jobs get" in metrics_text
+    assert "--trace-file" in metrics_text
 
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in readme
     assert "skills/kaiten-cli-metrics/SKILL.md" in readme
     assert "## Как работает кэш" in readme
+    assert "## Investigation and report workflows" in readme
+    assert "card-children.batch-list" in readme
+    assert "comments.batch-list" in readme
+    assert "space-topology.get" in readme
+    assert "--trace-file" in readme
     assert "--cache-mode" in readme
     assert "--cache-ttl-seconds" in readme
     assert "request-scoped" in readme
     assert "persistent" in readme
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in agents
+    assert "--trace-file" in agents

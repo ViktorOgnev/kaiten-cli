@@ -106,6 +106,7 @@ kaiten_get_calendar
 kaiten_get_card
 kaiten_get_card_activity
 kaiten_get_card_blocker
+kaiten_batch_list_card_children
 kaiten_get_card_location_history
 kaiten_batch_get_card_location_history
 kaiten_get_card_sla_measurements
@@ -133,6 +134,7 @@ kaiten_get_sd_template_answer
 kaiten_get_select_value
 kaiten_get_space
 kaiten_get_space_activity
+kaiten_get_space_topology
 kaiten_get_space_sla_measurements
 kaiten_get_sprint
 kaiten_get_tree
@@ -159,6 +161,7 @@ kaiten_list_checklists
 kaiten_list_children
 kaiten_list_column_subscribers
 kaiten_list_columns
+kaiten_batch_list_comments
 kaiten_list_comments
 kaiten_list_company_groups
 kaiten_list_custom_properties

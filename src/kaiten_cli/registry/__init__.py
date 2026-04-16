@@ -89,6 +89,8 @@ def search(query: str, limit: int = 5) -> list[ToolSpec]:
             tool.namespace,
             tool.action,
             tool.description,
+            tool.bulk_alternative or "",
+            " ".join(tool.usage_notes),
             " ".join(example.command for example in tool.examples),
             " ".join(example.description for example in tool.examples),
         ]

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.behaviors import execute_space_topology_get
 
 
 TOOLS = (
@@ -55,6 +56,28 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/spaces/{space_id}", path_fields=("space_id",)),
         examples=(
             ExampleSpec(command="kaiten spaces get --space-id 123", description="Get a space by ID."),
+        ),
+    ),
+    make_tool(
+        canonical_name="space-topology.get",
+        mcp_alias="kaiten_get_space_topology",
+        description="Fetch boards with their columns and lanes for a Kaiten space.",
+        input_schema={
+            "type": "object",
+            "properties": {"space_id": {"type": "integer", "description": "Space ID"}},
+            "required": ["space_id"],
+        },
+        operation=OperationSpec(method="GET", path_template="/spaces/{space_id}/topology", path_fields=("space_id",)),
+        response_policy=ResponsePolicy(result_kind="entity", heavy=True),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_space_topology_get,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten space-topology get --space-id 123 --json", description="Fetch board topology for a space."),
+        ),
+        usage_notes=(
+            "Use this for report scaffolding instead of separate boards.list, columns.list, and lanes.list loops.",
         ),
     ),
     make_tool(

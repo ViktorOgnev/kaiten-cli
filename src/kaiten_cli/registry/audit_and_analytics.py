@@ -97,6 +97,11 @@ TOOLS = (
         examples=(
             ExampleSpec(command="kaiten space-activity get --space-id 1 --limit 10 --json", description="Get space activity."),
         ),
+        usage_notes=(
+            "This low-level endpoint is useful for targeted page reads, but report workflows usually want the bounded bulk path.",
+            "Prefer space-activity-all.get over manual offset loops when collecting a full investigation window.",
+        ),
+        bulk_alternative="space-activity-all.get",
     ),
     make_tool(
         canonical_name="company-activity.get",
@@ -219,6 +224,9 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(command="kaiten space-activity-all get --space-id 1 --page-size 20 --max-pages 2 --json", description="Fetch all space activity with bounded pagination."),
+        ),
+        usage_notes=(
+            "Use this aggregated path for report windows instead of building manual offset loops around space-activity.get.",
         ),
     ),
     make_tool(

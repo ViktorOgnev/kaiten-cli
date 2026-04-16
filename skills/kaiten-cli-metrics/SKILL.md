@@ -10,6 +10,8 @@ Use this skill for lead time, cycle time, throughput, WIP, due-date performance,
 ## Source selection
 
 - Prefer `cards list-all` when the metric can be computed from card fields.
+- Prefer `space-topology get` to resolve board/column/lane structure before collecting metric data.
+- Prefer `space-activity-all get` over manual offset loops around `space-activity get`.
 - Use `card-location-history batch-get` only when the metric truly needs per-card movement history.
 - Use chart tools when Kaiten already computes the metric server-side.
 
@@ -19,6 +21,7 @@ Use this skill for lead time, cycle time, throughput, WIP, due-date performance,
 
 ```bash
 kaiten search-tools "lead time cards"
+kaiten describe space-topology.get
 kaiten describe cards.list-all
 kaiten describe card-location-history.batch-get
 ```
@@ -48,9 +51,17 @@ kaiten --json card-location-history batch-get \
   --fields changed,column_id,subcolumn_id
 ```
 
+If the metric depends on relation or comment evidence across many cards:
+
+```bash
+kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,title
+kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
+```
+
 ## Anti-patterns
 
 - Do not compute metrics by calling `card-location-history get` once per card.
+- Do not compute evidence-based metrics by looping over `card-children list` or `comments list`.
 - Do not fetch full card payloads if timing fields are enough.
 - Do not build a shell loop of repeated `kaiten cards get` when `cards list-all` already gives the population.
 - Do not ignore `describe` metadata; check `execution_mode`, `bulk_alternative`, and `cache_policy`.
@@ -80,8 +91,23 @@ Prefer chart endpoints when you need precomputed analytics instead of reconstruc
 
 Use chart submission plus `compute-jobs get` polling only for the chart result itself. Do not expect `compute-jobs get` to benefit from persistent cache.
 
+If the tenant returns `404` or feature-unavailable responses on chart tools, switch early to `cards.list-all`, `space-activity-all.get`, and `card-location-history.batch-get` instead of probing more chart variants.
+
+## Trace for long analytics runs
+
+When a report is orchestrated by a shell or Python wrapper, enable trace output on the expensive CLI steps:
+
+```bash
+kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get --card-ids '[101,102,103]'
+```
+
+The trace reveals real HTTP request counts even when the outer agent log only sees the wrapper command.
+
 ## Quick decision rule
 
 - WIP, throughput, lead/cycle time from card timestamps: `cards list-all`
+- Topology bootstrap: `space-topology get`
+- Activity window export: `space-activity-all get`
+- Relation/comment evidence across many cards: `card-children batch-list` / `comments batch-list`
 - Per-column movement reconstruction: `card-location-history batch-get`
 - Precomputed analytics: chart tools + `compute-jobs get`
