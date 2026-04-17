@@ -39,6 +39,7 @@ def test_repo_contains_expected_skill_files():
 
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in readme
     assert "skills/kaiten-cli-metrics/SKILL.md" in readme
+    assert "COMMAND_REFERENCE.md" in readme
     assert "## Как работает кэш" in readme
     assert "## Investigation and report workflows" in readme
     assert "## Local-first analytics and headless workflows" in readme
@@ -57,7 +58,9 @@ def test_repo_contains_expected_skill_files():
     assert "persistent" in readme
     assert "Local-first path остаётся explicit" in readme
     assert "benchmark_reference_workflows.py" in readme
+    assert "Полный generated справочник" in readme
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in agents
+    assert "COMMAND_REFERENCE.md" in agents
     assert "--trace-file" in agents
     assert "snapshot build" in agents
     assert "cards.batch-get" in agents

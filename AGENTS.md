@@ -3,6 +3,7 @@
 This file only captures agent-specific guidance.
 
 For install, human-oriented usage, and the full docs map, start with [README.md](README.md).  
+For the full command catalog, use [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).  
 For the system map, use [ARCHITECTURE.md](ARCHITECTURE.md).
 For optimized LLM workflows, start with:
 

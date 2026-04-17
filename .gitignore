@@ -15,3 +15,6 @@ dist/
 .env
 .env_stage
 /ARCHITECTURE_REVIEW.md
+/docs/archive/
+/PLAN*.md
+/PARITY_CHECKLIST.md

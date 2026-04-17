@@ -99,15 +99,12 @@ Bulk reads are still registry-defined tools. The difference is that some aggrega
 Primary docs:
 
 - [README.md](README.md) for install, usage, config, and operator guidance
+- [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md) for the full generated command catalog
 - [AGENTS.md](AGENTS.md) for agent-specific usage and safety shortcuts
 - `skills/` for repo-local LLM workflows in `SKILL.md` format
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md) for live test process
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md) for documented sandbox contracts
 - `ARCHITECTURE.md` for the system map
-
-Historical artifacts:
-
-- [docs/archive/](docs/archive/README.md)
 
 `ARCHITECTURE_REVIEW.md` is intentionally kept out of tracked docs. It is an audit artifact, not the maintained architecture reference.
 

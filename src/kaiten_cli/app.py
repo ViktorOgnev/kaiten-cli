@@ -25,6 +25,7 @@ from kaiten_cli.runtime.trace import TraceRecorder, bulk_trace_meta
 _CURRENT_ARGV: list[str] | None = None
 REPOSITORY_URL = "https://github.com/ViktorOgnev/kaiten-cli"
 README_URL = f"{REPOSITORY_URL}/blob/master/README.md"
+COMMAND_REFERENCE_URL = f"{REPOSITORY_URL}/blob/master/COMMAND_REFERENCE.md"
 ARCHITECTURE_URL = f"{REPOSITORY_URL}/blob/master/ARCHITECTURE.md"
 AGENTS_URL = f"{REPOSITORY_URL}/blob/master/AGENTS.md"
 HEAVY_DATA_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-heavy-data/SKILL.md"
@@ -59,6 +60,7 @@ CLI_EPILOG = f"""\b
 Documentation:
   Repo: {REPOSITORY_URL}
   README: {README_URL}
+  Command reference: {COMMAND_REFERENCE_URL}
   Architecture: {ARCHITECTURE_URL}
   Agent guide: {AGENTS_URL}
   Skills:
@@ -154,6 +156,7 @@ def _agent_help_payload() -> dict[str, Any]:
         "docs": {
             "repository": REPOSITORY_URL,
             "readme": README_URL,
+            "command_reference": COMMAND_REFERENCE_URL,
             "architecture": ARCHITECTURE_URL,
             "agent_guide": AGENTS_URL,
             "skills": {
@@ -193,6 +196,7 @@ def _agent_help_text() -> str:
             "Docs:",
             f"  repo: {REPOSITORY_URL}",
             f"  readme: {README_URL}",
+            f"  command reference: {COMMAND_REFERENCE_URL}",
             f"  architecture: {ARCHITECTURE_URL}",
             f"  agents: {AGENTS_URL}",
             f"  skills heavy-data: {HEAVY_DATA_SKILL_URL}",

@@ -58,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.5"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.6"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
@@ -66,6 +66,23 @@ uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.5"
 ```bash
 python -m kaiten_cli --help
 ```
+
+## Карта документации
+
+- [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
+  Полный generated справочник по всем canonical командам и MCP aliases на одной странице.
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+  Архитектурная карта, execution modes и docs model.
+- [AGENTS.md](AGENTS.md)
+  Короткий agent-facing guide и discovery-first flow.
+- [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
+  Как устроен live harness и sandbox validation.
+- [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
+  Зафиксированные sandbox/API contracts.
+- [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
+  Heavy-data workflow guidance для LLM и headless scripts.
+- [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
+  Metrics workflow guidance для LLM и headless scripts.
 
 ## Что уже есть
 
@@ -84,6 +101,45 @@ python -m kaiten_cli --help
 - полный паритет по набору инструментов с текущим локальным registry snapshot
 - strict alias-set regression против checked-in snapshot
 - full live validation campaign на sandbox с teardown discipline
+
+## Инструменты
+
+<!-- BEGIN GENERATED COMMAND SUMMARY -->
+В `kaiten-cli` сейчас **259** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+
+| Область | Модуль | Кол-во | Справочник |
+|---|---|---:|---|
+| Карточки | `cards` | 9 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
+| Комментарии | `comments` | 5 | [Раздел](COMMAND_REFERENCE.md#module-comments) |
+| Участники и пользователи | `members` | 5 | [Раздел](COMMAND_REFERENCE.md#module-members) |
+| Логи времени | `time_logs` | 5 | [Раздел](COMMAND_REFERENCE.md#module-time-logs) |
+| Теги | `tags` | 6 | [Раздел](COMMAND_REFERENCE.md#module-tags) |
+| Чеклисты | `checklists` | 8 | [Раздел](COMMAND_REFERENCE.md#module-checklists) |
+| Блокировки | `blockers` | 5 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
+| Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
+| Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
+| Файлы карточек | `files` | 4 | [Раздел](COMMAND_REFERENCE.md#module-files) |
+| Подписчики | `subscribers` | 6 | [Раздел](COMMAND_REFERENCE.md#module-subscribers) |
+| Пространства | `spaces` | 6 | [Раздел](COMMAND_REFERENCE.md#module-spaces) |
+| Доски | `boards` | 5 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
+| Колонки и подколонки | `columns` | 8 | [Раздел](COMMAND_REFERENCE.md#module-columns) |
+| Дорожки | `lanes` | 4 | [Раздел](COMMAND_REFERENCE.md#module-lanes) |
+| Типы карточек | `card_types` | 5 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
+| Кастомные свойства | `custom_properties` | 10 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
+| Документы | `documents` | 10 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
+| Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
+| Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
+| Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
+| Роли и группы | `roles_and_groups` | 14 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
+| Аудит и аналитика | `audit_and_analytics` | 12 | [Раздел](COMMAND_REFERENCE.md#module-audit-and-analytics) |
+| Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
+| Графики и аналитика | `charts` | 15 | [Раздел](COMMAND_REFERENCE.md#module-charts) |
+| Дерево сущностей | `tree` | 2 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
+| Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
+| Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
+| Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
+| **Итого** | **29 modules** | **259** | [Полный справочник](COMMAND_REFERENCE.md) |
+<!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
 
@@ -419,17 +475,7 @@ KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
 
 Он запускает заданные CLI-команды, собирает stdout bytes, wall time и trace JSONL, чтобы сравнивать не только latency, но и реальный `http_request_count`.
 
-Карта документации:
-
-- [ARCHITECTURE.md](ARCHITECTURE.md)
-- [AGENTS.md](AGENTS.md)
-- [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
-- [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
-- [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
-- [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
-- [docs/archive/](docs/archive/README.md)
-
-`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. Архитектурная карта живёт в `ARCHITECTURE.md`. Исторические plan/review артефакты вынесены в `docs/archive/`.
+`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. Полный каталог команд живёт в `COMMAND_REFERENCE.md`, а архитектурная карта — в `ARCHITECTURE.md`.
 
 Релизная политика:
 
