@@ -27,17 +27,11 @@ def _profile_setup_command() -> str:
     return "kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active"
 
 
-def _sandbox_setup_command() -> str:
-    return "kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active"
-
-
 def _config_guidance(*, include_profile_list: bool) -> str:
     lines = [
         f"Config file: {config_path()}",
         "Recommended persistent setup:",
         f"  {_profile_setup_command()}",
-        "Sandbox example:",
-        f"  {_sandbox_setup_command()}",
     ]
     if include_profile_list:
         lines.extend(
@@ -250,13 +244,12 @@ def resolve_profile(
 
     env_domain = os.environ.get("KAITEN_DOMAIN", "")
     env_token = os.environ.get("KAITEN_TOKEN", "")
-    env_sandbox = env_domain == "sandbox"
     if env_domain and env_token:
         return ResolvedProfile(
             name=None,
             domain=env_domain,
             token=env_token,
-            sandbox=env_sandbox,
+            sandbox=False,
             source="environment",
             cache_mode=_normalize_cache_mode(cache_mode_override),
             cache_ttl_seconds=_normalize_cache_ttl_seconds(cache_ttl_seconds_override),

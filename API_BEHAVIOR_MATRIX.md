@@ -1,6 +1,8 @@
 # API Behavior Matrix
 
-Этот документ фиксирует живые sandbox-контракты для `kaiten-cli`.
+Этот документ фиксирует живые API-контракты для `kaiten-cli`, наблюдавшиеся на текущем live test tenant.
+
+Запуск live suite по-прежнему gated только через `KAITEN_LIVE=1|true`; special-case по домену или profile metadata для этого не используется.
 
 ## Default rule
 

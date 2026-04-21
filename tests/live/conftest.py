@@ -12,19 +12,36 @@ import pytest
 from click.testing import CliRunner
 
 from kaiten_cli.app import cli
-from kaiten_cli.registry.live_contracts import LIVE_POLICY_EXCLUSIONS
+from kaiten_cli.profiles import load_config
 from kaiten_cli.registry import iter_tools, resolve_tool
+from kaiten_cli.registry.live_contracts import LIVE_POLICY_EXCLUSIONS
 
 NORMAL_PAUSE_SECONDS = 0.5
 HEAVY_PAUSE_SECONDS = 1.0
 
 
+def _truthy_env(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _require_live_env() -> dict[str, str]:
+    env: dict[str, str] = {}
+    config_override = os.environ.get("KAITEN_CLI_CONFIG_PATH")
     domain = os.environ.get("KAITEN_DOMAIN")
     token = os.environ.get("KAITEN_TOKEN")
-    if os.environ.get("KAITEN_LIVE") != "1" or not domain or not token:
-        pytest.skip("Live sandbox suite is opt-in. Set KAITEN_LIVE=1 with sandbox credentials.")
-    return {"KAITEN_DOMAIN": domain, "KAITEN_TOKEN": token}
+    if not _truthy_env("KAITEN_LIVE"):
+        pytest.skip("Live suite is opt-in. Set KAITEN_LIVE=1|true to run it on explicit credentials or an active CLI profile.")
+    if config_override:
+        env["KAITEN_CLI_CONFIG_PATH"] = config_override
+    if domain and token:
+        env["KAITEN_DOMAIN"] = domain
+        env["KAITEN_TOKEN"] = token
+        return env
+    config = load_config()
+    active = config.get("active_profile")
+    if active and active in config.get("profiles", {}):
+        return env
+    pytest.skip("Set KAITEN_LIVE=1|true and provide KAITEN_DOMAIN/KAITEN_TOKEN or an active CLI profile.")
 
 
 class LiveHarness:

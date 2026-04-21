@@ -48,16 +48,12 @@ Recommended persistent setup:
 kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
 ```
 
-Sandbox setup:
-
-```bash
-kaiten profile add sandbox --domain sandbox --token <api-token> --sandbox --set-active
-```
-
 ## Safety and efficiency
 
 - Start with read-only commands.
-- Mutations are blocked unless the selected profile is marked sandbox or uses the `sandbox` domain.
+- Normal profiles can mutate; treat real credentials as real writes.
+- `KAITEN_LIVE=1|true` is the explicit per-run gate for the live test suite.
+- `profile add --sandbox` is deprecated compatibility metadata and does not affect mutations or live-test gating.
 - Prefer `--compact` and `--fields` to reduce payload and token cost.
 - Request-scoped cache for safe GETs is built in; enable `--cache-mode readwrite` only when you want short-lived cross-process reuse.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.

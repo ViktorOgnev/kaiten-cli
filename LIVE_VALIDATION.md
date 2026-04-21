@@ -1,10 +1,13 @@
 # Live Validation
 
-Этот документ описывает, как устроена полная live-проверка `kaiten-cli` на sandbox-аккаунте.
+Этот документ описывает, как устроена полная live-проверка `kaiten-cli` на реальных credentials с явным per-run gate.
+
+Текущая матрица контрактов в основном собрана на sandbox tenant, но сам live harness не привязывается к домену, имени профиля или profile metadata автоматически.
 
 ## Базовые правила
 
 - live suite запускается только после зелёного локального `pytest`
+- live suite запускается только при явном `KAITEN_LIVE=1|true`
 - live suite никогда не идёт в default test run
 - выполнение строго последовательное, без параллельных API-вызовов
 - между вызовами остаются паузы для соблюдения low-load discipline
@@ -16,9 +19,9 @@
 Для live verification используются следующие статусы:
 
 - `live_passed`
-  Команда реально проходит по success-path на sandbox.
+  Команда реально проходит по success-path на текущем live tenant.
 - `live_passed_with_runtime_fix`
-  Команда проходит на sandbox, но для этого понадобился runtime shaping в CLI.
+  Команда проходит на текущем live tenant, но для этого понадобился runtime shaping в CLI.
 - `live_passed_as_expected_error`
   Живой API стабильно или условно возвращает ожидаемый `4xx`, и этот контракт проверяется как корректный.
 - `synthetic_read`
@@ -67,7 +70,7 @@ Harness делает следующее:
 
 - `projects.cards.list`
   - сначала CLI пробует `GET /projects/{project_id}/cards`
-  - если sandbox отвечает `405`, CLI делает `GET /projects/{project_id}?with_cards_data=true`
+  - если live API отвечает `405`, CLI делает `GET /projects/{project_id}?with_cards_data=true`
   - затем извлекает embedded cards list из project payload
 
 ## Expected-error contracts
@@ -81,7 +84,7 @@ Harness делает следующее:
 - `card-subscribers.list` -> `405`
 - `column-subscribers.list` -> `405`
 
-Есть и условные домены, где sandbox может разрешить success-path или вернуть ожидаемый `4xx`:
+Есть и условные tenant'ы, где live API может разрешить success-path или вернуть ожидаемый `4xx`:
 
 - `automations.copy`
 - `sprints.*`
@@ -104,7 +107,7 @@ Harness делает следующее:
 
 Также зафиксирован ещё один стабильный expected-error:
 
-- `service-desk.users.update` -> `400`, если текущий sandbox-пользователь не является Service Desk user
+- `service-desk.users.update` -> `400`, если текущий live-пользователь не является Service Desk user
 
 И один смешанный Service Desk contract:
 
@@ -116,10 +119,12 @@ Harness делает следующее:
 ## Запуск
 
 ```bash
-KAITEN_LIVE=1 KAITEN_DOMAIN=sandbox KAITEN_TOKEN=... \
+KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain> KAITEN_TOKEN=... \
   .venv/bin/pytest -m live -o addopts='--disable-socket --allow-unix-socket' \
   tests/live/test_sandbox_live_full.py
 ```
+
+Если credentials уже сохранены в обычном active profile, достаточно выставить только `KAITEN_LIVE=1|true`.
 
 ## Что делать при новом blocker-е
 

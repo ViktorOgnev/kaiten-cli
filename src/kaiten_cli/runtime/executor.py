@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from kaiten_cli.errors import ConfigError
 from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
 from kaiten_cli.runtime.cache import ExecutionContext
@@ -37,16 +36,6 @@ def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[st
 
 def timeout_for_tool(tool: ToolSpec) -> float:
     return HEAVY_TIMEOUT if tool.response_policy.heavy else DEFAULT_TIMEOUT
-
-
-def enforce_mutation_safety(tool: ToolSpec, profile: ResolvedProfile) -> None:
-    if not tool.is_mutation:
-        return
-    if profile.sandbox or profile.domain == "sandbox":
-        return
-    raise ConfigError(
-        "Mutation commands are blocked unless the selected profile is marked sandbox or uses the sandbox domain."
-    )
 
 
 def _emit_debug(reporter: DebugReporter | None, message: str) -> None:
@@ -92,13 +81,12 @@ async def execute_tool_with_diagnostics(
             cache_mode_override=cache_mode,
             cache_ttl_seconds_override=cache_ttl_seconds,
         )
-        if tool.runtime_behavior.enforce_mutation_guard:
-            enforce_mutation_safety(tool, profile)
         _emit_debug(
             reporter,
             "profile: "
             f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
-            f"sandbox={profile.sandbox} cache_mode={profile.cache_mode} cache_ttl_seconds={profile.cache_ttl_seconds}",
+            f"sandbox_metadata={profile.sandbox} cache_mode={profile.cache_mode} "
+            f"cache_ttl_seconds={profile.cache_ttl_seconds}",
         )
         context = ExecutionContext.for_profile(profile, reporter=reporter)
         client = KaitenClient(

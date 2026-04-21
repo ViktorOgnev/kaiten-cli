@@ -50,6 +50,7 @@ Principles:
   - keep local queries summary-first; escalate to detail/evidence only after candidate reduction
   - prefer bulk tools over per-entity loops
   - use --compact and --fields to shrink payloads
+  - live validation runs only when KAITEN_LIVE=1|true
   - use --trace-file for long investigations and report runs
 
 \b
@@ -149,6 +150,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "For repeated report or analytics workflows, snapshot once and query locally before touching the API again.",
             "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
             "Keep query cards summary-first; use detail/evidence only after local candidate reduction.",
+            "Live validation runs only when KAITEN_LIVE=1|true for the current process.",
             "Use --compact and --fields to reduce payload and token cost.",
             "Use --cache-mode readwrite only for short-lived cross-process safe GET reuse.",
             "Use --trace-file for long investigations when you need real HTTP cost visibility.",
@@ -181,7 +183,8 @@ def _agent_help_text() -> str:
             "6. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
             "7. only escalate to --view detail or --view evidence after local narrowing",
             "8. shrink payloads with --compact and --fields",
-            "9. use --trace-file for long investigations",
+            "9. live validation only runs when KAITEN_LIVE=1|true",
+            "10. use --trace-file for long investigations",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -476,7 +479,11 @@ def profile_group() -> None:
 @click.argument("name", type=click.STRING)
 @click.option("--domain", required=True, type=click.STRING)
 @click.option("--token", required=True, type=click.STRING)
-@click.option("--sandbox/--no-sandbox", default=False)
+@click.option(
+    "--sandbox/--no-sandbox",
+    default=False,
+    help="Deprecated compatibility metadata. Does not affect mutations or live-test gating.",
+)
 @click.option("--cache-mode", type=click.Choice(["off", "readwrite", "refresh"]), default=None)
 @click.option("--cache-ttl-seconds", type=click.INT, default=None)
 @click.option("--set-active/--no-set-active", default=False)

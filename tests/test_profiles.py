@@ -47,9 +47,20 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     resolved = resolve_profile()
     assert resolved.domain == "sandbox"
     assert resolved.token == "env-token"
+    assert resolved.sandbox is False
     assert resolved.source == "environment"
     assert resolved.cache_mode == "off"
     assert resolved.cache_ttl_seconds == 60
+
+
+def test_resolve_profile_env_domain_does_not_imply_test_metadata(config_env, monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+
+    resolved = resolve_profile()
+
+    assert resolved.domain == "sandbox"
+    assert resolved.sandbox is False
 
 
 def test_profile_add_and_resolve_cache_settings(config_env):

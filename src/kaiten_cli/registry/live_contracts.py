@@ -1,4 +1,4 @@
-"""Live validation contract metadata for sandbox verification."""
+"""Live validation contract metadata for the current test tenant."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
     ),
     "service-desk.users.update": LiveContract(
         status=LIVE_STATUS_PASSED_AS_EXPECTED_ERROR,
-        note="The current sandbox account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.",
+        note="The current live account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.",
         expected_statuses=(400, 403, 404, 405),
     ),
     "service-desk.organization-users.update": LiveContract(
@@ -240,7 +240,7 @@ def get_live_contract(canonical_name: str) -> LiveContract:
         canonical_name,
         LiveContract(
             status=LIVE_STATUS_PASSED,
-            note="Validated on the normal success path in the full sandbox live suite.",
+            note="Validated on the normal success path in the full live suite.",
         ),
     )
 

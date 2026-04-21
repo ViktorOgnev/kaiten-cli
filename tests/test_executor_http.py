@@ -7,7 +7,7 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli, main
-from kaiten_cli.errors import BatchExecutionError, ConfigError, ValidationError
+from kaiten_cli.errors import BatchExecutionError, ValidationError
 from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
@@ -76,14 +76,20 @@ def test_build_request_applies_runtime_request_shaper():
 
 
 @pytest.mark.asyncio
-async def test_execute_mutation_rejects_non_sandbox(config_env, monkeypatch):
+@respx.mock
+async def test_execute_mutation_allows_normal_profiles(config_env, monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(201, json={"id": 1, "title": "Task"})
+    )
     tool = resolve_tool("cards.create")
     payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
 
-    with pytest.raises(ConfigError):
-        await execute_tool(tool, payload)
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert result["id"] == 1
 
 
 @respx.mock

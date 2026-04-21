@@ -7090,7 +7090,7 @@ _No tool-specific arguments._
 **Notes**
 
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
-- Live note: The current sandbox account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.
+- Live note: The current live account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.
 
 ### `service-desk.vote-properties.add`
 
