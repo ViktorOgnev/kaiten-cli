@@ -58,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.8"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.9"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
@@ -96,11 +96,44 @@ python -m kaiten_cli --help
 - opt-in persistent disk cache с коротким TTL для safe reference/entity reads
 - persistent local sqlite snapshots для headless analytics и repeated report workflows
 - local-only `query cards` / `query metrics` поверх snapshot storage
+- Markdown export для карточек и документов через обычные `cards get` / `documents get`
 - low-load HTTP client: throttling, bounded retry, explicit timeouts
 - локальные transforms: `compact`, `fields`, strip-base64
 - полный паритет по набору инструментов с текущим локальным registry snapshot
 - strict alias-set regression против checked-in snapshot
 - full live validation campaign с explicit opt-in и teardown discipline
+
+## Markdown export и файлы
+
+Markdown не является отдельным Kaiten endpoint и не требует отдельной команды. По умолчанию `cards get` и `documents get` возвращают JSON из API, как раньше. Если нужен локальный `.md`, добавьте `--markdown`: CLI делает тот же read, локально рендерит Markdown и сохраняет файл.
+
+```bash
+kaiten --json documents get --document-uid <document_uid> --markdown --output ./document.md
+kaiten --json cards get --card-id 123 --markdown --output ./card.md
+```
+
+`--output` может быть файлом или директорией. Если путь не передан, файл пишется в текущую директорию с именем из заголовка и ID. Существующий файл не перезаписывается без `--overwrite`.
+
+Ссылки на вложения в Markdown нормализуются в Kaiten API-формат:
+
+```text
+/api/documents/<document_uid>/files/<file_uid>
+/api/cards/<card_id_or_uid>/files/<file_uid>
+```
+
+Это ссылки для последующего использования, а не сами бинарные данные. Скачать файл из карточки, документа или сохранённого Markdown можно через `files download`; команда сама резолвит короткоживущую storage-ссылку и по умолчанию возобновляет `.part` файл через HTTP Range, как `wget --continue`.
+
+```bash
+kaiten --json files download --entity-type document --document-uid <document_uid> --file-id <file_uid> --output ./downloads/
+kaiten --json files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/
+kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./downloads/
+```
+
+Отдельный запуск CLI не переиспользует in-memory результат предыдущей команды. Если workflow много раз читает один и тот же safe `GET` из разных процессов, включайте короткоживущий persistent cache явно:
+
+```bash
+kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 documents get --document-uid <document_uid> --markdown --output ./document.md --overwrite
+```
 
 ## Инструменты
 

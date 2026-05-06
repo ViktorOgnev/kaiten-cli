@@ -223,7 +223,7 @@ cards
 | Description | Get a Kaiten card by ID. Supports numeric ID or card key (e.g. PROJ-123). |
 | Method | `GET` |
 | Mutation | `no` |
-| Execution mode | `direct_http` |
+| Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
@@ -237,17 +237,25 @@ cards
 | `card_id` | `integer|string` | yes | — | Card ID or key (e.g. PROJ-123) |
 | `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
 | `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| `markdown` | `boolean` | no | — | Save the card as Markdown instead of returning JSON. |
+| `output` | `string` | no | — | Markdown output file or directory. Defaults to the current working directory. |
+| `overwrite` | `boolean` | no | — | Replace an existing Markdown output file. |
 
 **Examples**
 
 - Get a card by numeric ID.: `kaiten cards get --card-id 123`
 - Get a narrow card response.: `kaiten cards get --card-id 123 --compact --fields id,title,state --json`
+- Save a card as Markdown.: `kaiten cards get --card-id 123 --markdown --output ./card.md --json`
 
 **Notes**
 
 - Bulk alternative: `cards.batch-get`
 - This is a per-card entity read and becomes expensive when repeated over large card populations.
 - For detail enrichment after candidate reduction, prefer cards.batch-get over one-card-at-a-time loops.
+- `--markdown` does the same card GET, renders the result locally, and saves a Markdown file instead of returning the card JSON.
+- `--markdown` keeps card attachment links as Kaiten `/api/cards/<card>/files/<file_id>` URLs.
+- Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.
+- Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.
 
 ### `cards.list`
 
@@ -3847,7 +3855,7 @@ documents
 | Description | Get a Kaiten document by UID. |
 | Method | `GET` |
 | Mutation | `no` |
-| Execution mode | `direct_http` |
+| Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
 | Path template | `/documents/{document_uid}` |
 | Compact | `no` |
@@ -3859,10 +3867,21 @@ documents
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
 | `document_uid` | `string` | yes | — | Document UID |
+| `markdown` | `boolean` | no | — | Save the document body as Markdown instead of returning JSON. |
+| `output` | `string` | no | — | Markdown output file or directory. Defaults to the current working directory. |
+| `overwrite` | `boolean` | no | — | Replace an existing Markdown output file. |
 
 **Examples**
 
 - Get a document.: `kaiten documents get --document-uid doc-1 --json`
+- Save a document as Markdown.: `kaiten documents get --document-uid doc-1 --markdown --output ./doc.md --json`
+
+**Notes**
+
+- `--markdown` does the same document GET, renders the result locally, and saves a Markdown file instead of returning the document JSON.
+- `--markdown` keeps document file links as Kaiten `/api/documents/<uid>/files/<file_id>` URLs.
+- Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.
+- Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.
 
 ### `documents.list`
 

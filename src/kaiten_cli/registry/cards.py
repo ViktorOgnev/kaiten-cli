@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
+from kaiten_cli.models import (
+    CACHE_POLICY_PERSISTENT_OPT_IN,
+    ExampleSpec,
+    OperationSpec,
+    ResponsePolicy,
+    RuntimeBehavior,
+)
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import (
     archive_card_request,
@@ -11,6 +17,7 @@ from kaiten_cli.runtime.behaviors import (
     validate_cards_batch_get,
     validate_cards_list_all_selection,
 )
+from kaiten_cli.runtime.support.markdown_export import execute_card_get, validate_card_get_markdown_options
 from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
@@ -118,18 +125,41 @@ TOOLS = (
                     "type": "string",
                     "description": "Comma-separated field names to keep in the response. Example: 'id,title,state'",
                 },
+                "markdown": {
+                    "type": "boolean",
+                    "description": "Save the card as Markdown instead of returning JSON.",
+                },
+                "output": {
+                    "type": "string",
+                    "description": "Markdown output file or directory. Defaults to the current working directory.",
+                },
+                "overwrite": {"type": "boolean", "description": "Replace an existing Markdown output file."},
             },
             "required": ["card_id"],
         },
         operation=OperationSpec(method="GET", path_template="/cards/{card_id}", path_fields=("card_id",)),
         response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            payload_validator=validate_card_get_markdown_options,
+            custom_executor=execute_card_get,
+            cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
+        ),
         examples=(
             ExampleSpec(command="kaiten cards get --card-id 123", description="Get a card by numeric ID."),
             ExampleSpec(command="kaiten cards get --card-id 123 --compact --fields id,title,state --json", description="Get a narrow card response."),
+            ExampleSpec(
+                command="kaiten cards get --card-id 123 --markdown --output ./card.md --json",
+                description="Save a card as Markdown.",
+            ),
         ),
         usage_notes=(
             "This is a per-card entity read and becomes expensive when repeated over large card populations.",
             "For detail enrichment after candidate reduction, prefer cards.batch-get over one-card-at-a-time loops.",
+            "`--markdown` does the same card GET, renders the result locally, and saves a Markdown file instead of returning the card JSON.",
+            "`--markdown` keeps card attachment links as Kaiten `/api/cards/<card>/files/<file_id>` URLs.",
+            "Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.",
+            "Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.",
         ),
         bulk_alternative="cards.batch-get",
     ),

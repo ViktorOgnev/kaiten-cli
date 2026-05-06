@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
+from kaiten_cli.models import (
+    CACHE_POLICY_PERSISTENT_OPT_IN,
+    ExampleSpec,
+    OperationSpec,
+    ResponsePolicy,
+    RuntimeBehavior,
+)
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import prepare_document_request, prevent_redirect_request
+from kaiten_cli.runtime.support.markdown_export import execute_document_get
 
 
 TOOLS = (
@@ -60,12 +67,36 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "document_uid": {"type": "string", "description": "Document UID"},
+                "markdown": {
+                    "type": "boolean",
+                    "description": "Save the document body as Markdown instead of returning JSON.",
+                },
+                "output": {
+                    "type": "string",
+                    "description": "Markdown output file or directory. Defaults to the current working directory.",
+                },
+                "overwrite": {"type": "boolean", "description": "Replace an existing Markdown output file."},
             },
             "required": ["document_uid"],
         },
         operation=OperationSpec(method="GET", path_template="/documents/{document_uid}", path_fields=("document_uid",)),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_document_get,
+            cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
+        ),
         examples=(
             ExampleSpec(command="kaiten documents get --document-uid doc-1 --json", description="Get a document."),
+            ExampleSpec(
+                command="kaiten documents get --document-uid doc-1 --markdown --output ./doc.md --json",
+                description="Save a document as Markdown.",
+            ),
+        ),
+        usage_notes=(
+            "`--markdown` does the same document GET, renders the result locally, and saves a Markdown file instead of returning the document JSON.",
+            "`--markdown` keeps document file links as Kaiten `/api/documents/<uid>/files/<file_id>` URLs.",
+            "Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.",
+            "Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.",
         ),
     ),
     make_tool(
