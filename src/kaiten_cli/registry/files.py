@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import CACHE_POLICY_NONE, ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.support.files import execute_file_download
+from kaiten_cli.runtime.support.files import execute_file_download, execute_file_upload
 
 
 TOOLS = (
@@ -154,6 +154,33 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(command='kaiten files create --card-id 10 --url "https://example.com/a.png" --name "a.png" --json', description="Attach a URL-backed file to a card."),
+        ),
+    ),
+    make_tool(
+        canonical_name="files.upload",
+        mcp_alias="kaiten_upload_card_file",
+        description="Upload a local binary file to a Kaiten card using multipart/form-data.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "Card ID."},
+                "file": {"type": "string", "description": "Local file path to upload."},
+            },
+            "required": ["card_id", "file"],
+        },
+        operation=OperationSpec(method="PUT", path_template="/cards/{card_id}/files", path_fields=("card_id",)),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_file_upload,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(command="kaiten files upload --card-id 123 --file ./report.json --json", description="Upload a local file to a card."),
+        ),
+        usage_notes=(
+            "Uploads the local file as multipart/form-data field `file`.",
+            "The uploaded filename is the local file basename.",
+            "This command uses the public card file endpoint; the beta private file endpoint is not used.",
         ),
     ),
     make_tool(

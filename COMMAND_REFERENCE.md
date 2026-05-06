@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **261** canonical commands across **29** registry modules.
+`kaiten-cli` currently exposes **262** canonical commands across **29** registry modules.
 
 ## Conventions
 
@@ -28,7 +28,7 @@
 | Блокировки | `blockers` | 5 | [Open](#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Open](#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Open](#module-external-links) |
-| Файлы карточек | `files` | 5 | [Open](#module-files) |
+| Файлы карточек | `files` | 6 | [Open](#module-files) |
 | Подписчики | `subscribers` | 6 | [Open](#module-subscribers) |
 | Пространства | `spaces` | 6 | [Open](#module-spaces) |
 | Доски | `boards` | 5 | [Open](#module-boards) |
@@ -2299,7 +2299,7 @@ external-links
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-files"></a>
-## Файлы карточек (`files`) — 5 commands
+## Файлы карточек (`files`) — 6 commands
 
 Файлы и вложения карточек.
 
@@ -2312,6 +2312,7 @@ files
   download
   list
   update
+  upload
 ```
 
 ### `files.create`
@@ -2509,6 +2510,42 @@ files
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `files.upload`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten files upload` |
+| MCP alias | `kaiten_upload_card_file` |
+| Description | Upload a local binary file to a Kaiten card using multipart/form-data. |
+| Method | `PUT` |
+| Mutation | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/files` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+| `file` | `string` | yes | — | Local file path to upload. |
+
+**Examples**
+
+- Upload a local file to a card.: `kaiten files upload --card-id 123 --file ./report.json --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Uploads the local file as multipart/form-data field `file`.
+- The uploaded filename is the local file basename.
+- This command uses the public card file endpoint; the beta private file endpoint is not used.
 
 <a id="module-subscribers"></a>
 ## Подписчики (`subscribers`) — 6 commands

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -219,7 +220,7 @@ def _exercise_foundation(h) -> None:
     )
 
 
-def _exercise_card_adjacent(h) -> None:
+def _exercise_card_adjacent(h, tmp_path: Path) -> None:
     comment = h.run_tool("comments.create", card_id=h.state["parent_card_id"], text="Live comment", format="markdown")
     h.state["comment_id"] = comment["id"]
     h.push_cleanup("delete comment", "comments.delete", card_id=h.state["parent_card_id"], comment_id=h.state["comment_id"])
@@ -293,6 +294,17 @@ def _exercise_card_adjacent(h) -> None:
     h.push_cleanup("delete file", "files.delete", card_id=h.state["parent_card_id"], file_id=h.state["file_id"])
     h.run_tool("files.list", card_id=h.state["parent_card_id"])
     h.run_tool("files.update", card_id=h.state["parent_card_id"], file_id=h.state["file_id"], name="live-asset-updated.txt")
+
+    upload_path = tmp_path / "live-upload.txt"
+    upload_path.write_text("live upload smoke\n", encoding="utf-8")
+    uploaded_file = h.run_tool("files.upload", card_id=h.state["parent_card_id"], file=str(upload_path))
+    h.state["uploaded_file_id"] = uploaded_file["id"]
+    h.push_cleanup(
+        "delete uploaded file",
+        "files.delete",
+        card_id=h.state["parent_card_id"],
+        file_id=h.state["uploaded_file_id"],
+    )
 
     blocker = h.run_tool("blockers.create", card_id=h.state["parent_card_id"], reason="live blocker")
     h.state["blocker_id"] = blocker["id"]
@@ -944,11 +956,11 @@ def _exercise_utilities_tail(h) -> None:
 @pytest.mark.live
 @pytest.mark.full_live_coverage
 @pytest.mark.timeout(1800)
-def test_sandbox_full_live_sequential(live_harness):
+def test_sandbox_full_live_sequential(live_harness, tmp_path):
     h = live_harness
 
     _exercise_foundation(h)
-    _exercise_card_adjacent(h)
+    _exercise_card_adjacent(h, tmp_path)
     _exercise_projects_documents_and_tree(h)
     _exercise_company_metadata(h)
     _exercise_integrations(h)

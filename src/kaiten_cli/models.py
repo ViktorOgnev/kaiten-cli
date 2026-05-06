@@ -138,7 +138,7 @@ class ToolSpec:
 
     @property
     def is_mutation(self) -> bool:
-        return self.operation.method.upper() in {"POST", "PATCH", "DELETE"}
+        return self.operation.method.upper() in {"POST", "PUT", "PATCH", "DELETE"}
 
 
 @dataclass(slots=True)

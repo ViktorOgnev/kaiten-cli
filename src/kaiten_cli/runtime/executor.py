@@ -123,6 +123,8 @@ async def execute_tool_with_diagnostics(
             result = await client.get(path, params=query, timeout=timeout)
         elif method == "POST":
             result = await client.post(path, json=body, timeout=timeout)
+        elif method == "PUT":
+            result = await client.put(path, json=body, timeout=timeout)
         elif method == "PATCH":
             result = await client.patch(path, json=body, timeout=timeout)
         elif method == "DELETE":

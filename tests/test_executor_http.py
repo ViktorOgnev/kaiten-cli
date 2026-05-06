@@ -8,6 +8,7 @@ from httpx import Response
 
 from kaiten_cli.app import cli, main
 from kaiten_cli.errors import BatchExecutionError, ValidationError
+from kaiten_cli.models import OperationSpec, ToolSpec
 from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
@@ -90,6 +91,46 @@ async def test_execute_mutation_allows_normal_profiles(config_env, monkeypatch):
 
     assert route.called
     assert result["id"] == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_direct_put_tool(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.put("https://sandbox.kaiten.ru/api/latest/things/7").mock(
+        return_value=Response(200, json={"id": 7, "name": "renamed"})
+    )
+    tool = ToolSpec(
+        canonical_name="things.put",
+        mcp_alias="kaiten_put_thing",
+        namespace="things",
+        action="put",
+        description="Synthetic PUT tool.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "thing_id": {"type": "integer"},
+                "name": {"type": "string"},
+            },
+            "required": ["thing_id", "name"],
+        },
+        operation=OperationSpec(
+            method="PUT",
+            path_template="/things/{thing_id}",
+            path_fields=("thing_id",),
+            body_fields=("name",),
+        ),
+    )
+
+    payload = merge_inputs(tool, {"thing_id": 7, "name": "renamed"})
+    result = await execute_tool(tool, payload)
+
+    assert tool.is_mutation is True
+    assert route.called
+    assert route.calls[0].request.headers["content-type"] == "application/json"
+    assert json.loads(route.calls[0].request.content) == {"name": "renamed"}
+    assert result == {"id": 7, "name": "renamed"}
 
 
 @respx.mock

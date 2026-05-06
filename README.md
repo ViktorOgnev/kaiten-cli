@@ -129,6 +129,12 @@ kaiten --json files download --entity-type card --card-id 123 --file-id <file_ui
 kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./downloads/
 ```
 
+Загрузить локальный бинарный файл в карточку можно через `files upload`; команда отправляет `multipart/form-data` с полем `file` в публичный card-files endpoint Kaiten.
+
+```bash
+kaiten --json files upload --card-id 123 --file ./report.json
+```
+
 Отдельный запуск CLI не переиспользует in-memory результат предыдущей команды. По умолчанию `--cache-mode auto` сохраняет cacheable safe reads на диск с adaptive TTL; для freshness-critical повтора используйте `--cache-mode refresh`.
 
 ```bash
@@ -138,7 +144,7 @@ kaiten --json --cache-mode refresh documents get --document-uid <document_uid> -
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **261** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **262** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
@@ -151,7 +157,7 @@ kaiten --json --cache-mode refresh documents get --document-uid <document_uid> -
 | Блокировки | `blockers` | 5 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
-| Файлы карточек | `files` | 5 | [Раздел](COMMAND_REFERENCE.md#module-files) |
+| Файлы карточек | `files` | 6 | [Раздел](COMMAND_REFERENCE.md#module-files) |
 | Подписчики | `subscribers` | 6 | [Раздел](COMMAND_REFERENCE.md#module-subscribers) |
 | Пространства | `spaces` | 6 | [Раздел](COMMAND_REFERENCE.md#module-spaces) |
 | Доски | `boards` | 5 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
@@ -171,7 +177,7 @@ kaiten --json --cache-mode refresh documents get --document-uid <document_uid> -
 | Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **29 modules** | **261** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **29 modules** | **262** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

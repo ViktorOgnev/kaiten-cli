@@ -60,7 +60,6 @@ class KaitenClient:
                 base_url=self.base_url,
                 headers={
                     "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
             )
@@ -81,6 +80,7 @@ class KaitenClient:
         *,
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
+        files: Any = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         client = await self._get_client()
@@ -91,7 +91,14 @@ class KaitenClient:
             await self._rate_limit()
             started = time.perf_counter()
             try:
-                response = await client.request(method, path, params=params, json=json, timeout=timeout)
+                response = await client.request(
+                    method,
+                    path,
+                    params=params,
+                    json=json,
+                    files=files,
+                    timeout=timeout,
+                )
                 if self.execution_context is not None:
                     self.execution_context.stats.record_http_attempt(
                         source="kaiten_api",
@@ -189,6 +196,19 @@ class KaitenClient:
 
     async def post(self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT) -> Any:
         result = await self._request("POST", path, json=json, timeout=timeout)
+        if self.execution_context is not None:
+            await self.execution_context.invalidate_after_mutation()
+        return result
+
+    async def put(
+        self,
+        path: str,
+        *,
+        json: dict[str, Any] | None = None,
+        files: Any = None,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> Any:
+        result = await self._request("PUT", path, json=json, files=files, timeout=timeout)
         if self.execution_context is not None:
             await self.execution_context.invalidate_after_mutation()
         return result
