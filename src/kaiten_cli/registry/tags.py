@@ -16,16 +16,29 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search filter (matches by name)"},
-                "space_id": {"type": "integer", "description": "Filter tags by space (only tags used on cards in this space)"},
-                "ids": {"type": "string", "description": "Comma-separated tag IDs to fetch specific tags"},
+                "space_id": {
+                    "type": "integer",
+                    "description": "Filter tags by space (only tags used on cards in this space)",
+                },
+                "ids": {
+                    "type": "string",
+                    "description": "Comma-separated tag IDs to fetch specific tags",
+                },
                 "limit": {"type": "integer", "description": "Max results"},
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/tags", query_fields=("query", "space_id", "ids", "limit", "offset")),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/tags",
+            query_fields=("query", "space_id", "ids", "limit", "offset"),
+        ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
-            ExampleSpec(command='kaiten tags list --query "backend" --json', description="Search tags by name."),
+            ExampleSpec(
+                command='kaiten tags list --query "backend" --json',
+                description="Search tags by name.",
+            ),
         ),
     ),
     make_tool(
@@ -35,13 +48,19 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "Tag name (1-255 chars, must be unique within the company)"},
+                "name": {
+                    "type": "string",
+                    "description": "Tag name (1-255 chars, must be unique within the company)",
+                },
             },
             "required": ["name"],
         },
         operation=OperationSpec(method="POST", path_template="/tags", body_fields=("name",)),
         examples=(
-            ExampleSpec(command='kaiten tags create --name "backend" --json', description="Create a company tag."),
+            ExampleSpec(
+                command='kaiten tags create --name "backend" --json',
+                description="Create a company tag.",
+            ),
         ),
     ),
     make_tool(
@@ -64,7 +83,10 @@ TOOLS = (
             body_fields=("name", "color"),
         ),
         examples=(
-            ExampleSpec(command='kaiten tags update --tag-id 10 --name "backend" --json', description="Update a company tag."),
+            ExampleSpec(
+                command='kaiten tags update --tag-id 10 --name "backend" --json',
+                description="Update a company tag.",
+            ),
         ),
     ),
     make_tool(
@@ -78,9 +100,13 @@ TOOLS = (
             },
             "required": ["tag_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/company/tags/{tag_id}", path_fields=("tag_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/company/tags/{tag_id}", path_fields=("tag_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten tags delete --tag-id 10 --json", description="Delete a company tag."),
+            ExampleSpec(
+                command="kaiten tags delete --tag-id 10 --json", description="Delete a company tag."
+            ),
         ),
     ),
     make_tool(
@@ -102,7 +128,30 @@ TOOLS = (
             body_fields=("name",),
         ),
         examples=(
-            ExampleSpec(command='kaiten card-tags add --card-id 10 --name "backend" --json', description="Add a tag to a card."),
+            ExampleSpec(
+                command='kaiten card-tags add --card-id 10 --name "backend" --json',
+                description="Add a tag to a card.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="card-tags.list",
+        mcp_alias="kaiten_list_card_tags",
+        description="List tags attached to a Kaiten card.",
+        input_schema={
+            "type": "object",
+            "properties": {"card_id": {"type": "integer", "description": "Card ID"}},
+            "required": ["card_id"],
+        },
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/tags", path_fields=("card_id",)
+        ),
+        response_policy=ResponsePolicy(result_kind="list"),
+        examples=(
+            ExampleSpec(
+                command="kaiten card-tags list --card-id 10 --json",
+                description="List tags on a card.",
+            ),
         ),
     ),
     make_tool(
@@ -117,9 +166,16 @@ TOOLS = (
             },
             "required": ["card_id", "tag_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/tags/{tag_id}", path_fields=("card_id", "tag_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/tags/{tag_id}",
+            path_fields=("card_id", "tag_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-tags remove --card-id 10 --tag-id 20 --json", description="Remove a tag from a card."),
+            ExampleSpec(
+                command="kaiten card-tags remove --card-id 10 --tag-id 20 --json",
+                description="Remove a tag from a card.",
+            ),
         ),
     ),
 )

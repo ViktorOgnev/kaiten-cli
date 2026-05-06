@@ -27,10 +27,15 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/documents", query_fields=("query", "limit", "offset")),
+        operation=OperationSpec(
+            method="GET", path_template="/documents", query_fields=("query", "limit", "offset")
+        ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
-            ExampleSpec(command='kaiten documents list --query "Design" --json', description="List documents."),
+            ExampleSpec(
+                command='kaiten documents list --query "Design" --json',
+                description="List documents.",
+            ),
         ),
     ),
     make_tool(
@@ -41,10 +46,16 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "title": {"type": "string", "description": "Document title"},
-                "text": {"type": "string", "description": "Markdown content converted to ProseMirror."},
+                "text": {
+                    "type": "string",
+                    "description": "Markdown content converted to ProseMirror.",
+                },
                 "data": {"type": "object", "description": "Raw ProseMirror JSON."},
                 "parent_entity_uid": {"type": "string", "description": "Parent document group UID"},
-                "sort_order": {"type": "integer", "description": "Sort order (auto-generated if not provided)"},
+                "sort_order": {
+                    "type": "integer",
+                    "description": "Sort order (auto-generated if not provided)",
+                },
                 "key": {"type": "string", "description": "Unique key identifier"},
             },
             "required": ["title"],
@@ -56,7 +67,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
-            ExampleSpec(command='kaiten documents create --title "Spec" --text "# Header" --json', description="Create a document from markdown."),
+            ExampleSpec(
+                command='kaiten documents create --title "Spec" --text "# Header" --json',
+                description="Create a document from markdown.",
+            ),
         ),
     ),
     make_tool(
@@ -75,18 +89,26 @@ TOOLS = (
                     "type": "string",
                     "description": "Markdown output file or directory. Defaults to the current working directory.",
                 },
-                "overwrite": {"type": "boolean", "description": "Replace an existing Markdown output file."},
+                "overwrite": {
+                    "type": "boolean",
+                    "description": "Replace an existing Markdown output file.",
+                },
             },
             "required": ["document_uid"],
         },
-        operation=OperationSpec(method="GET", path_template="/documents/{document_uid}", path_fields=("document_uid",)),
+        operation=OperationSpec(
+            method="GET", path_template="/documents/{document_uid}", path_fields=("document_uid",)
+        ),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
             custom_executor=execute_document_get,
             cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
         ),
         examples=(
-            ExampleSpec(command="kaiten documents get --document-uid doc-1 --json", description="Get a document."),
+            ExampleSpec(
+                command="kaiten documents get --document-uid doc-1 --json",
+                description="Get a document.",
+            ),
             ExampleSpec(
                 command="kaiten documents get --document-uid doc-1 --markdown --output ./doc.md --json",
                 description="Save a document as Markdown.",
@@ -108,7 +130,10 @@ TOOLS = (
             "properties": {
                 "document_uid": {"type": "string", "description": "Document UID"},
                 "title": {"type": "string", "description": "New document title"},
-                "text": {"type": "string", "description": "Markdown content converted to ProseMirror."},
+                "text": {
+                    "type": "string",
+                    "description": "Markdown content converted to ProseMirror.",
+                },
                 "data": {"type": "object", "description": "Raw ProseMirror JSON."},
                 "parent_entity_uid": {"type": "string", "description": "New parent group UID"},
                 "sort_order": {"type": "integer", "description": "Sort order"},
@@ -124,7 +149,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
-            ExampleSpec(command='kaiten documents update --document-uid doc-1 --text "**bold**" --json', description="Update a document body."),
+            ExampleSpec(
+                command='kaiten documents update --document-uid doc-1 --text "**bold**" --json',
+                description="Update a document body.",
+            ),
         ),
     ),
     make_tool(
@@ -138,9 +166,16 @@ TOOLS = (
             },
             "required": ["document_uid"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/documents/{document_uid}", path_fields=("document_uid",)),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/documents/{document_uid}",
+            path_fields=("document_uid",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten documents delete --document-uid doc-1 --json", description="Delete a document."),
+            ExampleSpec(
+                command="kaiten documents delete --document-uid doc-1 --json",
+                description="Delete a document.",
+            ),
         ),
     ),
     make_tool(
@@ -172,6 +207,27 @@ TOOLS = (
         ),
     ),
     make_tool(
+        canonical_name="document-schemas.get",
+        mcp_alias="kaiten_get_document_schema",
+        description="Get a document data schema.",
+        input_schema={
+            "type": "object",
+            "properties": {"schema_id": {"type": "integer", "description": "Document schema ID."}},
+            "required": ["schema_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/document-schemas/{schema_id}",
+            path_fields=("schema_id",),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten document-schemas get --schema-id 1 --json",
+                description="Get a document data schema.",
+            ),
+        ),
+    ),
+    make_tool(
         canonical_name="document-groups.list",
         mcp_alias="kaiten_list_document_groups",
         description="List Kaiten document groups.",
@@ -183,10 +239,17 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/document-groups", query_fields=("query", "limit", "offset")),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/document-groups",
+            query_fields=("query", "limit", "offset"),
+        ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
-            ExampleSpec(command='kaiten document-groups list --query "Engineering" --json', description="List document groups."),
+            ExampleSpec(
+                command='kaiten document-groups list --query "Engineering" --json',
+                description="List document groups.",
+            ),
         ),
     ),
     make_tool(
@@ -197,8 +260,14 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "title": {"type": "string", "description": "Group title"},
-                "parent_entity_uid": {"type": "string", "description": "Parent group UID for nesting"},
-                "sort_order": {"type": "integer", "description": "Sort order (auto-generated if not provided)"},
+                "parent_entity_uid": {
+                    "type": "string",
+                    "description": "Parent group UID for nesting",
+                },
+                "sort_order": {
+                    "type": "integer",
+                    "description": "Sort order (auto-generated if not provided)",
+                },
             },
             "required": ["title"],
         },
@@ -209,7 +278,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
-            ExampleSpec(command='kaiten document-groups create --title "Engineering" --json', description="Create a document group."),
+            ExampleSpec(
+                command='kaiten document-groups create --title "Engineering" --json',
+                description="Create a document group.",
+            ),
         ),
     ),
     make_tool(
@@ -223,9 +295,14 @@ TOOLS = (
             },
             "required": ["group_uid"],
         },
-        operation=OperationSpec(method="GET", path_template="/document-groups/{group_uid}", path_fields=("group_uid",)),
+        operation=OperationSpec(
+            method="GET", path_template="/document-groups/{group_uid}", path_fields=("group_uid",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten document-groups get --group-uid grp-1 --json", description="Get a document group."),
+            ExampleSpec(
+                command="kaiten document-groups get --group-uid grp-1 --json",
+                description="Get a document group.",
+            ),
         ),
     ),
     make_tool(
@@ -247,7 +324,10 @@ TOOLS = (
             body_fields=("title",),
         ),
         examples=(
-            ExampleSpec(command='kaiten document-groups update --group-uid grp-1 --title "Docs" --json', description="Update a document group."),
+            ExampleSpec(
+                command='kaiten document-groups update --group-uid grp-1 --title "Docs" --json',
+                description="Update a document group.",
+            ),
         ),
     ),
     make_tool(
@@ -261,9 +341,16 @@ TOOLS = (
             },
             "required": ["group_uid"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/document-groups/{group_uid}", path_fields=("group_uid",)),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/document-groups/{group_uid}",
+            path_fields=("group_uid",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten document-groups delete --group-uid grp-1 --json", description="Delete a document group."),
+            ExampleSpec(
+                command="kaiten document-groups delete --group-uid grp-1 --json",
+                description="Delete a document group.",
+            ),
         ),
     ),
 )

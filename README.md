@@ -141,20 +141,33 @@ kaiten --json files upload --card-id 123 --file ./report.json
 kaiten --json --cache-mode refresh documents get --document-uid <document_uid> --markdown --output ./document.md --overwrite
 ```
 
+## Каталоги
+
+В интерфейсе Kaiten эта сущность называется «Каталоги»: таблицы/базы данных вроде клиентов, контактов, оборудования или подрядчиков. В Developers API тот же объект называется `custom-directories`, поэтому в CLI используются команды:
+
+```bash
+kaiten --json custom-directories list --include-fields --include-records-count
+kaiten --json custom-directory-fields list --directory-id <directory_uuid>
+kaiten --json custom-directory-records list --directory-id <directory_uuid> --profile summary
+kaiten --json custom-directory-records cards list --directory-id <directory_uuid> --record-id <record_uuid>
+```
+
+Модель такая: `custom-directories` управляет самим каталогом, `custom-directory-fields` — его колонками, `custom-directory-records` — строками/записями. Команды `custom-properties catalog-values ...` относятся к значениям пользовательского поля типа catalog и не являются CRUD для раздела «Каталоги».
+
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **262** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **345** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
-| Карточки | `cards` | 9 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
+| Карточки | `cards` | 14 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
 | Комментарии | `comments` | 5 | [Раздел](COMMAND_REFERENCE.md#module-comments) |
-| Участники и пользователи | `members` | 5 | [Раздел](COMMAND_REFERENCE.md#module-members) |
-| Логи времени | `time_logs` | 5 | [Раздел](COMMAND_REFERENCE.md#module-time-logs) |
-| Теги | `tags` | 6 | [Раздел](COMMAND_REFERENCE.md#module-tags) |
-| Чеклисты | `checklists` | 8 | [Раздел](COMMAND_REFERENCE.md#module-checklists) |
-| Блокировки | `blockers` | 5 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
+| Участники и пользователи | `members` | 7 | [Раздел](COMMAND_REFERENCE.md#module-members) |
+| Логи времени | `time_logs` | 6 | [Раздел](COMMAND_REFERENCE.md#module-time-logs) |
+| Теги | `tags` | 7 | [Раздел](COMMAND_REFERENCE.md#module-tags) |
+| Чеклисты | `checklists` | 16 | [Раздел](COMMAND_REFERENCE.md#module-checklists) |
+| Блокировки | `blockers` | 12 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
 | Файлы карточек | `files` | 6 | [Раздел](COMMAND_REFERENCE.md#module-files) |
@@ -163,21 +176,23 @@ kaiten --json --cache-mode refresh documents get --document-uid <document_uid> -
 | Доски | `boards` | 5 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
 | Колонки и подколонки | `columns` | 8 | [Раздел](COMMAND_REFERENCE.md#module-columns) |
 | Дорожки | `lanes` | 4 | [Раздел](COMMAND_REFERENCE.md#module-lanes) |
-| Типы карточек | `card_types` | 5 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
-| Кастомные свойства | `custom_properties` | 10 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
-| Документы | `documents` | 11 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
+| Типы карточек | `card_types` | 8 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
+| Каталоги / Custom directories | `custom_directories` | 16 | [Раздел](COMMAND_REFERENCE.md#module-custom-directories) |
+| Кастомные свойства | `custom_properties` | 25 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
+| Документы | `documents` | 12 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
-| Роли и группы | `roles_and_groups` | 14 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 29 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
+| SCIM | `scim` | 8 | [Раздел](COMMAND_REFERENCE.md#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Раздел](COMMAND_REFERENCE.md#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Раздел](COMMAND_REFERENCE.md#module-charts) |
-| Дерево сущностей | `tree` | 2 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
+| Дерево сущностей | `tree` | 3 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
 | Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **29 modules** | **262** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31 modules** | **345** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

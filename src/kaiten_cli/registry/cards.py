@@ -14,10 +14,14 @@ from kaiten_cli.runtime.behaviors import (
     archive_card_request,
     execute_cards_batch_get,
     execute_cards_list_all,
+    payload_body_request,
     validate_cards_batch_get,
     validate_cards_list_all_selection,
 )
-from kaiten_cli.runtime.support.markdown_export import execute_card_get, validate_card_get_markdown_options
+from kaiten_cli.runtime.support.markdown_export import (
+    execute_card_get,
+    validate_card_get_markdown_options,
+)
 from kaiten_cli.runtime.transforms import DEFAULT_LIMIT
 
 
@@ -35,7 +39,10 @@ LIST_CARD_SCHEMA = {
         "responsible_id": {"type": "integer", "description": "Filter by responsible user ID"},
         "tag_ids": {"type": "string", "description": "Comma-separated tag IDs"},
         "member_ids": {"type": "string", "description": "Comma-separated member IDs"},
-        "states": {"type": "string", "description": "Comma-separated states (1=queued,2=inProgress,3=done)"},
+        "states": {
+            "type": "string",
+            "description": "Comma-separated states (1=queued,2=inProgress,3=done)",
+        },
         "created_after": {"type": "string", "description": "ISO datetime filter"},
         "created_before": {"type": "string", "description": "ISO datetime filter"},
         "updated_after": {"type": "string", "description": "ISO datetime filter"},
@@ -102,10 +109,21 @@ TOOLS = (
                 "relations",
             ),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, default_limit=DEFAULT_LIMIT, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True,
+            fields_supported=True,
+            default_limit=DEFAULT_LIMIT,
+            result_kind="list",
+        ),
         examples=(
-            ExampleSpec(command="kaiten cards list --board-id 10 --limit 5 --compact --json", description="List cards on a board."),
-            ExampleSpec(command='kaiten cards list --query "bug" --fields id,title,state', description="Search cards by query."),
+            ExampleSpec(
+                command="kaiten cards list --board-id 10 --limit 5 --compact --json",
+                description="List cards on a board.",
+            ),
+            ExampleSpec(
+                command='kaiten cards list --query "bug" --fields id,title,state',
+                description="Search cards by query.",
+            ),
         ),
     ),
     make_tool(
@@ -115,7 +133,10 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": ["integer", "string"], "description": "Card ID or key (e.g. PROJ-123)"},
+                "card_id": {
+                    "type": ["integer", "string"],
+                    "description": "Card ID or key (e.g. PROJ-123)",
+                },
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields (avatars, nested user objects)",
@@ -133,12 +154,19 @@ TOOLS = (
                     "type": "string",
                     "description": "Markdown output file or directory. Defaults to the current working directory.",
                 },
-                "overwrite": {"type": "boolean", "description": "Replace an existing Markdown output file."},
+                "overwrite": {
+                    "type": "boolean",
+                    "description": "Replace an existing Markdown output file.",
+                },
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}", path_fields=("card_id",)),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}", path_fields=("card_id",)
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
             payload_validator=validate_card_get_markdown_options,
@@ -146,8 +174,13 @@ TOOLS = (
             cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
         ),
         examples=(
-            ExampleSpec(command="kaiten cards get --card-id 123", description="Get a card by numeric ID."),
-            ExampleSpec(command="kaiten cards get --card-id 123 --compact --fields id,title,state --json", description="Get a narrow card response."),
+            ExampleSpec(
+                command="kaiten cards get --card-id 123", description="Get a card by numeric ID."
+            ),
+            ExampleSpec(
+                command="kaiten cards get --card-id 123 --compact --fields id,title,state --json",
+                description="Get a narrow card response.",
+            ),
             ExampleSpec(
                 command="kaiten cards get --card-id 123 --markdown --output ./card.md --json",
                 description="Save a card as Markdown.",
@@ -170,10 +203,23 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to fetch"},
-                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
-                "compact": {"type": "boolean", "description": "Strip heavy nested fields from card payloads"},
-                "fields": {"type": "string", "description": "Comma-separated card field names to keep"},
+                "card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Card IDs to fetch",
+                },
+                "workers": {
+                    "type": "integer",
+                    "description": "Parallel workers (default 2, max 6)",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy nested fields from card payloads",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated card field names to keep",
+                },
             },
             "required": ["card_ids"],
         },
@@ -185,8 +231,14 @@ TOOLS = (
             custom_executor=execute_cards_batch_get,
         ),
         examples=(
-            ExampleSpec(command="kaiten cards batch-get --card-ids '[1,2,3]' --json", description="Fetch several cards in one CLI call."),
-            ExampleSpec(command="kaiten cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description --json", description="Fetch narrowed card detail payloads with bounded concurrency."),
+            ExampleSpec(
+                command="kaiten cards batch-get --card-ids '[1,2,3]' --json",
+                description="Fetch several cards in one CLI call.",
+            ),
+            ExampleSpec(
+                command="kaiten cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description --json",
+                description="Fetch narrowed card detail payloads with bounded concurrency.",
+            ),
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
@@ -221,19 +273,54 @@ TOOLS = (
                 "type_id": {"type": "integer", "description": "Card type ID"},
                 "external_id": {"type": "string", "description": "External ID (max 1024)"},
                 "sort_order": {"type": "number", "description": "Position in cell"},
-                "position": {"type": "integer", "enum": [1, 2], "description": "1=first, 2=last in cell"},
-                "properties": {"type": "object", "description": "Custom properties as {id_N: value}"},
-                "tags": {"type": "array", "items": {"type": "string"}, "description": "Tags to attach"},
+                "position": {
+                    "type": "integer",
+                    "enum": [1, 2],
+                    "description": "1=first, 2=last in cell",
+                },
+                "properties": {
+                    "type": "object",
+                    "description": "Custom properties as {id_N: value}",
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Tags to attach",
+                },
                 "sprint_id": {"type": "integer", "description": "Sprint ID to assign card to"},
-                "planned_start": {"type": ["string", "null"], "description": "Planned start date (ISO 8601)"},
-                "planned_end": {"type": ["string", "null"], "description": "Planned end date (ISO 8601)"},
+                "planned_start": {
+                    "type": ["string", "null"],
+                    "description": "Planned start date (ISO 8601)",
+                },
+                "planned_end": {
+                    "type": ["string", "null"],
+                    "description": "Planned end date (ISO 8601)",
+                },
                 "responsible_id": {"type": "integer", "description": "Responsible user ID"},
-                "condition": {"type": "integer", "enum": [1, 2], "description": "1=active, 2=archived"},
-                "due_date_time_present": {"type": "boolean", "description": "True if due_date includes time component"},
+                "condition": {
+                    "type": "integer",
+                    "enum": [1, 2],
+                    "description": "1=active, 2=archived",
+                },
+                "due_date_time_present": {
+                    "type": "boolean",
+                    "description": "True if due_date includes time component",
+                },
                 "expires_later": {"type": "boolean", "description": "Expires later flag"},
-                "estimate_workload": {"type": "integer", "description": "Estimated workload in minutes (resource planning)"},
-                "child_card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Child card IDs to link (max 1)"},
-                "parent_card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Parent card IDs to link (max 1)"},
+                "estimate_workload": {
+                    "type": "integer",
+                    "description": "Estimated workload in minutes (resource planning)",
+                },
+                "child_card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Child card IDs to link (max 1)",
+                },
+                "parent_card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Parent card IDs to link (max 1)",
+                },
                 "project_id": {"type": "string", "description": "Project UUID to attach card to"},
             },
             "required": ["title", "board_id"],
@@ -270,10 +357,18 @@ TOOLS = (
                 "project_id",
             ),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         examples=(
-            ExampleSpec(command='kaiten cards create --title "Smoke task" --board-id 10 --json', description="Create a card."),
-            ExampleSpec(command='kaiten cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state --json', description="Create a card with a narrow response."),
+            ExampleSpec(
+                command='kaiten cards create --title "Smoke task" --board-id 10 --json',
+                description="Create a card.",
+            ),
+            ExampleSpec(
+                command='kaiten cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state --json',
+                description="Create a card with a narrow response.",
+            ),
         ),
     ),
     make_tool(
@@ -301,24 +396,67 @@ TOOLS = (
                 "sort_order": {"type": "number", "description": "Position in cell"},
                 "owner_id": {"type": "integer", "description": "New owner user ID"},
                 "type_id": {"type": "integer", "description": "Card type ID"},
-                "condition": {"type": "integer", "enum": [1, 2], "description": "1=active, 2=archived"},
-                "due_date": {"type": ["string", "null"], "description": "Deadline (ISO 8601 or null)"},
+                "condition": {
+                    "type": "integer",
+                    "enum": [1, 2],
+                    "description": "1=active, 2=archived",
+                },
+                "due_date": {
+                    "type": ["string", "null"],
+                    "description": "Deadline (ISO 8601 or null)",
+                },
                 "asap": {"type": "boolean", "description": "ASAP marker"},
                 "size_text": {"type": ["string", "null"], "description": "Size"},
                 "blocked": {"type": "boolean", "description": "Set to false to unblock"},
                 "external_id": {"type": ["string", "null"], "description": "External ID"},
-                "properties": {"type": "object", "description": "Custom properties as {id_N: value}"},
-                "sprint_id": {"type": ["integer", "null"], "description": "Sprint ID (null to remove)"},
-                "planned_start": {"type": ["string", "null"], "description": "Planned start date (ISO 8601)"},
-                "planned_end": {"type": ["string", "null"], "description": "Planned end date (ISO 8601)"},
-                "state": {"type": "integer", "enum": [1, 2, 3], "description": "Card state: 1=queued, 2=inProgress, 3=done"},
-                "block_reason": {"type": ["string", "null"], "description": "Block reason text (null to clear)"},
-                "locked": {"type": ["string", "null"], "description": "Lock identifier (null to unlock)"},
-                "due_date_time_present": {"type": "boolean", "description": "True if due_date includes time component"},
+                "properties": {
+                    "type": "object",
+                    "description": "Custom properties as {id_N: value}",
+                },
+                "sprint_id": {
+                    "type": ["integer", "null"],
+                    "description": "Sprint ID (null to remove)",
+                },
+                "planned_start": {
+                    "type": ["string", "null"],
+                    "description": "Planned start date (ISO 8601)",
+                },
+                "planned_end": {
+                    "type": ["string", "null"],
+                    "description": "Planned end date (ISO 8601)",
+                },
+                "state": {
+                    "type": "integer",
+                    "enum": [1, 2, 3],
+                    "description": "Card state: 1=queued, 2=inProgress, 3=done",
+                },
+                "block_reason": {
+                    "type": ["string", "null"],
+                    "description": "Block reason text (null to clear)",
+                },
+                "locked": {
+                    "type": ["string", "null"],
+                    "description": "Lock identifier (null to unlock)",
+                },
+                "due_date_time_present": {
+                    "type": "boolean",
+                    "description": "True if due_date includes time component",
+                },
                 "expires_later": {"type": "boolean", "description": "Expires later flag"},
-                "estimate_workload": {"type": "integer", "description": "Estimated workload in minutes (resource planning)"},
-                "child_card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Child card IDs to link"},
-                "parent_card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Parent card IDs to link"},
+                "estimate_workload": {
+                    "type": "integer",
+                    "description": "Estimated workload in minutes (resource planning)",
+                },
+                "child_card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Child card IDs to link",
+                },
+                "parent_card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Parent card IDs to link",
+                },
             },
             "required": ["card_id"],
         },
@@ -355,10 +493,72 @@ TOOLS = (
                 "parent_card_ids",
             ),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         examples=(
-            ExampleSpec(command='kaiten cards update --card-id 123 --title "Renamed"', description="Update a card."),
-            ExampleSpec(command='kaiten cards update --card-id 123 --title "Renamed" --compact --fields id,title,state --json', description="Update a card with a narrow response."),
+            ExampleSpec(
+                command='kaiten cards update --card-id 123 --title "Renamed"',
+                description="Update a card.",
+            ),
+            ExampleSpec(
+                command='kaiten cards update --card-id 123 --title "Renamed" --compact --fields id,title,state --json',
+                description="Update a card with a narrow response.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="cards.batch-update",
+        mcp_alias="kaiten_batch_update_cards",
+        description="Batch update cards matching criteria. Kaiten runs the update as a background job.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "board_id": {"type": "integer", "description": "Criteria board ID."},
+                "column_id": {"type": "integer", "description": "Criteria column ID."},
+                "lane_id": {"type": "integer", "description": "Criteria lane ID."},
+                "owner_id": {"type": "integer", "description": "Criteria owner user ID."},
+                "type_id": {"type": "integer", "description": "Criteria card type ID."},
+                "condition": {
+                    "type": "integer",
+                    "enum": [1, 2],
+                    "description": "Criteria condition: 1=active, 2=archived.",
+                },
+                "attributes": {
+                    "type": "object",
+                    "description": "Attributes to change on matching cards.",
+                },
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs.",
+                },
+            },
+            "required": ["attributes"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/cards",
+            body_fields=(
+                "board_id",
+                "column_id",
+                "lane_id",
+                "owner_id",
+                "type_id",
+                "condition",
+                "attributes",
+                "payload",
+            ),
+        ),
+        runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
+        examples=(
+            ExampleSpec(
+                command="kaiten cards batch-update --board-id 10 --attributes '{\"owner_id\":7}' --json",
+                description="Batch update matching cards.",
+            ),
+        ),
+        usage_notes=(
+            "This endpoint updates all cards matching the criteria and returns a background job ID.",
+            "Use narrow criteria first; this is intentionally separate from per-card cards.update.",
         ),
     ),
     make_tool(
@@ -381,8 +581,12 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}", path_fields=("card_id",)),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        operation=OperationSpec(
+            method="DELETE", path_template="/cards/{card_id}", path_fields=("card_id",)
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         examples=(
             ExampleSpec(command="kaiten cards delete --card-id 123", description="Delete a card."),
         ),
@@ -413,10 +617,14 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("condition",),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         runtime_behavior=RuntimeBehavior(request_shaper=archive_card_request),
         examples=(
-            ExampleSpec(command="kaiten cards archive --card-id 123", description="Archive a card."),
+            ExampleSpec(
+                command="kaiten cards archive --card-id 123", description="Archive a card."
+            ),
         ),
     ),
     make_tool(
@@ -449,9 +657,113 @@ TOOLS = (
             path_fields=("card_id",),
             body_fields=("board_id", "column_id", "lane_id", "sort_order"),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="entity"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
         examples=(
-            ExampleSpec(command="kaiten cards move --card-id 123 --column-id 10 --json", description="Move a card."),
+            ExampleSpec(
+                command="kaiten cards move --card-id 123 --column-id 10 --json",
+                description="Move a card.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="card-baselines.list",
+        mcp_alias="kaiten_list_card_baselines",
+        description="List card baselines.",
+        input_schema={
+            "type": "object",
+            "properties": {"card_id": {"type": "integer", "description": "Card ID."}},
+            "required": ["card_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_id}/baselines",
+            path_fields=("card_id",),
+        ),
+        response_policy=ResponsePolicy(result_kind="list"),
+        examples=(
+            ExampleSpec(
+                command="kaiten card-baselines list --card-id 123 --json",
+                description="List baselines for a card.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="card-allowed-users.list",
+        mcp_alias="kaiten_list_card_allowed_users",
+        description="List users allowed to access a card.",
+        input_schema={
+            "type": "object",
+            "properties": {"card_id": {"type": "integer", "description": "Card ID."}},
+            "required": ["card_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_id}/allowed-users",
+            path_fields=("card_id",),
+        ),
+        response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        examples=(
+            ExampleSpec(
+                command="kaiten card-allowed-users list --card-id 123 --compact --json",
+                description="List card allowed users.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="card-service-desk-external-recipients.add",
+        mcp_alias="kaiten_add_card_sd_external_recipient",
+        description="Add a Service Desk external recipient to a card.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "Card ID."},
+                "email": {"type": "string", "description": "External recipient email."},
+                "name": {"type": "string", "description": "External recipient display name."},
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs.",
+                },
+            },
+            "required": ["card_id", "email"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_id}/sd-external-recipients",
+            path_fields=("card_id",),
+            body_fields=("email", "name", "payload"),
+        ),
+        runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
+        examples=(
+            ExampleSpec(
+                command="kaiten card-service-desk-external-recipients add --card-id 123 --email user@example.com --json",
+                description="Add a Service Desk external recipient.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="card-service-desk-external-recipients.remove",
+        mcp_alias="kaiten_remove_card_sd_external_recipient",
+        description="Remove a Service Desk external recipient from a card.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "Card ID."},
+                "email": {"type": "string", "description": "External recipient email."},
+            },
+            "required": ["card_id", "email"],
+        },
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/sd-external-recipients/{email}",
+            path_fields=("card_id", "email"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten card-service-desk-external-recipients remove --card-id 123 --email user@example.com --json",
+                description="Remove a Service Desk external recipient.",
+            ),
         ),
     ),
     make_tool(
@@ -463,7 +775,10 @@ TOOLS = (
             "properties": {
                 **LIST_CARD_SCHEMA["properties"],
                 "owner_ids": {"type": "string", "description": "Comma-separated owner IDs"},
-                "responsible_ids": {"type": "string", "description": "Comma-separated responsible IDs"},
+                "responsible_ids": {
+                    "type": "string",
+                    "description": "Comma-separated responsible IDs",
+                },
                 "column_ids": {"type": "string", "description": "Comma-separated column IDs"},
                 "type_ids": {"type": "string", "description": "Comma-separated type IDs"},
                 "selection": {
@@ -471,8 +786,14 @@ TOOLS = (
                     "enum": ["all", "active_only", "archived_only"],
                     "description": "Normalized bulk selection: all, active_only, or archived_only.",
                 },
-                "page_size": {"type": "integer", "description": "Cards per page (default 100, max 100)"},
-                "max_pages": {"type": "integer", "description": "Safety limit on pages to fetch (default 50)"},
+                "page_size": {
+                    "type": "integer",
+                    "description": "Cards per page (default 100, max 100)",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "description": "Safety limit on pages to fetch (default 50)",
+                },
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields (default true for bulk)",
@@ -490,7 +811,9 @@ TOOLS = (
             },
         },
         operation=OperationSpec(method="GET", path_template="/cards"),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list", heavy=True),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="list", heavy=True
+        ),
         runtime_behavior=RuntimeBehavior(
             execution_mode="aggregated",
             payload_validator=validate_cards_list_all_selection,
@@ -498,8 +821,14 @@ TOOLS = (
             compact_default=True,
         ),
         examples=(
-            ExampleSpec(command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json", description="Fetch all matching cards with bounded pagination."),
-            ExampleSpec(command="kaiten cards list-all --board-id 10 --selection active_only --fields id,title --json", description="Fetch only active cards via normalized bulk selection."),
+            ExampleSpec(
+                command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json",
+                description="Fetch all matching cards with bounded pagination.",
+            ),
+            ExampleSpec(
+                command="kaiten cards list-all --board-id 10 --selection active_only --fields id,title --json",
+                description="Fetch only active cards via normalized bulk selection.",
+            ),
         ),
         usage_notes=(
             "For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.",

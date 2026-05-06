@@ -14,7 +14,9 @@ from kaiten_cli.runtime.trace import ExecutionStats
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
 
-def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None]:
+def build_request(
+    tool: ToolSpec, payload: dict[str, Any]
+) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None]:
     path_values = {name: str(payload[name]) for name in tool.operation.path_fields}
     path = tool.operation.path_template.format(**path_values)
     query = {
@@ -23,9 +25,7 @@ def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[st
         if field in payload and payload[field] is not None
     } or None
     body = {
-        field: payload[field]
-        for field in tool.operation.body_fields
-        if field in payload
+        field: payload[field] for field in tool.operation.body_fields if field in payload
     } or None
     if "limit" in tool.operation.query_fields and tool.response_policy.default_limit is not None:
         query = dict(query or {})
@@ -37,6 +37,16 @@ def build_request(tool: ToolSpec, payload: dict[str, Any]) -> tuple[str, dict[st
 
 def timeout_for_tool(tool: ToolSpec) -> float:
     return HEAVY_TIMEOUT if tool.response_policy.heavy else DEFAULT_TIMEOUT
+
+
+def request_path_for_tool(tool: ToolSpec, path: str, client: KaitenClient | None) -> str:
+    if tool.operation.api_base_path is None:
+        return path
+    if client is None:
+        return path
+    base = tool.operation.api_base_path.rstrip("/")
+    suffix = path if path.startswith("/") else f"/{path}"
+    return f"https://{client.domain}.kaiten.ru{base}{suffix}"
 
 
 def _emit_debug(reporter: DebugReporter | None, message: str) -> None:
@@ -100,11 +110,12 @@ async def execute_tool_with_diagnostics(
     else:
         _emit_debug(reporter, "profile: not required for this command")
     path, query, body = build_request(tool, payload)
+    request_path = request_path_for_tool(tool, path, client)
     timeout = timeout_for_tool(tool)
     _emit_debug(
         reporter,
         "request: "
-        f"method={tool.operation.method.upper()} path={path} timeout={timeout:.1f}s "
+        f"method={tool.operation.method.upper()} path={request_path} timeout={timeout:.1f}s "
         f"execution_mode={tool.execution_mode} cache_policy={tool.cache_policy}",
     )
     if tool.runtime_behavior.request_shaper is not None:
@@ -113,22 +124,24 @@ async def execute_tool_with_diagnostics(
     try:
         method = tool.operation.method.upper()
         if tool.runtime_behavior.custom_executor is not None:
-            _emit_debug(reporter, f"custom-executor: {tool.runtime_behavior.custom_executor.__name__}")
+            _emit_debug(
+                reporter, f"custom-executor: {tool.runtime_behavior.custom_executor.__name__}"
+            )
             result = await tool.runtime_behavior.custom_executor(
-                client, tool, payload, path, query, body, timeout, reporter
+                client, tool, payload, request_path, query, body, timeout, reporter
             )
         elif client is None:
             raise ConfigError("This command requires a custom executor.")
         elif method == "GET":
-            result = await client.get(path, params=query, timeout=timeout)
+            result = await client.get(request_path, params=query, timeout=timeout)
         elif method == "POST":
-            result = await client.post(path, json=body, timeout=timeout)
+            result = await client.post(request_path, json=body, timeout=timeout)
         elif method == "PUT":
-            result = await client.put(path, json=body, timeout=timeout)
+            result = await client.put(request_path, json=body, timeout=timeout)
         elif method == "PATCH":
-            result = await client.patch(path, json=body, timeout=timeout)
+            result = await client.patch(request_path, json=body, timeout=timeout)
         elif method == "DELETE":
-            result = await client.delete(path, json=body, timeout=timeout)
+            result = await client.delete(request_path, json=body, timeout=timeout)
         else:  # pragma: no cover - impossible with current registry
             raise ConfigError(f"Unsupported method: {method}")
     except Exception as exc:

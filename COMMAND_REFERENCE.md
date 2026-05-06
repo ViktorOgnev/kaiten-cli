@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **262** canonical commands across **29** registry modules.
+`kaiten-cli` currently exposes **345** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -19,13 +19,13 @@
 
 | Area | Module | Count | Section |
 |---|---|---:|---|
-| Карточки | `cards` | 9 | [Open](#module-cards) |
+| Карточки | `cards` | 14 | [Open](#module-cards) |
 | Комментарии | `comments` | 5 | [Open](#module-comments) |
-| Участники и пользователи | `members` | 5 | [Open](#module-members) |
-| Логи времени | `time_logs` | 5 | [Open](#module-time-logs) |
-| Теги | `tags` | 6 | [Open](#module-tags) |
-| Чеклисты | `checklists` | 8 | [Open](#module-checklists) |
-| Блокировки | `blockers` | 5 | [Open](#module-blockers) |
+| Участники и пользователи | `members` | 7 | [Open](#module-members) |
+| Логи времени | `time_logs` | 6 | [Open](#module-time-logs) |
+| Теги | `tags` | 7 | [Open](#module-tags) |
+| Чеклисты | `checklists` | 16 | [Open](#module-checklists) |
+| Блокировки | `blockers` | 12 | [Open](#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Open](#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Open](#module-external-links) |
 | Файлы карточек | `files` | 6 | [Open](#module-files) |
@@ -34,17 +34,19 @@
 | Доски | `boards` | 5 | [Open](#module-boards) |
 | Колонки и подколонки | `columns` | 8 | [Open](#module-columns) |
 | Дорожки | `lanes` | 4 | [Open](#module-lanes) |
-| Типы карточек | `card_types` | 5 | [Open](#module-card-types) |
-| Кастомные свойства | `custom_properties` | 10 | [Open](#module-custom-properties) |
-| Документы | `documents` | 11 | [Open](#module-documents) |
+| Типы карточек | `card_types` | 8 | [Open](#module-card-types) |
+| Каталоги / Custom directories | `custom_directories` | 16 | [Open](#module-custom-directories) |
+| Кастомные свойства | `custom_properties` | 25 | [Open](#module-custom-properties) |
+| Документы | `documents` | 12 | [Open](#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
-| Роли и группы | `roles_and_groups` | 14 | [Open](#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 29 | [Open](#module-roles-and-groups) |
+| SCIM | `scim` | 8 | [Open](#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Open](#module-charts) |
-| Дерево сущностей | `tree` | 2 | [Open](#module-tree) |
+| Дерево сущностей | `tree` | 3 | [Open](#module-tree) |
 | Утилиты | `utilities` | 14 | [Open](#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Open](#module-query) |
@@ -52,16 +54,24 @@
 ## Full Reference
 
 <a id="module-cards"></a>
-## Карточки (`cards`) — 9 commands
+## Карточки (`cards`) — 14 commands
 
 Карточки, bulk reads и card-heavy workflows.
 
 **Namespace tree**
 
 ```text
+card-allowed-users
+  list
+card-baselines
+  list
+card-service-desk-external-recipients
+  add
+  remove
 cards
   archive
   batch-get
+  batch-update
   create
   delete
   get
@@ -70,6 +80,138 @@ cards
   move
   update
 ```
+
+### `card-allowed-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-allowed-users list` |
+| MCP alias | `kaiten_list_card_allowed_users` |
+| Description | List users allowed to access a card. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/allowed-users` |
+| Compact | `yes` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+
+**Examples**
+
+- List card allowed users.: `kaiten card-allowed-users list --card-id 123 --compact --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `card-baselines.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-baselines list` |
+| MCP alias | `kaiten_list_card_baselines` |
+| Description | List card baselines. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/baselines` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+
+**Examples**
+
+- List baselines for a card.: `kaiten card-baselines list --card-id 123 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `card-service-desk-external-recipients.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-service-desk-external-recipients add` |
+| MCP alias | `kaiten_add_card_sd_external_recipient` |
+| Description | Add a Service Desk external recipient to a card. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/sd-external-recipients` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+| `email` | `string` | yes | — | External recipient email. |
+| `name` | `string` | no | — | External recipient display name. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Add a Service Desk external recipient.: `kaiten card-service-desk-external-recipients add --card-id 123 --email user@example.com --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `card-service-desk-external-recipients.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-service-desk-external-recipients remove` |
+| MCP alias | `kaiten_remove_card_sd_external_recipient` |
+| Description | Remove a Service Desk external recipient from a card. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/sd-external-recipients/{email}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+| `email` | `string` | yes | — | External recipient email. |
+
+**Examples**
+
+- Remove a Service Desk external recipient.: `kaiten card-service-desk-external-recipients remove --card-id 123 --email user@example.com --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 ### `cards.archive`
 
@@ -142,6 +284,47 @@ cards
 - Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for detail enrichment after local candidate reduction or before building evidence-heavy snapshots.
+
+### `cards.batch-update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten cards batch-update` |
+| MCP alias | `kaiten_batch_update_cards` |
+| Description | Batch update cards matching criteria. Kaiten runs the update as a background job. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `board_id` | `integer` | no | — | Criteria board ID. |
+| `column_id` | `integer` | no | — | Criteria column ID. |
+| `lane_id` | `integer` | no | — | Criteria lane ID. |
+| `owner_id` | `integer` | no | — | Criteria owner user ID. |
+| `type_id` | `integer` | no | — | Criteria card type ID. |
+| `condition` | `integer` | no | `1`, `2` | Criteria condition: 1=active, 2=archived. |
+| `attributes` | `object` | yes | — | Attributes to change on matching cards. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Batch update matching cards.: `kaiten cards batch-update --board-id 10 --attributes '{"owner_id":7}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- This endpoint updates all cards matching the criteria and returns a background job ID.
+- Use narrow criteria first; this is intentionally separate from per-card cards.update.
 
 ### `cards.create`
 
@@ -703,7 +886,7 @@ comments
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-members"></a>
-## Участники и пользователи (`members`) — 5 commands
+## Участники и пользователи (`members`) — 7 commands
 
 Участники карточек, пользователи, группы и space users.
 
@@ -714,9 +897,11 @@ card-members
   add
   list
   remove
+  update
 users
   current
   list
+  update
 ```
 
 ### `card-members.add`
@@ -818,6 +1003,41 @@ users
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
+### `card-members.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-members update` |
+| MCP alias | `kaiten_update_card_member` |
+| Description | Update a card member role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/members/{member_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | ID of the card. |
+| `member_id` | `integer` | yes | — | Card member ID from Kaiten. |
+| `role_id` | `string` | no | — | Role ID to assign. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a card member role.: `kaiten card-members update --card-id 10 --member-id 7 --role-id role-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `users.current`
 
 | Field | Value |
@@ -884,8 +1104,43 @@ _No tool-specific arguments._
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
 
+### `users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten users update` |
+| MCP alias | `kaiten_update_user` |
+| Description | Update a user. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | User ID. |
+| `full_name` | `string` | no | — | Full name. |
+| `email` | `string` | no | — | Email. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a user.: `kaiten users update --user-id 7 --full-name "Alice Smith" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 <a id="module-time-logs"></a>
-## Логи времени (`time_logs`) — 5 commands
+## Логи времени (`time_logs`) — 6 commands
 
 Time logs, work logs и related analytics inputs.
 
@@ -898,6 +1153,8 @@ time-logs
   delete
   list
   update
+timesheet
+  list
 ```
 
 ### `time-logs.batch-list`
@@ -1085,8 +1342,48 @@ time-logs
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
+### `timesheet.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten timesheet list` |
+| MCP alias | `kaiten_list_timesheet` |
+| Description | List time logs across cards from the company timesheet endpoint. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/time-logs` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `integer` | no | — | Filter by user ID. |
+| `card_id` | `integer` | no | — | Filter by card ID. |
+| `for_date` | `string` | no | — | Filter by date (YYYY-MM-DD). |
+| `date_from` | `string` | no | — | Start date filter. |
+| `date_to` | `string` | no | — | End date filter. |
+| `limit` | `integer` | no | — | Max results. |
+| `offset` | `integer` | no | — | Pagination offset. |
+| `compact` | `boolean` | no | — | Strip heavy nested fields from time-log payloads. |
+| `fields` | `string` | no | — | Comma-separated field names to keep for each time log. |
+
+**Examples**
+
+- List company time logs.: `kaiten timesheet list --limit 50 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 <a id="module-tags"></a>
-## Теги (`tags`) — 6 commands
+## Теги (`tags`) — 7 commands
 
 Теги и операции привязки тегов к карточкам.
 
@@ -1095,6 +1392,7 @@ time-logs
 ```text
 card-tags
   add
+  list
   remove
 tags
   create
@@ -1135,6 +1433,38 @@ tags
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `card-tags.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-tags list` |
+| MCP alias | `kaiten_list_card_tags` |
+| Description | List tags attached to a Kaiten card. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/tags` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+
+**Examples**
+
+- List tags on a card.: `kaiten card-tags list --card-id 10 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 
 ### `card-tags.remove`
 
@@ -1304,13 +1634,15 @@ tags
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-checklists"></a>
-## Чеклисты (`checklists`) — 8 commands
+## Чеклисты (`checklists`) — 16 commands
 
 Чеклисты и checklist items.
 
 **Namespace tree**
 
 ```text
+checklist-cards
+  list
 checklist-items
   create
   delete
@@ -1321,7 +1653,49 @@ checklists
   delete
   list
   update
+space-template-checklist-items
+  create
+  delete
+  update
+space-template-checklists
+  create
+  delete
+  list
+  update
 ```
+
+### `checklist-cards.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten checklist-cards list` |
+| MCP alias | `kaiten_list_checklist_cards` |
+| Description | List cards that share a checklist. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/checklists/{checklist_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `checklist_id` | `integer` | yes | — | Checklist ID. |
+| `only_shared_cards` | `boolean` | no | — | Return only shared cards. |
+
+**Examples**
+
+- List cards with a checklist.: `kaiten checklist-cards list --checklist-id 20 --only-shared-cards --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 
 ### `checklist-items.create`
 
@@ -1605,21 +1979,464 @@ checklists
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
+### `space-template-checklist-items.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklist-items create` |
+| MCP alias | `kaiten_create_space_template_checklist_item` |
+| Description | Create an item in a space template checklist. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists/{template_checklist_uid}/items` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+| `text` | `string` | yes | — | Checklist item text. |
+| `sort_order` | `number` | no | — | Sort order. |
+
+**Examples**
+
+- Create a space template checklist item.: `kaiten space-template-checklist-items create --space-uid space-uuid --template-checklist-uid tmpl-uuid --text "Reviewed" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `space-template-checklist-items.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklist-items delete` |
+| MCP alias | `kaiten_delete_space_template_checklist_item` |
+| Description | Delete an item from a space template checklist. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists/{template_checklist_uid}/items/{item_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+| `item_uid` | `string` | yes | — | Template checklist item UID. |
+
+**Examples**
+
+- Delete a space template checklist item.: `kaiten space-template-checklist-items delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `space-template-checklist-items.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklist-items update` |
+| MCP alias | `kaiten_update_space_template_checklist_item` |
+| Description | Update an item in a space template checklist. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists/{template_checklist_uid}/items/{item_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+| `item_uid` | `string` | yes | — | Template checklist item UID. |
+| `text` | `string` | no | — | Checklist item text. |
+| `sort_order` | `number` | no | — | Sort order. |
+
+**Examples**
+
+- Update a space template checklist item.: `kaiten space-template-checklist-items update --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --text "Reviewed" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `space-template-checklists.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklists create` |
+| MCP alias | `kaiten_create_space_template_checklist` |
+| Description | Create a template checklist for a space. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `name` | `string` | yes | — | Template checklist name. |
+| `sort_order` | `number` | no | — | Sort order. |
+
+**Examples**
+
+- Create a space template checklist.: `kaiten space-template-checklists create --space-uid space-uuid --name "Definition of Done" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `space-template-checklists.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklists delete` |
+| MCP alias | `kaiten_delete_space_template_checklist` |
+| Description | Delete a template checklist from a space. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists/{template_checklist_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+
+**Examples**
+
+- Delete a space template checklist.: `kaiten space-template-checklists delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `space-template-checklists.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklists list` |
+| MCP alias | `kaiten_list_space_template_checklists` |
+| Description | List template checklists for a space. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_uid}/template-checklists` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+
+**Examples**
+
+- List space template checklists.: `kaiten space-template-checklists list --space-uid space-uuid --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `space-template-checklists.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-template-checklists update` |
+| MCP alias | `kaiten_update_space_template_checklist` |
+| Description | Update a template checklist for a space. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/template-checklists/{template_checklist_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+| `name` | `string` | no | — | Template checklist name. |
+| `sort_order` | `number` | no | — | Sort order. |
+
+**Examples**
+
+- Update a space template checklist.: `kaiten space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 <a id="module-blockers"></a>
-## Блокировки (`blockers`) — 5 commands
+## Блокировки (`blockers`) — 12 commands
 
 Блокировки карточек и blocker relations.
 
 **Namespace tree**
 
 ```text
+blocker-categories
+  add
+  list
+  remove
+blocker-users
+  add
+  list
+  remove
 blockers
   create
   delete
   get
   list
   update
+current-user-blockers
+  list
 ```
+
+### `blocker-categories.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-categories add` |
+| MCP alias | `kaiten_add_blocker_category` |
+| Description | Add a category to a blocker. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/blockers/{blocker_id}/categories` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | Blocker ID. |
+| `category_uuid` | `string` | yes | — | Category UUID. |
+
+**Examples**
+
+- Add a blocker category.: `kaiten blocker-categories add --blocker-id 20 --category-uuid cat-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `blocker-categories.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-categories list` |
+| MCP alias | `kaiten_list_blocker_categories` |
+| Description | List blocker categories. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/categories` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+_No tool-specific arguments._
+
+**Examples**
+
+- List blocker categories.: `kaiten blocker-categories list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `blocker-categories.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-categories remove` |
+| MCP alias | `kaiten_remove_blocker_category` |
+| Description | Remove a category from a blocker. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/blockers/{blocker_id}/categories/{category_uuid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | Blocker ID. |
+| `category_uuid` | `string` | yes | — | Category UUID. |
+
+**Examples**
+
+- Remove a blocker category.: `kaiten blocker-categories remove --blocker-id 20 --category-uuid cat-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `blocker-users.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-users add` |
+| MCP alias | `kaiten_add_blocker_user` |
+| Description | Add a user to a blocker. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/blockers/{blocker_id}/users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | Blocker ID. |
+| `user_id` | `integer` | yes | — | User ID. |
+
+**Examples**
+
+- Add a blocker user.: `kaiten blocker-users add --blocker-id 20 --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `blocker-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-users list` |
+| MCP alias | `kaiten_list_blocker_users` |
+| Description | List users attached to a blocker. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/blockers/{blocker_id}/users` |
+| Compact | `yes` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | Blocker ID. |
+
+**Examples**
+
+- List blocker users.: `kaiten blocker-users list --blocker-id 20 --compact --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `blocker-users.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten blocker-users remove` |
+| MCP alias | `kaiten_remove_blocker_user` |
+| Description | Remove a user from a blocker. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/blockers/{blocker_id}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | Blocker ID. |
+| `user_id` | `integer` | yes | — | User ID. |
+
+**Examples**
+
+- Remove a blocker user.: `kaiten blocker-users remove --blocker-id 20 --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 ### `blockers.create`
 
@@ -1786,6 +2603,36 @@ blockers
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `current-user-blockers.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten current-user-blockers list` |
+| MCP alias | `kaiten_list_current_user_blockers` |
+| Description | List blocker cards assigned to the current user. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/users/current/blockers` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+_No tool-specific arguments._
+
+**Examples**
+
+- List current user blockers.: `kaiten current-user-blockers list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 
 <a id="module-card-relations"></a>
 ## Связи карточек (`card_relations`) — 10 commands
@@ -3650,7 +4497,7 @@ lanes
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-card-types"></a>
-## Типы карточек (`card_types`) — 5 commands
+## Типы карточек (`card_types`) — 8 commands
 
 Card types and type metadata.
 
@@ -3663,6 +4510,10 @@ card-types
   get
   list
   update
+card-types.tree-entities
+  add
+  list
+  remove
 ```
 
 ### `card-types.create`
@@ -3802,6 +4653,105 @@ card-types
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 
+### `card-types.tree-entities.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-types tree-entities add` |
+| MCP alias | `kaiten_add_card_type_tree_entity` |
+| Description | Attach a tree entity to a card type. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/card-types/{type_id}/tree-entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | Card type ID |
+| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Attach a tree entity to a card type.: `kaiten card-types tree-entities add --type-id 42 --tree-entity-uid entity-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `card-types.tree-entities.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-types tree-entities list` |
+| MCP alias | `kaiten_list_card_type_tree_entities` |
+| Description | List tree entities attached to a card type. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/card-types/{type_id}/tree-entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | Card type ID |
+
+**Examples**
+
+- List card type tree entities.: `kaiten card-types tree-entities list --type-id 42 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `card-types.tree-entities.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-types tree-entities remove` |
+| MCP alias | `kaiten_remove_card_type_tree_entity` |
+| Description | Remove a tree entity from a card type. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/card-types/{type_id}/tree-entities/{tree_entity_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | Card type ID |
+| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+
+**Examples**
+
+- Remove a tree entity from a card type.: `kaiten card-types tree-entities remove --type-id 42 --tree-entity-uid entity-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-types.update`
 
 | Field | Value |
@@ -3838,10 +4788,675 @@ card-types
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
-<a id="module-custom-properties"></a>
-## Кастомные свойства (`custom_properties`) — 10 commands
+<a id="module-custom-directories"></a>
+## Каталоги / Custom directories (`custom_directories`) — 16 commands
 
-Custom properties and select values.
+Kaiten Catalogs: directories, fields, records and linked cards.
+
+**Namespace tree**
+
+```text
+custom-directories
+  create
+  delete
+  get
+  list
+  update
+custom-directory-fields
+  create
+  delete
+  get
+  list
+  update
+custom-directory-records
+  create
+  delete
+  get
+  list
+  update
+custom-directory-records.cards
+  list
+```
+
+### `custom-directories.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directories create` |
+| MCP alias | `kaiten_create_custom_directory` |
+| Description | Create a Kaiten Catalog (custom directory). |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `name` | `string` | yes | — | Directory name. |
+| `description` | `string|null` | no | — | Directory description. |
+| `settings` | `object` | no | — | Directory settings, for example multi_select or allow_editing. |
+| `fields` | `array` | no | — | Initial directory fields, when supported by the API. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Create a Catalog.: `kaiten custom-directories create --name "Contacts" --settings '{"multi_select":false,"allow_editing":true}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directories.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directories delete` |
+| MCP alias | `kaiten_delete_custom_directory` |
+| Description | Delete a Kaiten Catalog (custom directory). |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+
+**Examples**
+
+- Delete a Catalog.: `kaiten custom-directories delete --directory-id dir-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directories.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directories get` |
+| MCP alias | `kaiten_get_custom_directory` |
+| Description | Get a Kaiten Catalog (custom directory). |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/company/custom-directories/{directory_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `include_fields` | `boolean` | no | — | Include directory field definitions. |
+| `include_author` | `boolean` | no | — | Include author user object. |
+| `include_records_count` | `boolean` | no | — | Include records_count. |
+
+**Examples**
+
+- Get a Catalog.: `kaiten custom-directories get --directory-id dir-uuid --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directories.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directories list` |
+| MCP alias | `kaiten_list_custom_directories` |
+| Description | List Kaiten Catalogs (custom directories). |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-directories` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `include_fields` | `boolean` | no | — | Include directory field definitions. |
+| `include_author` | `boolean` | no | — | Include author user object. |
+| `include_records_count` | `boolean` | no | — | Include records_count. |
+| `query` | `string` | no | — | Search by directory name. |
+| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `limit` | `integer` | no | — | Max results, capped by Kaiten at 200. |
+| `offset` | `integer` | no | — | Pagination offset. |
+
+**Examples**
+
+- List Catalogs with field metadata and record counts.: `kaiten custom-directories list --include-fields --include-records-count --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directories.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directories update` |
+| MCP alias | `kaiten_update_custom_directory` |
+| Description | Update a Kaiten Catalog (custom directory). |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `name` | `string` | no | — | Directory name. |
+| `description` | `string|null` | no | — | Directory description. |
+| `settings` | `object` | no | — | Directory settings. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | Directory condition. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Update a Catalog.: `kaiten custom-directories update --directory-id dir-uuid --name "Clients" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-fields.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-fields create` |
+| MCP alias | `kaiten_create_custom_directory_field` |
+| Description | Create a field (column) in a Kaiten Catalog. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/fields` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `name` | `string` | yes | — | Field name. |
+| `type` | `string` | yes | — | Field type, for example string, email, phone, or catalog. |
+| `required` | `boolean` | no | — | Whether the field is required. |
+| `is_display` | `boolean` | no | — | Whether the field is used as display value. |
+| `sort_order` | `number` | no | — | Field sort order. |
+| `settings` | `object` | no | — | Type-specific field settings. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Create a Catalog field.: `kaiten custom-directory-fields create --directory-id dir-uuid --name Email --type email --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-fields.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-fields delete` |
+| MCP alias | `kaiten_delete_custom_directory_field` |
+| Description | Delete a field (column) from a Kaiten Catalog. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/fields/{field_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
+
+**Examples**
+
+- Delete a Catalog field.: `kaiten custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-fields.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-fields get` |
+| MCP alias | `kaiten_get_custom_directory_field` |
+| Description | Get a field (column) of a Kaiten Catalog. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/company/custom-directories/{directory_id}/fields/{field_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
+
+**Examples**
+
+- Get a Catalog field.: `kaiten custom-directory-fields get --directory-id dir-uuid --field-id field-uuid --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-fields.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-fields list` |
+| MCP alias | `kaiten_list_custom_directory_fields` |
+| Description | List fields (columns) of a Kaiten Catalog. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-directories/{directory_id}/fields` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `include_author` | `boolean` | no | — | Include author user object. |
+| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
+
+**Examples**
+
+- List Catalog fields.: `kaiten custom-directory-fields list --directory-id dir-uuid --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-fields.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-fields update` |
+| MCP alias | `kaiten_update_custom_directory_field` |
+| Description | Update a field (column) in a Kaiten Catalog. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/fields/{field_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
+| `name` | `string` | no | — | Field name. |
+| `required` | `boolean` | no | — | Whether the field is required. |
+| `is_display` | `boolean` | no | — | Whether the field is used as display value. |
+| `sort_order` | `number` | no | — | Field sort order. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | Field condition. |
+| `settings` | `object` | no | — | Type-specific field settings. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Update a Catalog field.: `kaiten custom-directory-fields update --directory-id dir-uuid --field-id field-uuid --required --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.cards.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records cards list` |
+| MCP alias | `kaiten_list_custom_directory_record_cards` |
+| Description | List cards linked to a Kaiten Catalog record. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-directories/{directory_id}/records/{record_id}/cards` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
+| `filter` | `string` | no | — | Base64-encoded JSON card filter. |
+| `limit` | `integer` | no | — | Max results, capped by Kaiten at 100. |
+| `offset` | `integer` | no | — | Pagination offset. |
+
+**Examples**
+
+- List cards linked to a Catalog record.: `kaiten custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records create` |
+| MCP alias | `kaiten_create_custom_directory_record` |
+| Description | Create a record (row) in a Kaiten Catalog. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/records` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `values` | `object|array` | yes | — | Field values for the record. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Create a Catalog record.: `kaiten custom-directory-records create --directory-id dir-uuid --values '{"field-uuid":"Alice"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records delete` |
+| MCP alias | `kaiten_delete_custom_directory_record` |
+| Description | Delete a record (row) from a Kaiten Catalog. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/records/{record_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
+
+**Examples**
+
+- Delete a Catalog record.: `kaiten custom-directory-records delete --directory-id dir-uuid --record-id record-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records get` |
+| MCP alias | `kaiten_get_custom_directory_record` |
+| Description | Get a record (row) from a Kaiten Catalog. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/company/custom-directories/{directory_id}/records/{record_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | Controls included relations. |
+
+**Examples**
+
+- Get a Catalog record.: `kaiten custom-directory-records get --directory-id dir-uuid --record-id record-uuid --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records list` |
+| MCP alias | `kaiten_list_custom_directory_records` |
+| Description | List records (rows) of a Kaiten Catalog. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-directories/{directory_id}/records` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `query` | `string` | no | — | Quick search by record display value. |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | Controls included relations. |
+| `include_values` | `boolean` | no | — | Legacy flag to include values array. |
+| `include_author` | `boolean` | no | — | Include author user object. |
+| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `filters` | `object` | no | — | Advanced field-based filters as JSON. |
+| `filter_operator` | `string` | no | `and`, `or` | Boolean operator for filters. |
+| `limit` | `integer` | no | — | Max results, capped by Kaiten at 100. |
+| `offset` | `integer` | no | — | Pagination offset. |
+
+**Examples**
+
+- List Catalog records.: `kaiten custom-directory-records list --directory-id dir-uuid --profile summary --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+### `custom-directory-records.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-directory-records update` |
+| MCP alias | `kaiten_update_custom_directory_record` |
+| Description | Update a record (row) in a Kaiten Catalog. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-directories/{directory_id}/records/{record_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
+| `values` | `object|array` | no | — | Field values for the record. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | Record condition. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+
+**Examples**
+
+- Update a Catalog record.: `kaiten custom-directory-records update --directory-id dir-uuid --record-id record-uuid --values '{"field-uuid":"Bob"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
+- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
+
+<a id="module-custom-properties"></a>
+## Кастомные свойства (`custom_properties`) — 25 commands
+
+Custom properties, select values, catalog-values and collective values.
 
 **Namespace tree**
 
@@ -3852,13 +5467,450 @@ custom-properties
   get
   list
   update
+custom-properties.catalog-values
+  create
+  delete
+  get
+  list
+  update
+custom-properties.collective-score-values
+  create
+  list
+  update
+custom-properties.collective-vote-values
+  create
+  delete
+  list
+  update
 custom-properties.select-values
   create
   delete
   get
   list
   update
+custom-properties.tree-entities
+  add
+  list
+  remove
 ```
+
+### `custom-properties.catalog-values.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties catalog-values create` |
+| MCP alias | `kaiten_create_catalog_value` |
+| Description | Create a catalog value for a catalog-typed custom property. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-properties/{property_id}/catalog-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `name` | `string` | no | — | Catalog value display name |
+| `value` | `object` | yes | — | Catalog value fields keyed by field UID. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Create a catalog value.: `kaiten custom-properties catalog-values create --property-id 5 --value '{"field-uuid":"Alice"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.catalog-values.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties catalog-values delete` |
+| MCP alias | `kaiten_delete_catalog_value` |
+| Description | Delete a catalog value for a catalog-typed custom property. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-properties/{property_id}/catalog-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Catalog value ID |
+
+**Examples**
+
+- Delete a catalog value.: `kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.catalog-values.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties catalog-values get` |
+| MCP alias | `kaiten_get_catalog_value` |
+| Description | Get a catalog value for a catalog-typed custom property. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/company/custom-properties/{property_id}/catalog-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Catalog value ID |
+
+**Examples**
+
+- Get a catalog value.: `kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
+### `custom-properties.catalog-values.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties catalog-values list` |
+| MCP alias | `kaiten_list_catalog_values` |
+| Description | List catalog values for a catalog-typed custom property. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-properties/{property_id}/catalog-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `query` | `string` | no | — | Text search filter by catalog values |
+| `conditions` | `string` | no | — | Condition filter: active or inactive |
+| `limit` | `integer` | no | — | Max results |
+| `offset` | `integer` | no | — | Pagination offset |
+
+**Examples**
+
+- List catalog values.: `kaiten custom-properties catalog-values list --property-id 5 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- This manages values of a catalog-typed custom property, not the UI `Каталоги` table itself.
+- For the UI `Каталоги` feature use custom-directories, custom-directory-fields, and custom-directory-records.
+
+### `custom-properties.catalog-values.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties catalog-values update` |
+| MCP alias | `kaiten_update_catalog_value` |
+| Description | Update a catalog value for a catalog-typed custom property. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-properties/{property_id}/catalog-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Catalog value ID |
+| `name` | `string` | no | — | Catalog value display name |
+| `value` | `object` | no | — | Catalog value fields keyed by field UID. |
+| `condition` | `string` | no | `active`, `inactive` | Value condition |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a catalog value.: `kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.collective-score-values.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-score-values create` |
+| MCP alias | `kaiten_create_collective_score_value` |
+| Description | Create a collective score value for a card custom property. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-score-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+| `value` | `string|number|object` | yes | — | Score value. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Create a collective score value.: `kaiten custom-properties collective-score-values create --card-id 10 --property-id 5 --value 8 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.collective-score-values.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-score-values list` |
+| MCP alias | `kaiten_list_collective_score_values` |
+| Description | List collective score values for a card custom property. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-score-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+
+**Examples**
+
+- List collective score values.: `kaiten custom-properties collective-score-values list --card-id 10 --property-id 5 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `custom-properties.collective-score-values.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-score-values update` |
+| MCP alias | `kaiten_update_collective_score_value` |
+| Description | Update a collective score value for a card custom property. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-score-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Score value ID |
+| `value` | `string|number|object` | no | — | Score value. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a collective score value.: `kaiten custom-properties collective-score-values update --card-id 10 --property-id 5 --value-id 1 --value 9 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.collective-vote-values.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-vote-values create` |
+| MCP alias | `kaiten_create_collective_vote_value` |
+| Description | Create a collective vote value for a card custom property. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-vote-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+| `value` | `string|number|object` | yes | — | Vote value. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Create a collective vote value.: `kaiten custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.collective-vote-values.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-vote-values delete` |
+| MCP alias | `kaiten_delete_collective_vote_value` |
+| Description | Delete a collective vote value for a card custom property. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-vote-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Vote value ID |
+
+**Examples**
+
+- Delete a collective vote value.: `kaiten custom-properties collective-vote-values delete --card-id 10 --property-id 5 --value-id 1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.collective-vote-values.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-vote-values list` |
+| MCP alias | `kaiten_list_collective_vote_values` |
+| Description | List collective vote values for a card custom property. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-vote-values` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+
+**Examples**
+
+- List collective vote values.: `kaiten custom-properties collective-vote-values list --card-id 10 --property-id 5 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `custom-properties.collective-vote-values.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties collective-vote-values update` |
+| MCP alias | `kaiten_update_collective_vote_value` |
+| Description | Update a collective vote value for a card custom property. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/custom-properties/{property_id}/collective-vote-values/{value_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `property_id` | `integer` | yes | — | Property ID |
+| `value_id` | `integer` | yes | — | Vote value ID |
+| `value` | `string|number|object` | no | — | Vote value. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a collective vote value.: `kaiten custom-properties collective-vote-values update --card-id 10 --property-id 5 --value-id 1 --value 2 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 ### `custom-properties.create`
 
@@ -4183,6 +6235,105 @@ custom-properties.select-values
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
+### `custom-properties.tree-entities.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties tree-entities add` |
+| MCP alias | `kaiten_add_custom_property_tree_entity` |
+| Description | Attach a tree entity to a custom property. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-properties/{property_id}/tree-entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Attach a tree entity to a custom property.: `kaiten custom-properties tree-entities add --property-id 5 --tree-entity-uid entity-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `custom-properties.tree-entities.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties tree-entities list` |
+| MCP alias | `kaiten_list_custom_property_tree_entities` |
+| Description | List tree entities attached to a custom property. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/custom-properties/{property_id}/tree-entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+
+**Examples**
+
+- List custom property tree entities.: `kaiten custom-properties tree-entities list --property-id 5 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `custom-properties.tree-entities.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten custom-properties tree-entities remove` |
+| MCP alias | `kaiten_remove_custom_property_tree_entity` |
+| Description | Remove a tree entity from a custom property. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/custom-properties/{property_id}/tree-entities/{tree_entity_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | Property ID |
+| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+
+**Examples**
+
+- Remove a tree entity from a custom property.: `kaiten custom-properties tree-entities remove --property-id 5 --tree-entity-uid entity-uuid --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.update`
 
 | Field | Value |
@@ -4227,7 +6378,7 @@ custom-properties.select-values
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-documents"></a>
-## Документы (`documents`) — 11 commands
+## Документы (`documents`) — 12 commands
 
 Documents and document groups.
 
@@ -4242,6 +6393,8 @@ document-groups
   get
   list
   update
+document-schemas
+  get
 documents
   create
   delete
@@ -4448,6 +6601,38 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `document-schemas.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-schemas get` |
+| MCP alias | `kaiten_get_document_schema` |
+| Description | Get a document data schema. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/document-schemas/{schema_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `schema_id` | `integer` | yes | — | Document schema ID. |
+
+**Examples**
+
+- Get a document data schema.: `kaiten document-schemas get --schema-id 1 --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 
 ### `documents.create`
 
@@ -5862,7 +8047,7 @@ _No tool-specific arguments._
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
 <a id="module-roles-and-groups"></a>
-## Роли и группы (`roles_and_groups`) — 14 commands
+## Роли и группы (`roles_and_groups`) — 29 commands
 
 Roles, groups and permission-related operations.
 
@@ -5875,6 +8060,18 @@ company-groups
   get
   list
   update
+company-users
+  remove-virtual
+  update
+group-admins
+  add
+  list
+  remove
+group-entities
+  add
+  list
+  remove
+  update
 group-users
   add
   list
@@ -5884,8 +8081,15 @@ roles
   list
 space-users
   add
+  get
   list
   remove
+  update
+user-roles
+  create
+  delete
+  get
+  list
   update
 ```
 
@@ -6046,6 +8250,307 @@ space-users
 **Examples**
 
 - Update a company group.: `kaiten company-groups update --group-uid grp-1 --name "Docs" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `company-users.remove-virtual`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company-users remove-virtual` |
+| MCP alias | `kaiten_remove_virtual_company_user` |
+| Description | Remove a virtual company user. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | Virtual user ID |
+
+**Examples**
+
+- Remove a virtual company user.: `kaiten company-users remove-virtual --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `company-users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company-users update` |
+| MCP alias | `kaiten_update_company_user` |
+| Description | Update a company user. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | User ID |
+| `full_name` | `string` | no | — | Full name |
+| `email` | `string` | no | — | Email |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a company user.: `kaiten company-users update --user-id 7 --full-name "Alice Smith" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `group-admins.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-admins add` |
+| MCP alias | `kaiten_add_group_admin` |
+| Description | Add an admin to a company group. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/groups/{group_uid}/admins` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `user_id` | `integer` | yes | — | User ID to add as admin |
+
+**Examples**
+
+- Add a group admin.: `kaiten group-admins add --group-uid grp-1 --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `group-admins.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-admins list` |
+| MCP alias | `kaiten_list_group_admins` |
+| Description | List admins of a company group. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/groups/{group_uid}/admins` |
+| Compact | `yes` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+
+**Examples**
+
+- List group admins.: `kaiten group-admins list --group-uid grp-1 --compact --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `group-admins.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-admins remove` |
+| MCP alias | `kaiten_remove_group_admin` |
+| Description | Remove an admin from a company group. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/groups/{group_uid}/admins/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `user_id` | `integer` | yes | — | User ID to remove |
+
+**Examples**
+
+- Remove a group admin.: `kaiten group-admins remove --group-uid grp-1 --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `group-entities.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities add` |
+| MCP alias | `kaiten_add_group_entity` |
+| Description | Attach a tree entity to a company group. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/groups/{group_uid}/entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `entity_uid` | `string` | yes | — | Tree entity UID |
+| `role_ids` | `array` | yes | — | Tree entity role IDs. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Attach a group entity.: `kaiten group-entities add --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `group-entities.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities list` |
+| MCP alias | `kaiten_list_group_entities` |
+| Description | List tree entities attached to a company group. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/groups/{group_uid}/entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+
+**Examples**
+
+- List group entities.: `kaiten group-entities list --group-uid grp-1 --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `group-entities.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities remove` |
+| MCP alias | `kaiten_remove_group_entity` |
+| Description | Remove a tree entity from a company group. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/groups/{group_uid}/entities/{entity_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `entity_uid` | `string` | yes | — | Tree entity UID |
+
+**Examples**
+
+- Remove a group entity.: `kaiten group-entities remove --group-uid grp-1 --entity-uid entity-1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `group-entities.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities update` |
+| MCP alias | `kaiten_update_group_entity` |
+| Description | Update a tree entity attached to a company group. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/groups/{group_uid}/entities/{entity_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | Group UID |
+| `entity_uid` | `string` | yes | — | Tree entity UID |
+| `role_ids` | `array` | no | — | Tree entity role IDs. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a group entity.: `kaiten group-entities update --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]' --json`
 
 **Notes**
 
@@ -6251,6 +8756,40 @@ space-users
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
 
+### `space-users.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-users get` |
+| MCP alias | `kaiten_get_space_user` |
+| Description | Get a user in a Kaiten space. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/spaces/{space_id}/users/{user_id}` |
+| Compact | `yes` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | Space ID |
+| `user_id` | `integer` | yes | — | User ID |
+| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+
+**Examples**
+
+- Get a space user.: `kaiten space-users get --space-id 1 --user-id 7 --compact --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `space-users.list`
 
 | Field | Value |
@@ -6345,6 +8884,455 @@ space-users
 **Examples**
 
 - Update a space user role.: `kaiten space-users update --space-id 1 --user-id 7 --role-id 9 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `user-roles.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-roles create` |
+| MCP alias | `kaiten_create_user_role` |
+| Description | Create a user role. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/user-roles` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `name` | `string` | yes | — | Role name |
+| `permissions` | `object` | no | — | Role permissions JSON. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Create a user role.: `kaiten user-roles create --name "Manager" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `user-roles.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-roles delete` |
+| MCP alias | `kaiten_delete_user_role` |
+| Description | Delete a user role. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/user-roles/{role_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | User role ID |
+
+**Examples**
+
+- Delete a user role.: `kaiten user-roles delete --role-id 1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `user-roles.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-roles get` |
+| MCP alias | `kaiten_get_user_role` |
+| Description | Get a user role. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/user-roles/{role_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | User role ID |
+
+**Examples**
+
+- Get a user role.: `kaiten user-roles get --role-id 1 --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
+### `user-roles.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-roles list` |
+| MCP alias | `kaiten_list_user_roles` |
+| Description | List user roles. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/user-roles` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `query` | `string` | no | — | Search query |
+| `limit` | `integer` | no | — | Max results |
+| `offset` | `integer` | no | — | Pagination offset |
+
+**Examples**
+
+- List user roles.: `kaiten user-roles list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `user-roles.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-roles update` |
+| MCP alias | `kaiten_update_user_role` |
+| Description | Update a user role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/user-roles/{role_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | User role ID |
+| `name` | `string` | no | — | Role name |
+| `permissions` | `object` | no | — | Role permissions JSON. |
+| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+
+**Examples**
+
+- Update a user role.: `kaiten user-roles update --role-id 1 --name "Manager" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+<a id="module-scim"></a>
+## SCIM (`scim`) — 8 commands
+
+SCIM v2 user and group provisioning.
+
+**Namespace tree**
+
+```text
+scim.groups
+  create
+  get
+  list
+  update
+scim.users
+  create
+  get
+  list
+  update
+```
+
+### `scim.groups.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim groups create` |
+| MCP alias | `kaiten_create_scim_group` |
+| Description | Create a SCIM group. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/scim/v2/Groups` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+
+**Examples**
+
+- Create a SCIM group.: `kaiten scim groups create --payload '{"displayName":"Engineering"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `scim.groups.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim groups get` |
+| MCP alias | `kaiten_get_scim_group` |
+| Description | Get a SCIM group. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/scim/v2/Groups/{group_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_id` | `string` | yes | — | SCIM group ID. |
+
+**Examples**
+
+- Get a SCIM group.: `kaiten scim groups get --group-id group-id --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
+### `scim.groups.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim groups list` |
+| MCP alias | `kaiten_list_scim_groups` |
+| Description | List SCIM groups. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/scim/v2/Groups` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `start_index` | `integer` | no | — | SCIM start index. |
+| `count` | `integer` | no | — | SCIM page size. |
+| `filter` | `string` | no | — | SCIM filter expression. |
+
+**Examples**
+
+- List SCIM groups.: `kaiten scim groups list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `scim.groups.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim groups update` |
+| MCP alias | `kaiten_update_scim_group` |
+| Description | Update a SCIM group. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/scim/v2/Groups/{group_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `group_id` | `string` | yes | — | SCIM group ID. |
+| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+
+**Examples**
+
+- Update a SCIM group.: `kaiten scim groups update --group-id group-id --payload '{"displayName":"Ops"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `scim.users.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim users create` |
+| MCP alias | `kaiten_create_scim_user` |
+| Description | Create a SCIM user. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/scim/v2/Users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+
+**Examples**
+
+- Create a SCIM user.: `kaiten scim users create --payload '{"userName":"alice@example.com"}' --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
+### `scim.users.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim users get` |
+| MCP alias | `kaiten_get_scim_user` |
+| Description | Get a SCIM user. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/scim/v2/Users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `string` | yes | — | SCIM user ID. |
+
+**Examples**
+
+- Get a SCIM user.: `kaiten scim users get --user-id user-id --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
+### `scim.users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim users list` |
+| MCP alias | `kaiten_list_scim_users` |
+| Description | List SCIM users. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/scim/v2/Users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `start_index` | `integer` | no | — | SCIM start index. |
+| `count` | `integer` | no | — | SCIM page size. |
+| `filter` | `string` | no | — | SCIM filter expression. |
+
+**Examples**
+
+- List SCIM users.: `kaiten scim users list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `scim.users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten scim users update` |
+| MCP alias | `kaiten_update_scim_user` |
+| Description | Update a SCIM user. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/scim/v2/Users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `user_id` | `string` | yes | — | SCIM user ID. |
+| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+
+**Examples**
+
+- Update a SCIM user.: `kaiten scim users update --user-id user-id --payload '{"active":false}' --json`
 
 **Notes**
 
@@ -9137,7 +12125,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-tree"></a>
-## Дерево сущностей (`tree`) — 2 commands
+## Дерево сущностей (`tree`) — 3 commands
 
 Entity tree and tree navigation commands.
 
@@ -9146,9 +12134,45 @@ Entity tree and tree navigation commands.
 ```text
 tree
   get
+tree-entities
+  list
 tree.children
   list
 ```
+
+### `tree-entities.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities list` |
+| MCP alias | `kaiten_list_tree_entities` |
+| Description | List tree entities from Kaiten. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/tree-entities` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `query` | `string` | no | — | Search query. |
+| `limit` | `integer` | no | — | Max results. |
+| `offset` | `integer` | no | — | Pagination offset. |
+
+**Examples**
+
+- List tree entities.: `kaiten tree-entities list --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 
 ### `tree.children.list`
 

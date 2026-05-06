@@ -13,6 +13,53 @@ from kaiten_cli.runtime.behaviors import (
 
 TOOLS = (
     make_tool(
+        canonical_name="timesheet.list",
+        mcp_alias="kaiten_list_timesheet",
+        description="List time logs across cards from the company timesheet endpoint.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "user_id": {"type": "integer", "description": "Filter by user ID."},
+                "card_id": {"type": "integer", "description": "Filter by card ID."},
+                "for_date": {"type": "string", "description": "Filter by date (YYYY-MM-DD)."},
+                "date_from": {"type": "string", "description": "Start date filter."},
+                "date_to": {"type": "string", "description": "End date filter."},
+                "limit": {"type": "integer", "description": "Max results."},
+                "offset": {"type": "integer", "description": "Pagination offset."},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy nested fields from time-log payloads.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep for each time log.",
+                },
+            },
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/time-logs",
+            query_fields=(
+                "user_id",
+                "card_id",
+                "for_date",
+                "date_from",
+                "date_to",
+                "limit",
+                "offset",
+            ),
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, default_limit=50, result_kind="list"
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten timesheet list --limit 50 --json",
+                description="List company time logs.",
+            ),
+        ),
+    ),
+    make_tool(
         canonical_name="time-logs.list",
         mcp_alias="kaiten_list_card_time_logs",
         description="List time logs for a card.",
@@ -21,16 +68,35 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the card."},
                 "for_date": {"type": "string", "description": "Filter by date (YYYY-MM-DD)."},
-                "personal": {"type": "boolean", "description": "Return only the current user's time logs."},
-                "compact": {"type": "boolean", "description": "Strip heavy nested fields from time-log payloads."},
-                "fields": {"type": "string", "description": "Comma-separated field names to keep for each time log."},
+                "personal": {
+                    "type": "boolean",
+                    "description": "Return only the current user's time logs.",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy nested fields from time-log payloads.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep for each time log.",
+                },
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/time-logs", path_fields=("card_id",), query_fields=("for_date", "personal")),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list"),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_id}/time-logs",
+            path_fields=("card_id",),
+            query_fields=("for_date", "personal"),
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="list"
+        ),
         examples=(
-            ExampleSpec(command="kaiten time-logs list --card-id 10 --json", description="List time logs on a card."),
+            ExampleSpec(
+                command="kaiten time-logs list --card-id 10 --json",
+                description="List time logs on a card.",
+            ),
         ),
         usage_notes=(
             "This is a per-card read and becomes expensive when repeated across large card populations.",
@@ -45,12 +111,31 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to inspect"},
-                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
-                "for_date": {"type": "string", "description": "Optional YYYY-MM-DD filter passed to each per-card request."},
-                "personal": {"type": "boolean", "description": "Only include the current user's time logs."},
-                "compact": {"type": "boolean", "description": "Strip heavy nested fields from time-log payloads"},
-                "fields": {"type": "string", "description": "Comma-separated field names to keep for each time log"},
+                "card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Card IDs to inspect",
+                },
+                "workers": {
+                    "type": "integer",
+                    "description": "Parallel workers (default 2, max 6)",
+                },
+                "for_date": {
+                    "type": "string",
+                    "description": "Optional YYYY-MM-DD filter passed to each per-card request.",
+                },
+                "personal": {
+                    "type": "boolean",
+                    "description": "Only include the current user's time logs.",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy nested fields from time-log payloads",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep for each time log",
+                },
             },
             "required": ["card_ids"],
         },
@@ -62,8 +147,14 @@ TOOLS = (
             custom_executor=execute_time_logs_batch_list,
         ),
         examples=(
-            ExampleSpec(command="kaiten time-logs batch-list --card-ids '[1,2,3]' --json", description="Fetch time logs for several cards in one CLI call."),
-            ExampleSpec(command="kaiten time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date --json", description="Fetch narrowed time-log payloads with bounded concurrency."),
+            ExampleSpec(
+                command="kaiten time-logs batch-list --card-ids '[1,2,3]' --json",
+                description="Fetch time logs for several cards in one CLI call.",
+            ),
+            ExampleSpec(
+                command="kaiten time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date --json",
+                description="Fetch narrowed time-log payloads with bounded concurrency.",
+            ),
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
@@ -78,9 +169,18 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the card."},
-                "time_spent": {"type": "integer", "description": "Time spent in minutes (minimum 1)."},
-                "role_id": {"type": "integer", "description": "Role ID for the time log. Use -1 for the default role."},
-                "for_date": {"type": "string", "description": "Date for the time log (YYYY-MM-DD). Defaults to today."},
+                "time_spent": {
+                    "type": "integer",
+                    "description": "Time spent in minutes (minimum 1).",
+                },
+                "role_id": {
+                    "type": "integer",
+                    "description": "Role ID for the time log. Use -1 for the default role.",
+                },
+                "for_date": {
+                    "type": "string",
+                    "description": "Date for the time log (YYYY-MM-DD). Defaults to today.",
+                },
                 "comment": {"type": "string", "description": "Optional comment for the time log."},
             },
             "required": ["card_id", "time_spent"],
@@ -93,7 +193,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=default_role_time_log_request),
         examples=(
-            ExampleSpec(command='kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json', description="Create a time log entry."),
+            ExampleSpec(
+                command='kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json',
+                description="Create a time log entry.",
+            ),
         ),
     ),
     make_tool(
@@ -119,7 +222,10 @@ TOOLS = (
             body_fields=("time_spent", "role_id", "comment", "for_date"),
         ),
         examples=(
-            ExampleSpec(command='kaiten time-logs update --card-id 10 --time-log-id 20 --time-spent 20 --json', description="Update a time log."),
+            ExampleSpec(
+                command="kaiten time-logs update --card-id 10 --time-log-id 20 --time-spent 20 --json",
+                description="Update a time log.",
+            ),
         ),
     ),
     make_tool(
@@ -134,9 +240,16 @@ TOOLS = (
             },
             "required": ["card_id", "time_log_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/time-logs/{time_log_id}", path_fields=("card_id", "time_log_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/time-logs/{time_log_id}",
+            path_fields=("card_id", "time_log_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten time-logs delete --card-id 10 --time-log-id 20 --json", description="Delete a time log."),
+            ExampleSpec(
+                command="kaiten time-logs delete --card-id 10 --time-log-id 20 --json",
+                description="Delete a time log.",
+            ),
         ),
     ),
 )

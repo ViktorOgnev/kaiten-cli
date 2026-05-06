@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from kaiten_cli.errors import BatchExecutionError, ValidationError
@@ -153,6 +154,37 @@ def comment_format_request(
     return path, query, shaped
 
 
+def payload_body_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped = dict(body or {})
+    payload_body = shaped.pop("payload", None)
+    if payload_body is not None:
+        if not isinstance(payload_body, dict):
+            raise ValidationError("Field payload must be a JSON object.")
+        shaped.update(payload_body)
+    return path, query, shaped or None
+
+
+def encode_object_query_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped_query = dict(query or {})
+    for key, value in tuple(shaped_query.items()):
+        if isinstance(value, dict):
+            shaped_query[key] = json.dumps(value, ensure_ascii=False)
+    return path, shaped_query or None, body
+
+
+def scim_query_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped_query = dict(query or {})
+    if "start_index" in shaped_query:
+        shaped_query["startIndex"] = shaped_query.pop("start_index")
+    return path, shaped_query or None, body
+
+
 def validate_cards_list_all_selection(tool, payload: dict[str, Any]) -> None:
     selection = payload.get("selection")
     if selection is None:
@@ -241,7 +273,9 @@ async def execute_project_cards_list(
 ) -> Any:
     if reporter:
         reporter("execution: synthetic read with direct endpoint and embedded project fallback")
-    return await fetch_project_cards(client, str(payload["project_id"]), timeout=timeout, reporter=reporter)
+    return await fetch_project_cards(
+        client, str(payload["project_id"]), timeout=timeout, reporter=reporter
+    )
 
 
 async def execute_cards_list_all(
@@ -294,7 +328,9 @@ async def execute_card_location_history_batch_get(
             f"succeeded={meta['succeeded']} failed={meta['failed']}"
         )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to fetch location history for all requested cards.", result)
+        raise BatchExecutionError(
+            "Failed to fetch location history for all requested cards.", result
+        )
     return result
 
 
@@ -351,8 +387,7 @@ async def execute_cards_batch_get(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            "execution: aggregated batch card read over /cards/{card_id} "
-            f"with workers={workers}"
+            f"execution: aggregated batch card read over /cards/{{card_id}} with workers={workers}"
         )
     result = await fetch_cards_batch_get(
         domain=client.domain,
@@ -486,5 +521,7 @@ async def execute_space_topology_get(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated topology read over /spaces/{space_id}/boards and /boards/{board_id}")
+        reporter(
+            "execution: aggregated topology read over /spaces/{space_id}/boards and /boards/{board_id}"
+        )
     return await fetch_space_topology(client, payload["space_id"], timeout=timeout)

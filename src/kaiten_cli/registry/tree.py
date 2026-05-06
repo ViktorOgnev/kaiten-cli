@@ -9,6 +9,28 @@ from kaiten_cli.runtime.behaviors import execute_tree_children_list, execute_tre
 
 TOOLS = (
     make_tool(
+        canonical_name="tree-entities.list",
+        mcp_alias="kaiten_list_tree_entities",
+        description="List tree entities from Kaiten.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "limit": {"type": "integer", "description": "Max results."},
+                "offset": {"type": "integer", "description": "Pagination offset."},
+            },
+        },
+        operation=OperationSpec(
+            method="GET", path_template="/tree-entities", query_fields=("query", "limit", "offset")
+        ),
+        response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
+        examples=(
+            ExampleSpec(
+                command="kaiten tree-entities list --json", description="List tree entities."
+            ),
+        ),
+    ),
+    make_tool(
         canonical_name="tree.children.list",
         mcp_alias="kaiten_list_children",
         description="List direct children of an entity in the Kaiten sidebar tree.",
@@ -23,9 +45,14 @@ TOOLS = (
         },
         operation=OperationSpec(method="GET", path_template="/tree/children"),
         response_policy=ResponsePolicy(heavy=True, result_kind="list"),
-        runtime_behavior=RuntimeBehavior(execution_mode="aggregated", custom_executor=execute_tree_children_list),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated", custom_executor=execute_tree_children_list
+        ),
         examples=(
-            ExampleSpec(command="kaiten tree children list --parent-entity-uid root-1 --json", description="List direct tree children."),
+            ExampleSpec(
+                command="kaiten tree children list --parent-entity-uid root-1 --json",
+                description="List direct tree children.",
+            ),
         ),
     ),
     make_tool(
@@ -47,9 +74,14 @@ TOOLS = (
         },
         operation=OperationSpec(method="GET", path_template="/tree"),
         response_policy=ResponsePolicy(heavy=True, result_kind="list"),
-        runtime_behavior=RuntimeBehavior(execution_mode="aggregated", custom_executor=execute_tree_get),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated", custom_executor=execute_tree_get
+        ),
         examples=(
-            ExampleSpec(command="kaiten tree get --depth 1 --json", description="Build a bounded entity tree."),
+            ExampleSpec(
+                command="kaiten tree get --depth 1 --json",
+                description="Build a bounded entity tree.",
+            ),
         ),
     ),
 )

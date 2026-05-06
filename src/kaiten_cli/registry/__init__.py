@@ -24,6 +24,7 @@ from kaiten_cli.registry.charts import TOOLS as CHART_TOOLS
 from kaiten_cli.registry.checklists import TOOLS as CHECKLIST_TOOLS
 from kaiten_cli.registry.columns import TOOLS as COLUMN_TOOLS
 from kaiten_cli.registry.comments import TOOLS as COMMENT_TOOLS
+from kaiten_cli.registry.custom_directories import TOOLS as CUSTOM_DIRECTORY_TOOLS
 from kaiten_cli.registry.custom_properties import TOOLS as CUSTOM_PROPERTY_TOOLS
 from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
@@ -33,6 +34,7 @@ from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
 from kaiten_cli.registry.query import TOOLS as QUERY_TOOLS
 from kaiten_cli.registry.roles_and_groups import TOOLS as ROLE_AND_GROUP_TOOLS
+from kaiten_cli.registry.scim import TOOLS as SCIM_TOOLS
 from kaiten_cli.registry.service_desk import TOOLS as SERVICE_DESK_TOOLS
 from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
 from kaiten_cli.registry.spaces import TOOLS as SPACE_TOOLS
@@ -57,6 +59,7 @@ TOOL_SET: tuple[ToolSpec, ...] = (
     + LANE_TOOLS
     + CHECKLIST_TOOLS
     + COMMENT_TOOLS
+    + CUSTOM_DIRECTORY_TOOLS
     + CUSTOM_PROPERTY_TOOLS
     + DOCUMENT_TOOLS
     + EXTERNAL_LINK_TOOLS
@@ -66,6 +69,7 @@ TOOL_SET: tuple[ToolSpec, ...] = (
     + PROJECT_TOOLS
     + QUERY_TOOLS
     + ROLE_AND_GROUP_TOOLS
+    + SCIM_TOOLS
     + SERVICE_DESK_TOOLS
     + AUDIT_AND_ANALYTICS_TOOLS
     + SNAPSHOT_TOOLS
@@ -119,7 +123,10 @@ def search(query: str, limit: int = 5) -> list[ToolSpec]:
         score += difflib.SequenceMatcher(a=query_lc, b=haystack).ratio() * 10.0
         if score > 0:
             scores.append((score, tool))
-    return [tool for _, tool in sorted(scores, key=lambda item: (-item[0], item[1].canonical_name))[:limit]]
+    return [
+        tool
+        for _, tool in sorted(scores, key=lambda item: (-item[0], item[1].canonical_name))[:limit]
+    ]
 
 
 def examples_for(identifier: str) -> list[str]:

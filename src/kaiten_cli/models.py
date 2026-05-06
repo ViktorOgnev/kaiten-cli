@@ -18,7 +18,9 @@ CACHE_POLICY_NONE = "none"
 CACHE_POLICY_REQUEST_SCOPE = "request_scope"
 CACHE_POLICY_PERSISTENT_OPT_IN = "persistent_opt_in"
 CACHE_POLICY_PERSISTENT_HEAVY = "persistent_heavy"
-PERSISTENT_CACHE_POLICIES = frozenset({CACHE_POLICY_PERSISTENT_OPT_IN, CACHE_POLICY_PERSISTENT_HEAVY})
+PERSISTENT_CACHE_POLICIES = frozenset(
+    {CACHE_POLICY_PERSISTENT_OPT_IN, CACHE_POLICY_PERSISTENT_HEAVY}
+)
 
 CACHE_MODE_AUTO = "auto"
 CACHE_MODE_OFF = "off"
@@ -49,6 +51,7 @@ class OperationSpec:
     path_fields: tuple[str, ...] = ()
     query_fields: tuple[str, ...] = ()
     body_fields: tuple[str, ...] = ()
+    api_base_path: str | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -68,7 +71,16 @@ RequestShaper = Callable[
 ]
 PayloadValidator = Callable[["ToolSpec", dict[str, Any]], None]
 CustomExecutor = Callable[
-    [Any, "ToolSpec", dict[str, Any], str, dict[str, Any] | None, dict[str, Any] | None, float, DebugReporter | None],
+    [
+        Any,
+        "ToolSpec",
+        dict[str, Any],
+        str,
+        dict[str, Any] | None,
+        dict[str, Any] | None,
+        float,
+        DebugReporter | None,
+    ],
     Awaitable[Any],
 ]
 

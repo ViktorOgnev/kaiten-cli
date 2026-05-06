@@ -36,33 +36,71 @@ class ModuleDocSpec:
 MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
     ModuleDocSpec("cards", "Карточки", "Карточки, bulk reads и card-heavy workflows."),
     ModuleDocSpec("comments", "Комментарии", "Комментарии карточек и comment-heavy reads."),
-    ModuleDocSpec("members", "Участники и пользователи", "Участники карточек, пользователи, группы и space users."),
+    ModuleDocSpec(
+        "members",
+        "Участники и пользователи",
+        "Участники карточек, пользователи, группы и space users.",
+    ),
     ModuleDocSpec("time_logs", "Логи времени", "Time logs, work logs и related analytics inputs."),
     ModuleDocSpec("tags", "Теги", "Теги и операции привязки тегов к карточкам."),
     ModuleDocSpec("checklists", "Чеклисты", "Чеклисты и checklist items."),
     ModuleDocSpec("blockers", "Блокировки", "Блокировки карточек и blocker relations."),
-    ModuleDocSpec("card_relations", "Связи карточек", "Parent/child/planned relations between cards."),
+    ModuleDocSpec(
+        "card_relations", "Связи карточек", "Parent/child/planned relations between cards."
+    ),
     ModuleDocSpec("external_links", "Внешние ссылки", "External links attached to cards."),
     ModuleDocSpec("files", "Файлы карточек", "Файлы и вложения карточек."),
     ModuleDocSpec("subscribers", "Подписчики", "Подписки на карточки и колонки."),
     ModuleDocSpec("spaces", "Пространства", "Spaces and top-level workspace reads."),
     ModuleDocSpec("boards", "Доски", "Boards and board-level operations."),
-    ModuleDocSpec("columns", "Колонки и подколонки", "Columns, subcolumns and related card structure."),
+    ModuleDocSpec(
+        "columns", "Колонки и подколонки", "Columns, subcolumns and related card structure."
+    ),
     ModuleDocSpec("lanes", "Дорожки", "Swimlanes and lane-level operations."),
     ModuleDocSpec("card_types", "Типы карточек", "Card types and type metadata."),
-    ModuleDocSpec("custom_properties", "Кастомные свойства", "Custom properties and select values."),
+    ModuleDocSpec(
+        "custom_directories",
+        "Каталоги / Custom directories",
+        "Kaiten Catalogs: directories, fields, records and linked cards.",
+    ),
+    ModuleDocSpec(
+        "custom_properties",
+        "Кастомные свойства",
+        "Custom properties, select values, catalog-values and collective values.",
+    ),
     ModuleDocSpec("documents", "Документы", "Documents and document groups."),
     ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
-    ModuleDocSpec("automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."),
+    ModuleDocSpec(
+        "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."
+    ),
     ModuleDocSpec("projects", "Проекты и спринты", "Projects, project cards and sprints."),
-    ModuleDocSpec("roles_and_groups", "Роли и группы", "Roles, groups and permission-related operations."),
-    ModuleDocSpec("audit_and_analytics", "Аудит и аналитика", "Audit logs, activity, saved filters and analytics helpers."),
-    ModuleDocSpec("service_desk", "Service Desk", "Service Desk requests, users, SLA, organizations and settings."),
+    ModuleDocSpec(
+        "roles_and_groups", "Роли и группы", "Roles, groups and permission-related operations."
+    ),
+    ModuleDocSpec("scim", "SCIM", "SCIM v2 user and group provisioning."),
+    ModuleDocSpec(
+        "audit_and_analytics",
+        "Аудит и аналитика",
+        "Audit logs, activity, saved filters and analytics helpers.",
+    ),
+    ModuleDocSpec(
+        "service_desk",
+        "Service Desk",
+        "Service Desk requests, users, SLA, organizations and settings.",
+    ),
     ModuleDocSpec("charts", "Графики и аналитика", "Chart endpoints and compute jobs."),
     ModuleDocSpec("tree", "Дерево сущностей", "Entity tree and tree navigation commands."),
-    ModuleDocSpec("utilities", "Утилиты", "Company, calendars, timers, api keys and removed entities."),
-    ModuleDocSpec("snapshot", "Локальные snapshots", "Local-first snapshot build, refresh and management commands."),
-    ModuleDocSpec("query", "Локальные запросы", "Local-only query and metrics commands over snapshots."),
+    ModuleDocSpec(
+        "utilities", "Утилиты", "Company, calendars, timers, api keys and removed entities."
+    ),
+    ModuleDocSpec(
+        "snapshot",
+        "Локальные snapshots",
+        "Local-first snapshot build, refresh and management commands.",
+    ),
+    ModuleDocSpec(
+        "query", "Локальные запросы", "Local-only query and metrics commands over snapshots."
+    ),
 )
 
 
@@ -248,7 +286,9 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         "|---|---|---:|---|",
     ]
     for spec, tools in modules:
-        lines.append(f"| {spec.label} | `{spec.key}` | {len(tools)} | [Open](#{_module_anchor(spec)}) |")
+        lines.append(
+            f"| {spec.label} | `{spec.key}` | {len(tools)} | [Open](#{_module_anchor(spec)}) |"
+        )
     lines.extend(
         [
             "",
@@ -303,8 +343,12 @@ def _write_if_changed(path: Path, content: str) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate registry-driven documentation files.")
-    parser.add_argument("--check", action="store_true", help="Verify that generated docs are up to date.")
-    parser.add_argument("--write", action="store_true", help="Write generated docs to the repository.")
+    parser.add_argument(
+        "--check", action="store_true", help="Verify that generated docs are up to date."
+    )
+    parser.add_argument(
+        "--write", action="store_true", help="Write generated docs to the repository."
+    )
     args = parser.parse_args()
 
     if args.check and args.write:
@@ -322,7 +366,11 @@ def main() -> int:
         mismatches: list[str] = []
         if readme != expected_readme:
             mismatches.append("README.md")
-        current_reference = COMMAND_REFERENCE_PATH.read_text(encoding="utf-8") if COMMAND_REFERENCE_PATH.exists() else ""
+        current_reference = (
+            COMMAND_REFERENCE_PATH.read_text(encoding="utf-8")
+            if COMMAND_REFERENCE_PATH.exists()
+            else ""
+        )
         if current_reference != expected_reference:
             mismatches.append("COMMAND_REFERENCE.md")
         if mismatches:
