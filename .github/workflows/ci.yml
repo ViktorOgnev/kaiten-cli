@@ -49,16 +49,16 @@ jobs:
         run: echo "${GITHUB_WORKSPACE}/.bin" >> "$GITHUB_PATH"
       - name: Smoke test build
         run: python -m build
-      - name: Compute pipx git spec
+      - name: Compute git install spec
         shell: bash
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            echo "PIPX_GIT_SPEC=git+${{ github.event.pull_request.head.repo.clone_url }}@${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+            echo "GIT_INSTALL_SPEC=git+${{ github.event.pull_request.head.repo.clone_url }}@${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
           else
-            echo "PIPX_GIT_SPEC=git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.sha }}" >> "$GITHUB_ENV"
+            echo "GIT_INSTALL_SPEC=git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.sha }}" >> "$GITHUB_ENV"
           fi
       - name: Install from git via pipx
-        run: python -m pipx install "$PIPX_GIT_SPEC"
+        run: python -m pipx install "$GIT_INSTALL_SPEC"
       - name: Verify pipx-installed CLI
         run: |
           kaiten --version
@@ -67,7 +67,7 @@ jobs:
       - name: Remove pipx install
         run: python -m pipx uninstall kaiten-cli
       - name: Install from git via uv
-        run: uv tool install "git+file://${GITHUB_WORKSPACE}"
+        run: uv tool install "$GIT_INSTALL_SPEC"
       - name: Verify uv-installed CLI
         run: |
           kaiten --version
