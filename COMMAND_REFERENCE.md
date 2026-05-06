@@ -9,6 +9,7 @@
 - Canonical CLI form is rendered as `kaiten <namespace...> <action>`.
 - MCP alias is shown inline for every command.
 - All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.
+- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.
 - `--compact` and `--fields` only apply when the command metadata says they are supported.
 - Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
 - Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sqlite3
 
 import pytest
 import respx
 from httpx import Response
 
-from kaiten_cli.app import cli
+from kaiten_cli.app import cli, main
 from kaiten_cli.models import ResolvedProfile
 from kaiten_cli.runtime.cache import ExecutionContext, HTTP_CACHE_DB_SCHEMA_VERSION
 from kaiten_cli.runtime.client import KaitenClient
@@ -92,6 +93,58 @@ async def test_auto_cache_mode_persists_cacheable_gets_by_default(monkeypatch):
 
     assert route.call_count == 1
     assert first == second == {"id": 123, "title": "Task"}
+
+
+@respx.mock
+def test_cli_json_stats_counts_api_wait_and_groups(monkeypatch, capsys):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+
+    async def delayed_response(request):
+        await asyncio.sleep(0.01)
+        return Response(200, json={"id": 123, "title": "Task"})
+
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(side_effect=delayed_response)
+
+    exit_code = main(["--json", "--cache-mode", "off", "cards", "get", "--card-id", "123"])
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert route.call_count == 1
+    assert payload["data"] == {"id": 123, "title": "Task"}
+    stats = payload["stats"]
+    assert stats["http_request_count"] == 1
+    assert stats["http_response_count"] == 1
+    assert stats["http_error_count"] == 0
+    assert stats["api_wait_ms"] > 0
+    assert stats["command_duration_ms"] >= stats["api_wait_ms"]
+    assert stats["groups"][0]["path_family"] == "/cards/:id"
+    assert stats["groups"][0]["http_request_count"] == 1
+
+
+@respx.mock
+def test_cli_json_stats_cache_hit_does_not_count_api(monkeypatch, capsys):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    first_exit = main(["--json", "cards", "get", "--card-id", "123"])
+    capsys.readouterr()
+    second_exit = main(["--json", "cards", "get", "--card-id", "123"])
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert first_exit == 0
+    assert second_exit == 0
+    assert route.call_count == 1
+    stats = payload["stats"]
+    assert stats["http_request_count"] == 0
+    assert stats["api_wait_ms"] == 0
+    assert stats["cache_hits"]["disk"] == 1
+    assert stats["groups"][0]["cache_hits"]["disk"] == 1
 
 
 @pytest.mark.asyncio

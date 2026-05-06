@@ -89,7 +89,7 @@ python -m kaiten_cli --help
 - canonical commands: `kaiten <namespace...> <action>`
 - MCP-compatible aliases: `kaiten kaiten_list_cards`
 - `--version` и module entrypoint: `python -m kaiten_cli`
-- `--json` с жёстким success/error envelope
+- `--json` с жёстким success/error envelope и runtime `stats`
 - discovery-команды: `search-tools`, `describe`, `examples`
 - profiles и явный `KAITEN_LIVE` gate для live validation
 - request-scoped GET cache внутри одного execution path
@@ -394,7 +394,7 @@ kaiten --json cards get --card-id 101 --compact --fields id,title,state
 kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --selection active_only
 ```
 
-Trace пишет JSONL со временем выполнения, количеством реальных HTTP-запросов, retry/cache counters и batch metadata вроде `requested_count` / `unique_count` / `workers`.
+Обычный `--json` ответ уже содержит top-level `stats`: command duration, реальные HTTP/API requests, API wait time, cache hit/miss counters и grouped aggregates по method/path-family. Trace пишет те же stats в JSONL и добавляет batch metadata вроде `requested_count` / `unique_count` / `workers`.
 
 ## Local-first analytics and headless workflows
 
@@ -460,7 +460,7 @@ kaiten snapshot list --json
 kaiten --json --verbose cards list --board-id 10 --limit 5
 ```
 
-Verbose diagnostics пишутся в `stderr` и показывают resolved profile source, request path, timeout class и custom execution path.
+Verbose diagnostics пишутся в `stderr` и показывают resolved profile source, request path, timeout class, custom execution path и compact runtime stats summary.
 
 Если нужна post-hoc трассировка длинного сценария:
 
@@ -468,7 +468,7 @@ Verbose diagnostics пишутся в `stderr` и показывают resolved 
 kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get --card-ids '[101,102,103]'
 ```
 
-Это не меняет stdout-ответ команды: trace уходит только в отдельный JSONL-файл.
+Это не заменяет stdout-ответ команды: `--json` всё равно возвращает `data` и `stats`, а trace дополнительно уходит в отдельный JSONL-файл.
 
 ## Troubleshooting
 

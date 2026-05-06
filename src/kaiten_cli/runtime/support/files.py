@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -312,10 +313,11 @@ async def _download_once(
         _emit_debug(reporter, f"download: resuming from byte {resume_from}")
 
     async with httpx.AsyncClient(follow_redirects=True) as http:
-        if getattr(client, "execution_context", None) is not None:
-            client.execution_context.stats.http_request_count += 1
+        started = time.perf_counter()
+        status_code: int | None = None
         try:
             async with http.stream("GET", url, headers=headers, timeout=timeout) as response:
+                status_code = response.status_code
                 if response.status_code in SIGNED_URL_REFRESH_STATUSES:
                     return response.status_code
                 if resume_from > 0 and response.status_code != 206:
@@ -359,6 +361,17 @@ async def _download_once(
             raise TransportError(f"Timeout downloading file: {exc}") from exc
         except httpx.HTTPError as exc:
             raise TransportError(f"Connection error downloading file: {exc}") from exc
+        finally:
+            if getattr(client, "execution_context", None) is not None:
+                path = urlparse(url).path or "/"
+                client.execution_context.stats.record_http_attempt(
+                    source="download",
+                    method="GET",
+                    path=path,
+                    wait_ms=(time.perf_counter() - started) * 1000.0,
+                    status_code=status_code,
+                    error=status_code is None,
+                )
 
 
 async def _download_with_refresh(

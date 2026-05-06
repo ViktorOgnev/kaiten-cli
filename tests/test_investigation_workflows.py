@@ -176,7 +176,10 @@ def test_trace_file_records_tool_stats_and_batch_meta(monkeypatch, tmp_path, cap
 
     assert exit_code == 0
     assert route.call_count == 1
-    assert json.loads(captured.out)["success"] is True
+    stdout_payload = json.loads(captured.out)
+    assert stdout_payload["success"] is True
+    assert stdout_payload["stats"]["http_request_count"] == 1
+    assert stdout_payload["stats"]["groups"][0]["path_family"] == "/cards/:id/location-history"
 
     entries = [json.loads(line) for line in trace_file.read_text(encoding="utf-8").splitlines()]
     assert len(entries) == 1
@@ -184,6 +187,8 @@ def test_trace_file_records_tool_stats_and_batch_meta(monkeypatch, tmp_path, cap
     assert entry["canonical_name"] == "card-location-history.batch-get"
     assert entry["execution_mode"] == "aggregated"
     assert entry["http_request_count"] == 1
+    assert entry["stats"]["http_request_count"] == 1
+    assert entry["stats"]["groups"][0]["path_family"] == "/cards/:id/location-history"
     assert entry["requested_count"] == 2
     assert entry["unique_count"] == 1
     assert entry["workers"] == 2

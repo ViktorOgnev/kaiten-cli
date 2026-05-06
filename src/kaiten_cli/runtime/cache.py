@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import copy
 import json
-import re
 import sqlite3
 import time
 from dataclasses import dataclass, field
@@ -25,7 +24,7 @@ from kaiten_cli.models import (
     PERSISTENT_CACHE_POLICIES,
     ResolvedProfile,
 )
-from kaiten_cli.runtime.trace import ExecutionStats
+from kaiten_cli.runtime.trace import ExecutionStats, path_family_for
 
 HTTP_CACHE_DB_SCHEMA_VERSION = 3
 AUTO_ENTITY_TTL_SECONDS = 30 * 60
@@ -39,12 +38,6 @@ AUTO_MEDIUM_PAYLOAD_BYTES = 100_000
 AUTO_DENSE_FAMILY_WINDOW_SECONDS = 30 * 60
 AUTO_DENSE_FAMILY_MEDIUM_THRESHOLD = 25
 AUTO_DENSE_FAMILY_HEAVY_THRESHOLD = 100
-
-_NUMERIC_PATH_SEGMENT_RE = re.compile(r"/\d+(?=/|$)")
-_UUID_PATH_SEGMENT_RE = re.compile(
-    r"/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?=/|$)"
-)
-
 
 def persistent_cache_path() -> Path:
     return user_cache_path("kaiten-cli") / "http-cache.sqlite3"
@@ -97,11 +90,6 @@ def _looks_historical(params_json: str) -> bool:
         if value < today_start:
             return True
     return False
-
-
-def _path_family(path: str) -> str:
-    family = _UUID_PATH_SEGMENT_RE.sub("/:id", path)
-    return _NUMERIC_PATH_SEGMENT_RE.sub("/:id", family)
 
 
 @dataclass(frozen=True, slots=True)
@@ -367,7 +355,7 @@ class ExecutionContext:
             method=method.upper(),
             path=path,
             params_json=params_json,
-            path_family=_path_family(path),
+            path_family=path_family_for(path),
         )
 
     def _persistent_allowed(self, cache_policy: str) -> bool:
@@ -381,25 +369,25 @@ class ExecutionContext:
         if cache_policy == CACHE_POLICY_NONE:
             return None
         if self.persistent_cache is None or cache_policy not in PERSISTENT_CACHE_POLICIES:
-            self.stats.disk_cache_bypasses += 1
+            self.stats.record_cache_bypass(cache="disk", method=key.method, path_family=key.path_family)
             self._debug(f"cache: disk bypass method={key.method} path={key.path}")
             return None
         if self.profile.cache_mode == CACHE_MODE_REFRESH:
-            self.stats.disk_cache_bypasses += 1
+            self.stats.record_cache_bypass(cache="disk", method=key.method, path_family=key.path_family)
             self._debug(f"cache: disk bypass refresh method={key.method} path={key.path}")
             return None
         try:
             status, payload = self.persistent_cache.get(key)
         except (OSError, sqlite3.Error, ValueError, json.JSONDecodeError) as exc:
-            self.stats.disk_cache_bypasses += 1
+            self.stats.record_cache_bypass(cache="disk", method=key.method, path_family=key.path_family)
             self._debug(f"cache: disk bypass method={key.method} path={key.path} reason={type(exc).__name__}")
             return None
         if status == "hit":
-            self.stats.disk_cache_hits += 1
+            self.stats.record_cache_hit(cache="disk", method=key.method, path_family=key.path_family)
         elif status == "miss":
-            self.stats.disk_cache_misses += 1
+            self.stats.record_cache_miss(cache="disk", method=key.method, path_family=key.path_family)
         elif status == "expired":
-            self.stats.disk_cache_expired += 1
+            self.stats.record_cache_miss(cache="disk_expired", method=key.method, path_family=key.path_family)
         self._debug(f"cache: disk {status} method={key.method} path={key.path}")
         return payload
 
@@ -532,19 +520,19 @@ class ExecutionContext:
         key = self._make_key(method, path, params)
         async with self._lock:
             if key in self._request_cache:
-                self.stats.request_cache_hits += 1
+                self.stats.record_cache_hit(cache="request", method=key.method, path_family=key.path_family)
                 self._debug(f"cache: request hit method={key.method} path={key.path}")
                 return copy.deepcopy(self._request_cache[key])
             task = self._inflight.get(key)
             if task is None:
-                self.stats.request_cache_misses += 1
+                self.stats.record_cache_miss(cache="request", method=key.method, path_family=key.path_family)
                 self._debug(f"cache: request miss method={key.method} path={key.path}")
                 task = asyncio.create_task(
                     self._load_or_fetch(key, cache_policy=cache_policy, fetch=fetch)
                 )
                 self._inflight[key] = task
             else:
-                self.stats.inflight_dedup_hits += 1
+                self.stats.record_cache_hit(cache="inflight_dedup", method=key.method, path_family=key.path_family)
                 self._debug(f"cache: inflight dedup hit method={key.method} path={key.path}")
 
         try:

@@ -242,7 +242,11 @@ def test_cli_columns_alias_and_canonical_match(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert json.loads(canonical.output) == json.loads(alias.output)
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called
 
 
@@ -258,7 +262,11 @@ def test_cli_project_cards_alias_and_nested_canonical_match(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert json.loads(canonical.output) == json.loads(alias.output)
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called
 
 
@@ -283,7 +291,11 @@ def test_cli_planned_relation_add_alias_and_canonical_match(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert json.loads(canonical.output) == json.loads(alias.output)
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called
 
 
@@ -308,7 +320,11 @@ def test_cli_planned_relation_update_alias_and_canonical_match(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert json.loads(canonical.output) == json.loads(alias.output)
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called
 
 

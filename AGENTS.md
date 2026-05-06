@@ -58,6 +58,7 @@ kaiten profile add main --domain <company-subdomain> --token <api-token> --set-a
 - Request-scoped cache for safe GETs is built in; default `--cache-mode auto` also persists cacheable safe reads across CLI processes.
 - Keep `auto` for LLM/script analytics unless freshness is critical; use `--cache-mode refresh` to rebuild from Kaiten API and `--cache-mode off` to bypass disk cache.
 - Heavy/batch reads and dense repeated entity reads get longer adaptive TTLs in `auto`; do not force tiny TTLs in wrapper scripts unless freshness is the main requirement.
+- JSON responses include top-level `stats`; check `http_request_count`, `api_wait_ms`, cache counters, and grouped path families before repeating expensive calls.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
 - Use `--trace-file` or `KAITEN_TRACE_FILE` when you need a JSONL trace of real command cost across a longer workflow.
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.

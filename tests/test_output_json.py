@@ -13,11 +13,37 @@ def test_render_success_json():
     assert payload["data"] == [{"id": 1}]
 
 
+def test_render_success_json_includes_runtime_stats_when_provided():
+    payload = json.loads(
+        render_success(
+            "cards.list",
+            [{"id": 1}],
+            True,
+            stats={"command_duration_ms": 1.25, "http_request_count": 1},
+        )
+    )
+
+    assert payload["stats"] == {"command_duration_ms": 1.25, "http_request_count": 1}
+
+
 def test_render_error_json():
     payload = json.loads(render_error("cards.list", ConfigError("missing config"), True))
     assert payload["success"] is False
     assert payload["command"] == "cards.list"
     assert payload["error"]["type"] == "config_error"
+
+
+def test_render_error_json_includes_runtime_stats_when_provided():
+    payload = json.loads(
+        render_error(
+            "cards.list",
+            ConfigError("missing config"),
+            True,
+            stats={"command_duration_ms": 1.25, "http_request_count": 0},
+        )
+    )
+
+    assert payload["stats"] == {"command_duration_ms": 1.25, "http_request_count": 0}
 
 
 def test_render_batch_execution_error_json_includes_data():

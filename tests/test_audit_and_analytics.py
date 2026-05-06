@@ -173,5 +173,9 @@ def test_cli_saved_filters_alias_and_canonical_match(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert json.loads(canonical.output) == json.loads(alias.output)
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called

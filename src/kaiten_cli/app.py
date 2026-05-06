@@ -19,7 +19,7 @@ from kaiten_cli.registry import iter_tools
 from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
-from kaiten_cli.runtime.trace import TraceRecorder, bulk_trace_meta
+from kaiten_cli.runtime.trace import ExecutionStats, TraceRecorder, bulk_trace_meta
 
 
 _CURRENT_ARGV: list[str] | None = None
@@ -77,12 +77,14 @@ def _ctx_options(ctx: click.Context) -> GlobalOptions:
 
 def _echo_result(ctx: click.Context, command: str, data: Any) -> None:
     options = _ctx_options(ctx)
-    click.echo(render_success(command, data, options.json_mode))
+    stats = ctx.meta.pop("last_stats_payload", None)
+    click.echo(render_success(command, data, options.json_mode, stats=stats))
 
 
 def _fail(ctx: click.Context, command: str | None, error: CliError) -> None:
     options = _ctx_options(ctx)
-    click.echo(render_error(command, error, options.json_mode), err=not options.json_mode)
+    stats = ctx.meta.pop("last_stats_payload", None)
+    click.echo(render_error(command, error, options.json_mode, stats=stats), err=not options.json_mode)
     ctx.exit(error.exit_code)
 
 
@@ -122,6 +124,25 @@ def _trace_bulk_meta(data: Any) -> dict[str, Any]:
     return bulk_trace_meta(data)
 
 
+def _stats_payload(stats: ExecutionStats | None, *, duration_ms: float) -> dict[str, Any]:
+    return (stats or ExecutionStats()).to_payload(command_duration_ms=duration_ms)
+
+
+def _emit_stats_summary(ctx: click.Context, stats_payload: dict[str, Any]) -> None:
+    options = _ctx_options(ctx)
+    if not options.verbose:
+        return
+    cache_hits = stats_payload.get("cache_hits", {})
+    click.echo(
+        "[verbose] stats: "
+        f"duration_ms={stats_payload.get('command_duration_ms', 0):.2f} "
+        f"http_requests={stats_payload.get('http_request_count', 0)} "
+        f"api_wait_ms={stats_payload.get('api_wait_ms', 0):.2f} "
+        f"cache_hits={cache_hits}",
+        err=True,
+    )
+
+
 def _agent_help_payload() -> dict[str, Any]:
     return {
         "summary": "Kaiten API CLI optimized for humans and agents.",
@@ -132,6 +153,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "For repeated analytics or report runs, build a local snapshot first.",
             "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates.",
             "Use --json for automation and LLM workflows.",
+            "Read top-level JSON stats to understand API calls, wait time, cache hits, and grouped path families.",
             "Default cache mode is auto: repeated safe reads and heavy analytics reuse persistent disk cache when the request shape is cacheable.",
             "Prefer bulk tools over per-entity loops.",
             "Shrink payloads with --compact and --fields.",
@@ -148,6 +170,7 @@ def _agent_help_payload() -> dict[str, Any]:
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",
+            "Read top-level JSON stats before repeating or widening expensive workflows.",
             "Default cache mode is auto; use --cache-mode refresh for freshness-critical reads and --cache-mode off to bypass disk cache.",
             "Prefer search-tools -> describe -> examples before heavy commands.",
             "For repeated report or analytics workflows, snapshot once and query locally before touching the API again.",
@@ -182,13 +205,14 @@ def _agent_help_text() -> str:
             "2. inspect: kaiten describe cards.list-all",
             "3. examples: kaiten examples cards.list-all",
             "4. use --json for automation and LLM workflows",
-            "5. leave --cache-mode at auto unless you need refresh/off/fixed TTL",
-            "6. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
-            "7. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
-            "8. only escalate to --view detail or --view evidence after local narrowing",
-            "9. shrink payloads with --compact and --fields",
-            "10. live validation only runs when KAITEN_LIVE=1|true",
-            "11. use --trace-file for long investigations",
+            "5. inspect JSON stats for API count, wait time, cache hits, and grouped path families",
+            "6. leave --cache-mode at auto unless you need refresh/off/fixed TTL",
+            "7. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
+            "8. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
+            "9. only escalate to --view detail or --view evidence after local narrowing",
+            "10. shrink payloads with --compact and --fields",
+            "11. live validation only runs when KAITEN_LIVE=1|true",
+            "12. use --trace-file for long investigations",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -217,38 +241,48 @@ def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback)
     start = time.perf_counter()
     try:
         result, stats = callback()
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        stats_payload = _stats_payload(stats, duration_ms=duration_ms)
+        ctx.meta["last_stats_payload"] = stats_payload
+        _emit_stats_summary(ctx, stats_payload)
         if recorder is not None:
             recorder.write(
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
                 exit_code=0,
-                duration_ms=(time.perf_counter() - start) * 1000.0,
+                duration_ms=duration_ms,
                 stats=stats,
                 bulk_meta=_trace_bulk_meta(result),
             )
         return result
     except CliError as error:
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        stats = getattr(error, "_kaiten_trace_stats", None)
+        ctx.meta["last_stats_payload"] = _stats_payload(stats, duration_ms=duration_ms)
         if recorder is not None:
             recorder.write(
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
                 exit_code=error.exit_code,
-                duration_ms=(time.perf_counter() - start) * 1000.0,
-                stats=getattr(error, "_kaiten_trace_stats", None),
+                duration_ms=duration_ms,
+                stats=stats,
                 bulk_meta=_trace_bulk_meta(error),
             )
         raise
     except Exception as exc:
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        stats = getattr(exc, "_kaiten_trace_stats", None)
+        ctx.meta["last_stats_payload"] = _stats_payload(stats, duration_ms=duration_ms)
         if recorder is not None:
             recorder.write(
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
                 exit_code=70,
-                duration_ms=(time.perf_counter() - start) * 1000.0,
-                stats=getattr(exc, "_kaiten_trace_stats", None),
+                duration_ms=duration_ms,
+                stats=stats,
                 bulk_meta={},
             )
         raise

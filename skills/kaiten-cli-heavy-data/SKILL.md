@@ -157,6 +157,9 @@ Check for:
 - `cache: request hit/miss`
 - `cache: disk hit/miss/bypass`
 - `retry:` messages
+- final `stats:` summary with duration, HTTP request count, API wait, and cache hits
+
+Every `--json` response also includes top-level `stats`. Use `stats.http_request_count`, `stats.api_wait_ms`, `stats.cache_hits`, and `stats.groups` before deciding to rerun or widen a heavy query.
 
 For longer workflows, record a command trace:
 
@@ -164,7 +167,7 @@ For longer workflows, record a command trace:
 kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --selection active_only
 ```
 
-Trace helps explain real HTTP cost when outer agent logs only show the wrapper script.
+Trace persists the same runtime stats across commands and helps explain real HTTP cost when outer agent logs only show the wrapper script.
 
 ## Quick decision rule
 

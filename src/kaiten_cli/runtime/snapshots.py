@@ -141,6 +141,10 @@ def _now_iso() -> str:
 def _stats_snapshot(stats) -> dict[str, int]:
     return {
         "http_request_count": stats.http_request_count,
+        "http_response_count": stats.http_response_count,
+        "http_error_count": stats.http_error_count,
+        "api_wait_ms": stats.api_wait_ms,
+        "http_wait_ms": stats.http_wait_ms,
         "retry_count": stats.retry_count,
         "request_cache_hits": stats.request_cache_hits,
         "request_cache_misses": stats.request_cache_misses,
@@ -152,7 +156,7 @@ def _stats_snapshot(stats) -> dict[str, int]:
     }
 
 
-def _stats_delta(after: dict[str, int], before: dict[str, int]) -> dict[str, int]:
+def _stats_delta(after: dict[str, Any], before: dict[str, Any]) -> dict[str, Any]:
     return {key: after[key] - before.get(key, 0) for key in after}
 
 
@@ -1445,6 +1449,10 @@ async def _measure_stage(client, reporter, name: str, callback):
         "name": name,
         "duration_ms": round((time.perf_counter() - started) * 1000.0, 2),
         "http_request_count": delta["http_request_count"],
+        "http_response_count": delta["http_response_count"],
+        "http_error_count": delta["http_error_count"],
+        "api_wait_ms": round(delta["api_wait_ms"], 2),
+        "http_wait_ms": round(delta["http_wait_ms"], 2),
         "retry_count": delta["retry_count"],
         "cache_hits": {
             "request": delta["request_cache_hits"],

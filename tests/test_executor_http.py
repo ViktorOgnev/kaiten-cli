@@ -112,7 +112,11 @@ def test_cli_cards_list_alias_and_canonical_use_numeric_options(runner):
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
-    assert canonical.output == alias.output
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
     assert route.called
 
 
@@ -135,6 +139,7 @@ def test_cli_verbose_writes_diagnostics_to_stderr_only(capsys):
     assert json.loads(captured.out)["success"] is True
     assert "[verbose] profile:" in captured.err
     assert "[verbose] request: method=GET path=/cards" in captured.err
+    assert "[verbose] stats:" in captured.err
 
 
 @pytest.mark.asyncio

@@ -54,11 +54,12 @@ Each CLI invocation builds one execution context for the selected profile.
 - `auto` uses adaptive TTLs: small fresh reads stay short, while heavy batch/aggregated reads, closed historical windows, and dense same-family entity loops are retained longer
 - successful mutations clear persistent cache for the current profile/domain scope
 - incompatible or corrupt local sqlite cache files are treated as disposable state and recreated automatically
+- JSON success/error envelopes include runtime `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates
 - optional JSONL trace output can be appended through `--trace-file` or `KAITEN_TRACE_FILE`
 
 This keeps freshness controls explicit (`refresh` / `off`) while reducing repeated entity, page, and card-scoped reads in synthetic, aggregated, worker-pooled, and external-script paths.
 
-The trace layer records command-level facts such as duration, real HTTP request count, retry/cache counters, and bulk metadata. It exists because outer Codex/session logs do not reliably see internal Kaiten subprocess calls from higher-level scripts.
+The trace layer records command-level facts such as duration, real HTTP request count, API wait time, retry/cache counters, grouped path families, and bulk metadata. It exists because outer Codex/session logs do not reliably see internal Kaiten subprocess calls from higher-level scripts.
 
 ## Local-first Snapshot Layer
 

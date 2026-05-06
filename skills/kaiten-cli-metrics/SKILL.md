@@ -127,13 +127,15 @@ If the tenant returns `404` or feature-unavailable responses on chart tools, swi
 
 ## Trace for long analytics runs
 
+Every `--json` response includes top-level `stats` with command duration, `http_request_count`, `api_wait_ms`, cache counters, and grouped method/path-family aggregates. Inspect those fields before widening a metric query.
+
 When a report is orchestrated by a shell or Python wrapper, enable trace output on the expensive CLI steps:
 
 ```bash
 kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get --card-ids '[101,102,103]'
 ```
 
-The trace reveals real HTTP request counts even when the outer agent log only sees the wrapper command.
+The trace persists runtime stats across commands and reveals real HTTP request counts even when the outer agent log only sees the wrapper command.
 
 ## Quick decision rule
 

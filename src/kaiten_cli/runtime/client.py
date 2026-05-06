@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import time
 from typing import Any
 
 import httpx
@@ -83,15 +84,22 @@ class KaitenClient:
         timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         client = await self._get_client()
-        if self.execution_context is not None:
-            self.execution_context.stats.http_request_count += 1
         if params:
             params = {key: value for key, value in params.items() if value is not None}
 
         for attempt in range(MAX_RETRIES):
             await self._rate_limit()
+            started = time.perf_counter()
             try:
                 response = await client.request(method, path, params=params, json=json, timeout=timeout)
+                if self.execution_context is not None:
+                    self.execution_context.stats.record_http_attempt(
+                        source="kaiten_api",
+                        method=method,
+                        path=path,
+                        wait_ms=(time.perf_counter() - started) * 1000.0,
+                        status_code=response.status_code,
+                    )
                 if response.status_code == 429:
                     retry_after = response.headers.get("Retry-After")
                     if retry_after:
@@ -130,6 +138,14 @@ class KaitenClient:
             except ApiError:
                 raise
             except httpx.TimeoutException as exc:
+                if self.execution_context is not None:
+                    self.execution_context.stats.record_http_attempt(
+                        source="kaiten_api",
+                        method=method,
+                        path=path,
+                        wait_ms=(time.perf_counter() - started) * 1000.0,
+                        error=True,
+                    )
                 if attempt == MAX_RETRIES - 1:
                     raise TransportError(f"Timeout calling Kaiten API: {exc}") from exc
                 self._debug(
@@ -140,6 +156,14 @@ class KaitenClient:
                     self.execution_context.stats.retry_count += 1
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
             except httpx.HTTPError as exc:
+                if self.execution_context is not None:
+                    self.execution_context.stats.record_http_attempt(
+                        source="kaiten_api",
+                        method=method,
+                        path=path,
+                        wait_ms=(time.perf_counter() - started) * 1000.0,
+                        error=True,
+                    )
                 if attempt == MAX_RETRIES - 1:
                     raise TransportError(f"Connection error: {exc}") from exc
                 self._debug(
