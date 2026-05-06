@@ -26,7 +26,7 @@ def test_repo_contains_expected_skill_files():
     assert "query cards" in heavy_text
     assert "--view summary" in heavy_text
     assert "--trace-file" in heavy_text
-    assert "--cache-mode readwrite" in heavy_text
+    assert "--cache-mode auto" in heavy_text
 
     assert "name: kaiten-cli-metrics" in metrics_text
     assert "cards list-all" in metrics_text

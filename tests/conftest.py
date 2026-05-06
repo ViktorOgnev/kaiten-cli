@@ -17,6 +17,10 @@ def isolated_config_env(request: pytest.FixtureRequest, tmp_path: Path, monkeypa
         return None
     path = tmp_path / "config.json"
     monkeypatch.setenv("KAITEN_CLI_CONFIG_PATH", str(path))
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path",
+        lambda: tmp_path / "http-cache.sqlite3",
+    )
     return path
 
 

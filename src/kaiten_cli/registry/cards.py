@@ -159,7 +159,7 @@ TOOLS = (
             "`--markdown` does the same card GET, renders the result locally, and saves a Markdown file instead of returning the card JSON.",
             "`--markdown` keeps card attachment links as Kaiten `/api/cards/<card>/files/<file_id>` URLs.",
             "Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.",
-            "Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.",
+            "Separate CLI processes do not share in-memory results, so default `--cache-mode auto` persists repeated safe card reads.",
         ),
         bulk_alternative="cards.batch-get",
     ),

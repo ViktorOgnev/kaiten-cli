@@ -77,6 +77,25 @@ async def test_inflight_dedup_shares_one_get_across_clients():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_auto_cache_mode_persists_cacheable_gets_by_default(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    first = await execute_tool(tool, payload)
+    second = await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+    assert first == second == {"id": 123, "title": "Task"}
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_persistent_cache_hits_across_separate_execute_calls(monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
@@ -93,6 +112,96 @@ async def test_persistent_cache_hits_across_separate_execute_calls(monkeypatch, 
 
     assert route.call_count == 1
     assert first == second == {"id": 123, "title": "Task"}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_auto_heavy_batch_cache_reuses_overlapping_card_ids(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    route_1 = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-01-01T00:00:00Z", "column_id": 10}])
+    )
+    route_2 = respx.get("https://sandbox.kaiten.ru/api/latest/cards/2/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-01-02T00:00:00Z", "column_id": 20}])
+    )
+    route_3 = respx.get("https://sandbox.kaiten.ru/api/latest/cards/3/location-history").mock(
+        return_value=Response(200, json=[{"changed": "2026-01-03T00:00:00Z", "column_id": 30}])
+    )
+
+    tool = resolve_tool("card-location-history.batch-get")
+    await execute_tool(tool, merge_inputs(tool, {"card_ids": [1, 2]}))
+    await execute_tool(tool, merge_inputs(tool, {"card_ids": [2, 3]}))
+
+    assert route_1.call_count == 1
+    assert route_2.call_count == 1
+    assert route_3.call_count == 1
+    with sqlite3.connect(cache_path) as conn:
+        row = conn.execute(
+            """
+            SELECT cache_policy, ttl_seconds, rows_count
+            FROM responses
+            WHERE path = '/cards/2/location-history'
+            """
+        ).fetchone()
+    assert row == ("persistent_heavy", 86400, 1)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_auto_dense_entity_family_extends_recent_ttl(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    cache_path = tmp_path / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    monkeypatch.setattr("kaiten_cli.runtime.cache.AUTO_DENSE_FAMILY_MEDIUM_THRESHOLD", 3)
+    monkeypatch.setattr("kaiten_cli.runtime.cache.AUTO_DENSE_FAMILY_HEAVY_THRESHOLD", 6)
+    routes = [
+        respx.get(f"https://sandbox.kaiten.ru/api/latest/cards/{card_id}").mock(
+            return_value=Response(200, json={"id": card_id, "title": f"Task {card_id}"})
+        )
+        for card_id in (1, 2, 3)
+    ]
+
+    tool = resolve_tool("cards.get")
+    for card_id in (1, 2, 3):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": card_id}))
+
+    assert [route.call_count for route in routes] == [1, 1, 1]
+    with sqlite3.connect(cache_path) as conn:
+        rows = conn.execute(
+            """
+            SELECT path_family, ttl_seconds
+            FROM responses
+            WHERE path LIKE '/cards/%'
+            ORDER BY path
+            """
+        ).fetchall()
+    assert rows == [
+        ("/cards/:id", 21600),
+        ("/cards/:id", 21600),
+        ("/cards/:id", 21600),
+    ]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_cache_mode_off_bypasses_auto_persistent_cache(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    await execute_tool(tool, payload, cache_mode="off")
+    await execute_tool(tool, payload, cache_mode="off")
+
+    assert route.call_count == 2
 
 
 @pytest.mark.asyncio

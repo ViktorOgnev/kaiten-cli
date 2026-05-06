@@ -10,10 +10,10 @@ from typing import Any
 from platformdirs import user_config_path
 
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.models import CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH, ResolvedProfile
+from kaiten_cli.models import CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH, ResolvedProfile
 
 CONFIG_ENV = "KAITEN_CLI_CONFIG_PATH"
-CACHE_MODE_VALUES = {CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
+CACHE_MODE_VALUES = {CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
 
 
 def config_path() -> Path:
@@ -107,7 +107,7 @@ def redact_token(token: str | None) -> str | None:
 
 def _normalize_cache_mode(value: str | None) -> str:
     if value is None:
-        return CACHE_MODE_OFF
+        return CACHE_MODE_AUTO
     normalized = str(value).strip().lower()
     if normalized not in CACHE_MODE_VALUES:
         allowed = ", ".join(sorted(CACHE_MODE_VALUES))
@@ -195,7 +195,7 @@ def show_profile(name: str | None = None) -> dict[str, Any]:
             "domain": None,
             "sandbox": False,
             "token_masked": None,
-            "cache_mode": CACHE_MODE_OFF,
+            "cache_mode": CACHE_MODE_AUTO,
             "cache_ttl_seconds": 60,
         }
     profiles = config.get("profiles", {})

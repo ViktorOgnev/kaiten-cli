@@ -96,7 +96,7 @@ TOOLS = (
             "`--markdown` does the same document GET, renders the result locally, and saves a Markdown file instead of returning the document JSON.",
             "`--markdown` keeps document file links as Kaiten `/api/documents/<uid>/files/<file_id>` URLs.",
             "Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.",
-            "Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.",
+            "Separate CLI processes do not share in-memory results, so default `--cache-mode auto` persists repeated safe document reads.",
         ),
     ),
     make_tool(

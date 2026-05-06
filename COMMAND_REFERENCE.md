@@ -11,6 +11,7 @@
 - All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.
 - `--compact` and `--fields` only apply when the command metadata says they are supported.
 - Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
+- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.
 - For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
 
 ## Module Index
@@ -80,6 +81,7 @@ cards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -97,6 +99,11 @@ cards
 
 - Archive a card.: `kaiten cards archive --card-id 123`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `cards.batch-get`
 
 | Field | Value |
@@ -107,7 +114,8 @@ cards
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards/batch` |
 | Compact | `no` |
 | Fields | `no` |
@@ -129,6 +137,8 @@ cards
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for detail enrichment after local candidate reduction or before building evidence-heavy snapshots.
 
@@ -143,6 +153,7 @@ cards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -186,6 +197,11 @@ cards
 - Create a card.: `kaiten cards create --title "Smoke task" --board-id 10 --json`
 - Create a card with a narrow response.: `kaiten cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `cards.delete`
 
 | Field | Value |
@@ -197,6 +213,7 @@ cards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -214,6 +231,11 @@ cards
 
 - Delete a card.: `kaiten cards delete --card-id 123`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `cards.get`
 
 | Field | Value |
@@ -225,6 +247,7 @@ cards
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -250,12 +273,14 @@ cards
 **Notes**
 
 - Bulk alternative: `cards.batch-get`
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - This is a per-card entity read and becomes expensive when repeated over large card populations.
 - For detail enrichment after candidate reduction, prefer cards.batch-get over one-card-at-a-time loops.
 - `--markdown` does the same card GET, renders the result locally, and saves a Markdown file instead of returning the card JSON.
 - `--markdown` keeps card attachment links as Kaiten `/api/cards/<card>/files/<file_id>` URLs.
 - Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.
-- Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.
+- Separate CLI processes do not share in-memory results, so default `--cache-mode auto` persists repeated safe card reads.
 
 ### `cards.list`
 
@@ -268,6 +293,7 @@ cards
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -310,6 +336,11 @@ cards
 - List cards on a board.: `kaiten cards list --board-id 10 --limit 5 --compact --json`
 - Search cards by query.: `kaiten cards list --query "bug" --fields id,title,state`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `cards.list-all`
 
 | Field | Value |
@@ -320,7 +351,8 @@ cards
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -372,6 +404,8 @@ cards
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.
 - active_only is computed as all_cards minus the archived subset to match the documented bulk CLI behavior.
 
@@ -386,6 +420,7 @@ cards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -407,6 +442,11 @@ cards
 
 - Move a card.: `kaiten cards move --card-id 123 --column-id 10 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `cards.update`
 
 | Field | Value |
@@ -418,6 +458,7 @@ cards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -462,6 +503,11 @@ cards
 - Update a card.: `kaiten cards update --card-id 123 --title "Renamed"`
 - Update a card with a narrow response.: `kaiten cards update --card-id 123 --title "Renamed" --compact --fields id,title,state --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 <a id="module-comments"></a>
 ## Комментарии (`comments`) — 5 commands
 
@@ -488,7 +534,8 @@ comments
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards/comments/batch` |
 | Compact | `no` |
 | Fields | `no` |
@@ -510,6 +557,8 @@ comments
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path when you need comment evidence across many cards.
 
@@ -524,6 +573,7 @@ comments
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/comments` |
 | Compact | `no` |
 | Fields | `no` |
@@ -542,6 +592,11 @@ comments
 
 - Create a markdown comment.: `kaiten comments create --card-id 10 --text "Looks good" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `comments.delete`
 
 | Field | Value |
@@ -553,6 +608,7 @@ comments
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/comments/{comment_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -569,6 +625,11 @@ comments
 
 - Delete a comment.: `kaiten comments delete --card-id 10 --comment-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `comments.list`
 
 | Field | Value |
@@ -580,6 +641,7 @@ comments
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/comments` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -599,6 +661,8 @@ comments
 **Notes**
 
 - Bulk alternative: `comments.batch-list`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For report and investigation workflows, prefer comments.batch-list over one-card-at-a-time loops.
 
@@ -613,6 +677,7 @@ comments
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/comments/{comment_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -630,6 +695,11 @@ comments
 **Examples**
 
 - Update a comment.: `kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-members"></a>
 ## Участники и пользователи (`members`) — 5 commands
@@ -659,6 +729,7 @@ users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/members` |
 | Compact | `no` |
 | Fields | `no` |
@@ -675,6 +746,11 @@ users
 
 - Add a member to a card.: `kaiten card-members add --card-id 10 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-members.list`
 
 | Field | Value |
@@ -686,6 +762,7 @@ users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/members` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -702,6 +779,11 @@ users
 
 - List members on a card.: `kaiten card-members list --card-id 10 --compact --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `card-members.remove`
 
 | Field | Value |
@@ -713,6 +795,7 @@ users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/members/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -729,6 +812,11 @@ users
 
 - Remove a member from a card.: `kaiten card-members remove --card-id 10 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `users.current`
 
 | Field | Value |
@@ -740,6 +828,7 @@ users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/users/current` |
 | Compact | `no` |
 | Fields | `no` |
@@ -753,6 +842,11 @@ _No tool-specific arguments._
 
 - Get the current user.: `kaiten users current --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `users.list`
 
 | Field | Value |
@@ -764,6 +858,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/users` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -782,6 +877,11 @@ _No tool-specific arguments._
 **Examples**
 
 - Search users by name.: `kaiten users list --query "alice" --compact --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 
 <a id="module-time-logs"></a>
 ## Логи времени (`time_logs`) — 5 commands
@@ -809,7 +909,8 @@ time-logs
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards/time-logs/batch` |
 | Compact | `no` |
 | Fields | `no` |
@@ -833,6 +934,8 @@ time-logs
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for work-log analytics and snapshot builds instead of repeating time-logs.list for every card.
 
@@ -847,6 +950,7 @@ time-logs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/time-logs` |
 | Compact | `no` |
 | Fields | `no` |
@@ -866,6 +970,11 @@ time-logs
 
 - Create a time log entry.: `kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `time-logs.delete`
 
 | Field | Value |
@@ -877,6 +986,7 @@ time-logs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/time-logs/{time_log_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -893,6 +1003,11 @@ time-logs
 
 - Delete a time log.: `kaiten time-logs delete --card-id 10 --time-log-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `time-logs.list`
 
 | Field | Value |
@@ -904,6 +1019,7 @@ time-logs
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/time-logs` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -926,6 +1042,8 @@ time-logs
 **Notes**
 
 - Bulk alternative: `time-logs.batch-list`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For analytics snapshots and work-log investigations, prefer time-logs.batch-list over one-card-at-a-time loops.
 
@@ -940,6 +1058,7 @@ time-logs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/time-logs/{time_log_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -959,6 +1078,11 @@ time-logs
 **Examples**
 
 - Update a time log.: `kaiten time-logs update --card-id 10 --time-log-id 20 --time-spent 20 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-tags"></a>
 ## Теги (`tags`) — 6 commands
@@ -989,6 +1113,7 @@ tags
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/tags` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1005,6 +1130,11 @@ tags
 
 - Add a tag to a card.: `kaiten card-tags add --card-id 10 --name "backend" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-tags.remove`
 
 | Field | Value |
@@ -1016,6 +1146,7 @@ tags
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/tags/{tag_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1032,6 +1163,11 @@ tags
 
 - Remove a tag from a card.: `kaiten card-tags remove --card-id 10 --tag-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `tags.create`
 
 | Field | Value |
@@ -1043,6 +1179,7 @@ tags
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/tags` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1058,6 +1195,11 @@ tags
 
 - Create a company tag.: `kaiten tags create --name "backend" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `tags.delete`
 
 | Field | Value |
@@ -1069,6 +1211,7 @@ tags
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/tags/{tag_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1084,6 +1227,11 @@ tags
 
 - Delete a company tag.: `kaiten tags delete --tag-id 10 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `tags.list`
 
 | Field | Value |
@@ -1095,6 +1243,7 @@ tags
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/tags` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1114,6 +1263,11 @@ tags
 
 - Search tags by name.: `kaiten tags list --query "backend" --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `tags.update`
 
 | Field | Value |
@@ -1125,6 +1279,7 @@ tags
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/tags/{tag_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1141,6 +1296,11 @@ tags
 **Examples**
 
 - Update a company tag.: `kaiten tags update --tag-id 10 --name "backend" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-checklists"></a>
 ## Чеклисты (`checklists`) — 8 commands
@@ -1173,6 +1333,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}/items` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1194,6 +1355,11 @@ checklists
 
 - Create a checklist item.: `kaiten checklist-items create --card-id 10 --checklist-id 20 --text "Ship it" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `checklist-items.delete`
 
 | Field | Value |
@@ -1205,6 +1371,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}/items/{item_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1222,6 +1389,11 @@ checklists
 
 - Delete a checklist item.: `kaiten checklist-items delete --card-id 10 --checklist-id 20 --item-id 30 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `checklist-items.list`
 
 | Field | Value |
@@ -1233,6 +1405,7 @@ checklists
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}/items` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1251,6 +1424,8 @@ checklists
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for checklist item listing; the live suite validates the expected error path.
 
@@ -1265,6 +1440,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}/items/{item_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1287,6 +1463,11 @@ checklists
 
 - Update a checklist item.: `kaiten checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `checklists.create`
 
 | Field | Value |
@@ -1298,6 +1479,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1315,6 +1497,11 @@ checklists
 
 - Create a checklist.: `kaiten checklists create --card-id 10 --name "Ready for QA" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `checklists.delete`
 
 | Field | Value |
@@ -1326,6 +1513,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1342,6 +1530,11 @@ checklists
 
 - Delete a checklist.: `kaiten checklists delete --card-id 10 --checklist-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `checklists.list`
 
 | Field | Value |
@@ -1353,6 +1546,7 @@ checklists
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/checklists` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1370,6 +1564,8 @@ checklists
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for checklist listing; the live suite validates the expected error path.
 
@@ -1384,6 +1580,7 @@ checklists
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/checklists/{checklist_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1401,6 +1598,11 @@ checklists
 **Examples**
 
 - Update a checklist.: `kaiten checklists update --card-id 10 --checklist-id 20 --name "Ready for QA" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-blockers"></a>
 ## Блокировки (`blockers`) — 5 commands
@@ -1429,6 +1631,7 @@ blockers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/blockers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1446,6 +1649,11 @@ blockers
 
 - Create a blocker on a card.: `kaiten blockers create --card-id 10 --reason "Waiting for review" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `blockers.delete`
 
 | Field | Value |
@@ -1457,6 +1665,7 @@ blockers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/blockers/{blocker_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1473,6 +1682,11 @@ blockers
 
 - Delete a blocker.: `kaiten blockers delete --card-id 10 --blocker-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `blockers.get`
 
 | Field | Value |
@@ -1484,6 +1698,7 @@ blockers
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/blockers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1500,6 +1715,11 @@ blockers
 
 - Get a blocker by filtering the blocker list.: `kaiten blockers get --card-id 10 --blocker-id 20 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `blockers.list`
 
 | Field | Value |
@@ -1511,6 +1731,7 @@ blockers
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/blockers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1526,6 +1747,11 @@ blockers
 
 - List blockers on a card.: `kaiten blockers list --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `blockers.update`
 
 | Field | Value |
@@ -1537,6 +1763,7 @@ blockers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/blockers/{blocker_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1553,6 +1780,11 @@ blockers
 **Examples**
 
 - Update a blocker.: `kaiten blockers update --card-id 10 --blocker-id 20 --reason "Waiting for review" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-card-relations"></a>
 ## Связи карточек (`card_relations`) — 10 commands
@@ -1588,6 +1820,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/children` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1604,6 +1837,11 @@ planned-relations
 
 - Add a child card relation.: `kaiten card-children add --card-id 10 --child-card-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-children.batch-list`
 
 | Field | Value |
@@ -1614,7 +1852,8 @@ planned-relations
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards/children/batch` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1636,6 +1875,8 @@ planned-relations
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for relation-heavy investigations instead of per-parent card-children.list loops.
 
@@ -1650,6 +1891,7 @@ planned-relations
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/children` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1668,6 +1910,8 @@ planned-relations
 **Notes**
 
 - Bulk alternative: `card-children.batch-list`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - This is a per-card read and becomes expensive when repeated across many parent cards.
 - For investigation and reporting workflows, prefer card-children.batch-list over one-card-at-a-time loops.
 
@@ -1682,6 +1926,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/children/{child_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1698,6 +1943,11 @@ planned-relations
 
 - Remove a child card relation.: `kaiten card-children remove --card-id 10 --child-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-parents.add`
 
 | Field | Value |
@@ -1709,6 +1959,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/parents` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1725,6 +1976,11 @@ planned-relations
 
 - Add a parent card relation.: `kaiten card-parents add --card-id 10 --parent-card-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-parents.list`
 
 | Field | Value |
@@ -1736,6 +1992,7 @@ planned-relations
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/parents` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1751,6 +2008,11 @@ planned-relations
 
 - List parent cards.: `kaiten card-parents list --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `card-parents.remove`
 
 | Field | Value |
@@ -1762,6 +2024,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/parents/{parent_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1778,6 +2041,11 @@ planned-relations
 
 - Remove a parent card relation.: `kaiten card-parents remove --card-id 10 --parent-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `planned-relations.add`
 
 | Field | Value |
@@ -1789,6 +2057,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/planned-relation` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1806,6 +2075,11 @@ planned-relations
 
 - Create a finish-to-start planned relation.: `kaiten planned-relations add --card-id 10 --target-card-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `planned-relations.remove`
 
 | Field | Value |
@@ -1817,6 +2091,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/planned-relation/{target_card_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1833,6 +2108,11 @@ planned-relations
 
 - Remove a planned relation.: `kaiten planned-relations remove --card-id 10 --target-card-id 11 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `planned-relations.update`
 
 | Field | Value |
@@ -1844,6 +2124,7 @@ planned-relations
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/planned-relation/{target_card_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1861,6 +2142,11 @@ planned-relations
 **Examples**
 
 - Set a 2-day lag for a planned relation.: `kaiten planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-external-links"></a>
 ## Внешние ссылки (`external_links`) — 4 commands
@@ -1888,6 +2174,7 @@ external-links
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/external-links` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1905,6 +2192,11 @@ external-links
 
 - Attach an external link to a card.: `kaiten external-links create --card-id 10 --url "https://example.com" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `external-links.delete`
 
 | Field | Value |
@@ -1916,6 +2208,7 @@ external-links
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/external-links/{link_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1932,6 +2225,11 @@ external-links
 
 - Delete a card external link.: `kaiten external-links delete --card-id 10 --link-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `external-links.list`
 
 | Field | Value |
@@ -1943,6 +2241,7 @@ external-links
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/external-links` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1958,6 +2257,11 @@ external-links
 
 - List external links on a card.: `kaiten external-links list --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `external-links.update`
 
 | Field | Value |
@@ -1969,6 +2273,7 @@ external-links
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/external-links/{link_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -1986,6 +2291,11 @@ external-links
 **Examples**
 
 - Update a card external link.: `kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-files"></a>
 ## Файлы карточек (`files`) — 5 commands
@@ -2014,6 +2324,7 @@ files
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/files` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2036,6 +2347,11 @@ files
 
 - Attach a URL-backed file to a card.: `kaiten files create --card-id 10 --url "https://example.com/a.png" --name "a.png" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `files.delete`
 
 | Field | Value |
@@ -2047,6 +2363,7 @@ files
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/files/{file_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2063,6 +2380,11 @@ files
 
 - Delete a card file.: `kaiten files delete --card-id 10 --file-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `files.download`
 
 | Field | Value |
@@ -2074,6 +2396,7 @@ files
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/files/download` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2107,6 +2430,8 @@ files
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - By default the command writes to the current working directory.
 - Downloads stream to <target>.part first and are renamed into place only after completion.
 - Existing .part files are resumed with HTTP Range by default, similar to wget --continue.
@@ -2123,6 +2448,7 @@ files
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/files` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2138,6 +2464,11 @@ files
 
 - List card files.: `kaiten files list --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `files.update`
 
 | Field | Value |
@@ -2149,6 +2480,7 @@ files
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/files/{file_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2171,6 +2503,11 @@ files
 **Examples**
 
 - Update a card file attachment.: `kaiten files update --card-id 10 --file-id 20 --name "a-v2.png" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-subscribers"></a>
 ## Подписчики (`subscribers`) — 6 commands
@@ -2201,6 +2538,7 @@ column-subscribers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/subscribers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2217,6 +2555,11 @@ column-subscribers
 
 - Add a card subscriber.: `kaiten card-subscribers add --card-id 10 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-subscribers.list`
 
 | Field | Value |
@@ -2228,6 +2571,7 @@ column-subscribers
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/subscribers` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -2246,6 +2590,8 @@ column-subscribers
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for card subscriber listing; the live suite validates the expected error path.
 
@@ -2260,6 +2606,7 @@ column-subscribers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/subscribers/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2276,6 +2623,11 @@ column-subscribers
 
 - Remove a card subscriber.: `kaiten card-subscribers remove --card-id 10 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `column-subscribers.add`
 
 | Field | Value |
@@ -2287,6 +2639,7 @@ column-subscribers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/columns/{column_id}/subscribers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2304,6 +2657,11 @@ column-subscribers
 
 - Add a column subscriber.: `kaiten column-subscribers add --column-id 10 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `column-subscribers.list`
 
 | Field | Value |
@@ -2315,6 +2673,7 @@ column-subscribers
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/columns/{column_id}/subscribers` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -2333,6 +2692,8 @@ column-subscribers
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for column subscriber listing; the live suite validates the expected error path.
 
@@ -2347,6 +2708,7 @@ column-subscribers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/columns/{column_id}/subscribers/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2362,6 +2724,11 @@ column-subscribers
 **Examples**
 
 - Remove a column subscriber.: `kaiten column-subscribers remove --column-id 10 --user-id 7 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-spaces"></a>
 ## Пространства (`spaces`) — 6 commands
@@ -2391,7 +2758,8 @@ spaces
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/spaces/{space_id}/topology` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2409,6 +2777,8 @@ spaces
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - Use this for report scaffolding instead of separate boards.list, columns.list, and lanes.list loops.
 
 ### `spaces.create`
@@ -2422,6 +2792,7 @@ spaces
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2442,6 +2813,11 @@ spaces
 
 - Create a space.: `kaiten spaces create --title "CLI smoke"`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `spaces.delete`
 
 | Field | Value |
@@ -2453,6 +2829,7 @@ spaces
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2468,6 +2845,11 @@ spaces
 
 - Delete a space.: `kaiten spaces delete --space-id 123`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `spaces.get`
 
 | Field | Value |
@@ -2479,6 +2861,7 @@ spaces
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces/{space_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2494,6 +2877,11 @@ spaces
 
 - Get a space by ID.: `kaiten spaces get --space-id 123`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `spaces.list`
 
 | Field | Value |
@@ -2505,6 +2893,7 @@ spaces
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -2523,6 +2912,11 @@ spaces
 - List spaces as machine-readable JSON.: `kaiten spaces list --json`
 - List spaces with a narrow response surface.: `kaiten spaces list --compact --fields id,title --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `spaces.update`
 
 | Field | Value |
@@ -2534,6 +2928,7 @@ spaces
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2554,6 +2949,11 @@ spaces
 **Examples**
 
 - Update a space.: `kaiten spaces update --space-id 123 --title "Updated"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-boards"></a>
 ## Доски (`boards`) — 5 commands
@@ -2582,6 +2982,7 @@ boards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/boards` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2604,6 +3005,11 @@ boards
 
 - Create a board.: `kaiten boards create --space-id 1 --title "Smoke"`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `boards.delete`
 
 | Field | Value |
@@ -2615,6 +3021,7 @@ boards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/boards/{board_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2634,6 +3041,8 @@ boards
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_with_runtime_fix`; expected statuses: —
 - Live note: Sandbox requires the force flag for board deletion; the CLI injects the live-safe request shape.
 
@@ -2648,6 +3057,7 @@ boards
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/boards/{board_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2663,6 +3073,11 @@ boards
 
 - Get a board.: `kaiten boards get --board-id 10`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `boards.list`
 
 | Field | Value |
@@ -2674,6 +3089,7 @@ boards
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces/{space_id}/boards` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -2692,6 +3108,11 @@ boards
 - List boards in a space.: `kaiten boards list --space-id 1 --compact`
 - List boards with narrow fields.: `kaiten boards list --space-id 1 --fields id,title --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `boards.update`
 
 | Field | Value |
@@ -2703,6 +3124,7 @@ boards
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/boards/{board_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2725,6 +3147,11 @@ boards
 **Examples**
 
 - Update a board.: `kaiten boards update --space-id 1 --board-id 10 --title "Updated"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-columns"></a>
 ## Колонки и подколонки (`columns`) — 8 commands
@@ -2757,6 +3184,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/columns` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2778,6 +3206,11 @@ subcolumns
 
 - Create a board column.: `kaiten columns create --board-id 10 --title "Doing" --type 2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `columns.delete`
 
 | Field | Value |
@@ -2789,6 +3222,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/columns/{column_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2805,6 +3239,11 @@ subcolumns
 
 - Delete a board column.: `kaiten columns delete --board-id 10 --column-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `columns.list`
 
 | Field | Value |
@@ -2816,6 +3255,7 @@ subcolumns
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/boards/{board_id}/columns` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2831,6 +3271,11 @@ subcolumns
 
 - List columns on a board.: `kaiten columns list --board-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `columns.update`
 
 | Field | Value |
@@ -2842,6 +3287,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/columns/{column_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2864,6 +3310,11 @@ subcolumns
 
 - Rename a board column.: `kaiten columns update --board-id 10 --column-id 20 --title "Review" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `subcolumns.create`
 
 | Field | Value |
@@ -2875,6 +3326,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/columns/{column_id}/subcolumns` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2894,6 +3346,11 @@ subcolumns
 
 - Create a subcolumn.: `kaiten subcolumns create --column-id 20 --title "Blocked" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `subcolumns.delete`
 
 | Field | Value |
@@ -2905,6 +3362,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/columns/{column_id}/subcolumns/{subcolumn_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2921,6 +3379,11 @@ subcolumns
 
 - Delete a subcolumn.: `kaiten subcolumns delete --column-id 20 --subcolumn-id 30 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `subcolumns.list`
 
 | Field | Value |
@@ -2932,6 +3395,7 @@ subcolumns
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/columns/{column_id}/subcolumns` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2947,6 +3411,11 @@ subcolumns
 
 - List subcolumns for a column.: `kaiten subcolumns list --column-id 20 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `subcolumns.update`
 
 | Field | Value |
@@ -2958,6 +3427,7 @@ subcolumns
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/columns/{column_id}/subcolumns/{subcolumn_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -2977,6 +3447,11 @@ subcolumns
 **Examples**
 
 - Update a subcolumn.: `kaiten subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-lanes"></a>
 ## Дорожки (`lanes`) — 4 commands
@@ -3004,6 +3479,7 @@ lanes
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/lanes` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3025,6 +3501,11 @@ lanes
 
 - Create a board lane.: `kaiten lanes create --board-id 10 --title "Backend" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `lanes.delete`
 
 | Field | Value |
@@ -3036,6 +3517,7 @@ lanes
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/lanes/{lane_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3052,6 +3534,11 @@ lanes
 
 - Delete a lane.: `kaiten lanes delete --board-id 10 --lane-id 20 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `lanes.list`
 
 | Field | Value |
@@ -3063,6 +3550,7 @@ lanes
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/boards/{board_id}/lanes` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3078,6 +3566,11 @@ lanes
 
 - List lanes on a board.: `kaiten lanes list --board-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `lanes.update`
 
 | Field | Value |
@@ -3089,6 +3582,7 @@ lanes
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/boards/{board_id}/lanes/{lane_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3111,6 +3605,11 @@ lanes
 **Examples**
 
 - Update a lane.: `kaiten lanes update --board-id 10 --lane-id 20 --title "Backend" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-card-types"></a>
 ## Типы карточек (`card_types`) — 5 commands
@@ -3139,6 +3638,7 @@ card-types
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/card-types` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3157,6 +3657,11 @@ card-types
 
 - Create a card type.: `kaiten card-types create --name "Feature" --letter F --color 3 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-types.delete`
 
 | Field | Value |
@@ -3168,6 +3673,7 @@ card-types
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/card-types/{type_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3187,6 +3693,11 @@ card-types
 
 - Delete a card type with replacement.: `kaiten card-types delete --type-id 42 --replace-type-id 1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-types.get`
 
 | Field | Value |
@@ -3198,6 +3709,7 @@ card-types
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/card-types/{type_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3213,6 +3725,11 @@ card-types
 
 - Get a card type.: `kaiten card-types get --type-id 42 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `card-types.list`
 
 | Field | Value |
@@ -3224,6 +3741,7 @@ card-types
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/card-types` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3241,6 +3759,11 @@ card-types
 
 - List card types.: `kaiten card-types list --query "bug" --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `card-types.update`
 
 | Field | Value |
@@ -3252,6 +3775,7 @@ card-types
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/card-types/{type_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3270,6 +3794,11 @@ card-types
 **Examples**
 
 - Update a card type.: `kaiten card-types update --type-id 42 --name "Bug" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-custom-properties"></a>
 ## Кастомные свойства (`custom_properties`) — 10 commands
@@ -3304,6 +3833,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3329,6 +3859,11 @@ custom-properties.select-values
 
 - Create a custom property.: `kaiten custom-properties create --name Status --type select --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.delete`
 
 | Field | Value |
@@ -3340,6 +3875,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties/{property_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3355,6 +3891,11 @@ custom-properties.select-values
 
 - Delete a custom property.: `kaiten custom-properties delete --property-id 5 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.get`
 
 | Field | Value |
@@ -3366,6 +3907,7 @@ custom-properties.select-values
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/company/custom-properties/{property_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3381,6 +3923,11 @@ custom-properties.select-values
 
 - Get a custom property.: `kaiten custom-properties get --property-id 5 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `custom-properties.list`
 
 | Field | Value |
@@ -3392,6 +3939,7 @@ custom-properties.select-values
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/company/custom-properties` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3416,6 +3964,11 @@ custom-properties.select-values
 
 - List custom properties.: `kaiten custom-properties list --types select --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `custom-properties.select-values.create`
 
 | Field | Value |
@@ -3427,6 +3980,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties/{property_id}/select-values` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3445,6 +3999,11 @@ custom-properties.select-values
 
 - Create a select value.: `kaiten custom-properties select-values create --property-id 3 --value High --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.select-values.delete`
 
 | Field | Value |
@@ -3456,6 +4015,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties/{property_id}/select-values/{value_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3472,6 +4032,11 @@ custom-properties.select-values
 
 - Soft-delete a select value.: `kaiten custom-properties select-values delete --property-id 3 --value-id 10 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.select-values.get`
 
 | Field | Value |
@@ -3483,6 +4048,7 @@ custom-properties.select-values
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/company/custom-properties/{property_id}/select-values/{value_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3499,6 +4065,11 @@ custom-properties.select-values
 
 - Get a select value.: `kaiten custom-properties select-values get --property-id 3 --value-id 10 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `custom-properties.select-values.list`
 
 | Field | Value |
@@ -3510,6 +4081,7 @@ custom-properties.select-values
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/company/custom-properties/{property_id}/select-values` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3531,6 +4103,11 @@ custom-properties.select-values
 
 - List select values.: `kaiten custom-properties select-values list --property-id 3 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `custom-properties.select-values.update`
 
 | Field | Value |
@@ -3542,6 +4119,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties/{property_id}/select-values/{value_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3562,6 +4140,11 @@ custom-properties.select-values
 
 - Update a select value.: `kaiten custom-properties select-values update --property-id 3 --value-id 10 --value Critical --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `custom-properties.update`
 
 | Field | Value |
@@ -3573,6 +4156,7 @@ custom-properties.select-values
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/custom-properties/{property_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3598,6 +4182,11 @@ custom-properties.select-values
 **Examples**
 
 - Update a custom property.: `kaiten custom-properties update --property-id 5 --name Priority --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-documents"></a>
 ## Документы (`documents`) — 11 commands
@@ -3634,6 +4223,7 @@ documents
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/documents/{document_uid}/files/{file_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3652,6 +4242,8 @@ documents
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.
 
 ### `document-groups.create`
@@ -3665,6 +4257,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/document-groups` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3682,6 +4275,11 @@ documents
 
 - Create a document group.: `kaiten document-groups create --title "Engineering" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `document-groups.delete`
 
 | Field | Value |
@@ -3693,6 +4291,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/document-groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3708,6 +4307,11 @@ documents
 
 - Delete a document group.: `kaiten document-groups delete --group-uid grp-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `document-groups.get`
 
 | Field | Value |
@@ -3719,6 +4323,7 @@ documents
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/document-groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3734,6 +4339,11 @@ documents
 
 - Get a document group.: `kaiten document-groups get --group-uid grp-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `document-groups.list`
 
 | Field | Value |
@@ -3745,6 +4355,7 @@ documents
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/document-groups` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3762,6 +4373,11 @@ documents
 
 - List document groups.: `kaiten document-groups list --query "Engineering" --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `document-groups.update`
 
 | Field | Value |
@@ -3773,6 +4389,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/document-groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3789,6 +4406,11 @@ documents
 
 - Update a document group.: `kaiten document-groups update --group-uid grp-1 --title "Docs" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `documents.create`
 
 | Field | Value |
@@ -3800,6 +4422,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/documents` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3820,6 +4443,11 @@ documents
 
 - Create a document from markdown.: `kaiten documents create --title "Spec" --text "# Header" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `documents.delete`
 
 | Field | Value |
@@ -3831,6 +4459,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/documents/{document_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3846,6 +4475,11 @@ documents
 
 - Delete a document.: `kaiten documents delete --document-uid doc-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `documents.get`
 
 | Field | Value |
@@ -3857,6 +4491,7 @@ documents
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/documents/{document_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3878,10 +4513,12 @@ documents
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - `--markdown` does the same document GET, renders the result locally, and saves a Markdown file instead of returning the document JSON.
 - `--markdown` keeps document file links as Kaiten `/api/documents/<uid>/files/<file_id>` URLs.
 - Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.
-- Separate CLI processes do not share in-memory results; use `--cache-mode readwrite` for explicit short-lived persistent cache.
+- Separate CLI processes do not share in-memory results, so default `--cache-mode auto` persists repeated safe document reads.
 
 ### `documents.list`
 
@@ -3894,6 +4531,7 @@ documents
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/documents` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3911,6 +4549,11 @@ documents
 
 - List documents.: `kaiten documents list --query "Design" --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `documents.update`
 
 | Field | Value |
@@ -3922,6 +4565,7 @@ documents
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/documents/{document_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3942,6 +4586,11 @@ documents
 **Examples**
 
 - Update a document body.: `kaiten documents update --document-uid doc-1 --text "**bold**" --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-webhooks"></a>
 ## Вебхуки (`webhooks`) — 9 commands
@@ -3975,6 +4624,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/webhooks` |
 | Compact | `no` |
 | Fields | `no` |
@@ -3997,6 +4647,11 @@ webhooks
 
 - Create an incoming webhook.: `kaiten incoming-webhooks create --space-id 1 --board-id 2 --column-id 3 --lane-id 4 --owner-id 5 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `incoming-webhooks.delete`
 
 | Field | Value |
@@ -4008,6 +4663,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/webhooks/{webhook_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4024,6 +4680,11 @@ webhooks
 
 - Delete an incoming webhook.: `kaiten incoming-webhooks delete --space-id 1 --webhook-id hook-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `incoming-webhooks.list`
 
 | Field | Value |
@@ -4035,6 +4696,7 @@ webhooks
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/spaces/{space_id}/webhooks` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4050,6 +4712,11 @@ webhooks
 
 - List incoming webhooks.: `kaiten incoming-webhooks list --space-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `incoming-webhooks.update`
 
 | Field | Value |
@@ -4061,6 +4728,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/webhooks/{webhook_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4084,6 +4752,11 @@ webhooks
 
 - Update an incoming webhook.: `kaiten incoming-webhooks update --space-id 1 --webhook-id hook-1 --position 1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `webhooks.create`
 
 | Field | Value |
@@ -4095,6 +4768,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/external-webhooks` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4111,6 +4785,11 @@ webhooks
 
 - Create an external webhook.: `kaiten webhooks create --space-id 1 --url "https://example.test" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `webhooks.delete`
 
 | Field | Value |
@@ -4122,6 +4801,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/external-webhooks/{webhook_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4140,6 +4820,8 @@ webhooks
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `404`, `405`
 - Live note: Webhook DELETE may return 404/405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -4154,6 +4836,7 @@ webhooks
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces/{space_id}/external-webhooks/{webhook_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4172,6 +4855,8 @@ webhooks
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `404`, `405`
 - Live note: Webhook GET may return 404/405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -4186,6 +4871,7 @@ webhooks
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/spaces/{space_id}/external-webhooks` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4201,6 +4887,11 @@ webhooks
 
 - List external webhooks.: `kaiten webhooks list --space-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `webhooks.update`
 
 | Field | Value |
@@ -4212,6 +4903,7 @@ webhooks
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/external-webhooks/{webhook_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4229,6 +4921,11 @@ webhooks
 **Examples**
 
 - Update an external webhook.: `kaiten webhooks update --space-id 1 --webhook-id 2 --enabled --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-automations"></a>
 ## Автоматизации и воркфлоу (`automations`) — 11 commands
@@ -4264,6 +4961,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/automations/{automation_id}/copy` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4283,6 +4981,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Automation copy remains sandbox-dependent even with a live-valid source automation; the live suite accepts success or a documented 400/403/404/405 contract.
 
@@ -4297,6 +4997,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/automations` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4321,6 +5022,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation creation passes on sandbox when the payload matches the known live-valid add_assignee shape derived from kaiten-mcp e2e.
 
@@ -4335,6 +5038,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/automations/{automation_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4353,6 +5057,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation delete passes on sandbox for automations created during live validation; cleanup is verified.
 
@@ -4367,6 +5073,7 @@ workflows
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces/{space_id}/automations/{automation_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4385,6 +5092,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Automation GET-single may return 405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -4399,6 +5108,7 @@ workflows
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/spaces/{space_id}/automations` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4414,6 +5124,11 @@ workflows
 
 - List space automations.: `kaiten automations list --space-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `automations.update`
 
 | Field | Value |
@@ -4425,6 +5140,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/automations/{automation_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4449,6 +5165,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation update passes on sandbox for automations created with the known live-valid add_assignee payload shape.
 
@@ -4463,6 +5181,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/workflows` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4482,6 +5201,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Workflow creation is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -4496,6 +5217,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/workflows/{workflow_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4513,6 +5235,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -4527,6 +5251,7 @@ workflows
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/company/workflows/{workflow_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4544,6 +5269,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -4558,6 +5285,7 @@ workflows
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/company/workflows` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4574,6 +5302,11 @@ workflows
 
 - List workflows.: `kaiten workflows list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `workflows.update`
 
 | Field | Value |
@@ -4585,6 +5318,7 @@ workflows
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/workflows/{workflow_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4605,6 +5339,8 @@ workflows
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -4645,6 +5381,7 @@ sprints
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/projects/{project_id}/cards` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4661,6 +5398,11 @@ sprints
 
 - Add a card to a project.: `kaiten projects cards add --project-id p1 --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `projects.cards.list`
 
 | Field | Value |
@@ -4672,6 +5414,7 @@ sprints
 | Mutation | `no` |
 | Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/projects/{project_id}/cards` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -4690,6 +5433,8 @@ sprints
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `synthetic_read`; expected statuses: `405`
 - Live note: If GET /projects/{project_id}/cards returns 405, the CLI falls back to GET /projects/{project_id}?with_cards_data=true and extracts the embedded cards list.
 
@@ -4704,6 +5449,7 @@ sprints
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/projects/{project_id}/cards/{card_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4720,6 +5466,11 @@ sprints
 
 - Remove a card from a project.: `kaiten projects cards remove --project-id p1 --card-id 10 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `projects.create`
 
 | Field | Value |
@@ -4731,6 +5482,7 @@ sprints
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/projects` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4750,6 +5502,11 @@ sprints
 
 - Create a project.: `kaiten projects create --title "Platform" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `projects.delete`
 
 | Field | Value |
@@ -4761,6 +5518,7 @@ sprints
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/projects/{project_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4776,6 +5534,11 @@ sprints
 
 - Delete a project.: `kaiten projects delete --project-id p1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `projects.get`
 
 | Field | Value |
@@ -4787,6 +5550,7 @@ sprints
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/projects/{project_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4803,6 +5567,11 @@ sprints
 
 - Get a project by ID.: `kaiten projects get --project-id p1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `projects.list`
 
 | Field | Value |
@@ -4814,6 +5583,7 @@ sprints
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/projects` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4827,6 +5597,11 @@ _No tool-specific arguments._
 
 - List company projects.: `kaiten projects list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `projects.update`
 
 | Field | Value |
@@ -4838,6 +5613,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/projects/{project_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4859,6 +5635,11 @@ _No tool-specific arguments._
 
 - Update a project.: `kaiten projects update --project-id p1 --title "Platform" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `sprints.create`
 
 | Field | Value |
@@ -4870,6 +5651,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/sprints` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4891,6 +5673,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Sprint creation is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -4905,6 +5689,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/sprints/{sprint_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4922,6 +5707,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: Sprint deletion is often unavailable on sandbox; the live suite accepts the documented 403/404/405 contract.
 
@@ -4936,6 +5723,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/sprints/{sprint_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4954,6 +5742,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When sprint creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel sprint id.
 
@@ -4968,6 +5758,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/sprints` |
 | Compact | `no` |
 | Fields | `no` |
@@ -4987,6 +5778,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Sprint listing is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -5001,6 +5794,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/sprints/{sprint_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5024,6 +5818,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`, `500`
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
@@ -5066,6 +5862,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/groups` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5081,6 +5878,11 @@ space-users
 
 - Create a company group.: `kaiten company-groups create --name "Engineering" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `company-groups.delete`
 
 | Field | Value |
@@ -5092,6 +5894,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5107,6 +5910,11 @@ space-users
 
 - Delete a company group.: `kaiten company-groups delete --group-uid grp-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `company-groups.get`
 
 | Field | Value |
@@ -5118,6 +5926,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/company/groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5133,6 +5942,11 @@ space-users
 
 - Get a company group.: `kaiten company-groups get --group-uid grp-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `company-groups.list`
 
 | Field | Value |
@@ -5144,6 +5958,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/company/groups` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5161,6 +5976,11 @@ space-users
 
 - List company groups.: `kaiten company-groups list --query "Engineering" --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `company-groups.update`
 
 | Field | Value |
@@ -5172,6 +5992,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/company/groups/{group_uid}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5188,6 +6009,11 @@ space-users
 
 - Update a company group.: `kaiten company-groups update --group-uid grp-1 --name "Docs" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `group-users.add`
 
 | Field | Value |
@@ -5199,6 +6025,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/groups/{group_uid}/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5215,6 +6042,11 @@ space-users
 
 - Add a user to a group.: `kaiten group-users add --group-uid grp-1 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `group-users.list`
 
 | Field | Value |
@@ -5226,6 +6058,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/groups/{group_uid}/users` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -5242,6 +6075,11 @@ space-users
 
 - List group users.: `kaiten group-users list --group-uid grp-1 --compact --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `group-users.remove`
 
 | Field | Value |
@@ -5253,6 +6091,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/groups/{group_uid}/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5269,6 +6108,11 @@ space-users
 
 - Remove a user from a group.: `kaiten group-users remove --group-uid grp-1 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `roles.get`
 
 | Field | Value |
@@ -5280,6 +6124,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/tree-entity-roles/{role_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5295,6 +6140,11 @@ space-users
 
 - Get a role.: `kaiten roles get --role-id role-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `roles.list`
 
 | Field | Value |
@@ -5306,6 +6156,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/tree-entity-roles` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5323,6 +6174,11 @@ space-users
 
 - List roles.: `kaiten roles list --query "admin" --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `space-users.add`
 
 | Field | Value |
@@ -5334,6 +6190,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5351,6 +6208,11 @@ space-users
 
 - Add a user to a space.: `kaiten space-users add --space-id 1 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `space-users.list`
 
 | Field | Value |
@@ -5362,6 +6224,7 @@ space-users
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/spaces/{space_id}/users` |
 | Compact | `yes` |
 | Fields | `no` |
@@ -5378,6 +6241,11 @@ space-users
 
 - List space users.: `kaiten space-users list --space-id 1 --compact --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `space-users.remove`
 
 | Field | Value |
@@ -5389,6 +6257,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5405,6 +6274,11 @@ space-users
 
 - Remove a user from a space.: `kaiten space-users remove --space-id 1 --user-id 7 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `space-users.update`
 
 | Field | Value |
@@ -5416,6 +6290,7 @@ space-users
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/spaces/{space_id}/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5432,6 +6307,11 @@ space-users
 **Examples**
 
 - Update a space user role.: `kaiten space-users update --space-id 1 --user-id 7 --role-id 9 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-audit-and-analytics"></a>
 ## Аудит и аналитика (`audit_and_analytics`) — 12 commands
@@ -5472,7 +6352,8 @@ space-activity-all
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/audit-logs` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5493,6 +6374,11 @@ space-activity-all
 
 - List audit logs.: `kaiten audit-logs list --limit 10 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+
 ### `card-activity.get`
 
 | Field | Value |
@@ -5504,6 +6390,7 @@ space-activity-all
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/activity` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5521,6 +6408,11 @@ space-activity-all
 
 - Get card activity.: `kaiten card-activity get --card-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `card-location-history.batch-get`
 
 | Field | Value |
@@ -5531,7 +6423,8 @@ space-activity-all
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/cards/location-history/batch` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5552,6 +6445,8 @@ space-activity-all
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use conservative workers to avoid shifting the bottleneck from process startup to API rate limiting.
 
@@ -5566,6 +6461,7 @@ space-activity-all
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/location-history` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5584,6 +6480,8 @@ space-activity-all
 **Notes**
 
 - Bulk alternative: `card-location-history.batch-get`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - This is a per-card read and becomes expensive when repeated hundreds of times.
 - For high-cardinality reads, use card-location-history.batch-get instead of spawning one CLI process per card.
 
@@ -5597,7 +6495,8 @@ space-activity-all
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/company/activity` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -5622,6 +6521,11 @@ space-activity-all
 
 - Get company activity.: `kaiten company-activity get --limit 10 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+
 ### `saved-filters.create`
 
 | Field | Value |
@@ -5633,6 +6537,7 @@ space-activity-all
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/saved-filters` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5650,6 +6555,11 @@ space-activity-all
 
 - Create a saved filter.: `kaiten saved-filters create --name MyFilter --filter '{}' --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `saved-filters.delete`
 
 | Field | Value |
@@ -5661,6 +6571,7 @@ space-activity-all
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/saved-filters/{filter_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5676,6 +6587,11 @@ space-activity-all
 
 - Delete a saved filter.: `kaiten saved-filters delete --filter-id 1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `saved-filters.get`
 
 | Field | Value |
@@ -5687,6 +6603,7 @@ space-activity-all
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/saved-filters/{filter_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5702,6 +6619,11 @@ space-activity-all
 
 - Get a saved filter.: `kaiten saved-filters get --filter-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `saved-filters.list`
 
 | Field | Value |
@@ -5713,6 +6635,7 @@ space-activity-all
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/saved-filters` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5729,6 +6652,11 @@ space-activity-all
 
 - List saved filters.: `kaiten saved-filters list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `saved-filters.update`
 
 | Field | Value |
@@ -5740,6 +6668,7 @@ space-activity-all
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/saved-filters/{filter_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5758,6 +6687,11 @@ space-activity-all
 
 - Update a saved filter.: `kaiten saved-filters update --filter-id 1 --name Renamed --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `space-activity-all.get`
 
 | Field | Value |
@@ -5768,7 +6702,8 @@ space-activity-all
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/spaces/{space_id}/activity` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -5794,6 +6729,8 @@ space-activity-all
 
 **Notes**
 
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - Use this aggregated path for report windows instead of building manual offset loops around space-activity.get.
 
 ### `space-activity.get`
@@ -5807,6 +6744,7 @@ space-activity-all
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/spaces/{space_id}/activity` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -5833,6 +6771,8 @@ space-activity-all
 **Notes**
 
 - Bulk alternative: `space-activity-all.get`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - This low-level endpoint is useful for targeted page reads, but report workflows usually want the bounded bulk path.
 - Prefer space-activity-all.get over manual offset loops when collecting a full investigation window.
 
@@ -5918,6 +6858,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/cards/{card_id}/sla-rules-measurements` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5933,6 +6874,11 @@ space-sla-measurements
 
 - Get card SLA measurements.: `kaiten card-sla-measurements get --card-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `card-slas.attach`
 
 | Field | Value |
@@ -5944,6 +6890,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/slas` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5960,6 +6907,11 @@ space-sla-measurements
 
 - Attach an SLA to a card.: `kaiten card-slas attach --card-id 1 --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `card-slas.detach`
 
 | Field | Value |
@@ -5971,6 +6923,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/cards/{card_id}/slas/{sla_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -5987,6 +6940,11 @@ space-sla-measurements
 
 - Detach an SLA from a card.: `kaiten card-slas detach --card-id 1 --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organization-users.add`
 
 | Field | Value |
@@ -5998,6 +6956,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6015,6 +6974,11 @@ space-sla-measurements
 
 - Add an organization user.: `kaiten service-desk organization-users add --organization-id 1 --user-id 2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organization-users.batch-add`
 
 | Field | Value |
@@ -6026,6 +6990,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6042,6 +7007,11 @@ space-sla-measurements
 
 - Batch-add organization users.: `kaiten service-desk organization-users batch-add --organization-id 1 --user-ids '[1,2]' --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organization-users.batch-remove`
 
 | Field | Value |
@@ -6053,6 +7023,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6069,6 +7040,11 @@ space-sla-measurements
 
 - Batch-remove organization users.: `kaiten service-desk organization-users batch-remove --organization-id 1 --user-ids '[1,2]' --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organization-users.remove`
 
 | Field | Value |
@@ -6080,6 +7056,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6096,6 +7073,11 @@ space-sla-measurements
 
 - Remove an organization user.: `kaiten service-desk organization-users remove --organization-id 1 --user-id 2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organization-users.update`
 
 | Field | Value |
@@ -6107,6 +7089,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6126,6 +7109,8 @@ space-sla-measurements
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Updating Service Desk organization-user permissions remains sandbox-dependent; the live suite accepts success or a documented 400/403/404/405 contract.
 
@@ -6140,6 +7125,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6156,6 +7142,11 @@ space-sla-measurements
 
 - Create an organization.: `kaiten service-desk organizations create --name Org --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organizations.delete`
 
 | Field | Value |
@@ -6167,6 +7158,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6182,6 +7174,11 @@ space-sla-measurements
 
 - Delete an organization.: `kaiten service-desk organizations delete --organization-id 1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.organizations.get`
 
 | Field | Value |
@@ -6193,6 +7190,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/organizations/{organization_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6208,6 +7206,11 @@ space-sla-measurements
 
 - Get an organization.: `kaiten service-desk organizations get --organization-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.organizations.list`
 
 | Field | Value |
@@ -6219,6 +7222,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/organizations` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6237,6 +7241,11 @@ space-sla-measurements
 
 - List organizations.: `kaiten service-desk organizations list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.organizations.update`
 
 | Field | Value |
@@ -6248,6 +7257,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/organizations/{organization_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6265,6 +7275,11 @@ space-sla-measurements
 
 - Update an organization.: `kaiten service-desk organizations update --organization-id 1 --name Org2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.requests.create`
 
 | Field | Value |
@@ -6276,6 +7291,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/requests` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6296,6 +7312,8 @@ space-sla-measurements
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Service Desk request creation is permission-dependent; the live suite accepts either success or a documented 400/403/404/405 contract.
 
@@ -6310,6 +7328,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/requests/{request_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6327,6 +7346,8 @@ space-sla-measurements
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -6341,6 +7362,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/requests/{request_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6358,6 +7380,8 @@ space-sla-measurements
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -6372,6 +7396,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/requests` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6389,6 +7414,11 @@ space-sla-measurements
 
 - List Service Desk requests.: `kaiten service-desk requests list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.requests.update`
 
 | Field | Value |
@@ -6400,6 +7430,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/requests/{request_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6420,6 +7451,8 @@ space-sla-measurements
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -6434,6 +7467,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/services` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6464,6 +7498,11 @@ space-sla-measurements
 
 - Create a service.: `kaiten service-desk services create --name Support --board-id 1 --position 1 --lng en --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.services.delete`
 
 | Field | Value |
@@ -6475,6 +7514,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/services/{service_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6490,6 +7530,11 @@ space-sla-measurements
 
 - Archive a service.: `kaiten service-desk services delete --service-id 1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.services.get`
 
 | Field | Value |
@@ -6501,6 +7546,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/services/{service_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6516,6 +7562,11 @@ space-sla-measurements
 
 - Get a service.: `kaiten service-desk services get --service-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.services.list`
 
 | Field | Value |
@@ -6527,6 +7578,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/services` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6545,6 +7597,11 @@ space-sla-measurements
 
 - List services.: `kaiten service-desk services list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.services.update`
 
 | Field | Value |
@@ -6556,6 +7613,7 @@ space-sla-measurements
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/services/{service_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6587,6 +7645,11 @@ space-sla-measurements
 
 - Update a service.: `kaiten service-desk services update --service-id 1 --archived --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.settings.get`
 
 | Field | Value |
@@ -6598,6 +7661,7 @@ space-sla-measurements
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/sd-settings/current` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6611,6 +7675,11 @@ _No tool-specific arguments._
 
 - Get Service Desk settings.: `kaiten service-desk settings get --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.settings.update`
 
 | Field | Value |
@@ -6622,6 +7691,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/sd-settings/current` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6637,6 +7707,11 @@ _No tool-specific arguments._
 
 - Update Service Desk settings.: `kaiten service-desk settings update --service-desk-settings '{}' --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.sla-rules.create`
 
 | Field | Value |
@@ -6648,6 +7723,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}/rules` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6671,6 +7747,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: SLA rule creation is permission- and schema-dependent; the live suite accepts either success or a documented 400/403/404/405 contract.
 
@@ -6685,6 +7763,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}/rules/{rule_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6703,6 +7782,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: When SLA-rule creation is unavailable, the live suite validates the documented 400/403/404/405 error contract on a sentinel rule id.
 
@@ -6717,6 +7798,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}/rules/{rule_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6741,6 +7823,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: When SLA-rule creation is unavailable, the live suite validates the documented 400/403/404/405 error contract on a sentinel rule id.
 
@@ -6755,6 +7839,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6773,6 +7858,11 @@ _No tool-specific arguments._
 
 - Create an SLA policy.: `kaiten service-desk sla create --name SLA --rules '[]' --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.sla.delete`
 
 | Field | Value |
@@ -6784,6 +7874,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6799,6 +7890,11 @@ _No tool-specific arguments._
 
 - Delete an SLA policy.: `kaiten service-desk sla delete --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.sla.get`
 
 | Field | Value |
@@ -6810,6 +7906,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/sla/{sla_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6825,6 +7922,11 @@ _No tool-specific arguments._
 
 - Get an SLA policy.: `kaiten service-desk sla get --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.sla.list`
 
 | Field | Value |
@@ -6836,6 +7938,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/sla` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6852,6 +7955,11 @@ _No tool-specific arguments._
 
 - List SLA policies.: `kaiten service-desk sla list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.sla.recalculate`
 
 | Field | Value |
@@ -6863,6 +7971,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}/recalculate-measurements` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6878,6 +7987,11 @@ _No tool-specific arguments._
 
 - Recalculate SLA measurements.: `kaiten service-desk sla recalculate --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.sla.stats`
 
 | Field | Value |
@@ -6888,7 +8002,8 @@ _No tool-specific arguments._
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/service-desk/sla-stats` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6910,6 +8025,11 @@ _No tool-specific arguments._
 
 - Get Service Desk SLA statistics.: `kaiten service-desk sla stats --sla-id sla-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+
 ### `service-desk.sla.update`
 
 | Field | Value |
@@ -6921,6 +8041,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/sla/{sla_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6940,6 +8061,11 @@ _No tool-specific arguments._
 
 - Update an SLA policy.: `kaiten service-desk sla update --sla-id sla-1 --status inactive --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.stats.get`
 
 | Field | Value |
@@ -6951,6 +8077,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/stats` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6969,6 +8096,11 @@ _No tool-specific arguments._
 
 - Get Service Desk statistics.: `kaiten service-desk stats get --date-from 2026-01-01 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.template-answers.create`
 
 | Field | Value |
@@ -6980,6 +8112,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/template-answers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -6996,6 +8129,11 @@ _No tool-specific arguments._
 
 - Create a template answer.: `kaiten service-desk template-answers create --name Hello --text "Hi" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.template-answers.delete`
 
 | Field | Value |
@@ -7007,6 +8145,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/template-answers/{template_answer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7022,6 +8161,11 @@ _No tool-specific arguments._
 
 - Delete a template answer.: `kaiten service-desk template-answers delete --template-answer-id ta-1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.template-answers.get`
 
 | Field | Value |
@@ -7033,6 +8177,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/service-desk/template-answers/{template_answer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7048,6 +8193,11 @@ _No tool-specific arguments._
 
 - Get a template answer.: `kaiten service-desk template-answers get --template-answer-id ta-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `service-desk.template-answers.list`
 
 | Field | Value |
@@ -7059,6 +8209,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/template-answers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7072,6 +8223,11 @@ _No tool-specific arguments._
 
 - List template answers.: `kaiten service-desk template-answers list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.template-answers.update`
 
 | Field | Value |
@@ -7083,6 +8239,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/template-answers/{template_answer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7100,6 +8257,11 @@ _No tool-specific arguments._
 
 - Update a template answer.: `kaiten service-desk template-answers update --template-answer-id ta-1 --text "Hello" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.users.list`
 
 | Field | Value |
@@ -7111,6 +8273,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/service-desk/users` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7130,6 +8293,11 @@ _No tool-specific arguments._
 
 - List Service Desk users.: `kaiten service-desk users list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `service-desk.users.set-temp-password`
 
 | Field | Value |
@@ -7141,6 +8309,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/users/set-temporary-password/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7158,6 +8327,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: Temporary password generation may succeed or return a documented 403/404/405 sandbox error; the live suite accepts both outcomes.
 
@@ -7172,6 +8343,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/users/{user_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7191,6 +8363,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: The current live account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.
 
@@ -7205,6 +8379,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/services/{service_id}/vote-properties` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7221,6 +8396,11 @@ _No tool-specific arguments._
 
 - Add a vote property.: `kaiten service-desk vote-properties add --service-id 1 --id 2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `service-desk.vote-properties.remove`
 
 | Field | Value |
@@ -7232,6 +8412,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/service-desk/services/{service_id}/vote-properties/{property_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7248,6 +8429,11 @@ _No tool-specific arguments._
 
 - Remove a vote property.: `kaiten service-desk vote-properties remove --service-id 1 --property-id 2 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `space-sla-measurements.get`
 
 | Field | Value |
@@ -7259,6 +8445,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/spaces/{space_id}/sla-rules-measurements` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7273,6 +8460,11 @@ _No tool-specific arguments._
 **Examples**
 
 - Get space SLA measurements.: `kaiten space-sla-measurements get --space-id 1 --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 
 <a id="module-charts"></a>
 ## Графики и аналитика (`charts`) — 15 commands
@@ -7324,6 +8516,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/block-resolution-time-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7342,6 +8535,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7356,6 +8551,7 @@ compute-jobs
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/charts/{space_id}/boards` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7371,6 +8567,11 @@ compute-jobs
 
 - Get chart board structure.: `kaiten charts boards get --space-id 1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `charts.cfd.create`
 
 | Field | Value |
@@ -7382,6 +8583,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/cfd` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7407,6 +8609,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7421,6 +8625,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/control-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7448,6 +8653,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7462,6 +8669,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/cycle-time-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7487,6 +8695,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7501,6 +8711,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/due-dates` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7529,6 +8740,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7543,6 +8756,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/lead-time` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7570,6 +8784,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7584,6 +8800,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/sales-funnel` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7608,6 +8825,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7622,6 +8841,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/spectral-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7649,6 +8869,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7663,6 +8885,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/summary` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7683,6 +8906,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7697,6 +8922,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/task-distribution-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7719,6 +8945,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7733,6 +8961,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/throughput-capacity-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7757,6 +8986,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7771,6 +9002,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/charts/throughput-demand-chart` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7795,6 +9027,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 
@@ -7809,6 +9043,7 @@ compute-jobs
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/users/current/compute-jobs/{job_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7826,6 +9061,8 @@ compute-jobs
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `404`, `409`
 - Live note: Canceling a compute job can legitimately return 400/404/409 depending on backend state; the live suite accepts that contract.
 
@@ -7840,6 +9077,7 @@ compute-jobs
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/users/current/compute-jobs/{job_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7854,6 +9092,11 @@ compute-jobs
 **Examples**
 
 - Get compute job status.: `kaiten compute-jobs get --job-id 1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-tree"></a>
 ## Дерево сущностей (`tree`) — 2 commands
@@ -7879,7 +9122,8 @@ tree.children
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/tree/children` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7895,6 +9139,11 @@ tree.children
 
 - List direct tree children.: `kaiten tree children list --parent-entity-uid root-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+
 ### `tree.get`
 
 | Field | Value |
@@ -7905,7 +9154,8 @@ tree.children
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `aggregated` |
-| Cache policy | `request_scope` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
 | Path template | `/tree` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7921,6 +9171,11 @@ tree.children
 **Examples**
 
 - Build a bounded entity tree.: `kaiten tree get --depth 1 --json`
+
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 
 <a id="module-utilities"></a>
 ## Утилиты (`utilities`) — 14 commands
@@ -7963,6 +9218,7 @@ user-timers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/api-keys` |
 | Compact | `no` |
 | Fields | `no` |
@@ -7980,6 +9236,8 @@ user-timers
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `policy_excluded`; expected statuses: —
 - Live note: Creating API keys is excluded from live validation because teardown would require testing key deletion.
 
@@ -7994,6 +9252,7 @@ user-timers
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/api-keys/{key_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8011,6 +9270,8 @@ user-timers
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `policy_excluded`; expected statuses: —
 - Live note: Deleting API keys is explicitly excluded from live validation by user instruction.
 
@@ -8025,6 +9286,7 @@ user-timers
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/api-keys` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8038,6 +9300,11 @@ _No tool-specific arguments._
 
 - List API keys.: `kaiten api-keys list --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `calendars.get`
 
 | Field | Value |
@@ -8049,6 +9316,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/calendars/{calendar_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8064,6 +9332,11 @@ _No tool-specific arguments._
 
 - Get a calendar by ID.: `kaiten calendars get --calendar-id cal-1 --json`
 
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
 ### `calendars.list`
 
 | Field | Value |
@@ -8075,6 +9348,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/calendars` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8091,6 +9365,11 @@ _No tool-specific arguments._
 
 - List calendars.: `kaiten calendars list --limit 5 --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `company.current`
 
 | Field | Value |
@@ -8102,6 +9381,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/companies/current` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8115,6 +9395,11 @@ _No tool-specific arguments._
 
 - Get current company information.: `kaiten company current --json`
 
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
 ### `company.update`
 
 | Field | Value |
@@ -8126,6 +9411,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/companies/current` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8141,6 +9427,11 @@ _No tool-specific arguments._
 
 - Update current company information.: `kaiten company update --name "Acme" --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `removed-boards.list`
 
 | Field | Value |
@@ -8152,6 +9443,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/removed/boards` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8170,6 +9462,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for recycle-bin board listing; the live suite validates that contract explicitly.
 
@@ -8184,6 +9478,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/removed/cards` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8202,6 +9497,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for recycle-bin card listing; the live suite validates that contract explicitly.
 
@@ -8216,6 +9513,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/user-timers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8233,6 +9531,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `405`, `409`
 - Live note: User-timer creation remains sandbox-dependent; the live suite accepts either success or a documented 400/403/405/409 contract.
 
@@ -8247,6 +9547,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/user-timers/{timer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8264,6 +9565,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -8278,6 +9581,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
 | Path template | `/user-timers/{timer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8295,6 +9599,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -8309,6 +9615,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
 | Path template | `/user-timers` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8324,6 +9631,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: User-timer listing remains sandbox-dependent; the live suite accepts either success or a documented 403/405 error path.
 
@@ -8338,6 +9647,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/user-timers/{timer_id}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8356,6 +9666,8 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -8386,6 +9698,7 @@ snapshot
 | Mutation | `yes` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/snapshots/{name}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8409,6 +9722,8 @@ snapshot
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - Build one snapshot, then run repeated local query cards/query metrics commands without extra Kaiten API calls.
 - analytics and full presets require window_start/window_end because throughput and history are window-bound datasets.
 
@@ -8423,6 +9738,7 @@ snapshot
 | Mutation | `yes` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/snapshots/{name}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8438,6 +9754,11 @@ snapshot
 
 - Delete a local snapshot.: `kaiten snapshot delete --name team-q1 --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `snapshot.list`
 
 | Field | Value |
@@ -8449,6 +9770,7 @@ snapshot
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/snapshots` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8462,6 +9784,11 @@ _No tool-specific arguments._
 
 - Show available local snapshots.: `kaiten snapshot list --json`
 
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+
 ### `snapshot.refresh`
 
 | Field | Value |
@@ -8473,6 +9800,7 @@ _No tool-specific arguments._
 | Mutation | `yes` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/snapshots/{name}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8490,7 +9818,10 @@ _No tool-specific arguments._
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - refresh reuses the stored snapshot spec and rebuilds datasets in place; v1 is rebuild-oriented, not incremental.
+- refresh clears the current profile/domain HTTP cache first so the rebuilt snapshot comes from fresh Kaiten API reads.
 
 ### `snapshot.show`
 
@@ -8503,6 +9834,7 @@ _No tool-specific arguments._
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/snapshots/{name}` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8517,6 +9849,11 @@ _No tool-specific arguments._
 **Examples**
 
 - Inspect snapshot metadata and dataset counts.: `kaiten snapshot show --name team-q1 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 
 <a id="module-query"></a>
 ## Локальные запросы (`query`) — 2 commands
@@ -8542,6 +9879,7 @@ query
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/query/cards` |
 | Compact | `yes` |
 | Fields | `yes` |
@@ -8566,6 +9904,8 @@ query
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - query cards never calls the Kaiten API; build or refresh the snapshot first.
 - summary is the default view and keeps local card payloads narrow for LLM and report workflows.
 - Use text_query, child_text_query, and comment_text_query to reduce candidate sets locally before involving an LLM.
@@ -8581,6 +9921,7 @@ query
 | Mutation | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
+| Cache strategy | `none` |
 | Path template | `/local/query/metrics` |
 | Compact | `no` |
 | Fields | `no` |
@@ -8602,5 +9943,7 @@ query
 
 **Notes**
 
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
 - throughput, lead_time, and cycle_time use the snapshot window when it exists; basic snapshots fall back to all locally known done transitions.
 - For repeated report generation, query metrics after snapshot build instead of re-fetching topology, cards, and history on every run.

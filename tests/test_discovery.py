@@ -12,6 +12,7 @@ def test_search_tools_finds_cards():
     assert results[0]["heavy"] is False
     assert results[0]["execution_mode"] == "direct_http"
     assert results[0]["cache_policy"] == "request_scope"
+    assert results[0]["cache_guidance"]["strategy"] == "request_scope"
     assert results[0]["has_special_live_contract"] is False
 
 
@@ -76,9 +77,14 @@ def test_describe_tool_includes_persistent_cache_policy_for_safe_entity_reads():
     description = describe_tool("cards.get")
 
     assert description["cache_policy"] == "persistent_opt_in"
+    assert description["cache_guidance"]["strategy"] == "entity_or_reference_persistent"
 
     compute_job = describe_tool("compute-jobs.get")
     assert compute_job["cache_policy"] == "none"
+
+    batch_history = describe_tool("card-location-history.batch-get")
+    assert batch_history["cache_policy"] == "persistent_heavy"
+    assert batch_history["cache_guidance"]["strategy"] == "heavy_persistent"
 
 
 def test_tool_examples_non_empty():

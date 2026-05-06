@@ -13,7 +13,7 @@ from typing import Any
 from platformdirs import user_data_path
 
 from kaiten_cli.errors import ConfigError, ValidationError
-from kaiten_cli.models import CACHE_POLICY_REQUEST_SCOPE
+from kaiten_cli.models import CACHE_POLICY_PERSISTENT_HEAVY
 from kaiten_cli.runtime.support.audit import (
     DEFAULT_HISTORY_WORKERS,
     fetch_all_space_activity,
@@ -1541,6 +1541,7 @@ async def _build_snapshot(
     spec: dict[str, Any],
 ) -> dict[str, Any]:
     store = SnapshotStore(reporter=reporter)
+    client.cache_policy = CACHE_POLICY_PERSISTENT_HEAVY
     requested_board_ids = payload.get("board_ids")
     topology, topology_stage = await _measure_stage(
         client,
@@ -1586,7 +1587,7 @@ async def _build_snapshot(
                 timeout=timeout,
                 reporter=reporter,
                 execution_context=client.execution_context,
-                cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+                cache_policy=CACHE_POLICY_PERSISTENT_HEAVY,
             ),
         )
         card_details_map, dataset_errors["card_detail_errors"] = _cards_map(card_details_result)
@@ -1623,7 +1624,7 @@ async def _build_snapshot(
                 timeout=timeout,
                 reporter=reporter,
                 execution_context=client.execution_context,
-                cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+                cache_policy=CACHE_POLICY_PERSISTENT_HEAVY,
             ),
         )
         history_map, dataset_errors["history_errors"] = _history_map(history_result)
@@ -1643,7 +1644,7 @@ async def _build_snapshot(
                 timeout=timeout,
                 reporter=reporter,
                 execution_context=client.execution_context,
-                cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+                cache_policy=CACHE_POLICY_PERSISTENT_HEAVY,
             ),
         )
         time_logs_map, dataset_errors["time_log_errors"] = _time_logs_map(time_logs_result)
@@ -1666,7 +1667,7 @@ async def _build_snapshot(
                 timeout=timeout,
                 reporter=reporter,
                 execution_context=client.execution_context,
-                cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+                cache_policy=CACHE_POLICY_PERSISTENT_HEAVY,
             ),
         )
         children_map, dataset_errors["relation_errors"] = _children_map(relation_result)
@@ -1686,7 +1687,7 @@ async def _build_snapshot(
                 timeout=timeout,
                 reporter=reporter,
                 execution_context=client.execution_context,
-                cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+                cache_policy=CACHE_POLICY_PERSISTENT_HEAVY,
             ),
         )
         comments_map, dataset_errors["comment_errors"] = _comments_map(comments_result)
@@ -1797,6 +1798,7 @@ async def execute_snapshot_refresh(
     spec = dict(existing["spec"])
     if reporter is not None:
         reporter(f"execution: local snapshot refresh name={spec['name']}")
+    await client.execution_context.clear_cache_scope(reason="snapshot-refresh")
     return await _build_snapshot(client=client, payload=payload, reporter=reporter, timeout=timeout, spec=spec)
 
 

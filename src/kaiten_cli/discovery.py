@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from kaiten_cli.registry import describe, examples_for, search
+from kaiten_cli.registry import cache_guidance_for, describe, examples_for, search
 from kaiten_cli.registry.live_contracts import has_special_live_contract
 
 
@@ -17,6 +17,7 @@ def search_tools(query: str, limit: int = 5) -> list[dict]:
             "heavy": tool.response_policy.heavy,
             "execution_mode": tool.execution_mode,
             "cache_policy": tool.cache_policy,
+            "cache_guidance": cache_guidance_for(tool),
             "has_special_live_contract": has_special_live_contract(tool.canonical_name),
             "bulk_alternative": tool.bulk_alternative,
             "usage_notes": list(tool.usage_notes),

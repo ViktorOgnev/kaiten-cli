@@ -45,6 +45,7 @@ Quick start:
 \b
 Principles:
   - use --json for automation and LLM workflows
+  - cache mode defaults to auto: repeated safe GETs may use persistent disk cache
   - prefer search-tools -> describe -> examples before heavy commands
   - for repeated analytics/report reads, prefer snapshot build -> query cards/query metrics
   - keep local queries summary-first; escalate to detail/evidence only after candidate reduction
@@ -131,6 +132,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "For repeated analytics or report runs, build a local snapshot first.",
             "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates.",
             "Use --json for automation and LLM workflows.",
+            "Default cache mode is auto: repeated safe reads and heavy analytics reuse persistent disk cache when the request shape is cacheable.",
             "Prefer bulk tools over per-entity loops.",
             "Shrink payloads with --compact and --fields.",
             "Use --trace-file for long investigations.",
@@ -146,13 +148,14 @@ def _agent_help_payload() -> dict[str, Any]:
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",
+            "Default cache mode is auto; use --cache-mode refresh for freshness-critical reads and --cache-mode off to bypass disk cache.",
             "Prefer search-tools -> describe -> examples before heavy commands.",
             "For repeated report or analytics workflows, snapshot once and query locally before touching the API again.",
             "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
             "Keep query cards summary-first; use detail/evidence only after local candidate reduction.",
             "Live validation runs only when KAITEN_LIVE=1|true for the current process.",
             "Use --compact and --fields to reduce payload and token cost.",
-            "Use --cache-mode readwrite only for short-lived cross-process safe GET reuse.",
+            "Use the default --cache-mode auto for most LLM/script workflows; use readwrite with --cache-ttl-seconds only when you need a fixed TTL.",
             "Use --trace-file for long investigations when you need real HTTP cost visibility.",
         ],
         "docs": {
@@ -179,12 +182,13 @@ def _agent_help_text() -> str:
             "2. inspect: kaiten describe cards.list-all",
             "3. examples: kaiten examples cards.list-all",
             "4. use --json for automation and LLM workflows",
-            "5. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
-            "6. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
-            "7. only escalate to --view detail or --view evidence after local narrowing",
-            "8. shrink payloads with --compact and --fields",
-            "9. live validation only runs when KAITEN_LIVE=1|true",
-            "10. use --trace-file for long investigations",
+            "5. leave --cache-mode at auto unless you need refresh/off/fixed TTL",
+            "6. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
+            "7. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
+            "8. only escalate to --view detail or --view evidence after local narrowing",
+            "9. shrink payloads with --compact and --fields",
+            "10. live validation only runs when KAITEN_LIVE=1|true",
+            "11. use --trace-file for long investigations",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -365,9 +369,9 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 @click.option("--verbose", is_flag=True, default=False, help="Enable verbose diagnostics.")
 @click.option(
     "--cache-mode",
-    type=click.Choice(["off", "readwrite", "refresh"]),
+    type=click.Choice(["auto", "off", "readwrite", "refresh"]),
     default=None,
-    help="Persistent cache mode. Request-scoped cache stays enabled for safe GETs.",
+    help="Persistent cache mode. Default auto adapts TTL by tool cost; request-scoped cache stays enabled for safe GETs.",
 )
 @click.option(
     "--cache-ttl-seconds",
@@ -484,7 +488,7 @@ def profile_group() -> None:
     default=False,
     help="Deprecated compatibility metadata. Does not affect mutations or live-test gating.",
 )
-@click.option("--cache-mode", type=click.Choice(["off", "readwrite", "refresh"]), default=None)
+@click.option("--cache-mode", type=click.Choice(["auto", "off", "readwrite", "refresh"]), default=None)
 @click.option("--cache-ttl-seconds", type=click.INT, default=None)
 @click.option("--set-active/--no-set-active", default=False)
 @click.pass_context

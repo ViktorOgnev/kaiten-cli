@@ -55,7 +55,9 @@ kaiten profile add main --domain <company-subdomain> --token <api-token> --set-a
 - `KAITEN_LIVE=1|true` is the explicit per-run gate for the live test suite.
 - `profile add --sandbox` is deprecated compatibility metadata and does not affect mutations or live-test gating.
 - Prefer `--compact` and `--fields` to reduce payload and token cost.
-- Request-scoped cache for safe GETs is built in; enable `--cache-mode readwrite` only when you want short-lived cross-process reuse.
+- Request-scoped cache for safe GETs is built in; default `--cache-mode auto` also persists cacheable safe reads across CLI processes.
+- Keep `auto` for LLM/script analytics unless freshness is critical; use `--cache-mode refresh` to rebuild from Kaiten API and `--cache-mode off` to bypass disk cache.
+- Heavy/batch reads and dense repeated entity reads get longer adaptive TTLs in `auto`; do not force tiny TTLs in wrapper scripts unless freshness is the main requirement.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
 - Use `--trace-file` or `KAITEN_TRACE_FILE` when you need a JSONL trace of real command cost across a longer workflow.
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.

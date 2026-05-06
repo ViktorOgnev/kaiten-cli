@@ -17,7 +17,10 @@ UNSET = _Unset()
 CACHE_POLICY_NONE = "none"
 CACHE_POLICY_REQUEST_SCOPE = "request_scope"
 CACHE_POLICY_PERSISTENT_OPT_IN = "persistent_opt_in"
+CACHE_POLICY_PERSISTENT_HEAVY = "persistent_heavy"
+PERSISTENT_CACHE_POLICIES = frozenset({CACHE_POLICY_PERSISTENT_OPT_IN, CACHE_POLICY_PERSISTENT_HEAVY})
 
+CACHE_MODE_AUTO = "auto"
 CACHE_MODE_OFF = "off"
 CACHE_MODE_READWRITE = "readwrite"
 CACHE_MODE_REFRESH = "refresh"
@@ -118,6 +121,8 @@ class ToolSpec:
             return CACHE_POLICY_NONE
         if self.runtime_behavior.cache_policy is not None:
             return self.runtime_behavior.cache_policy
+        if self.operation.method.upper() == "GET" and self.response_policy.heavy:
+            return CACHE_POLICY_PERSISTENT_HEAVY
         if (
             self.operation.method.upper() == "GET"
             and self.execution_mode == "direct_http"
@@ -156,7 +161,7 @@ class ResolvedProfile:
     token: str
     sandbox: bool = False
     source: str = "unknown"
-    cache_mode: str = CACHE_MODE_OFF
+    cache_mode: str = CACHE_MODE_AUTO
     cache_ttl_seconds: int = 60
 
 

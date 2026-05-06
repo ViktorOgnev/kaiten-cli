@@ -79,6 +79,7 @@ TOOLS = (
         ),
         usage_notes=(
             "refresh reuses the stored snapshot spec and rebuilds datasets in place; v1 is rebuild-oriented, not incremental.",
+            "refresh clears the current profile/domain HTTP cache first so the rebuilt snapshot comes from fresh Kaiten API reads.",
         ),
     ),
     make_tool(

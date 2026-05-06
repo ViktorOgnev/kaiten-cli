@@ -19,7 +19,7 @@ def test_profile_lifecycle(config_env):
     added = add_profile("sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True)
     assert added["active"] is True
     assert added["sandbox"] is True
-    assert added["cache_mode"] == "off"
+    assert added["cache_mode"] == "auto"
     assert added["cache_ttl_seconds"] == 60
     assert added["token_masked"].endswith("oken")
 
@@ -33,7 +33,7 @@ def test_profile_lifecycle(config_env):
     assert resolved.domain == "sandbox"
     assert resolved.sandbox is True
     assert resolved.source == "active_profile"
-    assert resolved.cache_mode == "off"
+    assert resolved.cache_mode == "auto"
     assert resolved.cache_ttl_seconds == 60
 
     use_profile("sandbox")
@@ -49,7 +49,7 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     assert resolved.token == "env-token"
     assert resolved.sandbox is False
     assert resolved.source == "environment"
-    assert resolved.cache_mode == "off"
+    assert resolved.cache_mode == "auto"
     assert resolved.cache_ttl_seconds == 60
 
 

@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import difflib
 
-from kaiten_cli.models import ToolSpec, example_commands, format_schema_type
+from kaiten_cli.models import (
+    CACHE_POLICY_NONE,
+    CACHE_POLICY_PERSISTENT_HEAVY,
+    CACHE_POLICY_PERSISTENT_OPT_IN,
+    CACHE_POLICY_REQUEST_SCOPE,
+    ToolSpec,
+    example_commands,
+    format_schema_type,
+)
 from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
@@ -119,6 +127,38 @@ def examples_for(identifier: str) -> list[str]:
     return example_commands(tool.examples)
 
 
+def cache_guidance_for(tool: ToolSpec) -> dict[str, str]:
+    if tool.cache_policy == CACHE_POLICY_NONE:
+        return {
+            "strategy": "none",
+            "guidance": "This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.",
+            "refresh_hint": "No cache refresh is needed.",
+        }
+    if tool.cache_policy == CACHE_POLICY_PERSISTENT_HEAVY:
+        return {
+            "strategy": "heavy_persistent",
+            "guidance": "Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.",
+            "refresh_hint": "Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.",
+        }
+    if tool.cache_policy == CACHE_POLICY_PERSISTENT_OPT_IN:
+        return {
+            "strategy": "entity_or_reference_persistent",
+            "guidance": "Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.",
+            "refresh_hint": "Use --cache-mode refresh to force a fresh API read and rewrite the cache.",
+        }
+    if tool.cache_policy == CACHE_POLICY_REQUEST_SCOPE:
+        return {
+            "strategy": "request_scope",
+            "guidance": "Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.",
+            "refresh_hint": "No disk cache is read by default for this command.",
+        }
+    return {
+        "strategy": tool.cache_policy,
+        "guidance": "Check command notes for cache behavior.",
+        "refresh_hint": "Use --cache-mode refresh only if the command supports persistent cache.",
+    }
+
+
 def describe(identifier: str) -> dict:
     tool = resolve_tool(identifier)
     properties = tool.input_schema.get("properties", {})
@@ -131,6 +171,7 @@ def describe(identifier: str) -> dict:
         "mutation": tool.is_mutation,
         "execution_mode": tool.execution_mode,
         "cache_policy": tool.cache_policy,
+        "cache_guidance": cache_guidance_for(tool),
         "path_template": tool.operation.path_template,
         "input_modes": ["options", "from_file", "stdin_json"],
         "response_policy": {

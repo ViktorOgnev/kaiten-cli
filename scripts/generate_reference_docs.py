@@ -17,7 +17,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kaiten_cli.models import ToolSpec, format_schema_type  # noqa: E402
-from kaiten_cli.registry import iter_tools  # noqa: E402
+from kaiten_cli.registry import cache_guidance_for, iter_tools  # noqa: E402
 from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract  # noqa: E402
 
 README_PATH = ROOT / "README.md"
@@ -185,11 +185,12 @@ def _render_examples(tool: ToolSpec) -> str:
 
 
 def _render_usage_notes(tool: ToolSpec) -> str:
-    if not tool.usage_notes and tool.bulk_alternative is None and not has_special_live_contract(tool.canonical_name):
-        return ""
     lines = ["**Notes**", ""]
     if tool.bulk_alternative is not None:
         lines.append(f"- Bulk alternative: `{tool.bulk_alternative}`")
+    cache_guidance = cache_guidance_for(tool)
+    lines.append(f"- Cache guidance: {cache_guidance['guidance']}")
+    lines.append(f"- Refresh hint: {cache_guidance['refresh_hint']}")
     for note in tool.usage_notes:
         lines.append(f"- {note}")
     if has_special_live_contract(tool.canonical_name):
@@ -212,6 +213,7 @@ def _render_command_metadata(tool: ToolSpec) -> str:
             f"| Mutation | `{_yes_no(tool.is_mutation)}` |",
             f"| Execution mode | `{tool.execution_mode}` |",
             f"| Cache policy | `{tool.cache_policy}` |",
+            f"| Cache strategy | `{cache_guidance_for(tool)['strategy']}` |",
             f"| Path template | `{tool.operation.path_template}` |",
             f"| Compact | `{_yes_no(tool.response_policy.compact_supported)}` |",
             f"| Fields | `{_yes_no(tool.response_policy.fields_supported)}` |",
@@ -236,6 +238,7 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         "- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.",
         "- `--compact` and `--fields` only apply when the command metadata says they are supported.",
         "- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.",
+        "- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.",
         "- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.",
         "",
         "## Module Index",

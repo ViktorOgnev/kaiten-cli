@@ -128,12 +128,12 @@ kaiten --json cards get --card-id 123 --compact --fields id,title,state
 
 ## Cache guidance
 
-Safe GET reads already use request-scoped cache inside one CLI invocation.
+Safe GET reads already use request-scoped cache inside one CLI invocation, and the CLI defaults to `--cache-mode auto` for cacheable cross-process reuse.
 
-Enable persistent cache only when the workflow repeatedly launches separate CLI processes for the same safe reads:
+For heavy LLM/script analytics, keep `auto` unless freshness is critical. Batch and aggregated reads store longer-lived cache chunks, and dense same-family entity loops such as many `/cards/<id>` reads are extended after enough recent writes.
 
 ```bash
-kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 cards get --card-id 123
+kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
 ```
 
 Use `refresh` when correctness matters more than reuse:
@@ -176,5 +176,5 @@ Trace helps explain real HTTP cost when outer agent logs only show the wrapper s
 - Need one space topology snapshot: `space-topology get`
 - Need many card histories: `card-location-history batch-get`
 - Need many follow-up questions on one working set: `snapshot build` -> `query cards` / `query metrics`
-- Need one entity many times across multiple CLI calls: enable `--cache-mode readwrite`
+- Need one entity many times across multiple CLI calls: keep default `--cache-mode auto`; use `--cache-mode readwrite` only for a fixed TTL
 - Need to understand the path first: `describe <tool>`

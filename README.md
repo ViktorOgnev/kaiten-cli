@@ -93,7 +93,7 @@ python -m kaiten_cli --help
 - discovery-команды: `search-tools`, `describe`, `examples`
 - profiles и явный `KAITEN_LIVE` gate для live validation
 - request-scoped GET cache внутри одного execution path
-- opt-in persistent disk cache с коротким TTL для safe reference/entity reads
+- `--cache-mode auto` по умолчанию: adaptive persistent disk cache для repeated safe reads и тяжёлой аналитики
 - persistent local sqlite snapshots для headless analytics и repeated report workflows
 - local-only `query cards` / `query metrics` поверх snapshot storage
 - Markdown export для карточек и документов через обычные `cards get` / `documents get`
@@ -129,10 +129,10 @@ kaiten --json files download --entity-type card --card-id 123 --file-id <file_ui
 kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./downloads/
 ```
 
-Отдельный запуск CLI не переиспользует in-memory результат предыдущей команды. Если workflow много раз читает один и тот же safe `GET` из разных процессов, включайте короткоживущий persistent cache явно:
+Отдельный запуск CLI не переиспользует in-memory результат предыдущей команды. По умолчанию `--cache-mode auto` сохраняет cacheable safe reads на диск с adaptive TTL; для freshness-critical повтора используйте `--cache-mode refresh`.
 
 ```bash
-kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 documents get --document-uid <document_uid> --markdown --output ./document.md --overwrite
+kaiten --json --cache-mode refresh documents get --document-uid <document_uid> --markdown --output ./document.md --overwrite
 ```
 
 ## Инструменты
@@ -214,7 +214,7 @@ kaiten profile add main --domain <company-subdomain> --token <api-token> --set-a
 kaiten profile show
 ```
 
-Если нужен opt-in persistent cache для этого profile:
+Если нужен фиксированный TTL persistent cache для этого profile вместо default `auto`:
 
 ```bash
 kaiten profile add main \
@@ -270,12 +270,12 @@ CLI поддерживает три режима входного payload:
 
 ## Как работает кэш
 
-В CLI есть два разных кэша.
+В CLI есть два разных кэша и default `auto`-режим для disk reuse.
 
 - `request-scoped`
   Работает автоматически внутри одного запуска `kaiten`.
 - `persistent`
-  Живёт между разными CLI-процессами и включается только через `--cache-mode` или profile defaults.
+  Живёт между разными CLI-процессами. В `auto` включается для cacheable safe reads и получает TTL по стоимости запроса.
 
 ### Что происходит без флагов
 
@@ -285,7 +285,7 @@ CLI поддерживает три режима входного payload:
 kaiten --json cards get --card-id 123
 ```
 
-то persistent cache не используется. При этом safe GET reads внутри одного execution path всё равно защищены request-scoped cache и in-flight dedup. Это особенно полезно для `synthetic` и `aggregated` команд, где CLI сам может прийти к одному и тому же `GET` несколько раз.
+то CLI работает в `--cache-mode auto`: safe entity/reference reads могут переиспользовать disk cache, а тяжёлые aggregated/batch paths получают более длинный TTL. При этом safe GET reads внутри одного execution path всё равно защищены request-scoped cache и in-flight dedup.
 
 ### Когда пользователь реально видит выгоду
 
@@ -294,14 +294,20 @@ kaiten --json cards get --card-id 123
 - `aggregated` или `synthetic`
   Встроенный request-scoped cache экономит повторные чтения внутри одного запуска.
 - `shell/LLM workflow`
-  Если один и тот же safe `GET` вызывается много раз из разных CLI-процессов, имеет смысл включать persistent cache.
+  Если один и тот же safe `GET` вызывается много раз из разных CLI-процессов, default `auto` уже пишет reusable disk cache.
+- `heavy analytics`
+  Если команда собирает много страниц, много card-scoped reads или закрытое историческое окно, TTL автоматически становится длиннее.
+- `dense entity loops`
+  Если внешний скрипт недавно записал много однотипных entity reads вроде `/cards/<id>`, `auto` продлевает TTL для этой группы записей.
 
 ### Режимы persistent cache
 
+- `--cache-mode auto`
+  Default. Читать/писать disk cache для cacheable safe reads; TTL выбирается по cache policy, размеру ответа и историчности окна.
 - `--cache-mode off`
-  Только request-scoped cache внутри текущего запуска. Это default.
+  Только request-scoped cache внутри текущего запуска.
 - `--cache-mode readwrite`
-  Читать и записывать короткоживущий persistent disk cache.
+  Читать и записывать persistent disk cache с фиксированным `--cache-ttl-seconds`.
 - `--cache-mode refresh`
   Игнорировать disk read, сходить в API и перезаписать cache.
 - `--cache-ttl-seconds`
@@ -309,10 +315,12 @@ kaiten --json cards get --card-id 123
 
 ### Что кэшируется и что нет
 
-Persistent cache deliberately conservative:
+Persistent cache deliberately cost-aware:
 
 - подходит для safe reference/entity reads;
-- полезен для типичных `*.get` и небольших discovery list-команд;
+- полезен для типичных `*.get`, discovery list-команд, batch reads и aggregated pagination;
+- для тяжёлых команд вроде `cards.list-all`, `space-activity-all.get`, `card-location-history.batch-get`, `comments.batch-list`, `card-children.batch-list`, `time-logs.batch-list` TTL в `auto` длиннее, чтобы повторный LLM/script workflow не собирал тот же массив заново;
+- для плотных серий однотипных entity reads TTL повышается по path-family, чтобы внешний loop не сбрасывал уже собранную выборку слишком быстро;
 - не предназначен для polling и volatile reads;
 - очищается после успешных mutation-команд для текущего profile/domain.
 - при несовместимой локальной sqlite-схеме или повреждённом файле persistent cache автоматически удаляется и создаётся заново.
@@ -321,10 +329,10 @@ Persistent cache deliberately conservative:
 
 ### Примеры
 
-Включить short-lived persistent cache для repeated reads:
+Обычный repeated read в default `auto`:
 
 ```bash
-kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 cards get --card-id 123 --compact --fields id,title,state
+kaiten --json cards get --card-id 123 --compact --fields id,title,state
 ```
 
 Принудительно обновить stale read:
@@ -333,7 +341,7 @@ kaiten --json --cache-mode readwrite --cache-ttl-seconds 60 cards get --card-id 
 kaiten --json --cache-mode refresh spaces list --compact --fields id,title
 ```
 
-Сценарий, где обычно достаточно встроенного request-scoped behavior:
+Сценарий, где `auto` сохраняет per-card chunks для повторных скриптов с пересекающимися card ids:
 
 ```bash
 kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
@@ -353,7 +361,7 @@ kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --worke
 - Для bulk population по карточкам используйте `cards.list-all --selection all|active_only|archived_only`.
 - Для topology scaffolding используйте `space-topology.get`, а не связку из `boards.list`, `columns.list` и `lanes.list`.
 - `cards.list-all --selection active_only` нормализован в CLI как `all_cards - archived_subset`, чтобы не перекладывать эту логику на внешний скрипт.
-- Если workflow состоит из многих повторных reference/entity GET, включайте `--cache-mode readwrite` с коротким TTL вместо повторных identical reads.
+- Если workflow состоит из многих повторных reference/entity GET, оставляйте default `--cache-mode auto`; используйте `--cache-mode readwrite` только когда нужен фиксированный TTL.
 
 Примеры:
 
@@ -365,7 +373,7 @@ kaiten --json card-children batch-list --card-ids '[101,102,103]' --workers 2 --
 kaiten --json comments batch-list --card-ids '[101,102,103]' --workers 2 --compact --fields id,text
 kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state
 kaiten --json space-topology get --space-id 10
-kaiten --json --cache-mode readwrite cards get --card-id 101 --compact --fields id,title,state
+kaiten --json cards get --card-id 101 --compact --fields id,title,state
 ```
 
 ## Investigation and report workflows

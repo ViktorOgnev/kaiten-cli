@@ -50,12 +50,13 @@ Each CLI invocation builds one execution context for the selected profile.
 
 - request-scoped cache is always enabled for safe GET reads
 - identical in-flight GETs are deduplicated inside the same execution context
-- persistent disk cache is opt-in through `--cache-mode` or profile defaults
+- persistent disk cache defaults to `--cache-mode auto` for cacheable safe reads
+- `auto` uses adaptive TTLs: small fresh reads stay short, while heavy batch/aggregated reads, closed historical windows, and dense same-family entity loops are retained longer
 - successful mutations clear persistent cache for the current profile/domain scope
 - incompatible or corrupt local sqlite cache files are treated as disposable state and recreated automatically
 - optional JSONL trace output can be appended through `--trace-file` or `KAITEN_TRACE_FILE`
 
-This keeps the default one-shot CLI behavior intact, while reducing repeated entity reads in synthetic, aggregated, and worker-pooled paths.
+This keeps freshness controls explicit (`refresh` / `off`) while reducing repeated entity, page, and card-scoped reads in synthetic, aggregated, worker-pooled, and external-script paths.
 
 The trace layer records command-level facts such as duration, real HTTP request count, retry/cache counters, and bulk metadata. It exists because outer Codex/session logs do not reliably see internal Kaiten subprocess calls from higher-level scripts.
 

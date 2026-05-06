@@ -98,14 +98,17 @@ kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id
 ## Cache guidance for metrics workflows
 
 - Same-process repeats are already covered by request-scoped cache.
-- For multi-step scripts that invoke `kaiten` many times, enable short-lived persistent cache on reference/entity reads.
+- Default `--cache-mode auto` persists cacheable safe reads across CLI processes and gives heavy/batch analytics longer TTLs.
+- Dense same-family entity loops also get TTL escalation after enough recent writes, so wrapper scripts should usually keep `auto`.
+- Do not force tiny TTLs in wrapper scripts for historical or high-cardinality metric runs; keep `auto` or build a snapshot.
 - Use `refresh` before a final report if data freshness is critical.
 
 Examples:
 
 ```bash
-kaiten --json --cache-mode readwrite boards list --compact --fields id,title
-kaiten --json --cache-mode readwrite columns list --board-id 10 --compact --fields id,title
+kaiten --json boards list --compact --fields id,title
+kaiten --json columns list --board-id 10 --compact --fields id,title
+kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
 ```
 
 ## When to use charts
