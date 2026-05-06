@@ -26,6 +26,7 @@ def test_help_shows_documents_and_tree_namespaces(runner):
 
 def test_resolve_document_and_tree_aliases():
     assert resolve_tool("kaiten_list_documents").canonical_name == "documents.list"
+    assert resolve_tool("kaiten_get_document_file_url").canonical_name == "document-files.get-url"
     assert resolve_tool("kaiten_create_document_group").canonical_name == "document-groups.create"
     assert resolve_tool("kaiten_list_children").canonical_name == "tree.children.list"
     assert resolve_tool("kaiten_get_tree").canonical_name == "tree.get"
@@ -107,6 +108,17 @@ def test_build_request_for_update_document_sanitizes_lists_and_marks():
     }
 
 
+def test_build_request_for_document_file_get_url_forces_prevent_redirect():
+    tool = resolve_tool("document-files.get-url")
+    payload = merge_inputs(tool, {"document_uid": "doc-1", "file_id": "file-1"})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/documents/doc-1/files/file-1"
+    assert query == {"prevent_redirect": True}
+    assert body is None
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_list_documents_injects_default_limit(monkeypatch):
@@ -122,6 +134,24 @@ async def test_execute_list_documents_injects_default_limit(monkeypatch):
 
     assert route.called
     assert result == [{"uid": "doc-1", "title": "Spec"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_document_file_get_url_returns_signed_url(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents/doc-1/files/file-1",
+        params={"prevent_redirect": "true"},
+    ).mock(return_value=Response(200, json={"url": "https://storage.example.test/file-1"}))
+
+    tool = resolve_tool("document-files.get-url")
+    payload = merge_inputs(tool, {"document_uid": "doc-1", "file_id": "file-1"})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert result == {"url": "https://storage.example.test/file-1"}
 
 
 @pytest.mark.asyncio

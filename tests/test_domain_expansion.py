@@ -59,6 +59,7 @@ def test_resolve_new_aliases():
     assert resolve_tool("kaiten_add_card_member").canonical_name == "card-members.add"
     assert resolve_tool("kaiten_get_current_user").canonical_name == "users.current"
     assert resolve_tool("kaiten_get_card_blocker").canonical_name == "blockers.get"
+    assert resolve_tool("kaiten_download_file").canonical_name == "files.download"
     assert resolve_tool("kaiten_create_card_file").canonical_name == "files.create"
     assert resolve_tool("kaiten_add_card_child").canonical_name == "card-children.add"
     assert resolve_tool("kaiten_batch_list_card_children").canonical_name == "card-children.batch-list"

@@ -2,11 +2,116 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec
+from kaiten_cli.models import CACHE_POLICY_NONE, ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.support.files import execute_file_download
 
 
 TOOLS = (
+    make_tool(
+        canonical_name="files.download",
+        mcp_alias="kaiten_download_file",
+        description=(
+            "Download a Kaiten file attachment to disk. Supports card, document, comment, "
+            "custom property, and conversation message file endpoints, plus Kaiten /api/... URLs."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "Kaiten /api/... file URL, internal /files/... URL, or direct http(s) URL.",
+                },
+                "entity_type": {
+                    "type": "string",
+                    "enum": ["card", "document", "comment", "custom_property", "conversation_message"],
+                    "description": "Attachment owner type when not passing --url.",
+                },
+                "file_id": {
+                    "type": ["string", "integer"],
+                    "description": "File identifier. UUID values may include the original extension.",
+                },
+                "card_id": {
+                    "type": ["string", "integer"],
+                    "description": "Card ID for card, comment, or custom property files.",
+                },
+                "card_uid": {
+                    "type": "string",
+                    "description": "Card UID for card, comment, or custom property files.",
+                },
+                "card_id_or_uid": {
+                    "type": "string",
+                    "description": "Card ID or UID for card, comment, or custom property files.",
+                },
+                "document_uid": {"type": "string", "description": "Document UID for document files."},
+                "comment_uid": {"type": "string", "description": "Comment UID for comment files."},
+                "custom_property_uid": {
+                    "type": "string",
+                    "description": "Custom property UID for custom property files.",
+                },
+                "conversation_uid": {
+                    "type": "string",
+                    "description": "Conversation UID for conversation message files.",
+                },
+                "conversation_message_uid": {
+                    "type": "string",
+                    "description": "Conversation message UID for conversation message files.",
+                },
+                "output": {
+                    "type": "string",
+                    "description": "Output file or directory. Defaults to the current working directory.",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Preferred local filename when --output is a directory or omitted.",
+                },
+                "overwrite": {
+                    "type": "boolean",
+                    "description": "Replace an existing output file.",
+                },
+                "continue": {
+                    "type": "boolean",
+                    "description": "Resume an existing .part file with HTTP Range. Enabled by default.",
+                },
+            },
+        },
+        operation=OperationSpec(method="GET", path_template="/files/download"),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_file_download,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(
+                command=(
+                    "kaiten files download --entity-type document --document-uid <document_uid> "
+                    "--file-id <file_uid> --json"
+                ),
+                description="Download a document attachment into the current directory.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten files download --entity-type card --card-id 123 --file-id <file_uid> "
+                    "--output ./downloads/ --json"
+                ),
+                description="Download a card attachment into a directory.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten files download --url "
+                    '"https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" '
+                    "--output ./file.bin --overwrite --json"
+                ),
+                description="Download from a Kaiten report/browser file URL.",
+            ),
+        ),
+        usage_notes=(
+            "By default the command writes to the current working directory.",
+            "Downloads stream to <target>.part first and are renamed into place only after completion.",
+            "Existing .part files are resumed with HTTP Range by default, similar to wget --continue.",
+            "For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.",
+        ),
+    ),
     make_tool(
         canonical_name="files.list",
         mcp_alias="kaiten_list_card_files",

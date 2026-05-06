@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from kaiten_cli.errors import ConfigError
 from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
 from kaiten_cli.runtime.cache import ExecutionContext

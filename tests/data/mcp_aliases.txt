@@ -99,6 +99,7 @@ kaiten_delete_user_timer
 kaiten_delete_webhook
 kaiten_delete_workflow
 kaiten_detach_card_sla
+kaiten_download_file
 kaiten_get_all_space_activity
 kaiten_get_automation
 kaiten_get_board
@@ -120,6 +121,7 @@ kaiten_get_compute_job
 kaiten_get_current_user
 kaiten_get_custom_property
 kaiten_get_document
+kaiten_get_document_file_url
 kaiten_get_document_group
 kaiten_get_project
 kaiten_get_role

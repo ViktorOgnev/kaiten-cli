@@ -74,6 +74,14 @@ def prepare_document_request(
     return path, query, prepare_document_body(tool.canonical_name, dict(body or {}))
 
 
+def prevent_redirect_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped_query = dict(query or {})
+    shaped_query["prevent_redirect"] = True
+    return path, shaped_query, body
+
+
 def select_value_soft_delete_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:

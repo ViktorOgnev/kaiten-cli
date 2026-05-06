@@ -102,8 +102,6 @@ def merge_inputs(
         if field_name not in properties:
             continue
         schema = properties[field_name]
-        schema_type = schema.get("type")
-        allowed_types = schema_type if isinstance(schema_type, list) else [schema_type]
         merged[field_name] = coerce_value(raw_value, schema, stdin_text=stdin_text, label=field_name)
 
     validate_payload(tool, merged)

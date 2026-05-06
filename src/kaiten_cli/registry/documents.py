@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import prepare_document_request
+from kaiten_cli.runtime.behaviors import prepare_document_request, prevent_redirect_request
 
 
 TOOLS = (
@@ -110,6 +110,34 @@ TOOLS = (
         operation=OperationSpec(method="DELETE", path_template="/documents/{document_uid}", path_fields=("document_uid",)),
         examples=(
             ExampleSpec(command="kaiten documents delete --document-uid doc-1 --json", description="Delete a document."),
+        ),
+    ),
+    make_tool(
+        canonical_name="document-files.get-url",
+        mcp_alias="kaiten_get_document_file_url",
+        description="Resolve a document file to a short-lived signed download URL.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "document_uid": {"type": "string", "description": "Document UID"},
+                "file_id": {"type": "string", "description": "Document file UID without extension"},
+            },
+            "required": ["document_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/documents/{document_uid}/files/{file_id}",
+            path_fields=("document_uid", "file_id"),
+        ),
+        runtime_behavior=RuntimeBehavior(request_shaper=prevent_redirect_request),
+        examples=(
+            ExampleSpec(
+                command="kaiten document-files get-url --document-uid doc-1 --file-id file-1 --json",
+                description="Resolve a private document file URL for download.",
+            ),
+        ),
+        usage_notes=(
+            "Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.",
         ),
     ),
     make_tool(

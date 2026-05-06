@@ -14,7 +14,6 @@ from typing import Any
 from platformdirs import user_cache_path
 
 from kaiten_cli.models import (
-    CACHE_MODE_OFF,
     CACHE_MODE_READWRITE,
     CACHE_MODE_REFRESH,
     CACHE_POLICY_NONE,

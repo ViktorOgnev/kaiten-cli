@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **259** canonical commands across **29** registry modules.
+`kaiten-cli` currently exposes **261** canonical commands across **29** registry modules.
 
 ## Conventions
 
@@ -26,7 +26,7 @@
 | Блокировки | `blockers` | 5 | [Open](#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Open](#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Open](#module-external-links) |
-| Файлы карточек | `files` | 4 | [Open](#module-files) |
+| Файлы карточек | `files` | 5 | [Open](#module-files) |
 | Подписчики | `subscribers` | 6 | [Open](#module-subscribers) |
 | Пространства | `spaces` | 6 | [Open](#module-spaces) |
 | Доски | `boards` | 5 | [Open](#module-boards) |
@@ -34,7 +34,7 @@
 | Дорожки | `lanes` | 4 | [Open](#module-lanes) |
 | Типы карточек | `card_types` | 5 | [Open](#module-card-types) |
 | Кастомные свойства | `custom_properties` | 10 | [Open](#module-custom-properties) |
-| Документы | `documents` | 10 | [Open](#module-documents) |
+| Документы | `documents` | 11 | [Open](#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
@@ -1980,7 +1980,7 @@ external-links
 - Update a card external link.: `kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json`
 
 <a id="module-files"></a>
-## Файлы карточек (`files`) — 4 commands
+## Файлы карточек (`files`) — 5 commands
 
 Файлы и вложения карточек.
 
@@ -1990,6 +1990,7 @@ external-links
 files
   create
   delete
+  download
   list
   update
 ```
@@ -2053,6 +2054,55 @@ files
 **Examples**
 
 - Delete a card file.: `kaiten files delete --card-id 10 --file-id 20 --json`
+
+### `files.download`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten files download` |
+| MCP alias | `kaiten_download_file` |
+| Description | Download a Kaiten file attachment to disk. Supports card, document, comment, custom property, and conversation message file endpoints, plus Kaiten /api/... URLs. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Path template | `/files/download` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `url` | `string` | no | — | Kaiten /api/... file URL, internal /files/... URL, or direct http(s) URL. |
+| `entity_type` | `string` | no | `card`, `document`, `comment`, `custom_property`, `conversation_message` | Attachment owner type when not passing --url. |
+| `file_id` | `string|integer` | no | — | File identifier. UUID values may include the original extension. |
+| `card_id` | `string|integer` | no | — | Card ID for card, comment, or custom property files. |
+| `card_uid` | `string` | no | — | Card UID for card, comment, or custom property files. |
+| `card_id_or_uid` | `string` | no | — | Card ID or UID for card, comment, or custom property files. |
+| `document_uid` | `string` | no | — | Document UID for document files. |
+| `comment_uid` | `string` | no | — | Comment UID for comment files. |
+| `custom_property_uid` | `string` | no | — | Custom property UID for custom property files. |
+| `conversation_uid` | `string` | no | — | Conversation UID for conversation message files. |
+| `conversation_message_uid` | `string` | no | — | Conversation message UID for conversation message files. |
+| `output` | `string` | no | — | Output file or directory. Defaults to the current working directory. |
+| `name` | `string` | no | — | Preferred local filename when --output is a directory or omitted. |
+| `overwrite` | `boolean` | no | — | Replace an existing output file. |
+| `continue` | `boolean` | no | — | Resume an existing .part file with HTTP Range. Enabled by default. |
+
+**Examples**
+
+- Download a document attachment into the current directory.: `kaiten files download --entity-type document --document-uid <document_uid> --file-id <file_uid> --json`
+- Download a card attachment into a directory.: `kaiten files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/ --json`
+- Download from a Kaiten report/browser file URL.: `kaiten files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./file.bin --overwrite --json`
+
+**Notes**
+
+- By default the command writes to the current working directory.
+- Downloads stream to <target>.part first and are renamed into place only after completion.
+- Existing .part files are resumed with HTTP Range by default, similar to wget --continue.
+- For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.
 
 ### `files.list`
 
@@ -3542,13 +3592,15 @@ custom-properties.select-values
 - Update a custom property.: `kaiten custom-properties update --property-id 5 --name Priority --json`
 
 <a id="module-documents"></a>
-## Документы (`documents`) — 10 commands
+## Документы (`documents`) — 11 commands
 
 Documents and document groups.
 
 **Namespace tree**
 
 ```text
+document-files
+  get-url
 document-groups
   create
   delete
@@ -3562,6 +3614,37 @@ documents
   list
   update
 ```
+
+### `document-files.get-url`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-files get-url` |
+| MCP alias | `kaiten_get_document_file_url` |
+| Description | Resolve a document file to a short-lived signed download URL. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Path template | `/documents/{document_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | Document UID |
+| `file_id` | `string` | yes | — | Document file UID without extension |
+
+**Examples**
+
+- Resolve a private document file URL for download.: `kaiten document-files get-url --document-uid doc-1 --file-id file-1 --json`
+
+**Notes**
+
+- Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.
 
 ### `document-groups.create`
 

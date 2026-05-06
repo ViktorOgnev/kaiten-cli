@@ -43,6 +43,7 @@ test = [
 ]
 dev = [
     "kaiten-cli[test]",
+    "ruff>=0.15.0",
 ]
 
 [project.scripts]

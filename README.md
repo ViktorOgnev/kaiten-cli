@@ -58,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.7"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.8"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
@@ -105,7 +105,7 @@ python -m kaiten_cli --help
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **259** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **261** canonical инструментов в **29** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
@@ -118,7 +118,7 @@ python -m kaiten_cli --help
 | Блокировки | `blockers` | 5 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
-| Файлы карточек | `files` | 4 | [Раздел](COMMAND_REFERENCE.md#module-files) |
+| Файлы карточек | `files` | 5 | [Раздел](COMMAND_REFERENCE.md#module-files) |
 | Подписчики | `subscribers` | 6 | [Раздел](COMMAND_REFERENCE.md#module-subscribers) |
 | Пространства | `spaces` | 6 | [Раздел](COMMAND_REFERENCE.md#module-spaces) |
 | Доски | `boards` | 5 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
@@ -126,7 +126,7 @@ python -m kaiten_cli --help
 | Дорожки | `lanes` | 4 | [Раздел](COMMAND_REFERENCE.md#module-lanes) |
 | Типы карточек | `card_types` | 5 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
 | Кастомные свойства | `custom_properties` | 10 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
-| Документы | `documents` | 10 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
+| Документы | `documents` | 11 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
@@ -138,7 +138,7 @@ python -m kaiten_cli --help
 | Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **29 modules** | **259** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **29 modules** | **261** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
