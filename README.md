@@ -157,11 +157,11 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **345** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **346** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
-| Карточки | `cards` | 14 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
+| Карточки | `cards` | 15 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
 | Комментарии | `comments` | 5 | [Раздел](COMMAND_REFERENCE.md#module-comments) |
 | Участники и пользователи | `members` | 7 | [Раздел](COMMAND_REFERENCE.md#module-members) |
 | Логи времени | `time_logs` | 6 | [Раздел](COMMAND_REFERENCE.md#module-time-logs) |
@@ -192,7 +192,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31 modules** | **345** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31 modules** | **346** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

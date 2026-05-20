@@ -11,6 +11,12 @@ from kaiten_cli.runtime.support.audit import (
     fetch_all_space_activity,
     fetch_card_location_histories,
 )
+from kaiten_cli.runtime.support.card_move_url import (
+    parse_card_url,
+    parse_target_url,
+    resolve_move_target,
+    validate_url_domain,
+)
 from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_get
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
@@ -19,6 +25,7 @@ from kaiten_cli.runtime.support.spaces import fetch_space_topology
 from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
 from kaiten_cli.runtime.support.time_logs import fetch_time_logs_batch
 from kaiten_cli.runtime.support.tree import build_tree, fetch_all_entities, list_children
+from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
 Query = dict[str, Any] | None
 Body = dict[str, Any] | None
@@ -291,6 +298,91 @@ async def execute_cards_list_all(
     if reporter:
         reporter("execution: aggregated bounded pagination over /cards")
     return await fetch_all_cards(client, payload, timeout=timeout)
+
+
+def _shape_move_by_url_card(card: Any, payload: dict[str, Any]) -> Any:
+    shaped = compact_response(card, bool(payload.get("compact", False)))
+    shaped = select_fields(shaped, payload.get("fields"))
+    shaped, _ = strip_base64(shaped)
+    return shaped
+
+
+def _verify_moved_card(card: Any, target: dict[str, Any]) -> None:
+    if not isinstance(card, dict):
+        raise ValidationError("Move verification failed: final card response is not an object.")
+
+    expected = {
+        "board_id": target["board_id"],
+        "column_id": target["column_id"],
+    }
+    if target.get("lane_id") is not None:
+        expected["lane_id"] = target["lane_id"]
+
+    mismatches = [
+        f"{key}: expected {value}, got {card.get(key)}"
+        for key, value in expected.items()
+        if card.get(key) != value
+    ]
+    if mismatches:
+        raise ValidationError("Move verification failed: " + "; ".join(mismatches))
+
+
+async def execute_cards_move_by_url(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    if reporter:
+        reporter("execution: aggregated card move by Kaiten UI URLs")
+
+    card_url = parse_card_url(payload["card_url"])
+    target_url = parse_target_url(payload["target_url"])
+    validate_url_domain(card_url.domain, client.domain, label="Card URL")
+    validate_url_domain(target_url.domain, client.domain, label="Target URL")
+
+    target = await resolve_move_target(
+        client,
+        target_url,
+        lane_id=payload.get("lane_id"),
+        timeout=timeout,
+    )
+    patch_body: dict[str, Any] = {
+        "board_id": target["board_id"],
+        "column_id": target["column_id"],
+    }
+    if target.get("lane_id") is not None:
+        patch_body["lane_id"] = target["lane_id"]
+    if "sort_order" in payload:
+        patch_body["sort_order"] = payload["sort_order"]
+
+    if payload.get("dry_run", False):
+        return {
+            "card_ref": card_url.card_ref,
+            "card_space_id": card_url.space_id,
+            "target": target,
+            "dry_run": True,
+            "would_patch": patch_body,
+        }
+
+    moved_card = await client.patch(f"/cards/{card_url.card_ref}", json=patch_body, timeout=timeout)
+    verified = False
+    card = moved_card
+    if payload.get("verify", True):
+        card = await client.get(f"/cards/{card_url.card_ref}", timeout=timeout)
+        _verify_moved_card(card, target)
+        verified = True
+
+    return {
+        "card_ref": card_url.card_ref,
+        "target": target,
+        "card": _shape_move_by_url_card(card, payload),
+        "verified": verified,
+    }
 
 
 async def execute_card_location_history_batch_get(

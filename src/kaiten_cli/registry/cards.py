@@ -14,6 +14,7 @@ from kaiten_cli.runtime.behaviors import (
     archive_card_request,
     execute_cards_batch_get,
     execute_cards_list_all,
+    execute_cards_move_by_url,
     payload_body_request,
     validate_cards_batch_get,
     validate_cards_list_all_selection,
@@ -665,6 +666,84 @@ TOOLS = (
                 command="kaiten cards move --card-id 123 --column-id 10 --json",
                 description="Move a card.",
             ),
+        ),
+    ),
+    make_tool(
+        canonical_name="cards.move-by-url",
+        mcp_alias="kaiten_move_card_by_url",
+        description="Move a Kaiten card by resolving card and target Kaiten UI URLs.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_url": {
+                    "type": "string",
+                    "description": "Kaiten card URL containing /boards/card/<id-or-key>",
+                },
+                "target_url": {
+                    "type": "string",
+                    "description": "Kaiten board URL with focus=column and focusId=<column_id>",
+                },
+                "lane_id": {
+                    "type": "integer",
+                    "description": "Target lane ID; required for boards with multiple lanes.",
+                },
+                "sort_order": {"type": "number", "description": "Position in cell"},
+                "dry_run": {
+                    "type": "boolean",
+                    "description": "Resolve the move target without patching the card",
+                    "default": False,
+                },
+                "verify": {
+                    "type": "boolean",
+                    "description": "Fetch the card after moving and verify its final location",
+                    "default": True,
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact card response without heavy fields",
+                    "default": False,
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated card fields to keep inside the returned card",
+                },
+            },
+            "required": ["card_url", "target_url"],
+        },
+        operation=OperationSpec(method="PATCH", path_template="/cards/move-by-url"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_cards_move_by_url,
+            apply_common_transforms=False,
+        ),
+        examples=(
+            ExampleSpec(
+                command=(
+                    "kaiten cards move-by-url "
+                    '--card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" '
+                    '--target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" '
+                    "--lane-id 20 --json"
+                ),
+                description="Move a card by resolving card and target UI URLs.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten cards move-by-url "
+                    '--card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" '
+                    '--target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" '
+                    "--dry-run --json"
+                ),
+                description="Preview the resolved move target without changing the card.",
+            ),
+        ),
+        usage_notes=(
+            "The command does discovery inside the target space, then calls cards.move semantics.",
+            "URL hosts must match the resolved profile domain; profiles are not auto-selected.",
+            "When the target board has multiple lanes, pass --lane-id explicitly.",
+            "`--fields` and `--compact` apply to the returned card inside the result envelope.",
         ),
     ),
     make_tool(

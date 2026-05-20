@@ -27,6 +27,7 @@ def test_help_shows_completion_tail_namespaces(runner):
 
 def test_resolve_completion_tail_aliases():
     assert resolve_tool("kaiten_move_card").canonical_name == "cards.move"
+    assert resolve_tool("kaiten_move_card_by_url").canonical_name == "cards.move-by-url"
     assert resolve_tool("kaiten_list_all_cards").canonical_name == "cards.list-all"
     assert resolve_tool("kaiten_list_sprints").canonical_name == "sprints.list"
     assert resolve_tool("kaiten_update_company").canonical_name == "company.update"

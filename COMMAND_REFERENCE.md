@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **345** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **346** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -19,7 +19,7 @@
 
 | Area | Module | Count | Section |
 |---|---|---:|---|
-| Карточки | `cards` | 14 | [Open](#module-cards) |
+| Карточки | `cards` | 15 | [Open](#module-cards) |
 | Комментарии | `comments` | 5 | [Open](#module-comments) |
 | Участники и пользователи | `members` | 7 | [Open](#module-members) |
 | Логи времени | `time_logs` | 6 | [Open](#module-time-logs) |
@@ -54,7 +54,7 @@
 ## Full Reference
 
 <a id="module-cards"></a>
-## Карточки (`cards`) — 14 commands
+## Карточки (`cards`) — 15 commands
 
 Карточки, bulk reads и card-heavy workflows.
 
@@ -78,6 +78,7 @@ cards
   list
   list-all
   move
+  move-by-url
   update
 ```
 
@@ -630,6 +631,50 @@ cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `cards.move-by-url`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten cards move-by-url` |
+| MCP alias | `kaiten_move_card_by_url` |
+| Description | Move a Kaiten card by resolving card and target Kaiten UI URLs. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `aggregated` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/move-by-url` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_url` | `string` | yes | — | Kaiten card URL containing /boards/card/<id-or-key> |
+| `target_url` | `string` | yes | — | Kaiten board URL with focus=column and focusId=<column_id> |
+| `lane_id` | `integer` | no | — | Target lane ID; required for boards with multiple lanes. |
+| `sort_order` | `number` | no | — | Position in cell |
+| `dry_run` | `boolean` | no | — | Resolve the move target without patching the card |
+| `verify` | `boolean` | no | — | Fetch the card after moving and verify its final location |
+| `compact` | `boolean` | no | — | Return compact card response without heavy fields |
+| `fields` | `string` | no | — | Comma-separated card fields to keep inside the returned card |
+
+**Examples**
+
+- Move a card by resolving card and target UI URLs.: `kaiten cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --lane-id 20 --json`
+- Preview the resolved move target without changing the card.: `kaiten cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --dry-run --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- The command does discovery inside the target space, then calls cards.move semantics.
+- URL hosts must match the resolved profile domain; profiles are not auto-selected.
+- When the target board has multiple lanes, pass --lane-id explicitly.
+- `--fields` and `--compact` apply to the returned card inside the result envelope.
 
 ### `cards.update`
 
