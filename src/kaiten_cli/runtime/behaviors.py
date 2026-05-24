@@ -149,6 +149,15 @@ def service_desk_stats_query_request(
     return path, shaped_query, body
 
 
+def company_members_section_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped_query = dict(query or {})
+    shaped_query.setdefault("for_members_section", True)
+    shaped_query.setdefault("offset", 0)
+    return path, shaped_query, body
+
+
 def comment_format_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:

@@ -348,6 +348,36 @@ async def test_execute_list_users_compact(monkeypatch):
     assert result == [{"id": 7, "full_name": "Alice"}]
 
 
+def test_build_request_for_users_list_passes_extended_query_fields():
+    tool = resolve_tool("users.list")
+    payload = merge_inputs(
+        tool,
+        {
+            "type": "shared",
+            "access_type_permissions": "guest",
+            "ids": "1,2",
+            "uids": "u-1,u-2",
+            "exclude_directly_added_members_by_entity_uid": "entity-uid",
+            "limit": 10,
+            "offset": 20,
+        },
+    )
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/users"
+    assert query == {
+        "type": "shared",
+        "access_type_permissions": "guest",
+        "ids": "1,2",
+        "uids": "u-1,u-2",
+        "exclude_directly_added_members_by_entity_uid": "entity-uid",
+        "limit": 10,
+        "offset": 20,
+    }
+    assert body is None
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_get_blocker_filters_list(monkeypatch):

@@ -28,6 +28,7 @@ EXPECTED_NEW_TOOLS = {
     "current-user-blockers.list",
     "users.update",
     "space-users.get",
+    "company-users.list",
     "company-users.update",
     "company-users.remove-virtual",
     "user-roles.create",

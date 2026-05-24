@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import payload_body_request
+from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
+
+
+COMPANY_USERS_DEFAULT_LIMIT = 100
 
 
 TOOLS = (
@@ -137,6 +140,120 @@ TOOLS = (
                 command="kaiten space-users remove --space-id 1 --user-id 7 --json",
                 description="Remove a user from a space.",
             ),
+        ),
+    ),
+    make_tool(
+        canonical_name="company-users.list",
+        mcp_alias="kaiten_list_company_users",
+        description=(
+            "List company users from the administrative Members section. "
+            "Defaults to for_members_section=true with paginated limit/offset."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "for_members_section": {
+                    "type": "boolean",
+                    "description": "Use the administrative Members section response shape (default true).",
+                },
+                "query": {
+                    "type": "string",
+                    "description": "Search by email or full name.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of users to return (default 100).",
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Number of users to skip (default 0).",
+                },
+                "only_records_count": {
+                    "type": "boolean",
+                    "description": "Return only the filtered user count.",
+                },
+                "access_type_permissions": {
+                    "type": "string",
+                    "enum": ["member", "guest", "denied"],
+                    "description": "Filter by Kaiten access type.",
+                },
+                "sd_access_type": {
+                    "type": "string",
+                    "enum": ["any", "has_access", "has_no_access"],
+                    "description": "Filter by Service Desk access.",
+                },
+                "take_licence": {
+                    "type": "string",
+                    "enum": ["any", "yes", "no"],
+                    "description": "Filter by users who take a paid license.",
+                },
+                "temporarily_inactive_status": {
+                    "type": "string",
+                    "enum": [
+                        "all_users",
+                        "only_temporarily_inactive_users",
+                        "only_active_users",
+                    ],
+                    "description": "Filter by temporary deactivation status.",
+                },
+                "group_ids": {
+                    "type": "array",
+                    "description": "JSON array of company group IDs.",
+                },
+                "permissions": {
+                    "type": "array",
+                    "description": "JSON array of company permission criteria.",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return per user.",
+                },
+            },
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/company/users",
+            query_fields=(
+                "for_members_section",
+                "query",
+                "limit",
+                "offset",
+                "only_records_count",
+                "access_type_permissions",
+                "sd_access_type",
+                "take_licence",
+                "temporarily_inactive_status",
+                "group_ids",
+                "permissions",
+            ),
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True,
+            fields_supported=True,
+            default_limit=COMPANY_USERS_DEFAULT_LIMIT,
+            result_kind="list",
+        ),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_members_section_request),
+        examples=(
+            ExampleSpec(
+                command="kaiten company-users list --limit 100 --offset 0 --compact --json",
+                description="List administrative company members.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten company-users list --only-records-count "
+                    "--temporarily-inactive-status all_users --json"
+                ),
+                description="Count company members including temporarily inactive users.",
+            ),
+        ),
+        usage_notes=(
+            "Use this command for paginated administrative member exports. "
+            "`users.list` is a generic users endpoint and may not be reliable for full member paging.",
         ),
     ),
     make_tool(

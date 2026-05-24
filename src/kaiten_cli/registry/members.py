@@ -119,13 +119,38 @@ TOOLS = (
     make_tool(
         canonical_name="users.list",
         mcp_alias="kaiten_list_users",
-        description="List company users. Supports search, pagination, and filtering inactive users. Response includes: last_request_date, activated, role, created.",
+        description=(
+            "List users from the generic /users endpoint. For paginated administrative "
+            "Members exports, prefer company-users.list."
+        ),
         input_schema={
             "type": "object",
             "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["all", "shared", "domain"],
+                    "description": "User visibility scope supported by the Kaiten API.",
+                },
                 "query": {
                     "type": "string",
                     "description": "Search filter for user names or emails.",
+                },
+                "access_type_permissions": {
+                    "type": "string",
+                    "enum": ["member", "guest"],
+                    "description": "Filter by Kaiten access type when supported by the endpoint.",
+                },
+                "ids": {
+                    "type": "string",
+                    "description": "Comma-separated user IDs.",
+                },
+                "uids": {
+                    "type": "string",
+                    "description": "Comma-separated user UUIDs.",
+                },
+                "exclude_directly_added_members_by_entity_uid": {
+                    "type": "string",
+                    "description": "Exclude users directly added to the given entity UID.",
                 },
                 "limit": {
                     "type": "integer",
@@ -149,7 +174,17 @@ TOOLS = (
         operation=OperationSpec(
             method="GET",
             path_template="/users",
-            query_fields=("query", "limit", "offset", "include_inactive"),
+            query_fields=(
+                "type",
+                "query",
+                "access_type_permissions",
+                "ids",
+                "uids",
+                "exclude_directly_added_members_by_entity_uid",
+                "limit",
+                "offset",
+                "include_inactive",
+            ),
         ),
         response_policy=ResponsePolicy(
             compact_supported=True, default_limit=DEFAULT_LIMIT, result_kind="list"
@@ -159,6 +194,10 @@ TOOLS = (
                 command='kaiten users list --query "alice" --compact --json',
                 description="Search users by name.",
             ),
+        ),
+        usage_notes=(
+            "This command maps to `/users`. Use `company-users.list` for the paginated "
+            "administrative Members section (`/company/users?for_members_section=true`).",
         ),
     ),
     make_tool(

@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **346** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **347** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -41,7 +41,7 @@
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
-| Роли и группы | `roles_and_groups` | 29 | [Open](#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 30 | [Open](#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Open](#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
@@ -1119,7 +1119,7 @@ _No tool-specific arguments._
 |---|---|
 | CLI command | `kaiten users list` |
 | MCP alias | `kaiten_list_users` |
-| Description | List company users. Supports search, pagination, and filtering inactive users. Response includes: last_request_date, activated, role, created. |
+| Description | List users from the generic /users endpoint. For paginated administrative Members exports, prefer company-users.list. |
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
@@ -1134,7 +1134,12 @@ _No tool-specific arguments._
 
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
+| `type` | `string` | no | `all`, `shared`, `domain` | User visibility scope supported by the Kaiten API. |
 | `query` | `string` | no | — | Search filter for user names or emails. |
+| `access_type_permissions` | `string` | no | `member`, `guest` | Filter by Kaiten access type when supported by the endpoint. |
+| `ids` | `string` | no | — | Comma-separated user IDs. |
+| `uids` | `string` | no | — | Comma-separated user UUIDs. |
+| `exclude_directly_added_members_by_entity_uid` | `string` | no | — | Exclude users directly added to the given entity UID. |
 | `limit` | `integer` | no | — | Maximum number of users to return (default 50). |
 | `offset` | `integer` | no | — | Number of users to skip (for pagination). |
 | `include_inactive` | `boolean` | no | — | Include inactive (deactivated) users in results. |
@@ -1148,6 +1153,7 @@ _No tool-specific arguments._
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
+- This command maps to `/users`. Use `company-users.list` for the paginated administrative Members section (`/company/users?for_members_section=true`).
 
 ### `users.update`
 
@@ -8092,7 +8098,7 @@ _No tool-specific arguments._
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
 <a id="module-roles-and-groups"></a>
-## Роли и группы (`roles_and_groups`) — 29 commands
+## Роли и группы (`roles_and_groups`) — 30 commands
 
 Roles, groups and permission-related operations.
 
@@ -8106,6 +8112,7 @@ company-groups
   list
   update
 company-users
+  list
   remove-virtual
   update
 group-admins
@@ -8300,6 +8307,52 @@ user-roles
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+
+### `company-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company-users list` |
+| MCP alias | `kaiten_list_company_users` |
+| Description | List company users from the administrative Members section. Defaults to for_members_section=true with paginated limit/offset. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `for_members_section` | `boolean` | no | — | Use the administrative Members section response shape (default true). |
+| `query` | `string` | no | — | Search by email or full name. |
+| `limit` | `integer` | no | — | Maximum number of users to return (default 100). |
+| `offset` | `integer` | no | — | Number of users to skip (default 0). |
+| `only_records_count` | `boolean` | no | — | Return only the filtered user count. |
+| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | Filter by Kaiten access type. |
+| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | Filter by Service Desk access. |
+| `take_licence` | `string` | no | `any`, `yes`, `no` | Filter by users who take a paid license. |
+| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | Filter by temporary deactivation status. |
+| `group_ids` | `array` | no | — | JSON array of company group IDs. |
+| `permissions` | `array` | no | — | JSON array of company permission criteria. |
+| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return per user. |
+
+**Examples**
+
+- List administrative company members.: `kaiten company-users list --limit 100 --offset 0 --compact --json`
+- Count company members including temporarily inactive users.: `kaiten company-users list --only-records-count --temporarily-inactive-status all_users --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- Use this command for paginated administrative member exports. `users.list` is a generic users endpoint and may not be reliable for full member paging.
 
 ### `company-users.remove-virtual`
 

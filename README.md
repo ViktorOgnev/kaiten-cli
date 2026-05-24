@@ -157,7 +157,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **346** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **347** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
@@ -183,7 +183,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
-| Роли и группы | `roles_and_groups` | 29 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 30 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Раздел](COMMAND_REFERENCE.md#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Раздел](COMMAND_REFERENCE.md#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
@@ -192,7 +192,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31 modules** | **346** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31 modules** | **347** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

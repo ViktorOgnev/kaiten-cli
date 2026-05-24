@@ -485,6 +485,8 @@ def _exercise_company_metadata(h) -> None:
     h.run_tool("roles.get", role_id=role_id)
     h.state["role_id"] = role_id
 
+    h.run_tool_maybe("company-users.list", expected_error_statuses={403}, limit=10, offset=0, compact=True)
+
     h.run_tool("space-users.list", space_id=h.state["space_id"], compact=True)
     space_user_target = h.state["other_user_id"] or h.state["current_user_id"]
     space_user_added, _ = h.run_tool_maybe(

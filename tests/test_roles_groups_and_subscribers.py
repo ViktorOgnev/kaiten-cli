@@ -26,6 +26,7 @@ def test_help_shows_roles_groups_and_subscribers(runner):
 
 def test_resolve_roles_groups_and_subscribers_aliases():
     assert resolve_tool("kaiten_list_space_users").canonical_name == "space-users.list"
+    assert resolve_tool("kaiten_list_company_users").canonical_name == "company-users.list"
     assert resolve_tool("kaiten_create_company_group").canonical_name == "company-groups.create"
     assert resolve_tool("kaiten_get_role").canonical_name == "roles.get"
     assert resolve_tool("kaiten_add_column_subscriber").canonical_name == "column-subscribers.add"
@@ -51,6 +52,31 @@ def test_build_request_for_add_space_user_accepts_uuid_role_id():
     assert path == "/spaces/10/users"
     assert query is None
     assert body == {"user_id": 7, "role_id": "7ec9167c-4ad4-4a08-a3b9-8768b0c5a431"}
+
+
+def test_build_request_for_company_users_list_defaults_members_section():
+    tool = resolve_tool("company-users.list")
+    payload = merge_inputs(
+        tool,
+        {
+            "temporarily_inactive_status": "all_users",
+            "sd_access_type": "has_access",
+            "compact": True,
+            "fields": "id,email,apps_permissions",
+        },
+    )
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/company/users"
+    assert query == {
+        "for_members_section": True,
+        "limit": 100,
+        "offset": 0,
+        "sd_access_type": "has_access",
+        "temporarily_inactive_status": "all_users",
+    }
+    assert body is None
 
 
 @pytest.mark.asyncio
