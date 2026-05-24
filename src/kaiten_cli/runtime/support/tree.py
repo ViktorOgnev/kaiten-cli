@@ -6,6 +6,9 @@ from typing import Any
 
 from kaiten_cli.errors import ConfigError
 
+TREE_PAGE_LIMIT = 500
+TREE_MAX_PAGES = 200
+
 
 def sort_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
     type_order = {"document_group": 0, "space": 1, "document": 2}
@@ -16,10 +19,32 @@ def strip_id_none(entity: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in entity.items() if not (key == "id" and value is None)}
 
 
+async def fetch_paginated_entities(
+    client,
+    path: str,
+    *,
+    timeout: float,
+    limit: int = TREE_PAGE_LIMIT,
+    max_pages: int = TREE_MAX_PAGES,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for page in range(max_pages):
+        offset = page * limit
+        response = await client.get(path, params={"limit": limit, "offset": offset}, timeout=timeout)
+        page_rows = response if isinstance(response, list) else []
+        rows.extend(row for row in page_rows if isinstance(row, dict))
+        if len(page_rows) < limit:
+            return rows
+    raise ConfigError(
+        f"{path} pagination reached {max_pages} full pages of {limit} rows; "
+        "refusing to return a possibly truncated tree"
+    )
+
+
 async def fetch_all_entities(client, *, timeout: float) -> list[dict[str, Any]]:
     spaces_resp = await client.get("/spaces", timeout=timeout)
-    docs_resp = await client.get("/documents", params={"limit": 500}, timeout=timeout)
-    groups_resp = await client.get("/document-groups", params={"limit": 500}, timeout=timeout)
+    docs_resp = await fetch_paginated_entities(client, "/documents", timeout=timeout)
+    groups_resp = await fetch_paginated_entities(client, "/document-groups", timeout=timeout)
 
     entities: list[dict[str, Any]] = []
 
@@ -63,17 +88,31 @@ async def fetch_all_entities(client, *, timeout: float) -> list[dict[str, Any]]:
 
 
 def list_children(entities: list[dict[str, Any]], parent_uid: str | None) -> list[dict[str, Any]]:
-    children = [entity for entity in entities if entity.get("parent_entity_uid") == parent_uid]
+    if parent_uid is None:
+        known_uids = {entity.get("uid") for entity in entities}
+        children = [
+            entity for entity in entities if effective_parent_uid(entity, known_uids) is None
+        ]
+    else:
+        children = [entity for entity in entities if entity.get("parent_entity_uid") == parent_uid]
     return [strip_id_none(entity) for entity in sort_entities(children)]
+
+
+def effective_parent_uid(entity: dict[str, Any], known_uids: set[Any]) -> Any:
+    parent_uid = entity.get("parent_entity_uid")
+    if parent_uid is not None and parent_uid not in known_uids:
+        return None
+    return parent_uid
 
 
 def build_tree(entities: list[dict[str, Any]], root_uid: str | None, max_depth: int) -> list[dict[str, Any]]:
     if root_uid is not None and not any(entity["uid"] == root_uid for entity in entities):
         raise ConfigError(f"Entity with uid '{root_uid}' not found")
 
+    known_uids = {entity.get("uid") for entity in entities}
     by_parent: dict[str | None, list[dict[str, Any]]] = {}
     for entity in entities:
-        by_parent.setdefault(entity.get("parent_entity_uid"), []).append(entity)
+        by_parent.setdefault(effective_parent_uid(entity, known_uids), []).append(entity)
 
     def recurse(parent_uid: str | None, depth: int) -> list[dict[str, Any]]:
         children = sort_entities(by_parent.get(parent_uid, []))

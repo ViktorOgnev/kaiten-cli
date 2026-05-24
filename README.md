@@ -289,6 +289,24 @@ CLI поддерживает три режима входного payload:
 
 `describe <tool>` и `search-tools <query>` показывают эти metadata, что полезно перед вызовом тяжёлых команд.
 
+## Дерево сущностей
+
+`tree.get` и `tree.children.list` — aggregated-команды: они сами собирают локальный каталог из пространств, документов и групп документов, а затем строят дерево.
+
+- `/spaces` читается одним запросом.
+- `/documents` и `/document-groups` читаются внутренней пагинацией по `limit=500` с `offset=0,500,1000...` до первой короткой страницы.
+- Пользователю не нужно и нельзя передавать `limit`, `offset`, `page-size` или `max-pages` для `tree.get`: публичные параметры остаются `root_uid` и `depth`.
+- Если внутренний safety cap достигнут на полной странице, CLI падает с ошибкой, чтобы не вернуть молча обрезанное дерево.
+- Видимые сущности с отсутствующим или недоступным `parent_entity_uid` показываются на root-уровне полного дерева.
+
+Примеры:
+
+```bash
+kaiten --json tree get --depth 1
+kaiten --json tree get --root-uid <uid> --depth 0
+kaiten --json --cache-mode refresh tree get --depth 1
+```
+
 ## Как работает кэш
 
 В CLI есть два разных кэша и default `auto`-режим для disk reuse.

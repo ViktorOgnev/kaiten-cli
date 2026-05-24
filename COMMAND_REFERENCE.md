@@ -12250,6 +12250,11 @@ tree.children
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
 - Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
+- `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
+- No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
+- If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
+- Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
 
 ### `tree.get`
 
@@ -12283,6 +12288,11 @@ tree.children
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
 - Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
+- `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
+- No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
+- If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
+- Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
 
 <a id="module-utilities"></a>
 ## Утилиты (`utilities`) — 14 commands
