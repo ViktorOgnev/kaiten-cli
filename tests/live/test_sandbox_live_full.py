@@ -109,6 +109,27 @@ def _exercise_foundation(h) -> None:
     h.run_tool("boards.delete", space_id=h.state["space_id"], board_id=disposable_board["id"], force=True)
     h.run_tool_expect_api_error("removed-boards.list", {405}, limit=5)
 
+    place_existing_board = h.run_tool("boards.create", space_id=h.state["space_id"], title=h.name("board-place-existing"))
+    h.push_cleanup(
+        "delete place-existing source board",
+        "boards.delete",
+        space_id=h.state["space_id"],
+        board_id=place_existing_board["id"],
+        force=True,
+    )
+    h.run_tool(
+        "boards.place-existing",
+        space_id=h.state["secondary_space_id"],
+        board_id=place_existing_board["id"],
+    )
+    h.push_cleanup(
+        "detach placed existing board",
+        "boards.delete",
+        space_id=h.state["secondary_space_id"],
+        board_id=place_existing_board["id"],
+        force=True,
+    )
+
     queue_column = h.run_tool("columns.create", board_id=h.state["board_id"], title=h.name("queue"), type=1)
     h.state["queue_column_id"] = queue_column["id"]
     h.push_cleanup("delete queue column", "columns.delete", board_id=h.state["board_id"], column_id=h.state["queue_column_id"])

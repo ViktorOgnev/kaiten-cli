@@ -76,6 +76,33 @@ def test_build_request_applies_runtime_request_shaper():
     assert body == {"force": True}
 
 
+def test_build_request_for_place_existing_board_defaults_position():
+    tool = resolve_tool("boards.place-existing")
+    payload = merge_inputs(tool, {"space_id": 3, "board_id": 7})
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/spaces/3/boards/7"
+    assert query is None
+    assert body == {"top": 0, "left": 0}
+    assert "move_from_space_id" not in body
+
+
+def test_build_request_for_place_existing_board_keeps_explicit_position():
+    tool = resolve_tool("boards.place-existing")
+    payload = merge_inputs(
+        tool,
+        {"space_id": 3, "board_id": 7, "top": 16, "left": 560, "sort_order": 2.5},
+    )
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/spaces/3/boards/7"
+    assert query is None
+    assert body == {"top": 16, "left": 560, "sort_order": 2.5}
+    assert "move_from_space_id" not in body
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_mutation_allows_normal_profiles(config_env, monkeypatch):
@@ -159,6 +186,38 @@ def test_cli_cards_list_alias_and_canonical_use_numeric_options(runner):
     alias_payload.pop("stats", None)
     assert canonical_payload == alias_payload
     assert route.called
+
+
+@respx.mock
+def test_cli_boards_place_existing_alias_and_canonical_match(runner):
+    route = respx.patch("https://sandbox.kaiten.ru/api/latest/spaces/3/boards/7").mock(
+        return_value=Response(200, json={"id": 7, "top": 0, "left": 0, "primary_path": False})
+    )
+    env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
+
+    canonical = runner.invoke(
+        cli,
+        ["--json", "boards", "place-existing", "--space-id", "3", "--board-id", "7"],
+        env=env,
+    )
+    alias = runner.invoke(
+        cli,
+        ["--json", "kaiten_place_existing_board", "--space-id", "3", "--board-id", "7"],
+        env=env,
+    )
+
+    assert canonical.exit_code == 0
+    assert alias.exit_code == 0
+    canonical_payload = json.loads(canonical.output)
+    alias_payload = json.loads(alias.output)
+    canonical_payload.pop("stats", None)
+    alias_payload.pop("stats", None)
+    assert canonical_payload == alias_payload
+    assert route.call_count == 2
+    assert [json.loads(call.request.content) for call in route.calls] == [
+        {"top": 0, "left": 0},
+        {"top": 0, "left": 0},
+    ]
 
 
 @respx.mock

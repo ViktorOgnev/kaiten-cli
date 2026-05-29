@@ -129,6 +129,15 @@ def board_delete_force_request(
     return path, shaped_query, {"force": payload["force"]}
 
 
+def board_place_existing_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped = dict(body or {})
+    shaped.setdefault("top", 0)
+    shaped.setdefault("left", 0)
+    return path, query, shaped
+
+
 def saved_filter_title_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:

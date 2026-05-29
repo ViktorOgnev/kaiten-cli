@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **347** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **348** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -31,7 +31,7 @@
 | Файлы карточек | `files` | 6 | [Open](#module-files) |
 | Подписчики | `subscribers` | 6 | [Open](#module-subscribers) |
 | Пространства | `spaces` | 6 | [Open](#module-spaces) |
-| Доски | `boards` | 5 | [Open](#module-boards) |
+| Доски | `boards` | 6 | [Open](#module-boards) |
 | Колонки и подколонки | `columns` | 8 | [Open](#module-columns) |
 | Дорожки | `lanes` | 4 | [Open](#module-lanes) |
 | Типы карточек | `card_types` | 8 | [Open](#module-card-types) |
@@ -3892,7 +3892,7 @@ spaces
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-boards"></a>
-## Доски (`boards`) — 5 commands
+## Доски (`boards`) — 6 commands
 
 Boards and board-level operations.
 
@@ -3904,6 +3904,7 @@ boards
   delete
   get
   list
+  place-existing
   update
 ```
 
@@ -4048,6 +4049,45 @@ boards
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+
+### `boards.place-existing`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten boards place-existing` |
+| MCP alias | `kaiten_place_existing_board` |
+| Description | Place an existing board into a target space without moving it from its current primary space. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/boards/{board_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | Target space ID |
+| `board_id` | `integer` | yes | — | Existing board ID |
+| `top` | `number` | no | — | Top position (px). Defaults to 0. |
+| `left` | `number` | no | — | Left position (px). Defaults to 0. |
+| `sort_order` | `number` | no | — | Sort order |
+
+**Examples**
+
+- Show an existing board in another space without moving it.: `kaiten boards place-existing --space-id 2 --board-id 10 --json`
+- Place an existing board at an explicit position.: `kaiten boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- This uses Kaiten's place-existing-board behavior and does not send move_from_space_id.
+- This command is intentionally separate from Kaiten's move_from_space_id board-move behavior.
 
 ### `boards.update`
 

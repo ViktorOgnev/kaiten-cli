@@ -260,6 +260,7 @@ kaiten_list_webhooks
 kaiten_list_workflows
 kaiten_move_card
 kaiten_move_card_by_url
+kaiten_place_existing_board
 kaiten_query_cards
 kaiten_query_metrics
 kaiten_recalculate_sla

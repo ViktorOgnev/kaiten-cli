@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import board_delete_force_request
+from kaiten_cli.runtime.behaviors import board_delete_force_request, board_place_existing_request
 
 
 TOOLS = (
@@ -104,6 +104,43 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(command='kaiten boards update --space-id 1 --board-id 10 --title "Updated"', description="Update a board."),
+        ),
+    ),
+    make_tool(
+        canonical_name="boards.place-existing",
+        mcp_alias="kaiten_place_existing_board",
+        description="Place an existing board into a target space without moving it from its current primary space.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "space_id": {"type": "integer", "description": "Target space ID"},
+                "board_id": {"type": "integer", "description": "Existing board ID"},
+                "top": {"type": "number", "description": "Top position (px). Defaults to 0."},
+                "left": {"type": "number", "description": "Left position (px). Defaults to 0."},
+                "sort_order": {"type": "number", "description": "Sort order"},
+            },
+            "required": ["space_id", "board_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/spaces/{space_id}/boards/{board_id}",
+            path_fields=("space_id", "board_id"),
+            body_fields=("top", "left", "sort_order"),
+        ),
+        runtime_behavior=RuntimeBehavior(request_shaper=board_place_existing_request),
+        examples=(
+            ExampleSpec(
+                command="kaiten boards place-existing --space-id 2 --board-id 10 --json",
+                description="Show an existing board in another space without moving it.",
+            ),
+            ExampleSpec(
+                command="kaiten boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2 --json",
+                description="Place an existing board at an explicit position.",
+            ),
+        ),
+        usage_notes=(
+            "This uses Kaiten's place-existing-board behavior and does not send move_from_space_id.",
+            "This command is intentionally separate from Kaiten's move_from_space_id board-move behavior.",
         ),
     ),
     make_tool(
