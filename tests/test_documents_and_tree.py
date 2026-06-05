@@ -32,6 +32,7 @@ def test_help_shows_documents_and_tree_namespaces(runner):
 def test_resolve_document_and_tree_aliases():
     assert resolve_tool("kaiten_list_documents").canonical_name == "documents.list"
     assert resolve_tool("kaiten_get_document_file_url").canonical_name == "document-files.get-url"
+    assert resolve_tool("kaiten_upload_document_file").canonical_name == "document-files.upload"
     assert resolve_tool("kaiten_create_document_group").canonical_name == "document-groups.create"
     assert resolve_tool("kaiten_list_children").canonical_name == "tree.children.list"
     assert resolve_tool("kaiten_get_tree").canonical_name == "tree.get"
@@ -124,6 +125,19 @@ def test_build_request_for_document_file_get_url_forces_prevent_redirect():
     assert body is None
 
 
+def test_build_request_for_document_file_upload(tmp_path):
+    upload = tmp_path / "screenshot.png"
+    upload.write_bytes(b"png")
+
+    tool = resolve_tool("document-files.upload")
+    payload = merge_inputs(tool, {"document_uid": "doc-1", "file": str(upload)})
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/documents/doc-1/files"
+    assert query is None
+    assert body is None
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_list_documents_injects_default_limit(monkeypatch):
@@ -157,6 +171,38 @@ async def test_execute_document_file_get_url_returns_signed_url(monkeypatch):
 
     assert route.called
     assert result == {"url": "https://storage.example.test/file-1"}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_upload_document_file_sends_multipart_put(monkeypatch, tmp_path):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    upload = tmp_path / "screen.png"
+    upload.write_bytes(b"fake png")
+    route = respx.put("https://sandbox.kaiten.ru/api/latest/documents/doc-1/files").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": "file-1",
+                "name": "screen.png",
+                "url": "https://files.example/screen.png",
+            },
+        )
+    )
+
+    tool = resolve_tool("document-files.upload")
+    payload = merge_inputs(tool, {"document_uid": "doc-1", "file": str(upload)})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    request = route.calls[0].request
+    assert request.headers["authorization"] == "Bearer test-token"
+    assert request.headers["content-type"].startswith("multipart/form-data; boundary=")
+    assert b'name="file"' in request.content
+    assert b'filename="screen.png"' in request.content
+    assert b"fake png" in request.content
+    assert result["id"] == "file-1"
 
 
 @pytest.mark.asyncio

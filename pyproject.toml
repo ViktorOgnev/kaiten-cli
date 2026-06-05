@@ -48,6 +48,7 @@ dev = [
 
 [project.scripts]
 kaiten = "kaiten_cli.app:main"
+kaiten-agent-gateway = "kaiten_cli.agent_gateway:main"
 
 [tool.hatch.version]
 path = "src/kaiten_cli/__init__.py"

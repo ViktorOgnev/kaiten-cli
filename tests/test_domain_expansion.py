@@ -73,6 +73,7 @@ def test_resolve_new_aliases():
     assert resolve_tool("kaiten_create_time_log").canonical_name == "time-logs.create"
     assert resolve_tool("kaiten_batch_list_time_logs").canonical_name == "time-logs.batch-list"
     assert resolve_tool("kaiten_get_company").canonical_name == "company.current"
+    assert resolve_tool("kaiten_get_company_socket_token").canonical_name == "company.socket-token"
     assert resolve_tool("kaiten_list_calendars").canonical_name == "calendars.list"
     assert resolve_tool("kaiten_create_user_timer").canonical_name == "user-timers.create"
     assert resolve_tool("kaiten_get_space_topology").canonical_name == "space-topology.get"

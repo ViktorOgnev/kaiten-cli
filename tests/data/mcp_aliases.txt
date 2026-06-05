@@ -147,6 +147,7 @@ kaiten_get_chart_boards
 kaiten_get_company
 kaiten_get_company_activity
 kaiten_get_company_group
+kaiten_get_company_socket_token
 kaiten_get_compute_job
 kaiten_get_current_user
 kaiten_get_custom_directory
@@ -346,3 +347,4 @@ kaiten_update_user_timer
 kaiten_update_webhook
 kaiten_update_workflow
 kaiten_upload_card_file
+kaiten_upload_document_file

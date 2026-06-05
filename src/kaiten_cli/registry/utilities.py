@@ -61,6 +61,16 @@ TOOLS = (
         ),
     ),
     make_tool(
+        canonical_name="company.socket-token",
+        mcp_alias="kaiten_get_company_socket_token",
+        description="Get a websocket JWT for the current user.",
+        input_schema={"type": "object", "properties": {}},
+        operation=OperationSpec(method="GET", path_template="/token-please"),
+        examples=(
+            ExampleSpec(command="kaiten company socket-token --json", description="Get a websocket JWT."),
+        ),
+    ),
+    make_tool(
         canonical_name="company.update",
         mcp_alias="kaiten_update_company",
         description="Update current company information.",

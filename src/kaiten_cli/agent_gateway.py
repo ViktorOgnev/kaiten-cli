@@ -1,0 +1,346 @@
+"""HTTP gateway that exposes kaiten-cli as a chat agent endpoint."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import tempfile
+from dataclasses import dataclass
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from typing import Any, Callable
+
+from kaiten_cli import __version__
+from kaiten_cli.app import _agent_help_payload
+
+
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8787
+DEFAULT_TIMEOUT_SECONDS = 180
+DEFAULT_REASONING_EFFORT = "low"
+DEFAULT_CODEX_BIN = "codex"
+SKILL_NAMES = ("kaiten-cli-heavy-data", "kaiten-cli-metrics")
+
+SYSTEM_PROMPT = """You are Kaiten Agent, an assistant embedded into Kaiten.
+Use kaiten-cli as the primary tool surface for Kaiten data.
+Start with discovery commands before heavy reads:
+- kaiten agent-help
+- kaiten search-tools "<query>"
+- kaiten describe <tool>
+- kaiten examples <tool>
+
+Prefer machine-readable, narrow, and bulk workflows:
+- use --json for tool output
+- use --compact and --fields to reduce payload
+- prefer cards list-all, batch commands, snapshots, and query commands over per-card loops
+- inspect cache/runtime stats before widening expensive reads
+- reuse local scripts that are available in the configured workdir or extra directories
+
+Do not mutate Kaiten unless the user explicitly asks for a write operation.
+Answer in the user's language unless they request otherwise.
+"""
+
+SKILL_FALLBACKS = {
+    "kaiten-cli-heavy-data": (
+        "Use bulk commands, snapshots, compact fields, and cache-aware workflows. "
+        "Avoid one CLI process or API request per card when a batch command exists."
+    ),
+    "kaiten-cli-metrics": (
+        "For metrics, start from topology, bulk card fields, snapshots/query metrics, "
+        "space activity, chart tools, and card-location-history batch-get only when needed."
+    ),
+}
+
+
+@dataclass(frozen=True)
+class AgentGatewayConfig:
+    host: str = DEFAULT_HOST
+    port: int = DEFAULT_PORT
+    codex_bin: str = DEFAULT_CODEX_BIN
+    codex_model: str | None = None
+    reasoning_effort: str = DEFAULT_REASONING_EFFORT
+    workdir: Path = Path.cwd()
+    extra_dirs: tuple[Path, ...] = ()
+    skip_git_repo_check: bool = False
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS
+    bearer_token: str | None = None
+    repo_root: Path = Path.cwd()
+
+
+def default_repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _json_dumps(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def _safe_read_text(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def load_skill_texts(repo_root: Path) -> dict[str, str]:
+    skills: dict[str, str] = {}
+    for skill_name in SKILL_NAMES:
+        skill_path = repo_root / "skills" / skill_name / "SKILL.md"
+        skills[skill_name] = _safe_read_text(skill_path) or SKILL_FALLBACKS[skill_name]
+    return skills
+
+
+def build_prompt(payload: dict[str, Any], *, repo_root: Path | None = None) -> str:
+    repo = repo_root or default_repo_root()
+    messages = payload.get("messages") if isinstance(payload.get("messages"), list) else []
+    context = payload.get("context") if isinstance(payload.get("context"), dict) else {}
+    endpoint_instructions = str(payload.get("instructions") or "").strip()
+
+    parts = [
+        SYSTEM_PROMPT.strip(),
+        "",
+        "Endpoint instructions from Kaiten:",
+        endpoint_instructions or "(none)",
+        "",
+        "kaiten agent-help JSON:",
+        _json_dumps(_agent_help_payload()),
+        "",
+        "Bundled skills:",
+        _json_dumps(load_skill_texts(repo)),
+        "",
+        "Kaiten runtime context:",
+        _json_dumps(context),
+        "",
+        "Conversation messages:",
+        _json_dumps(messages),
+        "",
+        "Return a concise final answer only. Mention exact commands when they materially help.",
+    ]
+    return "\n".join(parts)
+
+
+def build_codex_command(config: AgentGatewayConfig, last_message_path: Path) -> list[str]:
+    command = [
+        config.codex_bin,
+        "exec",
+        "--sandbox",
+        "read-only",
+        "--ephemeral",
+        "--cd",
+        str(config.workdir),
+        "--output-last-message",
+        str(last_message_path),
+    ]
+
+    for extra_dir in config.extra_dirs:
+        command.extend(["--add-dir", str(extra_dir)])
+
+    if config.skip_git_repo_check:
+        command.append("--skip-git-repo-check")
+
+    if config.codex_model:
+        command.extend(["--model", config.codex_model])
+
+    if config.reasoning_effort:
+        command.extend(["-c", f'model_reasoning_effort="{config.reasoning_effort}"'])
+
+    command.append("-")
+    return command
+
+
+def run_codex(
+    prompt: str,
+    config: AgentGatewayConfig,
+    *,
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> str:
+    with tempfile.TemporaryDirectory(prefix="kaiten-agent-") as tmpdir:
+        last_message_path = Path(tmpdir) / "last-message.txt"
+        result = runner(
+            build_codex_command(config, last_message_path),
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=config.timeout_seconds,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip()
+            raise RuntimeError(detail[-4000:] or f"codex exited with {result.returncode}")
+
+        output = _safe_read_text(last_message_path)
+        if output and output.strip():
+            return output.strip()
+
+        return (result.stdout or "").strip()
+
+
+def chat_response(content: str) -> dict[str, Any]:
+    return {
+        "message": {
+            "role": "assistant",
+            "content": content,
+        },
+        "tool_runs": [
+            {
+                "type": "codex_exec",
+                "sandbox": "read-only",
+            }
+        ],
+        "artifacts": [],
+        "usage": {
+            "provider": "codex_exec",
+        },
+    }
+
+
+def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
+    content_length = int(handler.headers.get("Content-Length") or 0)
+    if content_length <= 0:
+        return {}
+
+    raw = handler.rfile.read(content_length)
+    data = json.loads(raw.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("JSON body must be an object")
+    return data
+
+
+def _send_json(handler: BaseHTTPRequestHandler, status: HTTPStatus, payload: dict[str, Any]) -> None:
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    handler.send_response(status.value)
+    handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    handler.wfile.write(body)
+
+
+def _authorized(handler: BaseHTTPRequestHandler, config: AgentGatewayConfig) -> bool:
+    if not config.bearer_token:
+        return True
+    return handler.headers.get("Authorization") == f"Bearer {config.bearer_token}"
+
+
+def make_handler(config: AgentGatewayConfig) -> type[BaseHTTPRequestHandler]:
+    class AgentGatewayHandler(BaseHTTPRequestHandler):
+        server_version = "kaiten-agent-gateway"
+
+        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+            return
+
+        def _guard_auth(self) -> bool:
+            if _authorized(self, config):
+                return True
+            _send_json(self, HTTPStatus.UNAUTHORIZED, {"message": "Unauthorized"})
+            return False
+
+        def do_GET(self) -> None:  # noqa: N802
+            if not self._guard_auth():
+                return
+            if self.path != "/health":
+                _send_json(self, HTTPStatus.NOT_FOUND, {"message": "Not found"})
+                return
+            _send_json(
+                self,
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "name": "kaiten-agent-gateway",
+                    "version": __version__,
+                    "capabilities": ["health", "chat", "kaiten-cli", "codex-exec"],
+                },
+            )
+
+        def do_POST(self) -> None:  # noqa: N802
+            if not self._guard_auth():
+                return
+            if self.path != "/v1/chat":
+                _send_json(self, HTTPStatus.NOT_FOUND, {"message": "Not found"})
+                return
+
+            try:
+                payload = _read_json(self)
+                prompt = build_prompt(payload, repo_root=config.repo_root)
+                content = run_codex(prompt, config)
+            except json.JSONDecodeError as error:
+                _send_json(self, HTTPStatus.BAD_REQUEST, {"message": f"Invalid JSON: {error}"})
+                return
+            except ValueError as error:
+                _send_json(self, HTTPStatus.BAD_REQUEST, {"message": str(error)})
+                return
+            except subprocess.TimeoutExpired:
+                _send_json(self, HTTPStatus.GATEWAY_TIMEOUT, {"message": "Agent request timed out"})
+                return
+            except Exception as error:  # pragma: no cover - HTTP safety net
+                _send_json(self, HTTPStatus.BAD_GATEWAY, {"message": str(error)})
+                return
+
+            if not content:
+                _send_json(self, HTTPStatus.BAD_GATEWAY, {"message": "Codex returned an empty response"})
+                return
+
+            _send_json(self, HTTPStatus.OK, chat_response(content))
+
+    return AgentGatewayHandler
+
+
+def config_from_args(args: argparse.Namespace) -> AgentGatewayConfig:
+    repo_root = Path(args.repo_root or os.environ.get("KAITEN_AGENT_REPO_ROOT") or default_repo_root())
+    workdir = Path(args.workdir or os.environ.get("KAITEN_AGENT_WORKDIR") or repo_root)
+    extra_dir_values = list(args.add_dir or [])
+    env_extra_dirs = os.environ.get("KAITEN_AGENT_EXTRA_DIRS")
+    if env_extra_dirs:
+        extra_dir_values.extend(env_extra_dirs.split(os.pathsep))
+
+    return AgentGatewayConfig(
+        host=args.host,
+        port=args.port,
+        codex_bin=args.codex_bin or os.environ.get("KAITEN_AGENT_CODEX_BIN") or DEFAULT_CODEX_BIN,
+        codex_model=args.codex_model or os.environ.get("KAITEN_AGENT_CODEX_MODEL") or None,
+        reasoning_effort=(
+            args.reasoning_effort
+            or os.environ.get("KAITEN_AGENT_CODEX_REASONING_EFFORT")
+            or DEFAULT_REASONING_EFFORT
+        ),
+        workdir=workdir.resolve(),
+        extra_dirs=tuple(Path(value).expanduser().resolve() for value in extra_dir_values if value),
+        skip_git_repo_check=args.skip_git_repo_check,
+        timeout_seconds=int(
+            args.timeout_seconds
+            or os.environ.get("KAITEN_AGENT_TIMEOUT_SECONDS")
+            or DEFAULT_TIMEOUT_SECONDS
+        ),
+        bearer_token=args.bearer_token or os.environ.get("KAITEN_AGENT_BEARER_TOKEN") or None,
+        repo_root=repo_root.resolve(),
+    )
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run a local Kaiten Agent HTTP gateway.")
+    parser.add_argument("--host", default=os.environ.get("KAITEN_AGENT_HOST", DEFAULT_HOST))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("KAITEN_AGENT_PORT", DEFAULT_PORT)))
+    parser.add_argument("--codex-bin", default=None)
+    parser.add_argument("--codex-model", default=None)
+    parser.add_argument("--reasoning-effort", default=None)
+    parser.add_argument("--workdir", default=None)
+    parser.add_argument("--add-dir", action="append", default=None)
+    parser.add_argument("--skip-git-repo-check", action="store_true")
+    parser.add_argument("--repo-root", default=None)
+    parser.add_argument("--timeout-seconds", type=int, default=None)
+    parser.add_argument("--bearer-token", default=None)
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    config = config_from_args(parse_args(argv))
+    server = ThreadingHTTPServer((config.host, config.port), make_handler(config))
+    print(f"kaiten-agent-gateway listening on http://{config.host}:{config.port}", flush=True)
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

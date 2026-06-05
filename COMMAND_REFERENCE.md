@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **348** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **350** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -37,7 +37,7 @@
 | Типы карточек | `card_types` | 8 | [Open](#module-card-types) |
 | Каталоги / Custom directories | `custom_directories` | 16 | [Open](#module-custom-directories) |
 | Кастомные свойства | `custom_properties` | 25 | [Open](#module-custom-properties) |
-| Документы | `documents` | 12 | [Open](#module-documents) |
+| Документы | `documents` | 13 | [Open](#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
@@ -47,7 +47,7 @@
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Open](#module-charts) |
 | Дерево сущностей | `tree` | 3 | [Open](#module-tree) |
-| Утилиты | `utilities` | 14 | [Open](#module-utilities) |
+| Утилиты | `utilities` | 15 | [Open](#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Open](#module-query) |
 
@@ -6469,7 +6469,7 @@ custom-properties.tree-entities
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-documents"></a>
-## Документы (`documents`) — 12 commands
+## Документы (`documents`) — 13 commands
 
 Documents and document groups.
 
@@ -6478,6 +6478,7 @@ Documents and document groups.
 ```text
 document-files
   get-url
+  upload
 document-groups
   create
   delete
@@ -6527,6 +6528,41 @@ documents
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
 - Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.
+
+### `document-files.upload`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-files upload` |
+| MCP alias | `kaiten_upload_document_file` |
+| Description | Upload a local binary file to a Kaiten document using multipart/form-data. |
+| Method | `PUT` |
+| Mutation | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/documents/{document_uid}/files` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | Document UID. |
+| `file` | `string` | yes | — | Local file path to upload. |
+
+**Examples**
+
+- Upload a local file to a document.: `kaiten document-files upload --document-uid doc-1 --file ./screenshot.png --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- Uploads the local file as multipart/form-data field `file`.
+- The returned `id` can be used as a ProseMirror image node `attrs.fileId`.
 
 ### `document-groups.create`
 
@@ -12388,7 +12424,7 @@ tree.children
 - Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
 
 <a id="module-utilities"></a>
-## Утилиты (`utilities`) — 14 commands
+## Утилиты (`utilities`) — 15 commands
 
 Company, calendars, timers, api keys and removed entities.
 
@@ -12404,6 +12440,7 @@ calendars
   list
 company
   current
+  socket-token
   update
 removed-boards
   list
@@ -12604,6 +12641,36 @@ _No tool-specific arguments._
 **Examples**
 
 - Get current company information.: `kaiten company current --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+
+### `company.socket-token`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company socket-token` |
+| MCP alias | `kaiten_get_company_socket_token` |
+| Description | Get a websocket JWT for the current user. |
+| Method | `GET` |
+| Mutation | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/token-please` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+_No tool-specific arguments._
+
+**Examples**
+
+- Get a websocket JWT.: `kaiten company socket-token --json`
 
 **Notes**
 

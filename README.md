@@ -157,7 +157,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **348** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` сейчас **350** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Кол-во | Справочник |
 |---|---|---:|---|
@@ -179,7 +179,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Типы карточек | `card_types` | 8 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
 | Каталоги / Custom directories | `custom_directories` | 16 | [Раздел](COMMAND_REFERENCE.md#module-custom-directories) |
 | Кастомные свойства | `custom_properties` | 25 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
-| Документы | `documents` | 12 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
+| Документы | `documents` | 13 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
@@ -189,10 +189,10 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Раздел](COMMAND_REFERENCE.md#module-charts) |
 | Дерево сущностей | `tree` | 3 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
-| Утилиты | `utilities` | 14 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
+| Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31 modules** | **348** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31 modules** | **350** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

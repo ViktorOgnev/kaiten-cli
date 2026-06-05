@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from kaiten_cli.models import (
+    CACHE_POLICY_NONE,
     CACHE_POLICY_PERSISTENT_OPT_IN,
     ExampleSpec,
     OperationSpec,
@@ -11,6 +12,7 @@ from kaiten_cli.models import (
 )
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import prepare_document_request, prevent_redirect_request
+from kaiten_cli.runtime.support.files import execute_file_upload
 from kaiten_cli.runtime.support.markdown_export import execute_document_get
 
 
@@ -204,6 +206,39 @@ TOOLS = (
         ),
         usage_notes=(
             "Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.",
+        ),
+    ),
+    make_tool(
+        canonical_name="document-files.upload",
+        mcp_alias="kaiten_upload_document_file",
+        description="Upload a local binary file to a Kaiten document using multipart/form-data.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "document_uid": {"type": "string", "description": "Document UID."},
+                "file": {"type": "string", "description": "Local file path to upload."},
+            },
+            "required": ["document_uid", "file"],
+        },
+        operation=OperationSpec(
+            method="PUT",
+            path_template="/documents/{document_uid}/files",
+            path_fields=("document_uid",),
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_file_upload,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten document-files upload --document-uid doc-1 --file ./screenshot.png --json",
+                description="Upload a local file to a document.",
+            ),
+        ),
+        usage_notes=(
+            "Uploads the local file as multipart/form-data field `file`.",
+            "The returned `id` can be used as a ProseMirror image node `attrs.fileId`.",
         ),
     ),
     make_tool(
