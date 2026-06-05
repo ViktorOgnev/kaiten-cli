@@ -119,7 +119,7 @@ Harness делает следующее:
 ## Запуск
 
 ```bash
-KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain> KAITEN_TOKEN=... \
+KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
   .venv/bin/pytest -m live -o addopts='--disable-socket --allow-unix-socket' \
   tests/live/test_sandbox_live_full.py
 ```

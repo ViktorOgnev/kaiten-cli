@@ -10,7 +10,7 @@ from kaiten_cli.errors import ValidationError
 from kaiten_cli.registry import resolve_tool
 from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import merge_inputs
-from kaiten_cli.runtime.support.card_move_url import parse_card_url, parse_target_url
+from kaiten_cli.runtime.support.card_move_url import parse_card_url, parse_target_url, validate_url_domain
 
 
 CARD_URL = "https://sandbox.kaiten.ru/space/1/boards/card/STORY-1"
@@ -27,6 +27,10 @@ def test_parse_card_and_target_urls():
     assert target.domain == "sandbox"
     assert target.space_id == 20
     assert target.column_id == 10
+
+
+def test_validate_url_domain_accepts_full_kaiten_profile_url():
+    validate_url_domain("sandbox", "https://sandbox.kaiten.ru", label="Card URL")
 
 
 @pytest.mark.parametrize(

@@ -45,7 +45,7 @@ Credential resolution order:
 Recommended persistent setup:
 
 ```bash
-kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
 ```
 
 ## Safety and efficiency

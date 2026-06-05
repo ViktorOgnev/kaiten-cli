@@ -11,6 +11,7 @@ from platformdirs import user_config_path
 
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.models import CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH, ResolvedProfile
+from kaiten_cli.runtime.endpoints import normalize_profile_domain
 
 CONFIG_ENV = "KAITEN_CLI_CONFIG_PATH"
 CACHE_MODE_VALUES = {CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
@@ -24,7 +25,7 @@ def config_path() -> Path:
 
 
 def _profile_setup_command() -> str:
-    return "kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active"
+    return "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active"
 
 
 def _config_guidance(*, include_profile_list: bool) -> str:
@@ -45,7 +46,7 @@ def _config_guidance(*, include_profile_list: bool) -> str:
     lines.extend(
         [
             "Temporary shell environment:",
-            "  export KAITEN_DOMAIN=<company-subdomain>",
+            "  export KAITEN_DOMAIN=<company-subdomain-or-url>",
             "  export KAITEN_TOKEN=<api-token>",
             "Check current setup:",
             "  kaiten profile show",
@@ -139,7 +140,7 @@ def add_profile(
 ) -> dict[str, Any]:
     config = load_config()
     profile = {
-        "domain": domain,
+        "domain": normalize_profile_domain(domain),
         "token": token,
         "sandbox": sandbox,
     }
@@ -208,7 +209,7 @@ def sanitized_profile(name: str, raw: dict[str, Any], *, active: bool) -> dict[s
     return {
         "name": name,
         "active": active,
-        "domain": raw.get("domain"),
+        "domain": normalize_profile_domain(str(raw.get("domain", ""))),
         "sandbox": bool(raw.get("sandbox", False)),
         "token_masked": redact_token(raw.get("token")),
         "cache_mode": _normalize_cache_mode(raw.get("cache_mode")),
@@ -230,7 +231,7 @@ def resolve_profile(
         source = "explicit_profile" if profile_name else "active_profile"
         return ResolvedProfile(
             name=selected_name,
-            domain=str(selected.get("domain", "")),
+            domain=normalize_profile_domain(str(selected.get("domain", ""))),
             token=str(selected.get("token", "")),
             sandbox=bool(selected.get("sandbox", False)),
             source=source,
@@ -247,7 +248,7 @@ def resolve_profile(
     if env_domain and env_token:
         return ResolvedProfile(
             name=None,
-            domain=env_domain,
+            domain=normalize_profile_domain(env_domain),
             token=env_token,
             sandbox=False,
             source="environment",

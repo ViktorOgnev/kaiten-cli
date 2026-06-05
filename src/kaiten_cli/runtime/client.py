@@ -13,6 +13,7 @@ import httpx
 from kaiten_cli.errors import ApiError, ConfigError, TransportError
 from kaiten_cli.models import CACHE_POLICY_NONE, DebugReporter
 from kaiten_cli.runtime.cache import ExecutionContext
+from kaiten_cli.runtime.endpoints import profile_api_base_url, profile_origin
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,8 @@ class KaitenClient:
         self._reporter = reporter
         self.execution_context = execution_context
         self.cache_policy = cache_policy
-        self.base_url = f"https://{domain}.kaiten.ru/api/{API_VERSION}"
+        self.root_url = profile_origin(domain)
+        self.base_url = profile_api_base_url(domain, api_version=API_VERSION)
         self._client: httpx.AsyncClient | None = None
         self._last_request_time = 0.0
         self._rate_lock = asyncio.Lock()

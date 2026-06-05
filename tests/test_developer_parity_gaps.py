@@ -155,6 +155,16 @@ def test_scim_request_path_helper_points_to_domain_root():
         pass
 
 
+def test_scim_request_path_helper_supports_custom_host_with_port():
+    client = KaitenClient(domain="62.84.125.64:3200", token="test-token")
+    tool = resolve_tool("scim.groups.get")
+
+    assert (
+        request_path_for_tool(tool, "/scim/v2/Groups/group-id", client)
+        == "https://62.84.125.64:3200/scim/v2/Groups/group-id"
+    )
+
+
 @respx.mock
 def test_cli_custom_directories_alias_and_nested_canonical_match(runner):
     respx.get(

@@ -75,8 +75,8 @@ def test_json_config_error_envelope_contains_guidance(runner, config_env, monkey
     assert payload["success"] is False
     assert payload["error"]["type"] == "config_error"
     assert "Missing Kaiten credentials." in payload["error"]["message"]
-    assert "kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active" in payload["error"]["message"]
-    assert "export KAITEN_DOMAIN=<company-subdomain>" in payload["error"]["message"]
+    assert "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active" in payload["error"]["message"]
+    assert "export KAITEN_DOMAIN=<company-subdomain-or-url>" in payload["error"]["message"]
 
 
 def test_agent_help_returns_quickstart_and_docs(runner):

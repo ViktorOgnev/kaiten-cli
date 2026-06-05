@@ -218,7 +218,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 
 | Переменная | Обязательна | Описание |
 |------------|-------------|----------|
-| `KAITEN_DOMAIN` | Да | Домен компании (`company` для `https://company.kaiten.ru`) |
+| `KAITEN_DOMAIN` | Да | Tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host (`62.84.125.64:3200`, `http://localhost:3000`) |
 | `KAITEN_TOKEN` | Да | API-токен пользователя |
 | `KAITEN_LIVE` | Нет | `1` или `true` для opt-in live validation на явно переданных credentials/profile |
 | `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
@@ -231,15 +231,17 @@ CLI читает переменные окружения только из те�
 Рекомендуемый путь: сохранить профиль и сделать его активным.
 
 ```bash
-kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
 kaiten profile show
 ```
+
+`--domain` и `KAITEN_DOMAIN` принимают tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host с портом для локальных/dev-инсталляций.
 
 Если нужен фиксированный TTL persistent cache для этого profile вместо default `auto`:
 
 ```bash
 kaiten profile add main \
-  --domain <company-subdomain> \
+  --domain <company-subdomain-or-url> \
   --token <api-token> \
   --cache-mode readwrite \
   --cache-ttl-seconds 60 \
@@ -249,7 +251,7 @@ kaiten profile add main \
 Временный fallback через переменные окружения:
 
 ```bash
-export KAITEN_DOMAIN=<company-subdomain>
+export KAITEN_DOMAIN=<company-subdomain-or-url>
 export KAITEN_TOKEN=<api-token>
 ```
 
@@ -514,7 +516,7 @@ kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get 
 Если видишь `Missing Kaiten credentials`:
 
 ```bash
-kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
 kaiten profile show
 ```
 
@@ -536,7 +538,7 @@ kaiten profile use <name>
 Live validation запускается отдельно и только после зелёных локальных тестов. Единственный gate для него — `KAITEN_LIVE=1|true`; сами credentials можно передать через env или через обычный active profile:
 
 ```bash
-KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain> KAITEN_TOKEN=... \
+KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
   .venv/bin/pytest -m live -o addopts='--disable-socket --allow-unix-socket' \
   tests/live/test_sandbox_live_full.py
 ```

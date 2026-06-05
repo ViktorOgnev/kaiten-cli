@@ -40,7 +40,7 @@ Quick start:
   kaiten snapshot build --name team-basic --space-id 10 --preset basic
   kaiten query cards --snapshot team-basic --view summary --fields id,title,state
   kaiten --json spaces list --compact --fields id,title
-  kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active
+  kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
 
 \b
 Principles:
@@ -166,7 +166,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Build a local read snapshot: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
             "Query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
             "Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title",
-            "Configure credentials: kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active",
+            "Configure credentials: kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active",
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",

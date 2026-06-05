@@ -13,6 +13,7 @@ from kaiten_cli.profiles import (
     show_profile,
     use_profile,
 )
+from kaiten_cli.runtime.client import KaitenClient
 
 
 def test_profile_lifecycle(config_env):
@@ -51,6 +52,77 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     assert resolved.source == "environment"
     assert resolved.cache_mode == "auto"
     assert resolved.cache_ttl_seconds == 60
+
+
+def test_profile_add_normalizes_kaiten_url_domain(config_env):
+    added = add_profile(
+        "main",
+        domain="https://Sandbox.kaiten.ru/space/1/boards",
+        token="secret-token",
+        set_active=True,
+    )
+
+    shown = show_profile("main")
+    resolved = resolve_profile()
+
+    assert added["domain"] == "sandbox"
+    assert shown["domain"] == "sandbox"
+    assert resolved.domain == "sandbox"
+    assert KaitenClient(domain=resolved.domain, token=resolved.token).base_url == (
+        "https://sandbox.kaiten.ru/api/latest"
+    )
+
+
+def test_resolve_profile_normalizes_existing_full_kaiten_domain(config_env):
+    save_config(
+        {
+            "active_profile": "main",
+            "profiles": {
+                "main": {
+                    "domain": "https://sandbox.kaiten.ru",
+                    "token": "secret-token",
+                    "sandbox": False,
+                }
+            },
+        }
+    )
+
+    shown = show_profile()
+    resolved = resolve_profile()
+
+    assert shown["domain"] == "sandbox"
+    assert resolved.domain == "sandbox"
+
+
+def test_resolve_profile_preserves_custom_host_with_port(config_env):
+    add_profile("dev", domain="62.84.125.64:3200", token="secret-token", set_active=True)
+
+    resolved = resolve_profile()
+    client = KaitenClient(domain=resolved.domain, token=resolved.token)
+
+    assert resolved.domain == "62.84.125.64:3200"
+    assert client.root_url == "https://62.84.125.64:3200"
+    assert client.base_url == "https://62.84.125.64:3200/api/latest"
+
+
+def test_resolve_profile_preserves_http_custom_host(config_env):
+    add_profile("dev", domain="http://localhost:3000", token="secret-token", set_active=True)
+
+    resolved = resolve_profile()
+    client = KaitenClient(domain=resolved.domain, token=resolved.token)
+
+    assert resolved.domain == "http://localhost:3000"
+    assert client.root_url == "http://localhost:3000"
+    assert client.base_url == "http://localhost:3000/api/latest"
+
+
+def test_resolve_profile_env_normalizes_full_kaiten_url(config_env, monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "https://sandbox.kaiten.ru")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+
+    resolved = resolve_profile()
+
+    assert resolved.domain == "sandbox"
 
 
 def test_resolve_profile_env_domain_does_not_imply_test_metadata(config_env, monkeypatch):
@@ -161,8 +233,8 @@ def test_resolve_profile_guides_setup_when_missing(config_env, monkeypatch):
 
     message = str(excinfo.value)
     assert f"Config file: {config_path()}" in message
-    assert "kaiten profile add main --domain <company-subdomain> --token <api-token> --set-active" in message
-    assert "export KAITEN_DOMAIN=<company-subdomain>" in message
+    assert "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active" in message
+    assert "export KAITEN_DOMAIN=<company-subdomain-or-url>" in message
     assert "kaiten --json spaces list --compact --fields id,title" in message
 
 

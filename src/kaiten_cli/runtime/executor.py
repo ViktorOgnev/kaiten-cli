@@ -46,7 +46,7 @@ def request_path_for_tool(tool: ToolSpec, path: str, client: KaitenClient | None
         return path
     base = tool.operation.api_base_path.rstrip("/")
     suffix = path if path.startswith("/") else f"/{path}"
-    return f"https://{client.domain}.kaiten.ru{base}{suffix}"
+    return f"{client.root_url}{base}{suffix}"
 
 
 def _emit_debug(reporter: DebugReporter | None, message: str) -> None:

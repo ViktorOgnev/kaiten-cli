@@ -34,6 +34,23 @@ async def test_execute_list_cards_compact_and_fields(monkeypatch):
     assert result == [{"id": 1, "title": "Task"}]
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_uses_custom_http_host_from_env(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "http://localhost:3000")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("http://localhost:3000/api/latest/cards").mock(
+        return_value=Response(200, json=[{"id": 1, "title": "Task"}])
+    )
+
+    tool = resolve_tool("cards.list")
+    payload = merge_inputs(tool, {"board_id": 10, "limit": 5})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert result == [{"id": 1, "title": "Task"}]
+
+
 def test_build_request_for_update_card_keeps_nullable_fields():
     tool = resolve_tool("cards.update")
     payload = merge_inputs(tool, {"card_id": "PROJ-1", "description": "null", "title": "Renamed"})

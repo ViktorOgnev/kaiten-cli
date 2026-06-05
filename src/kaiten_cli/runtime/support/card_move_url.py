@@ -7,8 +7,8 @@ from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.runtime.endpoints import KAITEN_HOST_SUFFIX, normalize_profile_domain
 
-KAITEN_HOST_SUFFIX = ".kaiten.ru"
 COLUMN_CHILD_KEYS = ("columns", "subcolumns", "children")
 
 
@@ -27,10 +27,7 @@ class ParsedTargetUrl:
 
 
 def normalize_kaiten_domain(value: str) -> str:
-    normalized = value.strip().lower()
-    if normalized.endswith(KAITEN_HOST_SUFFIX):
-        normalized = normalized[: -len(KAITEN_HOST_SUFFIX)]
-    return normalized
+    return normalize_profile_domain(value)
 
 
 def _domain_from_url(raw_url: str) -> str:
