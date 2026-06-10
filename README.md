@@ -152,7 +152,16 @@ kaiten --json custom-directory-records list --directory-id <directory_uuid> --pr
 kaiten --json custom-directory-records cards list --directory-id <directory_uuid> --record-id <record_uuid>
 ```
 
-Модель такая: `custom-directories` управляет самим каталогом, `custom-directory-fields` — его колонками, `custom-directory-records` — строками/записями. Команды `custom-properties catalog-values ...` относятся к значениям пользовательского поля типа catalog и не являются CRUD для раздела «Каталоги».
+Модель такая: `custom-directories` управляет самим каталогом, `custom-directory-fields` — его колонками, `custom-directory-records` — строками/записями. Поле карточки типа «Справочник» — это `custom-properties` с API type `catalog`; команды `custom-properties catalog-values ...` относятся к значениям такого поля и не являются CRUD для раздела «Каталоги».
+
+Если запрос говорит только «каталог», «справочник» или `catalog`, сначала уточните смысл перед мутацией:
+
+| Что имелось в виду | CLI namespace |
+|---|---|
+| UI «Каталоги», справочник-таблица с колонками и записями | `custom-directories`, `custom-directory-fields`, `custom-directory-records` |
+| Само поле карточки типа «Справочник» / catalog | `custom-properties` с `type=catalog` |
+| Значения поля карточки типа «Справочник» / catalog | `custom-properties catalog-values` |
+| Папка/контейнер документов в дереве | `document-groups`, `tree` для чтения структуры |
 
 ## Инструменты
 

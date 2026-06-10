@@ -20,9 +20,13 @@ PAYLOAD = {
 }
 
 CATALOG_USAGE_NOTES = (
-    "Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.",
+    "Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.",
+    "For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.",
+    "Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.",
     "`custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.",
-    "Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.",
+    "Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.",
+    "Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.",
+    "If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.",
     "The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.",
 )
 

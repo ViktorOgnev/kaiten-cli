@@ -7,6 +7,24 @@ from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import payload_body_request, select_value_soft_delete_request
 
 
+CARD_CATALOG_PROPERTY_USAGE_NOTES = (
+    "A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.",
+    "Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.",
+    "Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.",
+    "Allowed entries/options are managed separately from the field definition.",
+    "Do not confuse this with UI catalog tables (`custom-directories`) or document groups.",
+)
+
+CATALOG_VALUES_USAGE_NOTES = (
+    "These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.",
+    "Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.",
+    "Use these commands for values/options of a card field of type `Справочник` / `справочник`.",
+    "Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).",
+    "For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.",
+    "Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.",
+)
+
+
 TOOLS = (
     make_tool(
         canonical_name="custom-properties.list",
@@ -61,7 +79,12 @@ TOOLS = (
                 command="kaiten custom-properties list --types select --json",
                 description="List custom properties.",
             ),
+            ExampleSpec(
+                command="kaiten custom-properties list --types catalog --json",
+                description="List card fields of type Catalog/Справочник.",
+            ),
         ),
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.get",
@@ -85,6 +108,7 @@ TOOLS = (
                 description="Get a custom property.",
             ),
         ),
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.create",
@@ -163,7 +187,12 @@ TOOLS = (
                 command="kaiten custom-properties create --name Status --type select --json",
                 description="Create a custom property.",
             ),
+            ExampleSpec(
+                command='kaiten custom-properties create --name "Client" --type catalog --json',
+                description="Create a card field of type Catalog/Справочник.",
+            ),
         ),
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.update",
@@ -224,6 +253,7 @@ TOOLS = (
                 description="Update a custom property.",
             ),
         ),
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.delete",
@@ -247,6 +277,7 @@ TOOLS = (
                 description="Delete a custom property.",
             ),
         ),
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.select-values.list",
@@ -471,7 +502,7 @@ TOOLS = (
     make_tool(
         canonical_name="custom-properties.catalog-values.list",
         mcp_alias="kaiten_list_catalog_values",
-        description="List catalog values for a catalog-typed custom property.",
+        description="List catalog property values for a catalog-typed custom property.",
         input_schema={
             "type": "object",
             "properties": {
@@ -496,18 +527,15 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten custom-properties catalog-values list --property-id 5 --json",
-                description="List catalog values.",
+                description="List catalog property values.",
             ),
         ),
-        usage_notes=(
-            "This manages values of a catalog-typed custom property, not the UI `Каталоги` table itself.",
-            "For the UI `Каталоги` feature use custom-directories, custom-directory-fields, and custom-directory-records.",
-        ),
+        usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.catalog-values.get",
         mcp_alias="kaiten_get_catalog_value",
-        description="Get a catalog value for a catalog-typed custom property.",
+        description="Get a catalog property value for a catalog-typed custom property.",
         input_schema={
             "type": "object",
             "properties": {
@@ -524,14 +552,15 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json",
-                description="Get a catalog value.",
+                description="Get a catalog property value.",
             ),
         ),
+        usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.catalog-values.create",
         mcp_alias="kaiten_create_catalog_value",
-        description="Create a catalog value for a catalog-typed custom property.",
+        description="Create a catalog property value for a catalog-typed custom property.",
         input_schema={
             "type": "object",
             "properties": {
@@ -558,14 +587,15 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command='kaiten custom-properties catalog-values create --property-id 5 --value \'{"field-uuid":"Alice"}\' --json',
-                description="Create a catalog value.",
+                description="Create a catalog property value.",
             ),
         ),
+        usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.catalog-values.update",
         mcp_alias="kaiten_update_catalog_value",
-        description="Update a catalog value for a catalog-typed custom property.",
+        description="Update a catalog property value for a catalog-typed custom property.",
         input_schema={
             "type": "object",
             "properties": {
@@ -598,14 +628,15 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command='kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json',
-                description="Update a catalog value.",
+                description="Update a catalog property value.",
             ),
         ),
+        usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.catalog-values.delete",
         mcp_alias="kaiten_delete_catalog_value",
-        description="Delete a catalog value for a catalog-typed custom property.",
+        description="Delete a catalog property value for a catalog-typed custom property.",
         input_schema={
             "type": "object",
             "properties": {
@@ -622,9 +653,10 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json",
-                description="Delete a catalog value.",
+                description="Delete a catalog property value.",
             ),
         ),
+        usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="custom-properties.collective-score-values.list",

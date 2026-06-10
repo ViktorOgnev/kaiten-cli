@@ -16,6 +16,19 @@ from kaiten_cli.runtime.support.files import execute_file_upload
 from kaiten_cli.runtime.support.markdown_export import execute_document_get
 
 
+DOCUMENT_PARENT_USAGE_NOTES = (
+    "`parent_entity_uid` places the document under a document group/container in the sidebar tree.",
+    "Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.",
+)
+
+DOCUMENT_GROUP_USAGE_NOTES = (
+    "Document groups are document folders/containers in the sidebar tree.",
+    "Use `document-groups.*` when a request says document catalog, folder, or container.",
+    "They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.",
+    "Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.",
+)
+
+
 TOOLS = (
     make_tool(
         canonical_name="documents.list",
@@ -74,6 +87,7 @@ TOOLS = (
                 description="Create a document from markdown.",
             ),
         ),
+        usage_notes=DOCUMENT_PARENT_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="documents.get",
@@ -156,6 +170,7 @@ TOOLS = (
                 description="Update a document body.",
             ),
         ),
+        usage_notes=DOCUMENT_PARENT_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="documents.delete",
@@ -286,6 +301,7 @@ TOOLS = (
                 description="List document groups.",
             ),
         ),
+        usage_notes=DOCUMENT_GROUP_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="document-groups.create",
@@ -318,6 +334,7 @@ TOOLS = (
                 description="Create a document group.",
             ),
         ),
+        usage_notes=DOCUMENT_GROUP_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="document-groups.get",
@@ -339,6 +356,7 @@ TOOLS = (
                 description="Get a document group.",
             ),
         ),
+        usage_notes=DOCUMENT_GROUP_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="document-groups.update",
@@ -364,6 +382,7 @@ TOOLS = (
                 description="Update a document group.",
             ),
         ),
+        usage_notes=DOCUMENT_GROUP_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="document-groups.delete",
@@ -387,5 +406,6 @@ TOOLS = (
                 description="Delete a document group.",
             ),
         ),
+        usage_notes=DOCUMENT_GROUP_USAGE_NOTES,
     ),
 )

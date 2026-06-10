@@ -4944,9 +4944,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directories.delete`
@@ -4980,9 +4984,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directories.get`
@@ -5019,9 +5027,13 @@ custom-directory-records.cards
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directories.list`
@@ -5061,9 +5073,13 @@ custom-directory-records.cards
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directories.update`
@@ -5102,9 +5118,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-fields.create`
@@ -5145,9 +5165,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-fields.delete`
@@ -5182,9 +5206,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-fields.get`
@@ -5219,9 +5247,13 @@ custom-directory-records.cards
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-fields.list`
@@ -5257,9 +5289,13 @@ custom-directory-records.cards
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-fields.update`
@@ -5301,9 +5337,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.cards.list`
@@ -5341,9 +5381,13 @@ custom-directory-records.cards
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.create`
@@ -5379,9 +5423,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.delete`
@@ -5416,9 +5464,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.get`
@@ -5454,9 +5506,13 @@ custom-directory-records.cards
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.list`
@@ -5499,9 +5555,13 @@ custom-directory-records.cards
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 ### `custom-directory-records.update`
@@ -5539,9 +5599,13 @@ custom-directory-records.cards
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
-- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`.
+- Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
+- For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
+- Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
 - `custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.
-- Do not confuse this with `custom-properties catalog-values`, which manages values of a catalog-typed custom property.
+- Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
+- If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.
 - The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.
 
 <a id="module-custom-properties"></a>
@@ -5591,7 +5655,7 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties catalog-values create` |
 | MCP alias | `kaiten_create_catalog_value` |
-| Description | Create a catalog value for a catalog-typed custom property. |
+| Description | Create a catalog property value for a catalog-typed custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
@@ -5613,12 +5677,18 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a catalog value.: `kaiten custom-properties catalog-values create --property-id 5 --value '{"field-uuid":"Alice"}' --json`
+- Create a catalog property value.: `kaiten custom-properties catalog-values create --property-id 5 --value '{"field-uuid":"Alice"}' --json`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
+- Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
+- Use these commands for values/options of a card field of type `Справочник` / `справочник`.
+- Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).
+- For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
 
 ### `custom-properties.catalog-values.delete`
 
@@ -5626,7 +5696,7 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties catalog-values delete` |
 | MCP alias | `kaiten_delete_catalog_value` |
-| Description | Delete a catalog value for a catalog-typed custom property. |
+| Description | Delete a catalog property value for a catalog-typed custom property. |
 | Method | `DELETE` |
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
@@ -5646,12 +5716,18 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Delete a catalog value.: `kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json`
+- Delete a catalog property value.: `kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
+- Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
+- Use these commands for values/options of a card field of type `Справочник` / `справочник`.
+- Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).
+- For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
 
 ### `custom-properties.catalog-values.get`
 
@@ -5659,7 +5735,7 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties catalog-values get` |
 | MCP alias | `kaiten_get_catalog_value` |
-| Description | Get a catalog value for a catalog-typed custom property. |
+| Description | Get a catalog property value for a catalog-typed custom property. |
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
@@ -5679,12 +5755,18 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Get a catalog value.: `kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json`
+- Get a catalog property value.: `kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
+- Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
+- Use these commands for values/options of a card field of type `Справочник` / `справочник`.
+- Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).
+- For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
 
 ### `custom-properties.catalog-values.list`
 
@@ -5692,7 +5774,7 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties catalog-values list` |
 | MCP alias | `kaiten_list_catalog_values` |
-| Description | List catalog values for a catalog-typed custom property. |
+| Description | List catalog property values for a catalog-typed custom property. |
 | Method | `GET` |
 | Mutation | `no` |
 | Execution mode | `direct_http` |
@@ -5715,14 +5797,18 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List catalog values.: `kaiten custom-properties catalog-values list --property-id 5 --json`
+- List catalog property values.: `kaiten custom-properties catalog-values list --property-id 5 --json`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- This manages values of a catalog-typed custom property, not the UI `Каталоги` table itself.
-- For the UI `Каталоги` feature use custom-directories, custom-directory-fields, and custom-directory-records.
+- These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
+- Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
+- Use these commands for values/options of a card field of type `Справочник` / `справочник`.
+- Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).
+- For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
 
 ### `custom-properties.catalog-values.update`
 
@@ -5730,7 +5816,7 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties catalog-values update` |
 | MCP alias | `kaiten_update_catalog_value` |
-| Description | Update a catalog value for a catalog-typed custom property. |
+| Description | Update a catalog property value for a catalog-typed custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
 | Execution mode | `direct_http` |
@@ -5754,12 +5840,18 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a catalog value.: `kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json`
+- Update a catalog property value.: `kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
+- Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
+- Use these commands for values/options of a card field of type `Справочник` / `справочник`.
+- Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).
+- For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.
+- Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.
 
 ### `custom-properties.collective-score-values.create`
 
@@ -6039,11 +6131,17 @@ custom-properties.tree-entities
 **Examples**
 
 - Create a custom property.: `kaiten custom-properties create --name Status --type select --json`
+- Create a card field of type Catalog/Справочник.: `kaiten custom-properties create --name "Client" --type catalog --json`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
+- Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
+- Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
+- Allowed entries/options are managed separately from the field definition.
+- Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
 
 ### `custom-properties.delete`
 
@@ -6076,6 +6174,11 @@ custom-properties.tree-entities
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
+- Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
+- Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
+- Allowed entries/options are managed separately from the field definition.
+- Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
 
 ### `custom-properties.get`
 
@@ -6108,6 +6211,11 @@ custom-properties.tree-entities
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
+- Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
+- Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
+- Allowed entries/options are managed separately from the field definition.
+- Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
 
 ### `custom-properties.list`
 
@@ -6144,11 +6252,17 @@ custom-properties.tree-entities
 **Examples**
 
 - List custom properties.: `kaiten custom-properties list --types select --json`
+- List card fields of type Catalog/Справочник.: `kaiten custom-properties list --types catalog --json`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
+- A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
+- Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
+- Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
+- Allowed entries/options are managed separately from the field definition.
+- Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
 
 ### `custom-properties.select-values.create`
 
@@ -6467,6 +6581,11 @@ custom-properties.tree-entities
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
+- Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
+- Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
+- Allowed entries/options are managed separately from the field definition.
+- Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
 
 <a id="module-documents"></a>
 ## Документы (`documents`) — 13 commands
@@ -6597,6 +6716,10 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- Document groups are document folders/containers in the sidebar tree.
+- Use `document-groups.*` when a request says document catalog, folder, or container.
+- They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.
 
 ### `document-groups.delete`
 
@@ -6629,6 +6752,10 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- Document groups are document folders/containers in the sidebar tree.
+- Use `document-groups.*` when a request says document catalog, folder, or container.
+- They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.
 
 ### `document-groups.get`
 
@@ -6661,6 +6788,10 @@ documents
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
 - Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Document groups are document folders/containers in the sidebar tree.
+- Use `document-groups.*` when a request says document catalog, folder, or container.
+- They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.
 
 ### `document-groups.list`
 
@@ -6695,6 +6826,10 @@ documents
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
+- Document groups are document folders/containers in the sidebar tree.
+- Use `document-groups.*` when a request says document catalog, folder, or container.
+- They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.
 
 ### `document-groups.update`
 
@@ -6728,6 +6863,10 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- Document groups are document folders/containers in the sidebar tree.
+- Use `document-groups.*` when a request says document catalog, folder, or container.
+- They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- Documents can be placed into a group with `parent_entity_uid`; tree commands read groups together with documents and spaces.
 
 ### `document-schemas.get`
 
@@ -6797,6 +6936,8 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- `parent_entity_uid` places the document under a document group/container in the sidebar tree.
+- Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
 
 ### `documents.delete`
 
@@ -6941,6 +7082,8 @@ documents
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Refresh hint: No cache refresh is needed.
+- `parent_entity_uid` places the document under a document group/container in the sidebar tree.
+- Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
 
 <a id="module-webhooks"></a>
 ## Вебхуки (`webhooks`) — 9 commands
@@ -12380,6 +12523,8 @@ tree.children
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
 - Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
+- Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
+- Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
 - `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
@@ -12418,6 +12563,8 @@ tree.children
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
 - Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
+- Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
+- Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
 - `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.

@@ -38,6 +38,17 @@ def test_resolve_document_and_tree_aliases():
     assert resolve_tool("kaiten_get_tree").canonical_name == "tree.get"
 
 
+def test_document_group_docs_disambiguate_catalog_terms():
+    document_create = resolve_tool("documents.create")
+    group_create = resolve_tool("document-groups.create")
+    tree = resolve_tool("tree.children.list")
+
+    assert any("parent_entity_uid" in note for note in document_create.usage_notes)
+    assert any("document folders/containers" in note for note in group_create.usage_notes)
+    assert any("custom-directories" in note for note in group_create.usage_notes)
+    assert any("read-only aggregate views" in note for note in tree.usage_notes)
+
+
 def test_build_request_for_create_document_text_sets_sort_order(monkeypatch):
     monkeypatch.setattr("kaiten_cli.runtime.support.documents.time.time", lambda: 1234)
     tool = resolve_tool("documents.create")

@@ -99,3 +99,50 @@ def test_search_tools_exposes_usage_notes_and_bulk_alternative():
     assert results[0]["canonical_name"] == "card-children.batch-list"
     assert results[0]["usage_notes"]
     assert results[0]["bulk_alternative"] is None
+
+
+def test_describe_tool_disambiguates_catalog_meanings():
+    custom_directory = describe_tool("custom-directories.create")
+    custom_property = describe_tool("custom-properties.create")
+    catalog_value = describe_tool("custom-properties.catalog-values.create")
+    document_group = describe_tool("document-groups.create")
+    tree = describe_tool("tree.get")
+
+    assert any("справочник" in note for note in custom_directory["usage_notes"])
+    assert any("before a mutation" in note for note in custom_directory["usage_notes"])
+    assert any("card field of type `Справочник`" in note for note in custom_property["usage_notes"])
+    assert any("property catalog options/values" in note for note in catalog_value["usage_notes"])
+    assert any("card field of type `Справочник`" in note for note in catalog_value["usage_notes"])
+    assert any("document folders/containers" in note for note in document_group["usage_notes"])
+    assert any("internal fetched entity index" in note for note in tree["usage_notes"])
+
+
+def test_search_tools_uses_catalog_disambiguation_notes():
+    catalog_results = search_tools("каталог", limit=5)
+    catalog_names = [result["canonical_name"] for result in catalog_results]
+    assert any(name.startswith("custom-director") for name in catalog_names)
+
+    ambiguous_results = search_tools("справочник", limit=25)
+    ambiguous_names = [result["canonical_name"] for result in ambiguous_results]
+    assert any(name.startswith("custom-director") for name in ambiguous_names)
+    assert any(name.startswith("custom-properties.") for name in ambiguous_names)
+
+    directory_results = search_tools("справочник таблица", limit=5)
+    directory_names = [result["canonical_name"] for result in directory_results]
+    assert any(name.startswith("custom-director") for name in directory_names)
+
+    card_field_results = search_tools("поле карточки справочник", limit=5)
+    card_field_names = [result["canonical_name"] for result in card_field_results]
+    assert any(name.startswith("custom-properties.") for name in card_field_names)
+
+    document_results = search_tools("document catalog folder", limit=5)
+    document_names = [result["canonical_name"] for result in document_results]
+    assert "document-groups.create" in document_names or "document-groups.list" in document_names
+
+    value_results = search_tools("catalog property values", limit=5)
+    value_names = [result["canonical_name"] for result in value_results]
+    assert any(name.startswith("custom-properties.catalog-values") for name in value_names)
+
+    card_field_value_results = search_tools("значения поля карточки справочник", limit=5)
+    card_field_value_names = [result["canonical_name"] for result in card_field_value_results]
+    assert any(name.startswith("custom-properties.catalog-values") for name in card_field_value_names)

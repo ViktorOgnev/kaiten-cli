@@ -99,10 +99,20 @@ def test_build_request_for_custom_directories_catalog_record_search():
 
 def test_custom_directory_docs_use_catalog_meaning():
     directory = resolve_tool("custom-directories.list")
-    catalog_values = resolve_tool("custom-properties.catalog-values.list")
+    record = resolve_tool("custom-directory-records.create")
+    custom_property = resolve_tool("custom-properties.create")
+    catalog_values = resolve_tool("custom-properties.catalog-values.create")
+    document_group = resolve_tool("document-groups.create")
+    tree = resolve_tool("tree.get")
 
     assert any("Каталоги" in note for note in directory.usage_notes)
-    assert any("not the UI" in note for note in catalog_values.usage_notes)
+    assert any("справочник" in note for note in directory.usage_notes)
+    assert any("before a mutation" in note for note in record.usage_notes)
+    assert any("card field of type `Справочник`" in note for note in custom_property.usage_notes)
+    assert any("catalog-typed custom property" in note for note in catalog_values.usage_notes)
+    assert any("card field of type `Справочник`" in note for note in catalog_values.usage_notes)
+    assert any("document folders/containers" in note for note in document_group.usage_notes)
+    assert any("internal fetched entity index" in note for note in tree.usage_notes)
 
 
 @pytest.mark.asyncio
