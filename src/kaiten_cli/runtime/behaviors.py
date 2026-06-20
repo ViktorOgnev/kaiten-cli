@@ -82,6 +82,15 @@ def prepare_document_request(
     return path, query, prepare_document_body(tool.canonical_name, dict(body or {}))
 
 
+def document_list_search_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    shaped_query = dict(query or {})
+    if "search_fields" in payload:
+        shaped_query["fields"] = payload["search_fields"]
+    return path, shaped_query or None, body
+
+
 def prevent_redirect_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:

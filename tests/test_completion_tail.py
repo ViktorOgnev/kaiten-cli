@@ -67,15 +67,42 @@ async def test_execute_list_all_cards_paginates_and_compacts_by_default(monkeypa
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     first = respx.get(
         "https://sandbox.kaiten.ru/api/latest/cards",
-        params={"relations": "none", "board_id": "10", "limit": "2", "offset": "0"},
+        params={
+            "relations": "none",
+            "board_id": "10",
+            "type_ids": "1,2",
+            "exclude_board_ids": "3",
+            "first_moved_in_progress_after": "2026-01-01T00:00:00Z",
+            "limit": "2",
+            "offset": "0",
+        },
     ).mock(return_value=Response(200, json=[{"id": 1, "title": "A", "description": "x"}, {"id": 2, "title": "B", "description": "y"}]))
     second = respx.get(
         "https://sandbox.kaiten.ru/api/latest/cards",
-        params={"relations": "none", "board_id": "10", "limit": "2", "offset": "2"},
+        params={
+            "relations": "none",
+            "board_id": "10",
+            "type_ids": "1,2",
+            "exclude_board_ids": "3",
+            "first_moved_in_progress_after": "2026-01-01T00:00:00Z",
+            "limit": "2",
+            "offset": "2",
+        },
     ).mock(return_value=Response(200, json=[{"id": 3, "title": "C", "description": "z"}]))
 
     tool = resolve_tool("cards.list-all")
-    payload = merge_inputs(tool, {"board_id": 10, "page_size": 2, "max_pages": 5, "fields": "id,title"})
+    payload = merge_inputs(
+        tool,
+        {
+            "board_id": 10,
+            "type_ids": "1,2",
+            "exclude_board_ids": "3",
+            "first_moved_in_progress_after": "2026-01-01T00:00:00Z",
+            "page_size": 2,
+            "max_pages": 5,
+            "fields": "id,title",
+        },
+    )
     result = await execute_tool(tool, payload)
 
     assert first.called

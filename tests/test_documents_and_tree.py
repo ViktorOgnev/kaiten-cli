@@ -194,6 +194,36 @@ async def test_execute_list_documents_compact_and_fields_are_local_transforms(mo
     assert result == [{"uid": "doc-1", "title": "Spec"}]
 
 
+def test_build_request_for_documents_list_accepts_version_two_search_parameters():
+    tool = resolve_tool("documents.list")
+    payload = merge_inputs(
+        tool,
+        {
+            "query": "design",
+            "version": 2,
+            "condition": 1,
+            "search_fields": "title,text",
+            "start_position": "cursor-1",
+            "include_search_preview": True,
+            "fields": "uid,title",
+        },
+    )
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/documents"
+    assert body is None
+    assert query == {
+        "query": "design",
+        "limit": 50,
+        "version": 2,
+        "condition": 1,
+        "start_position": "cursor-1",
+        "include_search_preview": True,
+        "fields": "title,text",
+    }
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_execute_document_file_get_url_returns_signed_url(monkeypatch):

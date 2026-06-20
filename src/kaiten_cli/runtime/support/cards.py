@@ -16,20 +16,36 @@ def _card_query_params(args: dict[str, Any]) -> dict[str, Any]:
     params: dict[str, Any] = {"relations": args.get("relations", "none")}
     string_keys = (
         "query",
+        "tag",
         "tag_ids",
         "member_ids",
         "owner_ids",
+        "exclude_owner_ids",
         "responsible_ids",
         "states",
         "column_ids",
+        "exclude_board_ids",
+        "exclude_lane_ids",
+        "exclude_column_ids",
+        "exclude_card_ids",
+        "organization_ids",
         "type_ids",
         "external_id",
         "created_after",
         "created_before",
         "updated_after",
         "updated_before",
+        "first_moved_in_progress_after",
+        "first_moved_in_progress_before",
+        "last_moved_to_done_at_after",
+        "last_moved_to_done_at_before",
         "due_date_after",
         "due_date_before",
+        "additional_card_fields",
+        "filter",
+        "order_by",
+        "order_direction",
+        "visible",
     )
     int_keys = (
         "space_id",
@@ -41,7 +57,7 @@ def _card_query_params(args: dict[str, Any]) -> dict[str, Any]:
         "owner_id",
         "responsible_id",
     )
-    bool_keys = ("overdue", "asap", "archived")
+    bool_keys = ("overdue", "asap", "done_on_time", "with_due_date", "is_request", "archived")
 
     for key in string_keys + int_keys + bool_keys:
         if args.get(key) is not None:

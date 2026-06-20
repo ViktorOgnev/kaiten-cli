@@ -75,6 +75,51 @@ def test_build_request_injects_default_limit_for_list_tools():
     assert query["limit"] == 50
 
 
+def test_build_request_for_cards_list_accepts_current_search_parameters():
+    tool = resolve_tool("cards.list")
+    payload = merge_inputs(
+        tool,
+        {
+            "query": "bug",
+            "version": 2,
+            "type_ids": "1,2",
+            "owner_ids": "7,8",
+            "exclude_board_ids": "3",
+            "first_moved_in_progress_after": "2026-01-01T00:00:00Z",
+            "last_moved_to_done_at_before": "2026-02-01T00:00:00Z",
+            "additional_card_fields": "description",
+            "search_fields": "title,description",
+            "start_position": "cursor-1",
+            "include_search_preview": True,
+            "filter": "encoded-filter",
+            "order_by": "updated",
+            "order_direction": "desc",
+            "visible": '{"space_id": 1}',
+        },
+    )
+
+    path, query, body = build_request(tool, payload)
+
+    assert path == "/cards"
+    assert body is None
+    assert query is not None
+    assert query["version"] == 2
+    assert query["type_ids"] == "1,2"
+    assert query["owner_ids"] == "7,8"
+    assert query["exclude_board_ids"] == "3"
+    assert query["first_moved_in_progress_after"] == "2026-01-01T00:00:00Z"
+    assert query["last_moved_to_done_at_before"] == "2026-02-01T00:00:00Z"
+    assert query["additional_card_fields"] == "description"
+    assert query["search_fields"] == "title,description"
+    assert query["start_position"] == "cursor-1"
+    assert query["include_search_preview"] is True
+    assert query["filter"] == "encoded-filter"
+    assert query["order_by"] == "updated"
+    assert query["order_direction"] == "desc"
+    assert query["visible"] == '{"space_id": 1}'
+    assert query["limit"] == 50
+
+
 def test_merge_inputs_rejects_cards_list_all_selection_with_archived():
     tool = resolve_tool("cards.list-all")
 

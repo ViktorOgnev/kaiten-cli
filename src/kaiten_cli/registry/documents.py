@@ -11,7 +11,11 @@ from kaiten_cli.models import (
     RuntimeBehavior,
 )
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import prepare_document_request, prevent_redirect_request
+from kaiten_cli.runtime.behaviors import (
+    document_list_search_request,
+    prepare_document_request,
+    prevent_redirect_request,
+)
 from kaiten_cli.runtime.support.files import execute_file_upload
 from kaiten_cli.runtime.support.markdown_export import execute_document_get
 
@@ -40,6 +44,23 @@ TOOLS = (
                 "query": {"type": "string", "description": "Search filter"},
                 "limit": {"type": "integer", "description": "Max results (default: 50)"},
                 "offset": {"type": "integer", "description": "Pagination offset"},
+                "version": {
+                    "type": "integer",
+                    "description": "Search version. Use 2 for OpenSearch result/position response.",
+                },
+                "condition": {"type": "integer", "description": "Filter condition for version=2"},
+                "search_fields": {
+                    "type": "string",
+                    "description": "Comma-separated API search fields for version=2. Sent as Kaiten query parameter 'fields'.",
+                },
+                "start_position": {
+                    "type": "string",
+                    "description": "Search cursor for version=2 pagination.",
+                },
+                "include_search_preview": {
+                    "type": "boolean",
+                    "description": "Include search preview objects for version=2.",
+                },
                 "fields": {
                     "type": "string",
                     "description": "Comma-separated field names to keep in the response. Example: 'uid,title'",
@@ -52,7 +73,20 @@ TOOLS = (
             },
         },
         operation=OperationSpec(
-            method="GET", path_template="/documents", query_fields=("query", "limit", "offset")
+            method="GET",
+            path_template="/documents",
+            query_fields=(
+                "query",
+                "limit",
+                "offset",
+                "version",
+                "condition",
+                "start_position",
+                "include_search_preview",
+            ),
+        ),
+        runtime_behavior=RuntimeBehavior(
+            request_shaper=document_list_search_request,
         ),
         response_policy=ResponsePolicy(
             compact_supported=True, fields_supported=True, default_limit=50, result_kind="list"

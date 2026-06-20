@@ -504,11 +504,38 @@ cards
 | `created_before` | `string` | no | — | ISO datetime filter |
 | `updated_after` | `string` | no | — | ISO datetime filter |
 | `updated_before` | `string` | no | — | ISO datetime filter |
+| `first_moved_in_progress_after` | `string` | no | — | ISO datetime filter for first move into in-progress state |
+| `first_moved_in_progress_before` | `string` | no | — | ISO datetime filter for first move into in-progress state |
+| `last_moved_to_done_at_after` | `string` | no | — | ISO datetime filter for last move to done column |
+| `last_moved_to_done_at_before` | `string` | no | — | ISO datetime filter for last move to done column |
 | `due_date_after` | `string` | no | — | ISO datetime filter |
 | `due_date_before` | `string` | no | — | ISO datetime filter |
+| `tag` | `string` | no | — | Filter by tag name |
+| `type_ids` | `string` | no | — | Comma-separated card type IDs |
+| `owner_ids` | `string` | no | — | Comma-separated owner user IDs |
+| `responsible_ids` | `string` | no | — | Comma-separated responsible user IDs |
+| `column_ids` | `string` | no | — | Comma-separated column IDs |
+| `exclude_board_ids` | `string` | no | — | Comma-separated board IDs to exclude |
+| `exclude_lane_ids` | `string` | no | — | Comma-separated lane IDs to exclude |
+| `exclude_column_ids` | `string` | no | — | Comma-separated column IDs to exclude |
+| `exclude_owner_ids` | `string` | no | — | Comma-separated owner IDs to exclude |
+| `exclude_card_ids` | `string` | no | — | Comma-separated card IDs to exclude |
+| `organization_ids` | `string` | no | — | Comma-separated Service Desk organization IDs |
+| `additional_card_fields` | `string` | no | — | Comma-separated extra fields to request. Supported by API: description |
+| `search_fields` | `string` | no | — | Comma-separated fields to search in for version=2 |
+| `start_position` | `string` | no | — | Search cursor for version=2 pagination |
+| `filter` | `string` | no | — | Encoded Kaiten filter query |
+| `order_by` | `string` | no | — | Sort field list |
+| `order_direction` | `string` | no | — | Sort direction list |
 | `external_id` | `string` | no | — | External ID filter |
+| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
 | `overdue` | `boolean` | no | — | Filter overdue cards |
 | `asap` | `boolean` | no | — | Filter ASAP cards |
+| `done_on_time` | `boolean` | no | — | Filter cards done on time |
+| `with_due_date` | `boolean` | no | — | Filter cards with due date |
+| `is_request` | `boolean` | no | — | Filter Service Desk request cards |
+| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2 |
+| `visible` | `string` | no | — | JSON-encoded visibility filter |
 | `archived` | `boolean` | no | — | Include archived |
 | `limit` | `integer` | no | — | Max results (default 50, max 100) |
 | `offset` | `integer` | no | — | Pagination offset |
@@ -563,21 +590,44 @@ cards
 | `created_before` | `string` | no | — | ISO datetime filter |
 | `updated_after` | `string` | no | — | ISO datetime filter |
 | `updated_before` | `string` | no | — | ISO datetime filter |
+| `first_moved_in_progress_after` | `string` | no | — | ISO datetime filter for first move into in-progress state |
+| `first_moved_in_progress_before` | `string` | no | — | ISO datetime filter for first move into in-progress state |
+| `last_moved_to_done_at_after` | `string` | no | — | ISO datetime filter for last move to done column |
+| `last_moved_to_done_at_before` | `string` | no | — | ISO datetime filter for last move to done column |
 | `due_date_after` | `string` | no | — | ISO datetime filter |
 | `due_date_before` | `string` | no | — | ISO datetime filter |
+| `tag` | `string` | no | — | Filter by tag name |
+| `type_ids` | `string` | no | — | Comma-separated type IDs |
+| `owner_ids` | `string` | no | — | Comma-separated owner IDs |
+| `responsible_ids` | `string` | no | — | Comma-separated responsible IDs |
+| `column_ids` | `string` | no | — | Comma-separated column IDs |
+| `exclude_board_ids` | `string` | no | — | Comma-separated board IDs to exclude |
+| `exclude_lane_ids` | `string` | no | — | Comma-separated lane IDs to exclude |
+| `exclude_column_ids` | `string` | no | — | Comma-separated column IDs to exclude |
+| `exclude_owner_ids` | `string` | no | — | Comma-separated owner IDs to exclude |
+| `exclude_card_ids` | `string` | no | — | Comma-separated card IDs to exclude |
+| `organization_ids` | `string` | no | — | Comma-separated Service Desk organization IDs |
+| `additional_card_fields` | `string` | no | — | Comma-separated extra fields to request. Supported by API: description |
+| `search_fields` | `string` | no | — | Comma-separated fields to search in for version=2 |
+| `start_position` | `string` | no | — | Search cursor for version=2 pagination |
+| `filter` | `string` | no | — | Encoded Kaiten filter query |
+| `order_by` | `string` | no | — | Sort field list |
+| `order_direction` | `string` | no | — | Sort direction list |
 | `external_id` | `string` | no | — | External ID filter |
+| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
 | `overdue` | `boolean` | no | — | Filter overdue cards |
 | `asap` | `boolean` | no | — | Filter ASAP cards |
+| `done_on_time` | `boolean` | no | — | Filter cards done on time |
+| `with_due_date` | `boolean` | no | — | Filter cards with due date |
+| `is_request` | `boolean` | no | — | Filter Service Desk request cards |
+| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2 |
+| `visible` | `string` | no | — | JSON-encoded visibility filter |
 | `archived` | `boolean` | no | — | Include archived |
 | `limit` | `integer` | no | — | Max results (default 50, max 100) |
 | `offset` | `integer` | no | — | Pagination offset |
 | `compact` | `boolean` | no | — | Return compact response without heavy fields (default true for bulk) |
 | `relations` | `string` | no | — | Relations to include or 'none' to exclude all nested objects (default 'none' for bulk). |
 | `fields` | `string` | no | — | Comma-separated field names to return per card after pagination. |
-| `owner_ids` | `string` | no | — | Comma-separated owner IDs |
-| `responsible_ids` | `string` | no | — | Comma-separated responsible IDs |
-| `column_ids` | `string` | no | — | Comma-separated column IDs |
-| `type_ids` | `string` | no | — | Comma-separated type IDs |
 | `selection` | `string` | no | `all`, `active_only`, `archived_only` | Normalized bulk selection: all, active_only, or archived_only. |
 | `page_size` | `integer` | no | — | Cards per page (default 100, max 100) |
 | `max_pages` | `integer` | no | — | Safety limit on pages to fetch (default 50) |
@@ -7035,6 +7085,11 @@ documents
 | `query` | `string` | no | — | Search filter |
 | `limit` | `integer` | no | — | Max results (default: 50) |
 | `offset` | `integer` | no | — | Pagination offset |
+| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
+| `condition` | `integer` | no | — | Filter condition for version=2 |
+| `search_fields` | `string` | no | — | Comma-separated API search fields for version=2. Sent as Kaiten query parameter 'fields'. |
+| `start_position` | `string` | no | — | Search cursor for version=2 pagination. |
+| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2. |
 | `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'uid,title' |
 | `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
 
