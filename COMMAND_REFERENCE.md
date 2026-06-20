@@ -7024,8 +7024,8 @@ documents
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/documents` |
-| Compact | `no` |
-| Fields | `no` |
+| Compact | `yes` |
+| Fields | `yes` |
 | Heavy | `no` |
 
 **Arguments**
@@ -7035,10 +7035,13 @@ documents
 | `query` | `string` | no | — | Search filter |
 | `limit` | `integer` | no | — | Max results (default: 50) |
 | `offset` | `integer` | no | — | Pagination offset |
+| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'uid,title' |
+| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
 
 **Examples**
 
 - List documents.: `kaiten documents list --query "Design" --json`
+- List documents with a narrow response surface.: `kaiten documents list --compact --fields uid,title --json`
 
 **Notes**
 

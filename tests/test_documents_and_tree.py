@@ -168,6 +168,34 @@ async def test_execute_list_documents_injects_default_limit(monkeypatch):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_execute_list_documents_compact_and_fields_are_local_transforms(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "50"}).mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "uid": "doc-1",
+                    "title": "Spec",
+                    "content": {"type": "doc"},
+                    "owner": {"id": 7, "full_name": "Alice", "avatar_url": "https://example.test/a.png"},
+                }
+            ],
+        )
+    )
+
+    tool = resolve_tool("documents.list")
+    payload = merge_inputs(tool, {"compact": True, "fields": "uid,title"})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert dict(route.calls[0].request.url.params) == {"limit": "50"}
+    assert result == [{"uid": "doc-1", "title": "Spec"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_execute_document_file_get_url_returns_signed_url(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")

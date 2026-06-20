@@ -40,16 +40,31 @@ TOOLS = (
                 "query": {"type": "string", "description": "Search filter"},
                 "limit": {"type": "integer", "description": "Max results (default: 50)"},
                 "offset": {"type": "integer", "description": "Pagination offset"},
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep in the response. Example: 'uid,title'",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields (avatars, nested user objects)",
+                    "default": False,
+                },
             },
         },
         operation=OperationSpec(
             method="GET", path_template="/documents", query_fields=("query", "limit", "offset")
         ),
-        response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, default_limit=50, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command='kaiten documents list --query "Design" --json',
                 description="List documents.",
+            ),
+            ExampleSpec(
+                command="kaiten documents list --compact --fields uid,title --json",
+                description="List documents with a narrow response surface.",
             ),
         ),
     ),
