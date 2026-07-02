@@ -46,38 +46,41 @@ from kaiten_cli.registry.tree import TOOLS as TREE_TOOLS
 from kaiten_cli.registry.utilities import TOOLS as UTILITY_TOOLS
 from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 
-TOOL_SET: tuple[ToolSpec, ...] = (
-    SPACE_TOOLS
-    + AUTOMATION_TOOLS
-    + BOARD_TOOLS
-    + CARD_TOOLS
-    + CARD_TYPE_TOOLS
-    + CHART_TOOLS
-    + BLOCKER_TOOLS
-    + CARD_RELATION_TOOLS
-    + COLUMN_TOOLS
-    + LANE_TOOLS
-    + CHECKLIST_TOOLS
-    + COMMENT_TOOLS
-    + CUSTOM_DIRECTORY_TOOLS
-    + CUSTOM_PROPERTY_TOOLS
-    + DOCUMENT_TOOLS
-    + EXTERNAL_LINK_TOOLS
-    + FILE_TOOLS
-    + TAG_TOOLS
-    + MEMBER_TOOLS
-    + PROJECT_TOOLS
-    + QUERY_TOOLS
-    + ROLE_AND_GROUP_TOOLS
-    + SCIM_TOOLS
-    + SERVICE_DESK_TOOLS
-    + AUDIT_AND_ANALYTICS_TOOLS
-    + SNAPSHOT_TOOLS
-    + TIME_LOG_TOOLS
-    + SUBSCRIBER_TOOLS
-    + TREE_TOOLS
-    + UTILITY_TOOLS
-    + WEBHOOK_TOOLS
+REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
+    ("spaces", SPACE_TOOLS),
+    ("automations", AUTOMATION_TOOLS),
+    ("boards", BOARD_TOOLS),
+    ("cards", CARD_TOOLS),
+    ("card_types", CARD_TYPE_TOOLS),
+    ("charts", CHART_TOOLS),
+    ("blockers", BLOCKER_TOOLS),
+    ("card_relations", CARD_RELATION_TOOLS),
+    ("columns", COLUMN_TOOLS),
+    ("lanes", LANE_TOOLS),
+    ("checklists", CHECKLIST_TOOLS),
+    ("comments", COMMENT_TOOLS),
+    ("custom_directories", CUSTOM_DIRECTORY_TOOLS),
+    ("custom_properties", CUSTOM_PROPERTY_TOOLS),
+    ("documents", DOCUMENT_TOOLS),
+    ("external_links", EXTERNAL_LINK_TOOLS),
+    ("files", FILE_TOOLS),
+    ("tags", TAG_TOOLS),
+    ("members", MEMBER_TOOLS),
+    ("projects", PROJECT_TOOLS),
+    ("query", QUERY_TOOLS),
+    ("roles_and_groups", ROLE_AND_GROUP_TOOLS),
+    ("scim", SCIM_TOOLS),
+    ("service_desk", SERVICE_DESK_TOOLS),
+    ("audit_and_analytics", AUDIT_AND_ANALYTICS_TOOLS),
+    ("snapshot", SNAPSHOT_TOOLS),
+    ("time_logs", TIME_LOG_TOOLS),
+    ("subscribers", SUBSCRIBER_TOOLS),
+    ("tree", TREE_TOOLS),
+    ("utilities", UTILITY_TOOLS),
+    ("webhooks", WEBHOOK_TOOLS),
+)
+TOOL_SET: tuple[ToolSpec, ...] = tuple(
+    tool for _, module_tools in REGISTRY_MODULES for tool in module_tools
 )
 TOOLS_BY_CANONICAL: dict[str, ToolSpec] = {tool.canonical_name: tool for tool in TOOL_SET}
 TOOLS_BY_ALIAS: dict[str, ToolSpec] = {tool.mcp_alias: tool for tool in TOOL_SET}
@@ -85,6 +88,10 @@ TOOLS_BY_ALIAS: dict[str, ToolSpec] = {tool.mcp_alias: tool for tool in TOOL_SET
 
 def iter_tools() -> tuple[ToolSpec, ...]:
     return TOOL_SET
+
+
+def iter_module_tools() -> tuple[tuple[str, tuple[ToolSpec, ...]], ...]:
+    return REGISTRY_MODULES
 
 
 def resolve_tool(identifier: str) -> ToolSpec:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import sys
 import time
+from collections import defaultdict
 from typing import Any
 
 import click
@@ -15,7 +16,8 @@ from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
 from kaiten_cli.errors import BatchExecutionError, CliError, ConfigError, InternalError, ValidationError
 from kaiten_cli.models import GlobalOptions, ToolSpec
 from kaiten_cli.profiles import add_profile, list_profiles, remove_profile, show_profile, use_profile
-from kaiten_cli.registry import iter_tools
+from kaiten_cli.registry import iter_module_tools, iter_tools
+from kaiten_cli.registry.module_docs import MODULE_SPECS_BY_KEY
 from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
@@ -23,6 +25,7 @@ from kaiten_cli.runtime.trace import ExecutionStats, TraceRecorder, bulk_trace_m
 
 
 _CURRENT_ARGV: list[str] | None = None
+CLICK_CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 REPOSITORY_URL = "https://github.com/ViktorOgnev/kaiten-cli"
 README_URL = f"{REPOSITORY_URL}/blob/master/README.md"
 COMMAND_REFERENCE_URL = f"{REPOSITORY_URL}/blob/master/COMMAND_REFERENCE.md"
@@ -75,10 +78,19 @@ def _ctx_options(ctx: click.Context) -> GlobalOptions:
     return ctx.ensure_object(GlobalOptions)
 
 
+def _discard_result_stats(ctx: click.Context) -> None:
+    ctx.meta.pop("last_stats_payload", None)
+
+
 def _echo_result(ctx: click.Context, command: str, data: Any) -> None:
     options = _ctx_options(ctx)
     stats = ctx.meta.pop("last_stats_payload", None)
     click.echo(render_success(command, data, options.json_mode, stats=stats))
+
+
+def _echo_human_result(ctx: click.Context, text: str) -> None:
+    _discard_result_stats(ctx)
+    click.echo(text)
 
 
 def _fail(ctx: click.Context, command: str | None, error: CliError) -> None:
@@ -141,6 +153,204 @@ def _emit_stats_summary(ctx: click.Context, stats_payload: dict[str, Any]) -> No
         f"cache_hits={cache_hits}",
         err=True,
     )
+
+
+def _cli_command_from_canonical(canonical_name: str) -> str:
+    return "kaiten " + canonical_name.replace(".", " ")
+
+
+def _cli_option_name(argument_name: str) -> str:
+    return "--" + argument_name.replace("_", "-")
+
+
+def _yes_no(value: Any) -> str:
+    return "yes" if bool(value) else "no"
+
+
+def _format_enum(values: Any) -> str:
+    if not values:
+        return ""
+    return " enum=" + "|".join(str(value) for value in values)
+
+
+def _format_short_help(text: str) -> str:
+    first_line = text.strip().splitlines()[0] if text.strip() else "Kaiten command group."
+    first_sentence = first_line.split(". ")[0].rstrip(".")
+    return first_sentence + "."
+
+
+def _build_namespace_help() -> dict[tuple[str, ...], tuple[str, str]]:
+    buckets: dict[tuple[str, ...], dict[str, Any]] = defaultdict(
+        lambda: {"modules": set(), "children": set(), "total": 0}
+    )
+    for module_key, tools in iter_module_tools():
+        for tool in tools:
+            namespace_segments = tool.namespace_segments
+            for index in range(1, len(namespace_segments) + 1):
+                path = namespace_segments[:index]
+                buckets[path]["modules"].add(module_key)
+                buckets[path]["total"] += 1
+                if index == len(namespace_segments):
+                    buckets[path]["children"].add(tool.action)
+                else:
+                    buckets[path]["children"].add(namespace_segments[index])
+
+    help_by_path: dict[tuple[str, ...], tuple[str, str]] = {}
+    for path, bucket in buckets.items():
+        modules = sorted(bucket["modules"])
+        specs = [MODULE_SPECS_BY_KEY[module] for module in modules if module in MODULE_SPECS_BY_KEY]
+        if len(specs) == 1:
+            summary = specs[0].description
+        elif specs:
+            labels = ", ".join(spec.label for spec in specs)
+            summary = f"Commands from these Kaiten areas: {labels}."
+        else:
+            summary = f"Kaiten command group for {'.'.join(path)}."
+
+        children = sorted(bucket["children"])
+        child_sample = ", ".join(children[:8])
+        if len(children) > 8:
+            child_sample += f", and {len(children) - 8} more"
+        detail = (
+            f"{summary}\n\n"
+            f"Contains {bucket['total']} command"
+            f"{'' if bucket['total'] == 1 else 's'} under: {child_sample}."
+        )
+        help_by_path[path] = (detail, _format_short_help(summary))
+    return help_by_path
+
+
+NAMESPACE_HELP = _build_namespace_help()
+
+
+def _render_search_tools_text(query: str, results: list[dict[str, Any]]) -> str:
+    lines = [f"Search results for: {query}", ""]
+    if not results:
+        lines.extend(
+            [
+                "No matching commands found.",
+                "",
+                "Try a broader query or inspect the full command list with: kaiten --help",
+            ]
+        )
+        return "\n".join(lines)
+
+    for index, item in enumerate(results, start=1):
+        canonical_name = item["canonical_name"]
+        flags = [
+            str(item.get("method", "GET")),
+            "mutation" if item.get("mutation") else "read",
+            str(item.get("execution_mode", "direct_http")),
+            f"cache={item.get('cache_policy', 'unknown')}",
+        ]
+        if item.get("heavy"):
+            flags.append("heavy")
+
+        lines.append(f"{index}. {canonical_name}")
+        lines.append(f"   CLI: {_cli_command_from_canonical(canonical_name)}")
+        lines.append(f"   {item.get('description', '').strip()}")
+        lines.append(f"   {' | '.join(flags)}")
+        if item.get("bulk_alternative"):
+            lines.append(f"   Bulk alternative: {item['bulk_alternative']}")
+        notes = item.get("usage_notes") or []
+        if notes:
+            lines.append(f"   Note: {notes[0]}")
+        lines.append(f"   Next: kaiten describe {canonical_name}; kaiten examples {canonical_name}")
+        lines.append("")
+
+    lines.append("Use --json before the command for machine-readable output.")
+    return "\n".join(lines).rstrip()
+
+
+def _render_describe_text(description: dict[str, Any]) -> str:
+    canonical_name = description["canonical_name"]
+    lines = [
+        canonical_name,
+        "",
+        f"Description: {description.get('description', '')}",
+        f"CLI: {_cli_command_from_canonical(canonical_name)}",
+        f"MCP alias: {description.get('mcp_alias', '')}",
+        (
+            f"API: {description.get('method', '')} {description.get('path_template', '')} "
+            f"| mutation={_yes_no(description.get('mutation'))} "
+            f"| mode={description.get('execution_mode', '')}"
+        ),
+        (
+            f"Cache: {description.get('cache_policy', '')} "
+            f"({description.get('cache_guidance', {}).get('strategy', 'unknown')})"
+        ),
+    ]
+
+    response_policy = description.get("response_policy", {})
+    lines.append(
+        "Response: "
+        f"kind={response_policy.get('result_kind', 'unknown')} "
+        f"| compact={_yes_no(response_policy.get('compact_supported'))} "
+        f"| fields={_yes_no(response_policy.get('fields_supported'))} "
+        f"| heavy={_yes_no(response_policy.get('heavy'))}"
+    )
+
+    if description.get("bulk_alternative"):
+        lines.append(f"Bulk alternative: {description['bulk_alternative']}")
+    if live_contract := description.get("live_contract"):
+        statuses = ", ".join(str(status) for status in live_contract.get("expected_statuses", []))
+        lines.append(f"Live contract: {live_contract.get('status')} ({statuses or 'no statuses'})")
+        lines.append(f"Live note: {live_contract.get('note')}")
+
+    arguments = description.get("arguments") or []
+    lines.extend(["", "Arguments:"])
+    if arguments:
+        for argument in arguments:
+            required = "required" if argument.get("required") else "optional"
+            type_display = argument.get("type_display") or argument.get("type") or "unknown"
+            option_name = _cli_option_name(str(argument.get("name")))
+            enum_display = _format_enum(argument.get("enum"))
+            arg_description = argument.get("description") or "No description."
+            lines.append(
+                f"  {option_name} ({type_display}, {required}{enum_display}): "
+                f"{arg_description}"
+            )
+    else:
+        lines.append("  No tool-specific arguments.")
+
+    examples = description.get("examples") or []
+    if examples:
+        lines.extend(["", "Examples:"])
+        for example in examples:
+            lines.append(f"  {example}")
+
+    notes = description.get("usage_notes") or []
+    cache_guidance = description.get("cache_guidance") or {}
+    rendered_notes = [
+        cache_guidance.get("guidance"),
+        cache_guidance.get("refresh_hint"),
+        *notes,
+    ]
+    rendered_notes = [note for note in rendered_notes if note]
+    if rendered_notes:
+        lines.extend(["", "Notes:"])
+        for note in rendered_notes:
+            lines.append(f"  - {note}")
+
+    lines.extend(
+        [
+            "",
+            f"Next: kaiten examples {canonical_name}",
+            "Use --json before the command for machine-readable output.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_examples_text(identifier: str, examples: list[str]) -> str:
+    lines = [f"Examples for: {identifier}", ""]
+    if not examples:
+        lines.append("No examples registered for this command.")
+    else:
+        for index, example in enumerate(examples, start=1):
+            lines.append(f"{index}. {example}")
+    lines.extend(["", f"Next: kaiten describe {identifier}"])
+    return "\n".join(lines)
 
 
 def _agent_help_payload() -> dict[str, Any]:
@@ -368,6 +578,8 @@ def _make_command(tool: ToolSpec, *, hidden: bool = False) -> click.Command:
     return click.Command(
         name=tool.action if not hidden else tool.mcp_alias,
         help=tool.description,
+        short_help=tool.description,
+        context_settings=CLICK_CONTEXT_SETTINGS,
         params=_command_params(tool),
         callback=_dynamic_callback(tool),
         hidden=hidden,
@@ -376,10 +588,25 @@ def _make_command(tool: ToolSpec, *, hidden: bool = False) -> click.Command:
 
 def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     group = root
+    current_path: tuple[str, ...] = ()
     for segment in segments:
+        current_path = current_path + (segment,)
         existing = group.commands.get(segment)
         if existing is None:
-            nested = click.Group(name=segment, no_args_is_help=True)
+            group_help, short_help = NAMESPACE_HELP.get(
+                current_path,
+                (
+                    f"Kaiten command group for {'.'.join(current_path)}.",
+                    f"Kaiten command group for {'.'.join(current_path)}.",
+                ),
+            )
+            nested = click.Group(
+                name=segment,
+                no_args_is_help=True,
+                help=group_help,
+                short_help=short_help,
+                context_settings=CLICK_CONTEXT_SETTINGS,
+            )
             group.add_command(nested)
             group = nested
             continue
@@ -390,7 +617,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 
 
 @click.group(
-    context_settings={"help_option_names": ["-h", "--help"]},
+    context_settings=CLICK_CONTEXT_SETTINGS,
     no_args_is_help=True,
     help=CLI_HELP,
     epilog=CLI_EPILOG,
@@ -449,26 +676,40 @@ def cli(
     )
 
 
-@cli.command("search-tools")
-@click.argument("query", type=click.STRING)
+@cli.command(
+    "search-tools",
+    help="Search the command registry and show ranked commands with usage guidance.",
+    short_help="Search commands with usage guidance.",
+)
+@click.argument("query", type=click.STRING, metavar="QUERY")
 @click.pass_context
 def search_tools_command(ctx: click.Context, query: str) -> None:
     try:
         result = _run_traced(ctx, "search-tools", "meta", lambda: (search_tools(query), None))
-        _echo_result(ctx, "search-tools", result)
+        if _ctx_options(ctx).json_mode:
+            _echo_result(ctx, "search-tools", result)
+        else:
+            _echo_human_result(ctx, _render_search_tools_text(query, result))
     except CliError as error:
         _fail(ctx, "search-tools", error)
     except Exception as exc:  # pragma: no cover - safety net
         _emit_internal(ctx, "search-tools", exc)
 
 
-@cli.command("describe")
-@click.argument("identifier", type=click.STRING)
+@cli.command(
+    "describe",
+    help="Describe one command: API path, arguments, cache behavior, examples and notes.",
+    short_help="Describe one command.",
+)
+@click.argument("identifier", type=click.STRING, metavar="IDENTIFIER")
 @click.pass_context
 def describe_command(ctx: click.Context, identifier: str) -> None:
     try:
         result = _run_traced(ctx, "describe", "meta", lambda: (describe_tool(identifier), None))
-        _echo_result(ctx, "describe", result)
+        if _ctx_options(ctx).json_mode:
+            _echo_result(ctx, "describe", result)
+        else:
+            _echo_human_result(ctx, _render_describe_text(result))
     except KeyError:
         _fail(ctx, "describe", ConfigError(f"Unknown command: {identifier}"))
     except CliError as error:
@@ -477,13 +718,20 @@ def describe_command(ctx: click.Context, identifier: str) -> None:
         _emit_internal(ctx, "describe", exc)
 
 
-@cli.command("examples")
-@click.argument("identifier", type=click.STRING)
+@cli.command(
+    "examples",
+    help="Show runnable examples for one command.",
+    short_help="Show command examples.",
+)
+@click.argument("identifier", type=click.STRING, metavar="IDENTIFIER")
 @click.pass_context
 def examples_command(ctx: click.Context, identifier: str) -> None:
     try:
         result = _run_traced(ctx, "examples", "meta", lambda: ({"examples": tool_examples(identifier)}, None))
-        _echo_result(ctx, "examples", result)
+        if _ctx_options(ctx).json_mode:
+            _echo_result(ctx, "examples", result)
+        else:
+            _echo_human_result(ctx, _render_examples_text(identifier, result["examples"]))
     except KeyError:
         _fail(ctx, "examples", ConfigError(f"Unknown command: {identifier}"))
     except CliError as error:
@@ -492,7 +740,11 @@ def examples_command(ctx: click.Context, identifier: str) -> None:
         _emit_internal(ctx, "examples", exc)
 
 
-@cli.command("agent-help")
+@cli.command(
+    "agent-help",
+    help="Show an agent-oriented bootstrap with discovery, bulk-read and snapshot guidance.",
+    short_help="Show agent-oriented bootstrap guidance.",
+)
 @click.pass_context
 def agent_help_command(ctx: click.Context) -> None:
     try:
@@ -508,23 +760,52 @@ def agent_help_command(ctx: click.Context) -> None:
         _emit_internal(ctx, "agent-help", exc)
 
 
-@cli.group("profile", no_args_is_help=True)
+@cli.group(
+    "profile",
+    no_args_is_help=True,
+    help="Manage named Kaiten credential profiles and per-profile cache defaults.",
+    short_help="Manage Kaiten profiles.",
+    context_settings=CLICK_CONTEXT_SETTINGS,
+)
 def profile_group() -> None:
     """Manage profiles."""
 
 
-@profile_group.command("add")
-@click.argument("name", type=click.STRING)
-@click.option("--domain", required=True, type=click.STRING)
-@click.option("--token", required=True, type=click.STRING)
+@profile_group.command(
+    "add",
+    help="Create or update a named profile with Kaiten domain, API token and cache defaults.",
+    short_help="Create or update a profile.",
+)
+@click.argument("name", type=click.STRING, metavar="NAME")
+@click.option(
+    "--domain",
+    required=True,
+    type=click.STRING,
+    help="Kaiten tenant subdomain or full base URL, for example acme or https://acme.kaiten.ru.",
+)
+@click.option("--token", required=True, type=click.STRING, help="Kaiten API token for this profile.")
 @click.option(
     "--sandbox/--no-sandbox",
     default=False,
     help="Deprecated compatibility metadata. Does not affect mutations or live-test gating.",
 )
-@click.option("--cache-mode", type=click.Choice(["auto", "off", "readwrite", "refresh"]), default=None)
-@click.option("--cache-ttl-seconds", type=click.INT, default=None)
-@click.option("--set-active/--no-set-active", default=False)
+@click.option(
+    "--cache-mode",
+    type=click.Choice(["auto", "off", "readwrite", "refresh"]),
+    default=None,
+    help="Default persistent cache mode to store with this profile.",
+)
+@click.option(
+    "--cache-ttl-seconds",
+    type=click.INT,
+    default=None,
+    help="Default persistent cache TTL in seconds for this profile.",
+)
+@click.option(
+    "--set-active/--no-set-active",
+    default=False,
+    help="Make this profile the active default immediately after saving it.",
+)
 @click.pass_context
 def profile_add_command(
     ctx: click.Context,
@@ -561,8 +842,12 @@ def profile_add_command(
         _emit_internal(ctx, "profile.add", exc)
 
 
-@profile_group.command("use")
-@click.argument("name", type=click.STRING)
+@profile_group.command(
+    "use",
+    help="Set an existing profile as the active default for future commands.",
+    short_help="Set the active profile.",
+)
+@click.argument("name", type=click.STRING, metavar="NAME")
 @click.pass_context
 def profile_use_command(ctx: click.Context, name: str) -> None:
     try:
@@ -573,7 +858,11 @@ def profile_use_command(ctx: click.Context, name: str) -> None:
         _emit_internal(ctx, "profile.use", exc)
 
 
-@profile_group.command("list")
+@profile_group.command(
+    "list",
+    help="List configured profiles and show which one is active.",
+    short_help="List configured profiles.",
+)
 @click.pass_context
 def profile_list_command(ctx: click.Context) -> None:
     try:
@@ -584,8 +873,12 @@ def profile_list_command(ctx: click.Context) -> None:
         _emit_internal(ctx, "profile.list", exc)
 
 
-@profile_group.command("show")
-@click.argument("name", required=False, type=click.STRING)
+@profile_group.command(
+    "show",
+    help="Show one profile, or the active profile when NAME is omitted.",
+    short_help="Show profile details.",
+)
+@click.argument("name", required=False, type=click.STRING, metavar="NAME")
 @click.pass_context
 def profile_show_command(ctx: click.Context, name: str | None) -> None:
     try:
@@ -596,8 +889,12 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
         _emit_internal(ctx, "profile.show", exc)
 
 
-@profile_group.command("remove")
-@click.argument("name", type=click.STRING)
+@profile_group.command(
+    "remove",
+    help="Remove a saved profile by name.",
+    short_help="Remove a profile.",
+)
+@click.argument("name", type=click.STRING, metavar="NAME")
 @click.pass_context
 def profile_remove_command(ctx: click.Context, name: str) -> None:
     try:
