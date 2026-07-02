@@ -36,6 +36,113 @@ async def test_execute_list_cards_compact_and_fields(monkeypatch):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_execute_checklists_list_reads_embedded_card_checklists(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": 10,
+                "checklists": [
+                    {
+                        "id": 20,
+                        "name": "Ready",
+                        "items": [{"id": 30, "text": "Review", "checked": False}],
+                    }
+                ],
+            },
+        )
+    )
+
+    tool = resolve_tool("checklists.list")
+    payload = merge_inputs(tool, {"card_id": 10})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert result == [
+        {
+            "id": 20,
+            "name": "Ready",
+            "items": [{"id": 30, "text": "Review", "checked": False}],
+        }
+    ]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_checklists_list_returns_empty_when_card_has_no_checklists(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
+        return_value=Response(200, json={"id": 10})
+    )
+
+    tool = resolve_tool("checklists.list")
+    payload = merge_inputs(tool, {"card_id": 10})
+    result = await execute_tool(tool, payload)
+
+    assert result == []
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_checklist_items_list_reads_items_from_matching_embedded_checklist(
+    monkeypatch,
+):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": 10,
+                "checklists": [
+                    {"id": 19, "items": [{"id": 29, "text": "Skip"}]},
+                    {"id": 20, "items": [{"id": 30, "text": "Review"}]},
+                ],
+            },
+        )
+    )
+
+    tool = resolve_tool("checklist-items.list")
+    payload = merge_inputs(tool, {"card_id": 10, "checklist_id": 20})
+    result = await execute_tool(tool, payload)
+
+    assert route.called
+    assert result == [{"id": 30, "text": "Review"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_checklist_items_list_matches_embedded_checklist_id_alias(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": 10,
+                "checklists": [
+                    {
+                        "id": 99,
+                        "checklist_id": 20,
+                        "items": [{"id": 30, "text": "Review"}],
+                    }
+                ],
+            },
+        )
+    )
+
+    tool = resolve_tool("checklist-items.list")
+    payload = merge_inputs(tool, {"card_id": 10, "checklist_id": 20})
+    result = await execute_tool(tool, payload)
+
+    assert result == [{"id": 30, "text": "Review"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_execute_uses_custom_http_host_from_env(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "http://localhost:3000")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")

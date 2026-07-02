@@ -66,12 +66,18 @@ Harness делает следующее:
 
 ## Synthetic contracts
 
-Сейчас один явный synthetic read:
+Явные synthetic reads:
 
 - `projects.cards.list`
   - сначала CLI пробует `GET /projects/{project_id}/cards`
   - если live API отвечает `405`, CLI делает `GET /projects/{project_id}?with_cards_data=true`
   - затем извлекает embedded cards list из project payload
+- `checklists.list`
+  - direct `GET /cards/{card_id}/checklists` возвращает `405`
+  - CLI делает `GET /cards/{card_id}` и извлекает embedded `checklists`
+- `checklist-items.list`
+  - direct `GET /cards/{card_id}/checklists/{checklist_id}/items` возвращает `405`
+  - CLI делает `GET /cards/{card_id}` и извлекает `items` из matching checklist
 
 ## Expected-error contracts
 
@@ -79,8 +85,6 @@ Harness делает следующее:
 
 - `removed-boards.list` -> `405`
 - `removed-cards.list` -> `405`
-- `checklists.list` -> `405`
-- `checklist-items.list` -> `405`
 - `card-subscribers.list` -> `405`
 - `column-subscribers.list` -> `405`
 

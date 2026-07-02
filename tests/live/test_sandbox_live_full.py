@@ -251,7 +251,8 @@ def _exercise_card_adjacent(h, tmp_path: Path) -> None:
     checklist = h.run_tool("checklists.create", card_id=h.state["parent_card_id"], name=h.name("checklist"))
     h.state["checklist_id"] = checklist["id"]
     h.push_cleanup("delete checklist", "checklists.delete", card_id=h.state["parent_card_id"], checklist_id=h.state["checklist_id"])
-    h.run_tool_expect_api_error("checklists.list", {405}, card_id=h.state["parent_card_id"])
+    checklists = h.run_tool("checklists.list", card_id=h.state["parent_card_id"])
+    assert any(item.get("id") == h.state["checklist_id"] for item in checklists)
     h.run_tool("checklists.update", card_id=h.state["parent_card_id"], checklist_id=h.state["checklist_id"], name=h.name("checklist-updated"))
 
     checklist_item = h.run_tool(
@@ -268,12 +269,12 @@ def _exercise_card_adjacent(h, tmp_path: Path) -> None:
         checklist_id=h.state["checklist_id"],
         item_id=h.state["checklist_item_id"],
     )
-    h.run_tool_expect_api_error(
+    checklist_items = h.run_tool(
         "checklist-items.list",
-        {405},
         card_id=h.state["parent_card_id"],
         checklist_id=h.state["checklist_id"],
     )
+    assert any(item.get("id") == h.state["checklist_item_id"] for item in checklist_items)
     h.run_tool(
         "checklist-items.update",
         card_id=h.state["parent_card_id"],

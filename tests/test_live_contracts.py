@@ -39,3 +39,11 @@ def test_projects_cards_list_is_classified_as_synthetic_read():
 
     assert contract.status == "synthetic_read"
     assert contract.expected_statuses == (405,)
+
+
+def test_checklist_reads_are_classified_as_synthetic_reads():
+    for tool_name in ("checklists.list", "checklist-items.list"):
+        contract = get_live_contract(tool_name)
+
+        assert contract.status == "synthetic_read"
+        assert contract.expected_statuses == (405,)

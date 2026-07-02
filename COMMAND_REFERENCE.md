@@ -1879,10 +1879,10 @@ space-template-checklists
 | Description | List all items in a checklist on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
-| Execution mode | `direct_http` |
+| Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/checklists/{checklist_id}/items` |
+| Path template | `/cards/{card_id}` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -1902,8 +1902,9 @@ space-template-checklists
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Live contract: `live_passed_as_expected_error`; expected statuses: `405`
-- Live note: Sandbox returns 405 for checklist item listing; the live suite validates the expected error path.
+- Direct checklist item listing is unsupported on sandbox; this command reads the card and extracts items from the matching embedded checklist.
+- Live contract: `synthetic_read`; expected statuses: `405`
+- Live note: Direct checklist item listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklist items.
 
 ### `checklist-items.update`
 
@@ -2020,10 +2021,10 @@ space-template-checklists
 | Description | List all checklists on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
-| Execution mode | `direct_http` |
+| Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/checklists` |
+| Path template | `/cards/{card_id}` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -2042,8 +2043,9 @@ space-template-checklists
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
-- Live contract: `live_passed_as_expected_error`; expected statuses: `405`
-- Live note: Sandbox returns 405 for checklist listing; the live suite validates the expected error path.
+- Direct checklist listing is unsupported on sandbox; this command reads the card and extracts embedded checklists.
+- Live contract: `synthetic_read`; expected statuses: `405`
+- Live note: Direct checklist listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklists.
 
 ### `checklists.update`
 

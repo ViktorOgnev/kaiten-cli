@@ -27,6 +27,8 @@
 | Command | Primary endpoint | Status | Fallback |
 |---------|------------------|--------|----------|
 | `projects.cards.list` | `GET /projects/{project_id}/cards` | `synthetic_read` | При `405` CLI делает `GET /projects/{project_id}?with_cards_data=true` и извлекает embedded cards list. |
+| `checklists.list` | `GET /cards/{card_id}` | `synthetic_read` | Replaces unsupported direct `GET /cards/{card_id}/checklists` by extracting embedded `checklists`. |
+| `checklist-items.list` | `GET /cards/{card_id}` | `synthetic_read` | Replaces unsupported direct `GET /cards/{card_id}/checklists/{checklist_id}/items` by extracting matching checklist `items`. |
 
 ## Stable expected-error contracts
 
@@ -34,8 +36,6 @@
 |---------|-------------|--------|-------------------|-------|
 | `removed-boards.list` | `GET /boards/removed` | `live_passed_as_expected_error` | `405` | Sandbox recycle-bin endpoint unsupported. |
 | `removed-cards.list` | `GET /cards/removed` | `live_passed_as_expected_error` | `405` | Sandbox recycle-bin endpoint unsupported. |
-| `checklists.list` | `GET /cards/{card_id}/checklists` | `live_passed_as_expected_error` | `405` | Direct checklist listing unsupported on sandbox. |
-| `checklist-items.list` | `GET /cards/{card_id}/checklists/{checklist_id}/items` | `live_passed_as_expected_error` | `405` | Direct checklist-item listing unsupported on sandbox. |
 | `card-subscribers.list` | `GET /cards/{card_id}/subscribers` | `live_passed_as_expected_error` | `405` | Direct subscriber listing unsupported on sandbox. |
 | `column-subscribers.list` | `GET /columns/{column_id}/subscribers` | `live_passed_as_expected_error` | `405` | Direct subscriber listing unsupported on sandbox. |
 | `service-desk.users.update` | `PATCH /service-desk/users/{user_id}` | `live_passed_as_expected_error` | `400`, `403`, `404`, `405` | Для текущего sandbox-аккаунта API возвращает `400 Should be service desk user`, если пользователь не является SD user. |

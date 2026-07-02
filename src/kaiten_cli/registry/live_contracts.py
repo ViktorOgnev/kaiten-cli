@@ -56,13 +56,13 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
         expected_statuses=(405,),
     ),
     "checklists.list": LiveContract(
-        status=LIVE_STATUS_PASSED_AS_EXPECTED_ERROR,
-        note="Sandbox returns 405 for checklist listing; the live suite validates the expected error path.",
+        status=LIVE_STATUS_SYNTHETIC_READ,
+        note="Direct checklist listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklists.",
         expected_statuses=(405,),
     ),
     "checklist-items.list": LiveContract(
-        status=LIVE_STATUS_PASSED_AS_EXPECTED_ERROR,
-        note="Sandbox returns 405 for checklist item listing; the live suite validates the expected error path.",
+        status=LIVE_STATUS_SYNTHETIC_READ,
+        note="Direct checklist item listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklist items.",
         expected_statuses=(405,),
     ),
     "card-subscribers.list": LiveContract(

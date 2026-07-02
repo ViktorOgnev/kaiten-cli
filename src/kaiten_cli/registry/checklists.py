@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy
+from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.behaviors import execute_checklist_items_list, execute_checklists_list
 
 
 TOOLS = (
@@ -48,13 +49,22 @@ TOOLS = (
             "required": ["card_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/cards/{card_id}/checklists", path_fields=("card_id",)
+            method="GET", path_template="/cards/{card_id}", path_fields=("card_id",)
+        ),
+        response_policy=ResponsePolicy(result_kind="list"),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="synthetic",
+            custom_executor=execute_checklists_list,
         ),
         examples=(
             ExampleSpec(
                 command="kaiten checklists list --card-id 10 --json",
                 description="List checklists on a card.",
             ),
+        ),
+        usage_notes=(
+            "Direct checklist listing is unsupported on sandbox; this command reads the card "
+            "and extracts embedded checklists.",
         ),
     ),
     make_tool(
@@ -148,14 +158,23 @@ TOOLS = (
         },
         operation=OperationSpec(
             method="GET",
-            path_template="/cards/{card_id}/checklists/{checklist_id}/items",
-            path_fields=("card_id", "checklist_id"),
+            path_template="/cards/{card_id}",
+            path_fields=("card_id",),
+        ),
+        response_policy=ResponsePolicy(result_kind="list"),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="synthetic",
+            custom_executor=execute_checklist_items_list,
         ),
         examples=(
             ExampleSpec(
                 command="kaiten checklist-items list --card-id 10 --checklist-id 20 --json",
                 description="List checklist items.",
             ),
+        ),
+        usage_notes=(
+            "Direct checklist item listing is unsupported on sandbox; this command reads the "
+            "card and extracts items from the matching embedded checklist.",
         ),
     ),
     make_tool(

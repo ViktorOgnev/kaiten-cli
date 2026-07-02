@@ -18,6 +18,7 @@ from kaiten_cli.runtime.support.card_move_url import (
     validate_url_domain,
 )
 from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_get
+from kaiten_cli.runtime.support.checklists import extract_card_checklists, extract_checklist_items
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
 from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
@@ -530,6 +531,38 @@ async def execute_cards_batch_get(
     if result["meta"]["succeeded"] == 0:
         raise BatchExecutionError("Failed to fetch cards for all requested card IDs.", result)
     return result
+
+
+async def execute_checklists_list(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    if reporter:
+        reporter("execution: synthetic checklist read from /cards/{card_id} payload")
+    card = await client.get(path, timeout=timeout)
+    return extract_card_checklists(card if isinstance(card, dict) else {})
+
+
+async def execute_checklist_items_list(
+    client,
+    tool,
+    payload: dict[str, Any],
+    path: str,
+    query: Query,
+    body: Body,
+    timeout: float,
+    reporter,
+) -> Any:
+    if reporter:
+        reporter("execution: synthetic checklist item read from /cards/{card_id} payload")
+    card = await client.get(path, timeout=timeout)
+    return extract_checklist_items(card if isinstance(card, dict) else {}, payload["checklist_id"])
 
 
 async def execute_comments_batch_list(
