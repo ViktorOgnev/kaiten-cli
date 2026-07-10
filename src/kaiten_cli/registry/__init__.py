@@ -183,6 +183,8 @@ def describe(identifier: str) -> dict:
         "description": tool.description,
         "method": tool.operation.method,
         "mutation": tool.is_mutation,
+        "read_only_allowed": tool.read_only_allowed,
+        "remote_side_effects": tool.remote_side_effects,
         "execution_mode": tool.execution_mode,
         "cache_policy": tool.cache_policy,
         "cache_guidance": cache_guidance_for(tool),

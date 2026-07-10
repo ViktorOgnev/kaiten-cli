@@ -20,6 +20,8 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Utilities",
 ]
 dependencies = [
@@ -37,12 +39,15 @@ Issues = "https://github.com/ViktorOgnev/kaiten-cli/issues"
 test = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
     "pytest-timeout>=2.3",
     "pytest-socket>=0.7",
     "respx>=0.22",
 ]
 dev = [
     "kaiten-cli[test]",
+    "build>=1.2",
+    "pip-audit>=2.9",
     "ruff>=0.15.0",
 ]
 
@@ -65,6 +70,7 @@ include = [
     "/AGENTS.md",
     "/LIVE_VALIDATION.md",
     "/API_BEHAVIOR_MATRIX.md",
+    "/SECURITY.md",
     "/docs",
     "/scripts",
     "/skills",
@@ -84,3 +90,11 @@ markers = [
 target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["kaiten_cli"]
+
+[tool.coverage.report]
+fail_under = 75
+show_missing = true

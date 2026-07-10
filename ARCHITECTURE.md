@@ -51,13 +51,25 @@ Each CLI invocation builds one execution context for the selected profile.
 - request-scoped cache is always enabled for safe GET reads
 - identical in-flight GETs are deduplicated inside the same execution context
 - persistent disk cache defaults to `--cache-mode auto` for cacheable safe reads
+- persistent cache scope includes a one-way credential fingerprint, so different users of the same tenant/profile cannot reuse each other's cached responses
 - `auto` uses adaptive TTLs: small fresh reads stay short, while heavy batch/aggregated reads, closed historical windows, and dense same-family entity loops are retained longer
-- successful mutations clear persistent cache for the current profile/domain scope
+- worker clients share one execution-scoped rate limiter instead of multiplying the request budget by worker count
+- every attempted remote mutation clears persistent cache for the current credential scope, including ambiguous failures, so verification reads cannot reuse pre-mutation data
 - incompatible or corrupt local sqlite cache files are treated as disposable state and recreated automatically
+- credential config, HTTP cache, snapshots, and trace files are stored with user-only file permissions (`0600`); application-owned parent directories are `0700`, while existing user-selected trace/config parent modes are preserved
 - JSON success/error envelopes include runtime `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates
 - optional JSONL trace output can be appended through `--trace-file` or `KAITEN_TRACE_FILE`
 
 This keeps freshness controls explicit (`refresh` / `off`) while reducing repeated entity, page, and card-scoped reads in synthetic, aggregated, worker-pooled, and external-script paths.
+
+## Mutation Safety
+
+- Transport retries are limited to safe HTTP methods. An ambiguous timeout, connection failure, HTTP 5xx, or malformed successful response for a remote mutation is returned without retry and explicitly tells the caller to verify remote state.
+- Global `--read-only` and `KAITEN_CLI_READ_ONLY=1` block registry tools that mutate Kaiten through `RuntimeBehavior.enforce_mutation_guard`.
+- Local snapshot lifecycle commands opt out of that guard because they only write derived local sqlite state; their Kaiten API calls remain reads.
+- Three POST-backed chart retrieval commands opt out because they only submit analytics filters; chart build commands remain guarded because they create transient compute jobs.
+- Discovery exposes `read_only_allowed` separately from HTTP-method-derived `mutation`.
+- The agent gateway passes remote and local-storage read-only environment policies, disables ambient Codex user config/rules, applies request limits, and requires bearer authentication for non-loopback binds. Existing snapshots use a SQLite read-only connection inside that sandbox; snapshot lifecycle writes are rejected. Because the child still has shell access and Kaiten credentials, this is a cooperative safety layer rather than a hard authorization boundary; untrusted/non-loopback deployments require server-side credential restrictions and an external TLS/connection-limiting proxy.
 
 The trace layer records command-level facts such as duration, real HTTP request count, API wait time, retry/cache counters, grouped path families, and bulk metadata. It exists because outer Codex/session logs do not reliably see internal Kaiten subprocess calls from higher-level scripts.
 

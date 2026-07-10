@@ -133,7 +133,11 @@ def sanitize_prosemirror(node: Any) -> Any:
         node = {
             **node,
             "marks": [
-                ({**mark, "type": _MARK_ALIASES[mark["type"]]} if isinstance(mark, dict) and mark.get("type") in _MARK_ALIASES else mark)
+                (
+                    {**mark, "type": _MARK_ALIASES[mark["type"]]}
+                    if isinstance(mark, dict) and mark.get("type") in _MARK_ALIASES
+                    else mark
+                )
                 for mark in node["marks"]
             ],
         }

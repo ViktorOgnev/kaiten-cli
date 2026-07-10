@@ -34,9 +34,7 @@ def _read_trace_entries(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
 
 
@@ -48,7 +46,9 @@ def _summarize_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "retry_count": sum(int(entry.get("retry_count", 0)) for entry in entries),
         "cache_hits": {
             "request": sum(int(entry.get("cache_hits", {}).get("request", 0)) for entry in entries),
-            "inflight_dedup": sum(int(entry.get("cache_hits", {}).get("inflight_dedup", 0)) for entry in entries),
+            "inflight_dedup": sum(
+                int(entry.get("cache_hits", {}).get("inflight_dedup", 0)) for entry in entries
+            ),
             "disk": sum(int(entry.get("cache_hits", {}).get("disk", 0)) for entry in entries),
         },
     }
@@ -111,7 +111,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run reference kaiten-cli workflows and summarize wall time, trace stats, and output size."
     )
-    parser.add_argument("--spec", required=True, help="Path to a JSON spec with workflow definitions.")
+    parser.add_argument(
+        "--spec", required=True, help="Path to a JSON spec with workflow definitions."
+    )
     parser.add_argument(
         "--workdir",
         default=".",

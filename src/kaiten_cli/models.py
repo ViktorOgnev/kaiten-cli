@@ -95,6 +95,7 @@ class RuntimeBehavior:
     cache_policy: str | None = None
     requires_profile: bool = True
     enforce_mutation_guard: bool = True
+    remote_side_effects: bool | None = None
     apply_common_transforms: bool = True
 
 
@@ -152,6 +153,16 @@ class ToolSpec:
     def is_mutation(self) -> bool:
         return self.operation.method.upper() in {"POST", "PUT", "PATCH", "DELETE"}
 
+    @property
+    def read_only_allowed(self) -> bool:
+        return not (self.is_mutation and self.runtime_behavior.enforce_mutation_guard)
+
+    @property
+    def remote_side_effects(self) -> bool:
+        if self.runtime_behavior.remote_side_effects is not None:
+            return self.runtime_behavior.remote_side_effects
+        return self.is_mutation
+
 
 @dataclass(slots=True)
 class GlobalOptions:
@@ -164,6 +175,7 @@ class GlobalOptions:
     cache_mode: str | None = None
     cache_ttl_seconds: int | None = None
     trace_file: str | None = None
+    read_only: bool = False
 
 
 @dataclass(slots=True)

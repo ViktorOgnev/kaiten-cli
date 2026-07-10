@@ -49,7 +49,9 @@ async def fetch_project_cards(
         if exc.status_code != 405:
             raise
         if reporter is not None:
-            reporter("fallback: GET /projects/{id}/cards returned 405, retrying with with_cards_data=true")
+            reporter(
+                "fallback: GET /projects/{id}/cards returned 405, retrying with with_cards_data=true"
+            )
         project = await client.get(
             f"/projects/{project_id}",
             params={"with_cards_data": True},

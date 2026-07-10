@@ -31,7 +31,10 @@ TOOLS = (
         },
         operation=OperationSpec(method="POST", path_template="/api-keys", body_fields=("name",)),
         examples=(
-            ExampleSpec(command='kaiten api-keys create --name "local-dev" --json', description="Create an API key."),
+            ExampleSpec(
+                command='kaiten api-keys create --name "local-dev" --json',
+                description="Create an API key.",
+            ),
         ),
     ),
     make_tool(
@@ -45,9 +48,13 @@ TOOLS = (
             },
             "required": ["key_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/api-keys/{key_id}", path_fields=("key_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/api-keys/{key_id}", path_fields=("key_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten api-keys delete --key-id 1 --json", description="Delete an API key."),
+            ExampleSpec(
+                command="kaiten api-keys delete --key-id 1 --json", description="Delete an API key."
+            ),
         ),
     ),
     make_tool(
@@ -57,7 +64,10 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/companies/current"),
         examples=(
-            ExampleSpec(command="kaiten company current --json", description="Get current company information."),
+            ExampleSpec(
+                command="kaiten company current --json",
+                description="Get current company information.",
+            ),
         ),
     ),
     make_tool(
@@ -67,7 +77,9 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/token-please"),
         examples=(
-            ExampleSpec(command="kaiten company socket-token --json", description="Get a websocket JWT."),
+            ExampleSpec(
+                command="kaiten company socket-token --json", description="Get a websocket JWT."
+            ),
         ),
     ),
     make_tool(
@@ -80,9 +92,14 @@ TOOLS = (
                 "name": {"type": "string", "description": "Company name"},
             },
         },
-        operation=OperationSpec(method="PATCH", path_template="/companies/current", body_fields=("name",)),
+        operation=OperationSpec(
+            method="PATCH", path_template="/companies/current", body_fields=("name",)
+        ),
         examples=(
-            ExampleSpec(command='kaiten company update --name "Acme" --json', description="Update current company information."),
+            ExampleSpec(
+                command='kaiten company update --name "Acme" --json',
+                description="Update current company information.",
+            ),
         ),
     ),
     make_tool(
@@ -96,10 +113,14 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/calendars", query_fields=("limit", "offset")),
+        operation=OperationSpec(
+            method="GET", path_template="/calendars", query_fields=("limit", "offset")
+        ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten calendars list --limit 5 --json", description="List calendars."),
+            ExampleSpec(
+                command="kaiten calendars list --limit 5 --json", description="List calendars."
+            ),
         ),
     ),
     make_tool(
@@ -113,9 +134,14 @@ TOOLS = (
             },
             "required": ["calendar_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/calendars/{calendar_id}", path_fields=("calendar_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/calendars/{calendar_id}", path_fields=("calendar_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten calendars get --calendar-id cal-1 --json", description="Get a calendar by ID."),
+            ExampleSpec(
+                command="kaiten calendars get --calendar-id cal-1 --json",
+                description="Get a calendar by ID.",
+            ),
         ),
     ),
     make_tool(
@@ -129,10 +155,14 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/removed/cards", query_fields=("limit", "offset")),
+        operation=OperationSpec(
+            method="GET", path_template="/removed/cards", query_fields=("limit", "offset")
+        ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten removed-cards list --json", description="List removed cards."),
+            ExampleSpec(
+                command="kaiten removed-cards list --json", description="List removed cards."
+            ),
         ),
     ),
     make_tool(
@@ -146,10 +176,14 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/removed/boards", query_fields=("limit", "offset")),
+        operation=OperationSpec(
+            method="GET", path_template="/removed/boards", query_fields=("limit", "offset")
+        ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten removed-boards list --json", description="List removed boards."),
+            ExampleSpec(
+                command="kaiten removed-boards list --json", description="List removed boards."
+            ),
         ),
     ),
     make_tool(
@@ -173,9 +207,14 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="POST", path_template="/user-timers", body_fields=("card_id",)),
+        operation=OperationSpec(
+            method="POST", path_template="/user-timers", body_fields=("card_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten user-timers create --card-id 10 --json", description="Create a user timer."),
+            ExampleSpec(
+                command="kaiten user-timers create --card-id 10 --json",
+                description="Create a user timer.",
+            ),
         ),
     ),
     make_tool(
@@ -189,9 +228,14 @@ TOOLS = (
             },
             "required": ["timer_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/user-timers/{timer_id}", path_fields=("timer_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/user-timers/{timer_id}", path_fields=("timer_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten user-timers get --timer-id 10 --json", description="Get a user timer."),
+            ExampleSpec(
+                command="kaiten user-timers get --timer-id 10 --json",
+                description="Get a user timer.",
+            ),
         ),
     ),
     make_tool(
@@ -206,9 +250,17 @@ TOOLS = (
             },
             "required": ["timer_id"],
         },
-        operation=OperationSpec(method="PATCH", path_template="/user-timers/{timer_id}", path_fields=("timer_id",), body_fields=("paused",)),
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/user-timers/{timer_id}",
+            path_fields=("timer_id",),
+            body_fields=("paused",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten user-timers update --timer-id 10 --paused --json", description="Pause a user timer."),
+            ExampleSpec(
+                command="kaiten user-timers update --timer-id 10 --paused --json",
+                description="Pause a user timer.",
+            ),
         ),
     ),
     make_tool(
@@ -222,9 +274,14 @@ TOOLS = (
             },
             "required": ["timer_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/user-timers/{timer_id}", path_fields=("timer_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/user-timers/{timer_id}", path_fields=("timer_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten user-timers delete --timer-id 10 --json", description="Delete a user timer."),
+            ExampleSpec(
+                command="kaiten user-timers delete --timer-id 10 --json",
+                description="Delete a user timer.",
+            ),
         ),
     ),
 )

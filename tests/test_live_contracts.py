@@ -10,7 +10,9 @@ from kaiten_cli.registry import iter_tools, resolve_tool
 
 
 def test_all_tools_have_a_live_contract_status():
-    statuses = {tool.canonical_name: get_live_contract(tool.canonical_name).status for tool in iter_tools()}
+    statuses = {
+        tool.canonical_name: get_live_contract(tool.canonical_name).status for tool in iter_tools()
+    }
 
     assert statuses
     assert set(statuses.values()) <= VALID_LIVE_STATUSES

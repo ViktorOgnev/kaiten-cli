@@ -30,7 +30,10 @@ def test_resolve_audit_aliases():
     assert resolve_tool("kaiten_list_audit_logs").canonical_name == "audit-logs.list"
     assert resolve_tool("kaiten_get_space_activity").canonical_name == "space-activity.get"
     assert resolve_tool("kaiten_get_all_space_activity").canonical_name == "space-activity-all.get"
-    assert resolve_tool("kaiten_batch_get_card_location_history").canonical_name == "card-location-history.batch-get"
+    assert (
+        resolve_tool("kaiten_batch_get_card_location_history").canonical_name
+        == "card-location-history.batch-get"
+    )
     assert resolve_tool("kaiten_create_saved_filter").canonical_name == "saved-filters.create"
 
 
@@ -47,7 +50,9 @@ def test_build_request_for_create_saved_filter_maps_name_to_title():
 
 def test_build_request_for_space_activity():
     tool = resolve_tool("space-activity.get")
-    payload = merge_inputs(tool, {"space_id": 1, "actions": "card_move", "limit": 10, "offset": 5, "compact": True})
+    payload = merge_inputs(
+        tool, {"space_id": 1, "actions": "card_move", "limit": 10, "offset": 5, "compact": True}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -66,9 +71,9 @@ def test_timeout_policy_for_bulk_space_activity():
 async def test_execute_audit_logs_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/audit-logs", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1, "action": "create"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/audit-logs", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "action": "create"}]))
 
     tool = resolve_tool("audit-logs.list")
     payload = merge_inputs(tool, {})
@@ -86,7 +91,11 @@ async def test_execute_space_activity_all_paginates_and_compacts_by_default(monk
     first = respx.get(
         "https://sandbox.kaiten.ru/api/latest/spaces/1/activity",
         params={"limit": "2", "offset": "0"},
-    ).mock(return_value=Response(200, json=[{"id": 1, "actor": {"id": 10}}, {"id": 2, "actor": {"id": 11}}]))
+    ).mock(
+        return_value=Response(
+            200, json=[{"id": 1, "actor": {"id": 10}}, {"id": 2, "actor": {"id": 11}}]
+        )
+    )
     second = respx.get(
         "https://sandbox.kaiten.ru/api/latest/spaces/1/activity",
         params={"limit": "2", "offset": "2"},
@@ -107,17 +116,23 @@ async def test_execute_card_location_history_batch_get_returns_items_errors_and_
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     first = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/location-history").mock(
-        return_value=Response(200, json=[{"changed": "2026-04-15T10:00:00Z", "column_id": 10, "subcolumn_id": 11}])
+        return_value=Response(
+            200, json=[{"changed": "2026-04-15T10:00:00Z", "column_id": 10, "subcolumn_id": 11}]
+        )
     )
     second = respx.get("https://sandbox.kaiten.ru/api/latest/cards/2/location-history").mock(
         return_value=Response(404, json={"message": "missing"})
     )
     third = respx.get("https://sandbox.kaiten.ru/api/latest/cards/3/location-history").mock(
-        return_value=Response(200, json=[{"changed": "2026-04-15T11:00:00Z", "column_id": 20, "subcolumn_id": 21}])
+        return_value=Response(
+            200, json=[{"changed": "2026-04-15T11:00:00Z", "column_id": 20, "subcolumn_id": 21}]
+        )
     )
 
     tool = resolve_tool("card-location-history.batch-get")
-    payload = merge_inputs(tool, {"card_ids": "[1,2,3]", "workers": 2, "fields": "changed,column_id"})
+    payload = merge_inputs(
+        tool, {"card_ids": "[1,2,3]", "workers": 2, "fields": "changed,column_id"}
+    )
     result = await execute_tool(tool, payload)
 
     assert first.called
@@ -150,7 +165,9 @@ async def test_execute_card_location_history_batch_get_deduplicates_repeated_car
     )
 
     tool = resolve_tool("card-location-history.batch-get")
-    payload = merge_inputs(tool, {"card_ids": "[1,1,1]", "workers": 2, "fields": "changed,column_id"})
+    payload = merge_inputs(
+        tool, {"card_ids": "[1,1,1]", "workers": 2, "fields": "changed,column_id"}
+    )
     result = await execute_tool(tool, payload)
 
     assert route.call_count == 1
@@ -163,9 +180,9 @@ async def test_execute_card_location_history_batch_get_deduplicates_repeated_car
 
 @respx.mock
 def test_cli_saved_filters_alias_and_canonical_match(runner):
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/saved-filters", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1, "title": "Backlog"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/saved-filters", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "title": "Backlog"}]))
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
     canonical = runner.invoke(cli, ["--json", "saved-filters", "list"], env=env)

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 
 from kaiten_cli.errors import ValidationError
-from kaiten_cli.runtime.input import merge_inputs
+from kaiten_cli.runtime.input import merge_inputs, validate_payload
 from kaiten_cli.models import UNSET
 from kaiten_cli.registry import resolve_tool
 
@@ -13,7 +14,9 @@ from kaiten_cli.registry import resolve_tool
 def test_merge_inputs_from_file_with_override(tmp_path):
     tool = resolve_tool("cards.create")
     payload_file = tmp_path / "payload.json"
-    payload_file.write_text(json.dumps({"title": "From file", "board_id": 7, "description": "draft"}), encoding="utf-8")
+    payload_file.write_text(
+        json.dumps({"title": "From file", "board_id": 7, "description": "draft"}), encoding="utf-8"
+    )
 
     result = merge_inputs(
         tool,
@@ -98,3 +101,93 @@ def test_merge_inputs_rejects_time_logs_batch_workers_above_limit():
 
     with pytest.raises(ValidationError):
         merge_inputs(tool, {"card_ids": "[1,2]", "workers": 7})
+
+
+def test_merge_inputs_rejects_invalid_automation_action_item_with_path():
+    tool = resolve_tool("automations.create")
+
+    with pytest.raises(ValidationError, match=r"actions\[0\].*expected object"):
+        merge_inputs(
+            tool,
+            {
+                "space_id": 1,
+                "name": "Invalid automation",
+                "trigger": {"type": "card_created"},
+                "actions": [1],
+            },
+        )
+
+
+def test_validate_payload_recurses_through_objects_arrays_required_and_enum():
+    tool = replace(
+        resolve_tool("spaces.create"),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "properties": {
+                        "rules": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "mode": {"type": "string", "enum": ["safe", "fast"]},
+                                    "limit": {"type": "integer"},
+                                },
+                                "required": ["mode", "limit"],
+                            },
+                        }
+                    },
+                    "required": ["rules"],
+                }
+            },
+            "required": ["config"],
+        },
+    )
+
+    with pytest.raises(ValidationError, match=r"config\.rules\[0\].*limit"):
+        validate_payload(tool, {"config": {"rules": [{"mode": "safe"}]}})
+
+    with pytest.raises(ValidationError, match=r"config\.rules\[0\]\.mode.*safe, fast"):
+        validate_payload(tool, {"config": {"rules": [{"mode": "unsafe", "limit": 1}]}})
+
+    with pytest.raises(ValidationError, match=r"config\.rules\[0\]\.limit.*expected integer"):
+        validate_payload(tool, {"config": {"rules": [{"mode": "safe", "limit": True}]}})
+
+
+def test_validate_payload_rejects_additional_properties_only_when_explicitly_false():
+    nested_schema = {
+        "type": "object",
+        "properties": {"known": {"type": "string"}},
+    }
+    tool = replace(
+        resolve_tool("spaces.create"),
+        input_schema={
+            "type": "object",
+            "properties": {"config": nested_schema},
+            "required": ["config"],
+        },
+    )
+
+    validate_payload(tool, {"config": {"known": "yes"}, "extension": 1})
+    validate_payload(tool, {"config": {"known": "yes", "extension": 1}})
+
+    strict_tool = replace(
+        tool,
+        input_schema={
+            "type": "object",
+            "properties": {
+                "config": {**nested_schema, "additionalProperties": False},
+            },
+            "required": ["config"],
+        },
+    )
+    with pytest.raises(ValidationError, match=r"Unknown field\(s\) at config: extension"):
+        validate_payload(strict_tool, {"config": {"known": "yes", "extension": 1}})
+
+    strict_root_tool = replace(
+        tool, input_schema={**tool.input_schema, "additionalProperties": False}
+    )
+    with pytest.raises(ValidationError, match=r"Unknown field\(s\) at payload: extension"):
+        validate_payload(strict_root_tool, {"config": {"known": "yes"}, "extension": 1})

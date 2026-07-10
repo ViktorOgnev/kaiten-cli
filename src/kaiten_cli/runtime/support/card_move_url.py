@@ -180,6 +180,4 @@ async def resolve_move_target(
             "lane_title": lane_title(board, resolved_lane_id),
         }
 
-    raise ValidationError(
-        f"Column {target.column_id} was not found in space {target.space_id}."
-    )
+    raise ValidationError(f"Column {target.column_id} was not found in space {target.space_id}.")

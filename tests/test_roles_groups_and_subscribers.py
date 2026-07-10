@@ -45,7 +45,9 @@ def test_build_request_for_add_column_subscriber_sets_default_type():
 
 def test_build_request_for_add_space_user_accepts_uuid_role_id():
     tool = resolve_tool("space-users.add")
-    payload = merge_inputs(tool, {"space_id": 10, "user_id": 7, "role_id": "7ec9167c-4ad4-4a08-a3b9-8768b0c5a431"})
+    payload = merge_inputs(
+        tool, {"space_id": 10, "user_id": 7, "role_id": "7ec9167c-4ad4-4a08-a3b9-8768b0c5a431"}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -84,9 +86,9 @@ def test_build_request_for_company_users_list_defaults_members_section():
 async def test_execute_list_company_groups_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/groups", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"uid": "grp-1", "name": "Engineering"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/company/groups", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"uid": "grp-1", "name": "Engineering"}]))
 
     tool = resolve_tool("company-groups.list")
     payload = merge_inputs(tool, {})
@@ -101,9 +103,9 @@ async def test_execute_list_company_groups_injects_default_limit(monkeypatch):
 async def test_execute_list_roles_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/tree-entity-roles", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": "role-1", "name": "Admin"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/tree-entity-roles", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": "role-1", "name": "Admin"}]))
 
     tool = resolve_tool("roles.list")
     payload = merge_inputs(tool, {})
@@ -119,7 +121,9 @@ async def test_execute_list_space_users_compact(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     route = respx.get("https://sandbox.kaiten.ru/api/latest/spaces/10/users").mock(
-        return_value=Response(200, json=[{"id": 7, "full_name": "Alice", "avatar": "data:image/png;base64,abc"}])
+        return_value=Response(
+            200, json=[{"id": 7, "full_name": "Alice", "avatar": "data:image/png;base64,abc"}]
+        )
     )
 
     tool = resolve_tool("space-users.list")
@@ -136,7 +140,9 @@ async def test_execute_list_card_subscribers_compact(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10/subscribers").mock(
-        return_value=Response(200, json=[{"id": 7, "full_name": "Alice", "avatar": "data:image/png;base64,abc"}])
+        return_value=Response(
+            200, json=[{"id": 7, "full_name": "Alice", "avatar": "data:image/png;base64,abc"}]
+        )
     )
 
     tool = resolve_tool("card-subscribers.list")

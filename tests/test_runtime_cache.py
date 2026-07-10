@@ -3,14 +3,21 @@ from __future__ import annotations
 import asyncio
 import json
 import sqlite3
+import stat
+from contextlib import closing
 
 import pytest
 import respx
-from httpx import Response
+from httpx import ReadTimeout, Response
 
 from kaiten_cli.app import cli, main
+from kaiten_cli.errors import TransportError
 from kaiten_cli.models import ResolvedProfile
-from kaiten_cli.runtime.cache import ExecutionContext, HTTP_CACHE_DB_SCHEMA_VERSION
+from kaiten_cli.runtime.cache import (
+    ExecutionContext,
+    HTTP_CACHE_DB_SCHEMA_VERSION,
+    PersistentCache,
+)
 from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import merge_inputs
@@ -52,7 +59,9 @@ async def test_inflight_dedup_shares_one_get_across_clients():
         await asyncio.sleep(0.01)
         return Response(200, json={"id": 1, "title": "Task"})
 
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(side_effect=delayed_response)
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
+        side_effect=delayed_response
+    )
     client1 = KaitenClient(
         domain="sandbox",
         token="test-token",
@@ -95,6 +104,124 @@ async def test_auto_cache_mode_persists_cacheable_gets_by_default(monkeypatch):
     assert first == second == {"id": 123, "title": "Task"}
 
 
+def test_cache_scope_is_credential_scoped_without_exposing_token():
+    first = ExecutionContext.for_profile(
+        ResolvedProfile(name=None, domain="sandbox", token="token-a")
+    )
+    second = ExecutionContext.for_profile(
+        ResolvedProfile(name=None, domain="sandbox", token="token-b")
+    )
+
+    assert first.scope != second.scope
+    assert "token-a" not in first.scope
+    assert "token-b" not in second.scope
+
+
+def test_cache_scope_has_no_domain_profile_delimiter_collision():
+    first = ExecutionContext.for_profile(
+        ResolvedProfile(name="x", domain="http://localhost:3000", token="same-token")
+    )
+    second = ExecutionContext.for_profile(
+        ResolvedProfile(name="3000:x", domain="http://localhost", token="same-token")
+    )
+
+    assert first.scope != second.scope
+
+
+def test_persistent_cache_closes_sqlite_connections(monkeypatch, tmp_path):
+    cache = PersistentCache(tmp_path / "cache.sqlite3")
+    connection = sqlite3.connect(cache.path)
+    cache._initialize_schema(connection)
+    monkeypatch.setattr(cache, "_open_connection", lambda: connection)
+
+    cache.clear_scope("sandbox:test")
+
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        connection.execute("SELECT 1")
+
+
+def test_persistent_cache_does_not_unlink_locked_store(tmp_path):
+    cache_path = tmp_path / "cache.sqlite3"
+    cache = PersistentCache(cache_path)
+    connection = cache._connect()
+    assert connection is not None
+    connection.close()
+    inode = cache_path.stat().st_ino
+
+    with closing(sqlite3.connect(cache_path, timeout=0)) as lock:
+        lock.execute("BEGIN EXCLUSIVE")
+
+        class NoWaitCache(PersistentCache):
+            def _open_connection(self):
+                return sqlite3.connect(self.path, timeout=0)
+
+        assert NoWaitCache(cache_path)._connect() is None
+
+    assert cache_path.stat().st_ino == inode
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_persistent_cache_does_not_cross_environment_credentials(
+    config_env, monkeypatch, tmp_path
+):
+    cache_path = tmp_path / "private-cache" / "cache.sqlite3"
+    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "token-a")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        side_effect=[
+            Response(200, json={"id": 123, "title": "Visible to A"}),
+            Response(200, json={"id": 123, "title": "Visible to B"}),
+        ]
+    )
+    tool = resolve_tool("cards.get")
+    payload = merge_inputs(tool, {"card_id": 123})
+
+    first = await execute_tool(tool, payload)
+    monkeypatch.setenv("KAITEN_TOKEN", "token-b")
+    second = await execute_tool(tool, payload)
+
+    assert route.call_count == 2
+    assert first["title"] == "Visible to A"
+    assert second["title"] == "Visible to B"
+    assert stat.S_IMODE(cache_path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(cache_path.parent.stat().st_mode) == 0o700
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_ambiguous_mutation_clears_cached_reads_before_verification():
+    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token", sandbox=True)
+    context = ExecutionContext.for_profile(profile)
+    client = KaitenClient(
+        domain="sandbox",
+        token="test-token",
+        execution_context=context,
+        cache_policy="request_scope",
+    )
+    get_route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
+        side_effect=[
+            Response(200, json={"id": 1, "title": "Before"}),
+            Response(200, json={"id": 1, "title": "After verification"}),
+        ]
+    )
+    post_route = respx.post("https://sandbox.kaiten.ru/api/latest/cards").mock(
+        side_effect=ReadTimeout("response was lost")
+    )
+
+    try:
+        assert (await client.get("/cards/1"))["title"] == "Before"
+        with pytest.raises(TransportError, match="remote outcome is unknown"):
+            await client.post("/cards", json={"title": "Task"})
+        assert (await client.get("/cards/1"))["title"] == "After verification"
+    finally:
+        await client.close()
+
+    assert get_route.call_count == 2
+    assert post_route.call_count == 1
+
+
 @respx.mock
 def test_cli_json_stats_counts_api_wait_and_groups(monkeypatch, capsys):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
@@ -104,7 +231,9 @@ def test_cli_json_stats_counts_api_wait_and_groups(monkeypatch, capsys):
         await asyncio.sleep(0.01)
         return Response(200, json={"id": 123, "title": "Task"})
 
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(side_effect=delayed_response)
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        side_effect=delayed_response
+    )
 
     exit_code = main(["--json", "--cache-mode", "off", "cards", "get", "--card-id", "123"])
     captured = capsys.readouterr()
@@ -152,7 +281,9 @@ def test_cli_json_stats_cache_hit_does_not_count_api(monkeypatch, capsys):
 async def test_persistent_cache_hits_across_separate_execute_calls(monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3"
+    )
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
         return_value=Response(200, json={"id": 123, "title": "Task"})
     )
@@ -191,7 +322,7 @@ async def test_auto_heavy_batch_cache_reuses_overlapping_card_ids(monkeypatch, t
     assert route_1.call_count == 1
     assert route_2.call_count == 1
     assert route_3.call_count == 1
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         row = conn.execute(
             """
             SELECT cache_policy, ttl_seconds, rows_count
@@ -223,7 +354,7 @@ async def test_auto_dense_entity_family_extends_recent_ttl(monkeypatch, tmp_path
         await execute_tool(tool, merge_inputs(tool, {"card_id": card_id}))
 
     assert [route.call_count for route in routes] == [1, 1, 1]
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         rows = conn.execute(
             """
             SELECT path_family, ttl_seconds
@@ -264,7 +395,7 @@ async def test_persistent_cache_resets_incompatible_store(monkeypatch, tmp_path)
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     cache_path = tmp_path / "cache.sqlite3"
     monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
         conn.execute("PRAGMA user_version = 99")
         conn.commit()
@@ -279,7 +410,7 @@ async def test_persistent_cache_resets_incompatible_store(monkeypatch, tmp_path)
     first = await execute_tool(tool, payload, cache_mode="readwrite")
     second = await execute_tool(tool, payload, cache_mode="readwrite")
 
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
 
     assert route.call_count == 1
@@ -306,7 +437,7 @@ async def test_persistent_cache_resets_corrupt_store(monkeypatch, tmp_path):
     await execute_tool(tool, payload, cache_mode="readwrite")
     await execute_tool(tool, payload, cache_mode="readwrite")
 
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
 
     assert route.call_count == 1
@@ -320,7 +451,7 @@ async def test_persistent_cache_reset_failure_falls_back_to_bypass(monkeypatch, 
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     cache_path = tmp_path / "cache.sqlite3"
     monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
         conn.execute("PRAGMA user_version = 99")
         conn.commit()
@@ -348,7 +479,9 @@ async def test_persistent_cache_reset_failure_falls_back_to_bypass(monkeypatch, 
 async def test_cache_mode_refresh_bypasses_disk_read_and_rewrites(monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3"
+    )
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
         return_value=Response(200, json={"id": 123, "title": "Task"})
     )
@@ -369,7 +502,9 @@ async def test_cache_mode_refresh_bypasses_disk_read_and_rewrites(monkeypatch, t
 async def test_successful_mutation_invalidates_persistent_cache(monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3"
+    )
     get_route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
         return_value=Response(200, json={"id": 123, "title": "Task"})
     )
@@ -395,7 +530,7 @@ async def test_successful_mutation_invalidates_persistent_cache(monkeypatch, tmp
 def test_cli_verbose_reports_cache_reset(capsys, monkeypatch, tmp_path):
     cache_path = tmp_path / "cache.sqlite3"
     monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: cache_path)
-    with sqlite3.connect(cache_path) as conn:
+    with closing(sqlite3.connect(cache_path)) as conn:
         conn.execute("CREATE TABLE legacy_cache (id INTEGER PRIMARY KEY)")
         conn.execute("PRAGMA user_version = 99")
         conn.commit()
@@ -410,19 +545,25 @@ def test_cli_verbose_reports_cache_reset(capsys, monkeypatch, tmp_path):
             patch_env.setenv(key, value)
         from kaiten_cli.app import main
 
-        exit_code = main(["--json", "--verbose", "--cache-mode", "readwrite", "cards", "get", "--card-id", "123"])
+        exit_code = main(
+            ["--json", "--verbose", "--cache-mode", "readwrite", "cards", "get", "--card-id", "123"]
+        )
 
     captured = capsys.readouterr()
 
     assert exit_code == 0
     assert route.call_count == 1
-    assert "cache: local store dropped store=http-cache reason=incompatible-schema:99" in captured.err
+    assert (
+        "cache: local store dropped store=http-cache reason=incompatible-schema:99" in captured.err
+    )
     assert "cache: local store recreated store=http-cache" in captured.err
 
 
 @respx.mock
 def test_cli_cache_mode_flag_enables_persistent_cache(runner, monkeypatch, tmp_path):
-    monkeypatch.setattr("kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path", lambda: tmp_path / "cache.sqlite3"
+    )
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
         return_value=Response(200, json={"id": 123, "title": "Task"})
     )

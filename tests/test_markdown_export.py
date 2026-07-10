@@ -30,7 +30,11 @@ def test_document_to_markdown_serializes_common_prosemirror_nodes():
                 {
                     "type": "doc",
                     "content": [
-                        {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Intro"}]},
+                        {
+                            "type": "heading",
+                            "attrs": {"level": 2},
+                            "content": [{"type": "text", "text": "Intro"}],
+                        },
                         {
                             "type": "paragraph",
                             "content": [
@@ -39,7 +43,9 @@ def test_document_to_markdown_serializes_common_prosemirror_nodes():
                                 {
                                     "type": "text",
                                     "text": "link",
-                                    "marks": [{"type": "link", "attrs": {"href": "https://example.test"}}],
+                                    "marks": [
+                                        {"type": "link", "attrs": {"href": "https://example.test"}}
+                                    ],
                                 },
                             ],
                         },
@@ -49,7 +55,12 @@ def test_document_to_markdown_serializes_common_prosemirror_nodes():
                                 {
                                     "type": "check_list_item",
                                     "attrs": {"checked": True},
-                                    "content": [{"type": "paragraph", "content": [{"type": "text", "text": "done"}]}],
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [{"type": "text", "text": "done"}],
+                                        }
+                                    ],
                                 }
                             ],
                         },
@@ -59,13 +70,19 @@ def test_document_to_markdown_serializes_common_prosemirror_nodes():
                                 {
                                     "type": "table_row",
                                     "content": [
-                                        {"type": "table_header", "content": [{"type": "text", "text": "A|B"}]},
+                                        {
+                                            "type": "table_header",
+                                            "content": [{"type": "text", "text": "A|B"}],
+                                        },
                                     ],
                                 },
                                 {
                                     "type": "table_row",
                                     "content": [
-                                        {"type": "table_cell", "content": [{"type": "text", "text": "value"}]},
+                                        {
+                                            "type": "table_cell",
+                                            "content": [{"type": "text", "text": "value"}],
+                                        },
                                     ],
                                 },
                             ],
@@ -87,7 +104,7 @@ def test_document_to_markdown_serializes_common_prosemirror_nodes():
         }
     )
 
-    assert "type: \"document\"" in markdown
+    assert 'type: "document"' in markdown
     assert "# Spec" in markdown
     assert "## Intro" in markdown
     assert "**bold** and [link](https://example.test)" in markdown
@@ -124,14 +141,21 @@ async def test_documents_get_markdown_writes_file(monkeypatch, tmp_path):
                 "uid": "doc-1",
                 "title": "Spec Doc",
                 "data": json.dumps(
-                    {"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Body"}]}]}
+                    {
+                        "type": "doc",
+                        "content": [
+                            {"type": "paragraph", "content": [{"type": "text", "text": "Body"}]}
+                        ],
+                    }
                 ),
             },
         )
     )
 
     tool = resolve_tool("documents.get")
-    payload = merge_inputs(tool, {"document_uid": "doc-1", "markdown": True, "output": str(tmp_path)})
+    payload = merge_inputs(
+        tool, {"document_uid": "doc-1", "markdown": True, "output": str(tmp_path)}
+    )
     result = await execute_tool(tool, payload)
 
     target = tmp_path / "spec-doc--doc-1.md"

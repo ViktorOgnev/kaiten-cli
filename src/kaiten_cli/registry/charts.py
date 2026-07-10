@@ -6,9 +6,19 @@ from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, Runtim
 from kaiten_cli.registry.base import make_tool
 
 _HEAVY = ResponsePolicy(heavy=True)
+_READ_ONLY_ANALYTICS = RuntimeBehavior(
+    enforce_mutation_guard=False,
+    remote_side_effects=False,
+)
 _CHART_USAGE_NOTES = (
     "Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.",
     "If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.",
+)
+_POST_READ_USAGE_NOTES = _CHART_USAGE_NOTES + (
+    "This is a read-only analytics request even though the Kaiten API uses POST to submit filters.",
+)
+_CHART_BUILD_USAGE_NOTES = _CHART_USAGE_NOTES + (
+    "This request can create a transient compute job, so global read-only mode blocks it.",
 )
 
 _COMMON_CHART_PROPS = {
@@ -74,12 +84,17 @@ def _chart_create(
             mcp_alias=mcp_alias,
             description=description,
             input_schema={"type": "object", "properties": properties, "required": list(required)},
-            operation=OperationSpec(method="POST", path_template=path_template, body_fields=body_fields),
+            operation=OperationSpec(
+                method="POST", path_template=path_template, body_fields=body_fields
+            ),
             response_policy=_HEAVY,
             examples=(
-                ExampleSpec(command=f"kaiten {' '.join(canonical_name.split('.'))} --json", description=description),
+                ExampleSpec(
+                    command=f"kaiten {' '.join(canonical_name.split('.'))} --json",
+                    description=description,
+                ),
             ),
-            usage_notes=_CHART_USAGE_NOTES,
+            usage_notes=_CHART_BUILD_USAGE_NOTES,
         ),
     )
 
@@ -94,9 +109,14 @@ TOOLS = (
             "properties": {"space_id": {"type": "integer", "description": "Space ID"}},
             "required": ["space_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/charts/{space_id}/boards", path_fields=("space_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/charts/{space_id}/boards", path_fields=("space_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten charts boards get --space-id 1 --json", description="Get chart board structure."),
+            ExampleSpec(
+                command="kaiten charts boards get --space-id 1 --json",
+                description="Get chart board structure.",
+            ),
         ),
     ),
     make_tool(
@@ -123,13 +143,14 @@ TOOLS = (
             body_fields=("space_id", "date_from", "date_to", "done_columns"),
         ),
         response_policy=_HEAVY,
+        runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
             ExampleSpec(
                 command="kaiten charts summary get --space-id 1 --date-from 2026-01-01 --date-to 2026-01-31 --done-columns '[10,11]' --json",
                 description="Get a done-card summary.",
             ),
         ),
-        usage_notes=_CHART_USAGE_NOTES,
+        usage_notes=_POST_READ_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="charts.block-resolution.get",
@@ -153,10 +174,14 @@ TOOLS = (
             body_fields=("space_id", "category_ids"),
         ),
         response_policy=_HEAVY,
+        runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
-            ExampleSpec(command="kaiten charts block-resolution get --space-id 1 --json", description="Get blocker resolution data."),
+            ExampleSpec(
+                command="kaiten charts block-resolution get --space-id 1 --json",
+                description="Get blocker resolution data.",
+            ),
         ),
-        usage_notes=_CHART_USAGE_NOTES,
+        usage_notes=_POST_READ_USAGE_NOTES,
     ),
     make_tool(
         canonical_name="charts.due-dates.get",
@@ -166,7 +191,10 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
-                "card_date_from": {"type": "string", "description": "Card date range start (ISO 8601)"},
+                "card_date_from": {
+                    "type": "string",
+                    "description": "Card date range start (ISO 8601)",
+                },
                 "card_date_to": {"type": "string", "description": "Card date range end (ISO 8601)"},
                 "checklist_item_date_from": {
                     "type": "string",
@@ -179,14 +207,26 @@ TOOLS = (
                 "due_date": {"type": "string", "description": "Due date filter (ISO 8601)"},
                 "responsible_id": {"type": "integer", "description": "Responsible user ID"},
                 "tz_offset": {"type": "integer", "description": "Timezone offset in minutes"},
-                "lane_ids": {"type": "array", "items": {"type": "integer"}, "description": "Filter by lane IDs"},
-                "column_ids": {"type": "array", "items": {"type": "integer"}, "description": "Filter by column IDs"},
+                "lane_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filter by lane IDs",
+                },
+                "column_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filter by column IDs",
+                },
                 "card_type_ids": {
                     "type": "array",
                     "items": {"type": "integer"},
                     "description": "Filter by card type IDs",
                 },
-                "tag_ids": {"type": "array", "items": {"type": "integer"}, "description": "Filter by tag IDs"},
+                "tag_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filter by tag IDs",
+                },
             },
             "required": [
                 "space_id",
@@ -215,13 +255,14 @@ TOOLS = (
             ),
         ),
         response_policy=_HEAVY,
+        runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
             ExampleSpec(
                 command="kaiten charts due-dates get --space-id 1 --card-date-from 2026-01-01 --card-date-to 2026-01-31 --checklist-item-date-from 2026-01-01 --checklist-item-date-to 2026-01-31 --json",
                 description="Get due-date analysis.",
             ),
         ),
-        usage_notes=_CHART_USAGE_NOTES,
+        usage_notes=_POST_READ_USAGE_NOTES,
     ),
     *_chart_create(
         canonical_name="charts.cfd.create",
@@ -242,7 +283,17 @@ TOOLS = (
             },
         },
         required=("space_id", "date_from", "date_to"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "cardTypes", "group_by", "selectedLanes"),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "cardTypes",
+            "group_by",
+            "selectedLanes",
+        ),
     ),
     *_chart_create(
         canonical_name="charts.control.create",
@@ -250,8 +301,25 @@ TOOLS = (
         description="Build a Control Chart for a space.",
         path_template="/charts/control-chart",
         properties={**_COMMON_CHART_PROPS, **_CONTROL_EXTRA_PROPS},
-        required=("space_id", "date_from", "date_to", "start_columns", "end_columns", "start_column_lanes", "end_column_lanes"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", *_CONTROL_EXTRA_KEYS),
+        required=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "start_columns",
+            "end_columns",
+            "start_column_lanes",
+            "end_column_lanes",
+        ),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            *_CONTROL_EXTRA_KEYS,
+        ),
     ),
     *_chart_create(
         canonical_name="charts.spectral.create",
@@ -259,8 +327,25 @@ TOOLS = (
         description="Build a Spectral Chart for a space.",
         path_template="/charts/spectral-chart",
         properties={**_COMMON_CHART_PROPS, **_CONTROL_EXTRA_PROPS},
-        required=("space_id", "date_from", "date_to", "start_columns", "end_columns", "start_column_lanes", "end_column_lanes"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", *_CONTROL_EXTRA_KEYS),
+        required=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "start_columns",
+            "end_columns",
+            "start_column_lanes",
+            "end_column_lanes",
+        ),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            *_CONTROL_EXTRA_KEYS,
+        ),
     ),
     *_chart_create(
         canonical_name="charts.lead-time.create",
@@ -268,26 +353,67 @@ TOOLS = (
         description="Build a Lead Time Chart for a space.",
         path_template="/charts/lead-time",
         properties={**_COMMON_CHART_PROPS, **_CONTROL_EXTRA_PROPS},
-        required=("space_id", "date_from", "date_to", "start_columns", "end_columns", "start_column_lanes", "end_column_lanes"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", *_CONTROL_EXTRA_KEYS),
+        required=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "start_columns",
+            "end_columns",
+            "start_column_lanes",
+            "end_column_lanes",
+        ),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            *_CONTROL_EXTRA_KEYS,
+        ),
     ),
     *_chart_create(
         canonical_name="charts.throughput-capacity.create",
         mcp_alias="kaiten_chart_throughput_capacity",
         description="Build a Throughput Capacity Chart for a space.",
         path_template="/charts/throughput-capacity-chart",
-        properties={**_COMMON_CHART_PROPS, "end_column": {"type": "integer", "description": "End (done) column ID"}},
+        properties={
+            **_COMMON_CHART_PROPS,
+            "end_column": {"type": "integer", "description": "End (done) column ID"},
+        },
         required=("space_id", "date_from", "end_column"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", "end_column"),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            "end_column",
+        ),
     ),
     *_chart_create(
         canonical_name="charts.throughput-demand.create",
         mcp_alias="kaiten_chart_throughput_demand",
         description="Build a Throughput Demand Chart for a space.",
         path_template="/charts/throughput-demand-chart",
-        properties={**_COMMON_CHART_PROPS, "start_column": {"type": "integer", "description": "Start (input) column ID"}},
+        properties={
+            **_COMMON_CHART_PROPS,
+            "start_column": {"type": "integer", "description": "Start (input) column ID"},
+        },
         required=("space_id", "date_from", "start_column"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", "start_column"),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            "start_column",
+        ),
     ),
     *_chart_create(
         canonical_name="charts.task-distribution.create",
@@ -298,7 +424,10 @@ TOOLS = (
             "space_id": {"type": "integer", "description": "Space ID"},
             "timezone": {"type": "string", "description": "Timezone name (e.g. Europe/Moscow)"},
             "includeArchivedCards": {"type": "boolean", "description": "Include archived cards"},
-            "only_asap_cards": {"type": "boolean", "description": "Include only ASAP (expedite) cards"},
+            "only_asap_cards": {
+                "type": "boolean",
+                "description": "Include only ASAP (expedite) cards",
+            },
             "card_types": {
                 "type": "array",
                 "items": {"type": "integer"},
@@ -307,7 +436,14 @@ TOOLS = (
             "itemsFilter": {"type": "object", "description": "Additional filter object for items"},
         },
         required=("space_id",),
-        body_fields=("space_id", "timezone", "includeArchivedCards", "only_asap_cards", "card_types", "itemsFilter"),
+        body_fields=(
+            "space_id",
+            "timezone",
+            "includeArchivedCards",
+            "only_asap_cards",
+            "card_types",
+            "itemsFilter",
+        ),
     ),
     *_chart_create(
         canonical_name="charts.cycle-time.create",
@@ -320,7 +456,17 @@ TOOLS = (
             "end_column": {"type": "integer", "description": "End column ID"},
         },
         required=("space_id", "date_from", "date_to", "start_column", "end_column"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", "start_column", "end_column"),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            "start_column",
+            "end_column",
+        ),
     ),
     *_chart_create(
         canonical_name="charts.sales-funnel.create",
@@ -336,7 +482,16 @@ TOOLS = (
             },
         },
         required=("space_id", "date_from", "date_to", "board_configs"),
-        body_fields=("space_id", "date_from", "date_to", "tags", "only_asap_cards", "card_types", "group_by", "board_configs"),
+        body_fields=(
+            "space_id",
+            "date_from",
+            "date_to",
+            "tags",
+            "only_asap_cards",
+            "card_types",
+            "group_by",
+            "board_configs",
+        ),
     ),
     make_tool(
         canonical_name="compute-jobs.get",
@@ -347,10 +502,17 @@ TOOLS = (
             "properties": {"job_id": {"type": "integer", "description": "Compute job ID"}},
             "required": ["job_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/users/current/compute-jobs/{job_id}", path_fields=("job_id",)),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/users/current/compute-jobs/{job_id}",
+            path_fields=("job_id",),
+        ),
         runtime_behavior=RuntimeBehavior(cache_policy="none"),
         examples=(
-            ExampleSpec(command="kaiten compute-jobs get --job-id 1 --json", description="Get compute job status."),
+            ExampleSpec(
+                command="kaiten compute-jobs get --job-id 1 --json",
+                description="Get compute job status.",
+            ),
         ),
     ),
     make_tool(
@@ -362,9 +524,16 @@ TOOLS = (
             "properties": {"job_id": {"type": "integer", "description": "Compute job ID"}},
             "required": ["job_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/users/current/compute-jobs/{job_id}", path_fields=("job_id",)),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/users/current/compute-jobs/{job_id}",
+            path_fields=("job_id",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten compute-jobs cancel --job-id 1 --json", description="Cancel a compute job."),
+            ExampleSpec(
+                command="kaiten compute-jobs cancel --job-id 1 --json",
+                description="Cancel a compute job.",
+            ),
         ),
     ),
 )

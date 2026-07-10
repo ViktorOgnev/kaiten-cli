@@ -3,15 +3,37 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import Any
 
-from kaiten_cli.errors import ConfigError
+from kaiten_cli.errors import ConfigError, MutationBlockedError
 from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
 from kaiten_cli.runtime.cache import ExecutionContext
 from kaiten_cli.runtime.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT, KaitenClient
 from kaiten_cli.runtime.trace import ExecutionStats
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
+
+READ_ONLY_ENV = "KAITEN_CLI_READ_ONLY"
+TRUTHY_ENV_VALUES = frozenset({"1", "true", "yes", "on"})
+
+
+def read_only_enabled(explicit: bool | None = None) -> bool:
+    environment_enabled = os.environ.get(READ_ONLY_ENV, "").strip().lower() in TRUTHY_ENV_VALUES
+    return bool(explicit) or environment_enabled
+
+
+def enforce_mutation_policy(tool: ToolSpec, *, read_only: bool | None = None) -> None:
+    if (
+        read_only_enabled(read_only)
+        and tool.is_mutation
+        and tool.runtime_behavior.enforce_mutation_guard
+    ):
+        command_name = ".".join(tool.command_segments)
+        raise MutationBlockedError(
+            f"Command {command_name} is blocked by read-only mode. "
+            "Run without --read-only and unset KAITEN_CLI_READ_ONLY only after explicitly authorizing the mutation."
+        )
 
 
 def build_request(
@@ -62,6 +84,7 @@ async def execute_tool(
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
+    read_only: bool | None = None,
 ) -> Any:
     result, _ = await execute_tool_with_diagnostics(
         tool,
@@ -70,6 +93,7 @@ async def execute_tool(
         cache_mode=cache_mode,
         cache_ttl_seconds=cache_ttl_seconds,
         reporter=reporter,
+        read_only=read_only,
     )
     return result
 
@@ -82,7 +106,15 @@ async def execute_tool_with_diagnostics(
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
+    read_only: bool | None = None,
 ) -> tuple[Any, ExecutionStats]:
+    effective_read_only = read_only_enabled(read_only)
+    _emit_debug(
+        reporter,
+        f"safety: read_only={effective_read_only} mutation={tool.is_mutation} "
+        f"guarded={tool.runtime_behavior.enforce_mutation_guard}",
+    )
+    enforce_mutation_policy(tool, read_only=effective_read_only)
     profile: ResolvedProfile | None = None
     context: ExecutionContext | None = None
     client: KaitenClient | None = None
@@ -106,6 +138,7 @@ async def execute_tool_with_diagnostics(
             reporter=reporter,
             execution_context=context,
             cache_policy=tool.cache_policy,
+            mutates_remote_state=tool.remote_side_effects,
         )
     else:
         _emit_debug(reporter, "profile: not required for this command")
@@ -172,6 +205,7 @@ def execute_tool_sync(
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
+    read_only: bool | None = None,
 ) -> Any:
     result, _ = execute_tool_sync_with_diagnostics(
         tool,
@@ -180,6 +214,7 @@ def execute_tool_sync(
         cache_mode=cache_mode,
         cache_ttl_seconds=cache_ttl_seconds,
         reporter=reporter,
+        read_only=read_only,
     )
     return result
 
@@ -192,6 +227,7 @@ def execute_tool_sync_with_diagnostics(
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
     reporter: DebugReporter | None = None,
+    read_only: bool | None = None,
 ) -> tuple[Any, ExecutionStats]:
     return asyncio.run(
         execute_tool_with_diagnostics(
@@ -201,5 +237,6 @@ def execute_tool_sync_with_diagnostics(
             cache_mode=cache_mode,
             cache_ttl_seconds=cache_ttl_seconds,
             reporter=reporter,
+            read_only=read_only,
         )
     )

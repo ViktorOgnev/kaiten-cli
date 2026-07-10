@@ -24,7 +24,9 @@ def test_help_shows_webhooks_automations_and_workflows(runner):
 
 def test_resolve_webhook_and_automation_aliases():
     assert resolve_tool("kaiten_list_webhooks").canonical_name == "webhooks.list"
-    assert resolve_tool("kaiten_create_incoming_webhook").canonical_name == "incoming-webhooks.create"
+    assert (
+        resolve_tool("kaiten_create_incoming_webhook").canonical_name == "incoming-webhooks.create"
+    )
     assert resolve_tool("kaiten_copy_automation").canonical_name == "automations.copy"
     assert resolve_tool("kaiten_list_workflows").canonical_name == "workflows.list"
 
@@ -79,7 +81,10 @@ def test_build_request_for_create_automation_preserves_known_good_payload_shape(
 
 def test_build_request_for_create_incoming_webhook_includes_required_body():
     tool = resolve_tool("incoming-webhooks.create")
-    payload = merge_inputs(tool, {"space_id": 1, "board_id": 2, "column_id": 3, "lane_id": 4, "owner_id": 5, "format": 2})
+    payload = merge_inputs(
+        tool,
+        {"space_id": 1, "board_id": 2, "column_id": 3, "lane_id": 4, "owner_id": 5, "format": 2},
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -93,9 +98,9 @@ def test_build_request_for_create_incoming_webhook_includes_required_body():
 async def test_execute_list_workflows_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/workflows", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": "wf-1", "name": "Flow"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/company/workflows", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": "wf-1", "name": "Flow"}]))
 
     tool = resolve_tool("workflows.list")
     payload = merge_inputs(tool, {})

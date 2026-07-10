@@ -25,9 +25,14 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/children", path_fields=("card_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/children", path_fields=("card_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-children list --card-id 10 --json", description="List child cards."),
+            ExampleSpec(
+                command="kaiten card-children list --card-id 10 --json",
+                description="List child cards.",
+            ),
         ),
         usage_notes=(
             "This is a per-card read and becomes expensive when repeated across many parent cards.",
@@ -42,10 +47,23 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Parent card IDs to inspect"},
-                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
-                "compact": {"type": "boolean", "description": "Strip heavy nested fields from child card payloads"},
-                "fields": {"type": "string", "description": "Comma-separated field names to keep for each child card"},
+                "card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Parent card IDs to inspect",
+                },
+                "workers": {
+                    "type": "integer",
+                    "description": "Parallel workers (default 2, max 6)",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy nested fields from child card payloads",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep for each child card",
+                },
             },
             "required": ["card_ids"],
         },
@@ -57,8 +75,14 @@ TOOLS = (
             custom_executor=execute_card_children_batch_list,
         ),
         examples=(
-            ExampleSpec(command="kaiten card-children batch-list --card-ids '[1,2,3]' --json", description="Fetch child-card relations for several parent cards."),
-            ExampleSpec(command="kaiten card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title --json", description="Fetch narrowed child-card payloads with bounded concurrency."),
+            ExampleSpec(
+                command="kaiten card-children batch-list --card-ids '[1,2,3]' --json",
+                description="Fetch child-card relations for several parent cards.",
+            ),
+            ExampleSpec(
+                command="kaiten card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title --json",
+                description="Fetch narrowed child-card payloads with bounded concurrency.",
+            ),
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
@@ -73,7 +97,10 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the parent card."},
-                "child_card_id": {"type": "integer", "description": "ID of the card to add as a child."},
+                "child_card_id": {
+                    "type": "integer",
+                    "description": "ID of the card to add as a child.",
+                },
             },
             "required": ["card_id", "child_card_id"],
         },
@@ -85,7 +112,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=card_child_add_request),
         examples=(
-            ExampleSpec(command="kaiten card-children add --card-id 10 --child-card-id 11 --json", description="Add a child card relation."),
+            ExampleSpec(
+                command="kaiten card-children add --card-id 10 --child-card-id 11 --json",
+                description="Add a child card relation.",
+            ),
         ),
     ),
     make_tool(
@@ -100,9 +130,16 @@ TOOLS = (
             },
             "required": ["card_id", "child_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/children/{child_id}", path_fields=("card_id", "child_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/children/{child_id}",
+            path_fields=("card_id", "child_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-children remove --card-id 10 --child-id 11 --json", description="Remove a child card relation."),
+            ExampleSpec(
+                command="kaiten card-children remove --card-id 10 --child-id 11 --json",
+                description="Remove a child card relation.",
+            ),
         ),
     ),
     make_tool(
@@ -116,9 +153,14 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/parents", path_fields=("card_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/parents", path_fields=("card_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-parents list --card-id 10 --json", description="List parent cards."),
+            ExampleSpec(
+                command="kaiten card-parents list --card-id 10 --json",
+                description="List parent cards.",
+            ),
         ),
     ),
     make_tool(
@@ -129,7 +171,10 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the child card."},
-                "parent_card_id": {"type": "integer", "description": "ID of the card to add as a parent."},
+                "parent_card_id": {
+                    "type": "integer",
+                    "description": "ID of the card to add as a parent.",
+                },
             },
             "required": ["card_id", "parent_card_id"],
         },
@@ -141,7 +186,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=card_parent_add_request),
         examples=(
-            ExampleSpec(command="kaiten card-parents add --card-id 10 --parent-card-id 11 --json", description="Add a parent card relation."),
+            ExampleSpec(
+                command="kaiten card-parents add --card-id 10 --parent-card-id 11 --json",
+                description="Add a parent card relation.",
+            ),
         ),
     ),
     make_tool(
@@ -156,9 +204,16 @@ TOOLS = (
             },
             "required": ["card_id", "parent_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/parents/{parent_id}", path_fields=("card_id", "parent_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/parents/{parent_id}",
+            path_fields=("card_id", "parent_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-parents remove --card-id 10 --parent-id 11 --json", description="Remove a parent card relation."),
+            ExampleSpec(
+                command="kaiten card-parents remove --card-id 10 --parent-id 11 --json",
+                description="Remove a parent card relation.",
+            ),
         ),
     ),
     make_tool(
@@ -171,8 +226,14 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
-                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card."},
+                "card_id": {
+                    "type": "integer",
+                    "description": "ID of the source (predecessor) card.",
+                },
+                "target_card_id": {
+                    "type": "integer",
+                    "description": "ID of the target (successor) card.",
+                },
                 "type": {
                     "type": "string",
                     "enum": ["end-start"],
@@ -202,8 +263,14 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
-                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card."},
+                "card_id": {
+                    "type": "integer",
+                    "description": "ID of the source (predecessor) card.",
+                },
+                "target_card_id": {
+                    "type": "integer",
+                    "description": "ID of the target (successor) card.",
+                },
                 "gap": {
                     "type": ["integer", "null"],
                     "description": "Distance between cards (-1000..1000). Positive = lag, negative = lead. null to clear.",
@@ -236,8 +303,14 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "ID of the source (predecessor) card."},
-                "target_card_id": {"type": "integer", "description": "ID of the target (successor) card to unlink."},
+                "card_id": {
+                    "type": "integer",
+                    "description": "ID of the source (predecessor) card.",
+                },
+                "target_card_id": {
+                    "type": "integer",
+                    "description": "ID of the target (successor) card to unlink.",
+                },
             },
             "required": ["card_id", "target_card_id"],
         },

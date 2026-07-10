@@ -35,7 +35,9 @@ def _coerce_nullable_string(raw: str) -> str | None:
     return raw
 
 
-def coerce_value(raw: Any, schema: dict[str, Any], *, stdin_text: str | None = None, label: str) -> Any:
+def coerce_value(
+    raw: Any, schema: dict[str, Any], *, stdin_text: str | None = None, label: str
+) -> Any:
     if raw is UNSET:
         return UNSET
 
@@ -102,7 +104,9 @@ def merge_inputs(
         if field_name not in properties:
             continue
         schema = properties[field_name]
-        merged[field_name] = coerce_value(raw_value, schema, stdin_text=stdin_text, label=field_name)
+        merged[field_name] = coerce_value(
+            raw_value, schema, stdin_text=stdin_text, label=field_name
+        )
 
     validate_payload(tool, merged)
     if tool.runtime_behavior.payload_validator is not None:
@@ -128,23 +132,66 @@ def _type_matches(value: Any, expected: str) -> bool:
     return True
 
 
-def validate_payload(tool: ToolSpec, payload: dict[str, Any]) -> None:
-    properties = tool.input_schema.get("properties", {})
-    required = set(tool.input_schema.get("required", []))
-    missing = [field for field in required if field not in payload]
-    if missing:
-        raise ValidationError(f"Missing required field(s): {', '.join(sorted(missing))}")
+def _format_path(path: str) -> str:
+    return path or "payload"
 
-    unknown = set(payload) - set(properties)
-    if unknown:
-        raise ValidationError(f"Unknown input field(s): {', '.join(sorted(unknown))}")
 
-    for field_name, value in payload.items():
-        schema = properties[field_name]
-        schema_type = schema.get("type")
+def _enum_contains(enum_values: list[Any], value: Any) -> bool:
+    """Compare enum values without treating booleans as the integers 0 and 1."""
+    for candidate in enum_values:
+        if isinstance(candidate, bool) != isinstance(value, bool):
+            continue
+        if candidate == value:
+            return True
+    return False
+
+
+def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
+    schema_type = schema.get("type")
+    if schema_type is not None:
         allowed_types = schema_type if isinstance(schema_type, list) else [schema_type]
         if not any(_type_matches(value, expected) for expected in allowed_types):
-            raise ValidationError(f"Field {field_name} has invalid type.")
-        enum_values = schema.get("enum")
-        if enum_values and value is not None and value not in enum_values:
-            raise ValidationError(f"Field {field_name} must be one of: {', '.join(map(str, enum_values))}")
+            expected = " or ".join(str(item) for item in allowed_types)
+            raise ValidationError(
+                f"Field {_format_path(path)} has invalid type; expected {expected}."
+            )
+
+    enum_values = schema.get("enum")
+    # Registry schemas use nullable types with a non-null enum as shorthand for
+    # "one of these values, or null". Preserve that established convention.
+    if enum_values is not None and value is not None and not _enum_contains(enum_values, value):
+        allowed = ", ".join(map(str, enum_values))
+        raise ValidationError(f"Field {_format_path(path)} must be one of: {allowed}")
+
+    if isinstance(value, dict):
+        properties = schema.get("properties", {})
+        required = schema.get("required", [])
+        missing = [field for field in required if field not in value]
+        if missing:
+            location = f" at {_format_path(path)}" if path else ""
+            raise ValidationError(
+                f"Missing required field(s){location}: {', '.join(sorted(missing))}"
+            )
+
+        if schema.get("additionalProperties") is False:
+            unknown = set(value) - set(properties)
+            if unknown:
+                raise ValidationError(
+                    f"Unknown field(s) at {_format_path(path)}: {', '.join(sorted(unknown))}"
+                )
+
+        for field_name, field_schema in properties.items():
+            if field_name not in value:
+                continue
+            field_path = f"{path}.{field_name}" if path else field_name
+            _validate_schema(value[field_name], field_schema, path=field_path)
+
+    if isinstance(value, list) and isinstance(schema.get("items"), dict):
+        item_schema = schema["items"]
+        for index, item in enumerate(value):
+            item_path = f"{path}[{index}]" if path else f"[{index}]"
+            _validate_schema(item, item_schema, path=item_path)
+
+
+def validate_payload(tool: ToolSpec, payload: dict[str, Any]) -> None:
+    _validate_schema(payload, tool.input_schema, path="")

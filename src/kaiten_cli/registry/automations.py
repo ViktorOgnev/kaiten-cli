@@ -19,9 +19,14 @@ TOOLS = (
             },
             "required": ["space_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/spaces/{space_id}/automations", path_fields=("space_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/spaces/{space_id}/automations", path_fields=("space_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten automations list --space-id 1 --json", description="List space automations."),
+            ExampleSpec(
+                command="kaiten automations list --space-id 1 --json",
+                description="List space automations.",
+            ),
         ),
     ),
     make_tool(
@@ -34,11 +39,22 @@ TOOLS = (
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "name": {"type": "string", "description": "Automation name"},
                 "trigger": {"type": "object", "description": "Trigger configuration"},
-                "actions": {"type": "array", "items": {"type": "object"}, "description": "Action configurations"},
+                "actions": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Action configurations",
+                },
                 "conditions": {"type": "object", "description": "Conditions configuration"},
-                "type": {"type": "string", "enum": ["on_action", "on_date", "on_demand", "on_workflow"], "description": "Automation type"},
+                "type": {
+                    "type": "string",
+                    "enum": ["on_action", "on_date", "on_demand", "on_workflow"],
+                    "description": "Automation type",
+                },
                 "sort_order": {"type": "number", "description": "Sort position"},
-                "source_automation_id": {"type": "string", "description": "Automation ID to clone from"},
+                "source_automation_id": {
+                    "type": "string",
+                    "description": "Automation ID to clone from",
+                },
             },
             "required": ["space_id", "name", "trigger", "actions"],
         },
@@ -46,7 +62,15 @@ TOOLS = (
             method="POST",
             path_template="/spaces/{space_id}/automations",
             path_fields=("space_id",),
-            body_fields=("name", "trigger", "actions", "conditions", "type", "sort_order", "source_automation_id"),
+            body_fields=(
+                "name",
+                "trigger",
+                "actions",
+                "conditions",
+                "type",
+                "sort_order",
+                "source_automation_id",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -67,9 +91,16 @@ TOOLS = (
             },
             "required": ["space_id", "automation_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/spaces/{space_id}/automations/{automation_id}", path_fields=("space_id", "automation_id")),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/spaces/{space_id}/automations/{automation_id}",
+            path_fields=("space_id", "automation_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten automations get --space-id 1 --automation-id auto-1 --json", description="Get an automation."),
+            ExampleSpec(
+                command="kaiten automations get --space-id 1 --automation-id auto-1 --json",
+                description="Get an automation.",
+            ),
         ),
     ),
     make_tool(
@@ -83,9 +114,17 @@ TOOLS = (
                 "automation_id": {"type": "string", "description": "Automation ID (UUID)"},
                 "name": {"type": "string", "description": "New automation name"},
                 "trigger": {"type": "object", "description": "New trigger configuration"},
-                "actions": {"type": "array", "items": {"type": "object"}, "description": "New action configurations"},
+                "actions": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "New action configurations",
+                },
                 "conditions": {"type": "object", "description": "New conditions configuration"},
-                "status": {"type": "string", "enum": ["active", "disabled"], "description": "Automation status"},
+                "status": {
+                    "type": "string",
+                    "enum": ["active", "disabled"],
+                    "description": "Automation status",
+                },
                 "sort_order": {"type": "number", "description": "Sort position"},
             },
             "required": ["space_id", "automation_id"],
@@ -97,7 +136,10 @@ TOOLS = (
             body_fields=("name", "trigger", "actions", "conditions", "status", "sort_order"),
         ),
         examples=(
-            ExampleSpec(command='kaiten automations update --space-id 1 --automation-id auto-1 --status disabled --json', description="Disable an automation."),
+            ExampleSpec(
+                command="kaiten automations update --space-id 1 --automation-id auto-1 --status disabled --json",
+                description="Disable an automation.",
+            ),
         ),
     ),
     make_tool(
@@ -112,9 +154,16 @@ TOOLS = (
             },
             "required": ["space_id", "automation_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/spaces/{space_id}/automations/{automation_id}", path_fields=("space_id", "automation_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/spaces/{space_id}/automations/{automation_id}",
+            path_fields=("space_id", "automation_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten automations delete --space-id 1 --automation-id auto-1 --json", description="Delete an automation."),
+            ExampleSpec(
+                command="kaiten automations delete --space-id 1 --automation-id auto-1 --json",
+                description="Delete an automation.",
+            ),
         ),
     ),
     make_tool(
@@ -138,7 +187,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=automation_copy_request),
         examples=(
-            ExampleSpec(command="kaiten automations copy --space-id 1 --automation-id auto-1 --target-space-id 2 --json", description="Copy an automation."),
+            ExampleSpec(
+                command="kaiten automations copy --space-id 1 --automation-id auto-1 --target-space-id 2 --json",
+                description="Copy an automation.",
+            ),
         ),
     ),
     make_tool(
@@ -152,7 +204,9 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Offset for pagination"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/company/workflows", query_fields=("limit", "offset")),
+        operation=OperationSpec(
+            method="GET", path_template="/company/workflows", query_fields=("limit", "offset")
+        ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(command="kaiten workflows list --json", description="List workflows."),
@@ -166,14 +220,29 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "name": {"type": "string", "description": "Workflow name"},
-                "stages": {"type": "array", "items": {"type": "object"}, "description": "Workflow stages"},
-                "transitions": {"type": "array", "items": {"type": "object"}, "description": "Workflow transitions"},
+                "stages": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Workflow stages",
+                },
+                "transitions": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Workflow transitions",
+                },
             },
             "required": ["name", "stages", "transitions"],
         },
-        operation=OperationSpec(method="POST", path_template="/company/workflows", body_fields=("name", "stages", "transitions")),
+        operation=OperationSpec(
+            method="POST",
+            path_template="/company/workflows",
+            body_fields=("name", "stages", "transitions"),
+        ),
         examples=(
-            ExampleSpec(command='kaiten workflows create --name Flow --stages \'[{"id":"1","name":"Todo","type":"queue"}]\' --transitions \'[{"id":"t1"}]\' --json', description="Create a workflow."),
+            ExampleSpec(
+                command='kaiten workflows create --name Flow --stages \'[{"id":"1","name":"Todo","type":"queue"}]\' --transitions \'[{"id":"t1"}]\' --json',
+                description="Create a workflow.",
+            ),
         ),
     ),
     make_tool(
@@ -187,9 +256,16 @@ TOOLS = (
             },
             "required": ["workflow_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/company/workflows/{workflow_id}", path_fields=("workflow_id",)),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/company/workflows/{workflow_id}",
+            path_fields=("workflow_id",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten workflows get --workflow-id wf-1 --json", description="Get a workflow."),
+            ExampleSpec(
+                command="kaiten workflows get --workflow-id wf-1 --json",
+                description="Get a workflow.",
+            ),
         ),
     ),
     make_tool(
@@ -201,8 +277,16 @@ TOOLS = (
             "properties": {
                 "workflow_id": {"type": "string", "description": "Workflow ID (UUID)"},
                 "name": {"type": "string", "description": "New workflow name"},
-                "stages": {"type": "array", "items": {"type": "object"}, "description": "Updated stages"},
-                "transitions": {"type": "array", "items": {"type": "object"}, "description": "Updated transitions"},
+                "stages": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Updated stages",
+                },
+                "transitions": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Updated transitions",
+                },
             },
             "required": ["workflow_id"],
         },
@@ -213,7 +297,10 @@ TOOLS = (
             body_fields=("name", "stages", "transitions"),
         ),
         examples=(
-            ExampleSpec(command='kaiten workflows update --workflow-id wf-1 --name Flow2 --json', description="Update a workflow."),
+            ExampleSpec(
+                command="kaiten workflows update --workflow-id wf-1 --name Flow2 --json",
+                description="Update a workflow.",
+            ),
         ),
     ),
     make_tool(
@@ -227,9 +314,16 @@ TOOLS = (
             },
             "required": ["workflow_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/company/workflows/{workflow_id}", path_fields=("workflow_id",)),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/company/workflows/{workflow_id}",
+            path_fields=("workflow_id",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten workflows delete --workflow-id wf-1 --json", description="Delete a workflow."),
+            ExampleSpec(
+                command="kaiten workflows delete --workflow-id wf-1 --json",
+                description="Delete a workflow.",
+            ),
         ),
     ),
 )

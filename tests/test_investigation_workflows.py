@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import stat
 
 import pytest
 import respx
@@ -9,12 +10,15 @@ from httpx import Response
 from kaiten_cli.app import main
 from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import merge_inputs
+from kaiten_cli.runtime.trace import TraceRecorder
 from kaiten_cli.registry import resolve_tool
 
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_execute_card_children_batch_list_deduplicates_and_reports_partial_errors(monkeypatch):
+async def test_execute_card_children_batch_list_deduplicates_and_reports_partial_errors(
+    monkeypatch,
+):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     first = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/children").mock(
@@ -28,7 +32,9 @@ async def test_execute_card_children_batch_list_deduplicates_and_reports_partial
     )
 
     tool = resolve_tool("card-children.batch-list")
-    payload = merge_inputs(tool, {"card_ids": "[1,2,1]", "workers": 2, "compact": True, "fields": "id,title"})
+    payload = merge_inputs(
+        tool, {"card_ids": "[1,2,1]", "workers": 2, "compact": True, "fields": "id,title"}
+    )
     result = await execute_tool(tool, payload)
 
     assert first.call_count == 1
@@ -55,7 +61,14 @@ async def test_execute_comments_batch_list_shapes_nested_payloads(monkeypatch):
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/comments").mock(
         return_value=Response(
             200,
-            json=[{"id": 5, "text": "Looks good", "author": {"id": 7, "full_name": "Alice"}, "avatar": "data:image/png;base64,abc"}],
+            json=[
+                {
+                    "id": 5,
+                    "text": "Looks good",
+                    "author": {"id": 7, "full_name": "Alice"},
+                    "avatar": "data:image/png;base64,abc",
+                }
+            ],
         )
     )
 
@@ -65,7 +78,12 @@ async def test_execute_comments_batch_list_shapes_nested_payloads(monkeypatch):
 
     assert route.call_count == 1
     assert result["items"] == [
-        {"card_id": 1, "comments": [{"id": 5, "text": "Looks good", "author": {"id": 7, "full_name": "Alice"}}]}
+        {
+            "card_id": 1,
+            "comments": [
+                {"id": 5, "text": "Looks good", "author": {"id": 7, "full_name": "Alice"}}
+            ],
+        }
     ]
     assert result["errors"] == []
 
@@ -78,7 +96,13 @@ async def test_execute_cards_batch_get_shapes_card_payloads(monkeypatch):
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
         return_value=Response(
             200,
-            json={"id": 1, "title": "Alpha", "description": "detail", "owner": {"id": 7, "full_name": "Alice"}, "avatar": "data:image/png;base64,abc"},
+            json={
+                "id": 1,
+                "title": "Alpha",
+                "description": "detail",
+                "owner": {"id": 7, "full_name": "Alice"},
+                "avatar": "data:image/png;base64,abc",
+            },
         )
     )
 
@@ -105,14 +129,27 @@ async def test_execute_time_logs_batch_list_propagates_query_and_shapes_payloads
     ).mock(
         return_value=Response(
             200,
-            json=[{"id": 10, "time_spent": 30, "for_date": "2026-04-01", "comment": "analysis", "author": {"id": 7}}],
+            json=[
+                {
+                    "id": 10,
+                    "time_spent": 30,
+                    "for_date": "2026-04-01",
+                    "comment": "analysis",
+                    "author": {"id": 7},
+                }
+            ],
         )
     )
 
     tool = resolve_tool("time-logs.batch-list")
     payload = merge_inputs(
         tool,
-        {"card_ids": "[1]", "for_date": "2026-04-01", "personal": True, "fields": "id,time_spent,for_date"},
+        {
+            "card_ids": "[1]",
+            "for_date": "2026-04-01",
+            "personal": True,
+            "fields": "id,time_spent,for_date",
+        },
     )
     result = await execute_tool(tool, payload)
 
@@ -134,7 +171,12 @@ async def test_execute_space_topology_get_returns_board_details(monkeypatch):
     detail = respx.get("https://sandbox.kaiten.ru/api/latest/boards/100").mock(
         return_value=Response(
             200,
-            json={"id": 100, "title": "Flow", "columns": [{"id": 1, "title": "Todo"}], "lanes": [{"id": 2, "title": "Default"}]},
+            json={
+                "id": 100,
+                "title": "Flow",
+                "columns": [{"id": 1, "title": "Todo"}],
+                "lanes": [{"id": 2, "title": "Default"}],
+            },
         )
     )
 
@@ -146,7 +188,14 @@ async def test_execute_space_topology_get_returns_board_details(monkeypatch):
     assert detail.called
     assert result == {
         "space_id": 10,
-        "boards": [{"id": 100, "title": "Flow", "columns": [{"id": 1, "title": "Todo"}], "lanes": [{"id": 2, "title": "Default"}]}],
+        "boards": [
+            {
+                "id": 100,
+                "title": "Flow",
+                "columns": [{"id": 1, "title": "Todo"}],
+                "lanes": [{"id": 2, "title": "Default"}],
+            }
+        ],
     }
 
 
@@ -192,6 +241,80 @@ def test_trace_file_records_tool_stats_and_batch_meta(monkeypatch, tmp_path, cap
     assert entry["requested_count"] == 2
     assert entry["unique_count"] == 1
     assert entry["workers"] == 2
+    assert stat.S_IMODE(trace_file.stat().st_mode) == 0o600
+
+
+def test_trace_file_preserves_existing_parent_mode(tmp_path):
+    trace_directory = tmp_path / "shared-traces"
+    trace_directory.mkdir(mode=0o755)
+    trace_directory.chmod(0o755)
+    trace_file = trace_directory / "trace.jsonl"
+
+    TraceRecorder(trace_file).write(
+        canonical_name="spaces.list",
+        execution_mode="direct_http",
+        argv=["kaiten", "spaces", "list"],
+        exit_code=0,
+        duration_ms=1.0,
+    )
+
+    assert stat.S_IMODE(trace_directory.stat().st_mode) == 0o755
+    assert stat.S_IMODE(trace_file.stat().st_mode) == 0o600
+
+
+def test_trace_file_supports_user_selected_symlinked_parent(tmp_path):
+    target_directory = tmp_path / "real-traces"
+    target_directory.mkdir(mode=0o755)
+    linked_directory = tmp_path / "trace-link"
+    linked_directory.symlink_to(target_directory, target_is_directory=True)
+    trace_file = linked_directory / "trace.jsonl"
+
+    TraceRecorder(trace_file).write(
+        canonical_name="spaces.list",
+        execution_mode="direct_http",
+        argv=["kaiten", "spaces", "list"],
+        exit_code=0,
+        duration_ms=1.0,
+    )
+
+    assert trace_file.exists()
+    assert stat.S_IMODE(target_directory.stat().st_mode) == 0o755
+    assert stat.S_IMODE(trace_file.stat().st_mode) == 0o600
+
+
+@respx.mock
+def test_trace_failure_does_not_turn_successful_mutation_into_cli_failure(
+    config_env, monkeypatch, tmp_path, capsys
+):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.post("https://sandbox.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(201, json={"id": 123, "title": "Task"})
+    )
+
+    def fail_trace_write(self, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(TraceRecorder, "write", fail_trace_write)
+    exit_code = main(
+        [
+            "--json",
+            "--trace-file",
+            str(tmp_path / "trace.jsonl"),
+            "cards",
+            "create",
+            "--title",
+            "Task",
+            "--board-id",
+            "1",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert json.loads(captured.out)["success"] is True
+    assert route.call_count == 1
+    assert "trace record was not written" in captured.err
 
 
 def test_trace_file_from_env_redacts_tokens(config_env, monkeypatch, tmp_path, capsys):

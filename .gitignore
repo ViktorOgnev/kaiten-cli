@@ -2,6 +2,10 @@
 .verify-venv/
 __pycache__/
 .pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 .mypy_cache/
 .ruff_cache/
 .claude-flow/
@@ -14,6 +18,8 @@ dist/
 *.pyc
 .env
 .env_stage
+.env_private
+.DS_Store
 /ARCHITECTURE_REVIEW.md
 /docs/archive/
 /PLAN*.md

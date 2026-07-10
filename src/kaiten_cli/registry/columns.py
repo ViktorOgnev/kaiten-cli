@@ -18,9 +18,14 @@ TOOLS = (
             },
             "required": ["board_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/boards/{board_id}/columns", path_fields=("board_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/boards/{board_id}/columns", path_fields=("board_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten columns list --board-id 10 --json", description="List columns on a board."),
+            ExampleSpec(
+                command="kaiten columns list --board-id 10 --json",
+                description="List columns on a board.",
+            ),
         ),
     ),
     make_tool(
@@ -32,10 +37,20 @@ TOOLS = (
             "properties": {
                 "board_id": {"type": "integer", "description": "Board ID"},
                 "title": {"type": "string", "description": "Column title"},
-                "type": {"type": "integer", "enum": [1, 2, 3], "description": "Column type: 1=queue, 2=in_progress, 3=done"},
+                "type": {
+                    "type": "integer",
+                    "enum": [1, 2, 3],
+                    "description": "Column type: 1=queue, 2=in_progress, 3=done",
+                },
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "wip_limit_type": {"type": "integer", "description": "WIP limit type (1=cards count, 2=size sum)"},
-                "col_count": {"type": "integer", "description": "Number of sub-columns to split into"},
+                "wip_limit_type": {
+                    "type": "integer",
+                    "description": "WIP limit type (1=cards count, 2=size sum)",
+                },
+                "col_count": {
+                    "type": "integer",
+                    "description": "Number of sub-columns to split into",
+                },
                 "sort_order": {"type": "number", "description": "Sort order"},
             },
             "required": ["board_id", "title", "type"],
@@ -47,7 +62,10 @@ TOOLS = (
             body_fields=("title", "type", "wip_limit", "wip_limit_type", "col_count", "sort_order"),
         ),
         examples=(
-            ExampleSpec(command='kaiten columns create --board-id 10 --title "Doing" --type 2 --json', description="Create a board column."),
+            ExampleSpec(
+                command='kaiten columns create --board-id 10 --title "Doing" --type 2 --json',
+                description="Create a board column.",
+            ),
         ),
     ),
     make_tool(
@@ -62,8 +80,14 @@ TOOLS = (
                 "title": {"type": "string", "description": "New title"},
                 "type": {"type": "integer", "enum": [1, 2, 3], "description": "Column type"},
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "wip_limit_type": {"type": "integer", "description": "WIP limit type (1=cards count, 2=size sum)"},
-                "col_count": {"type": "integer", "description": "Number of sub-columns to split into"},
+                "wip_limit_type": {
+                    "type": "integer",
+                    "description": "WIP limit type (1=cards count, 2=size sum)",
+                },
+                "col_count": {
+                    "type": "integer",
+                    "description": "Number of sub-columns to split into",
+                },
                 "sort_order": {"type": "number", "description": "Sort order"},
             },
             "required": ["board_id", "column_id"],
@@ -75,7 +99,10 @@ TOOLS = (
             body_fields=("title", "type", "wip_limit", "wip_limit_type", "col_count", "sort_order"),
         ),
         examples=(
-            ExampleSpec(command='kaiten columns update --board-id 10 --column-id 20 --title "Review" --json', description="Rename a board column."),
+            ExampleSpec(
+                command='kaiten columns update --board-id 10 --column-id 20 --title "Review" --json',
+                description="Rename a board column.",
+            ),
         ),
     ),
     make_tool(
@@ -90,9 +117,16 @@ TOOLS = (
             },
             "required": ["board_id", "column_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/boards/{board_id}/columns/{column_id}", path_fields=("board_id", "column_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/boards/{board_id}/columns/{column_id}",
+            path_fields=("board_id", "column_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten columns delete --board-id 10 --column-id 20 --json", description="Delete a board column."),
+            ExampleSpec(
+                command="kaiten columns delete --board-id 10 --column-id 20 --json",
+                description="Delete a board column.",
+            ),
         ),
     ),
     make_tool(
@@ -106,9 +140,16 @@ TOOLS = (
             },
             "required": ["column_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/columns/{column_id}/subcolumns", path_fields=("column_id",)),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/columns/{column_id}/subcolumns",
+            path_fields=("column_id",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten subcolumns list --column-id 20 --json", description="List subcolumns for a column."),
+            ExampleSpec(
+                command="kaiten subcolumns list --column-id 20 --json",
+                description="List subcolumns for a column.",
+            ),
         ),
     ),
     make_tool(
@@ -122,7 +163,10 @@ TOOLS = (
                 "title": {"type": "string", "description": "Subcolumn title"},
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "col_count": {"type": "integer", "description": "Number of sub-columns to split into"},
+                "col_count": {
+                    "type": "integer",
+                    "description": "Number of sub-columns to split into",
+                },
             },
             "required": ["column_id", "title"],
         },
@@ -133,7 +177,10 @@ TOOLS = (
             body_fields=("title", "sort_order", "wip_limit", "col_count"),
         ),
         examples=(
-            ExampleSpec(command='kaiten subcolumns create --column-id 20 --title "Blocked" --json', description="Create a subcolumn."),
+            ExampleSpec(
+                command='kaiten subcolumns create --column-id 20 --title "Blocked" --json',
+                description="Create a subcolumn.",
+            ),
         ),
     ),
     make_tool(
@@ -148,7 +195,10 @@ TOOLS = (
                 "title": {"type": "string", "description": "New title"},
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "col_count": {"type": "integer", "description": "Number of sub-columns to split into"},
+                "col_count": {
+                    "type": "integer",
+                    "description": "Number of sub-columns to split into",
+                },
             },
             "required": ["column_id", "subcolumn_id"],
         },
@@ -159,7 +209,10 @@ TOOLS = (
             body_fields=("title", "sort_order", "wip_limit", "col_count"),
         ),
         examples=(
-            ExampleSpec(command='kaiten subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked" --json', description="Update a subcolumn."),
+            ExampleSpec(
+                command='kaiten subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked" --json',
+                description="Update a subcolumn.",
+            ),
         ),
     ),
     make_tool(
@@ -174,9 +227,16 @@ TOOLS = (
             },
             "required": ["column_id", "subcolumn_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/columns/{column_id}/subcolumns/{subcolumn_id}", path_fields=("column_id", "subcolumn_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/columns/{column_id}/subcolumns/{subcolumn_id}",
+            path_fields=("column_id", "subcolumn_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten subcolumns delete --column-id 20 --subcolumn-id 30 --json", description="Delete a subcolumn."),
+            ExampleSpec(
+                command="kaiten subcolumns delete --column-id 20 --subcolumn-id 30 --json",
+                description="Delete a subcolumn.",
+            ),
         ),
     ),
 )

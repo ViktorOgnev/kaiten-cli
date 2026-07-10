@@ -19,7 +19,10 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "ID of the card whose comments to list."},
+                "card_id": {
+                    "type": "integer",
+                    "description": "ID of the card whose comments to list.",
+                },
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields (avatars, nested user objects).",
@@ -28,10 +31,15 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/comments", path_fields=("card_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/comments", path_fields=("card_id",)
+        ),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten comments list --card-id 10 --compact --json", description="List comments on a card."),
+            ExampleSpec(
+                command="kaiten comments list --card-id 10 --compact --json",
+                description="List comments on a card.",
+            ),
         ),
         usage_notes=(
             "This is a per-card read and becomes expensive when repeated across large card populations.",
@@ -46,10 +54,23 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_ids": {"type": "array", "items": {"type": "integer"}, "description": "Card IDs to inspect"},
-                "workers": {"type": "integer", "description": "Parallel workers (default 2, max 6)"},
-                "compact": {"type": "boolean", "description": "Strip heavy fields from comment payloads"},
-                "fields": {"type": "string", "description": "Comma-separated field names to keep for each comment"},
+                "card_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Card IDs to inspect",
+                },
+                "workers": {
+                    "type": "integer",
+                    "description": "Parallel workers (default 2, max 6)",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Strip heavy fields from comment payloads",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to keep for each comment",
+                },
             },
             "required": ["card_ids"],
         },
@@ -61,8 +82,14 @@ TOOLS = (
             custom_executor=execute_comments_batch_list,
         ),
         examples=(
-            ExampleSpec(command="kaiten comments batch-list --card-ids '[1,2,3]' --json", description="Fetch comments for several cards in one CLI call."),
-            ExampleSpec(command="kaiten comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text --json", description="Fetch narrowed comment payloads with bounded concurrency."),
+            ExampleSpec(
+                command="kaiten comments batch-list --card-ids '[1,2,3]' --json",
+                description="Fetch comments for several cards in one CLI call.",
+            ),
+            ExampleSpec(
+                command="kaiten comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text --json",
+                description="Fetch narrowed comment payloads with bounded concurrency.",
+            ),
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
@@ -77,13 +104,19 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the card to comment on."},
-                "text": {"type": "string", "description": "Comment text. For format=html send HTML content."},
+                "text": {
+                    "type": "string",
+                    "description": "Comment text. For format=html send HTML content.",
+                },
                 "format": {
                     "type": "string",
                     "enum": ["markdown", "html"],
                     "description": "Comment format. 'markdown' (default) stores raw markdown, 'html' switches the request to HTML mode.",
                 },
-                "internal": {"type": "boolean", "description": "Mark the comment as internal (visible only to team)."},
+                "internal": {
+                    "type": "boolean",
+                    "description": "Mark the comment as internal (visible only to team).",
+                },
             },
             "required": ["card_id", "text"],
         },
@@ -95,7 +128,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
-            ExampleSpec(command='kaiten comments create --card-id 10 --text "Looks good" --json', description="Create a markdown comment."),
+            ExampleSpec(
+                command='kaiten comments create --card-id 10 --text "Looks good" --json',
+                description="Create a markdown comment.",
+            ),
         ),
     ),
     make_tool(
@@ -107,7 +143,10 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "ID of the card."},
                 "comment_id": {"type": "integer", "description": "ID of the comment to update."},
-                "text": {"type": "string", "description": "New comment text. For format=html send HTML content."},
+                "text": {
+                    "type": "string",
+                    "description": "New comment text. For format=html send HTML content.",
+                },
                 "format": {
                     "type": "string",
                     "enum": ["markdown", "html"],
@@ -124,7 +163,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
-            ExampleSpec(command='kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json', description="Update a comment."),
+            ExampleSpec(
+                command='kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json',
+                description="Update a comment.",
+            ),
         ),
     ),
     make_tool(
@@ -145,7 +187,10 @@ TOOLS = (
             path_fields=("card_id", "comment_id"),
         ),
         examples=(
-            ExampleSpec(command="kaiten comments delete --card-id 10 --comment-id 20 --json", description="Delete a comment."),
+            ExampleSpec(
+                command="kaiten comments delete --card-id 10 --comment-id 20 --json",
+                description="Delete a comment.",
+            ),
         ),
     ),
 )

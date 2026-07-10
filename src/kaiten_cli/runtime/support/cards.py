@@ -66,7 +66,9 @@ def _card_query_params(args: dict[str, Any]) -> dict[str, Any]:
     return params
 
 
-async def _fetch_cards(client, params: dict[str, Any], *, page_size: int, max_pages: int, timeout: float) -> list[Any]:
+async def _fetch_cards(
+    client, params: dict[str, Any], *, page_size: int, max_pages: int, timeout: float
+) -> list[Any]:
     all_cards: list[Any] = []
     for page in range(max_pages):
         page_params = dict(params)
@@ -94,28 +96,37 @@ async def fetch_all_cards(client, args: dict[str, Any], *, timeout: float) -> li
         archived_params = dict(base_params)
         archived_params["archived"] = True
         archived_params.pop("condition", None)
-        return await _fetch_cards(client, archived_params, page_size=page_size, max_pages=max_pages, timeout=timeout)
+        return await _fetch_cards(
+            client, archived_params, page_size=page_size, max_pages=max_pages, timeout=timeout
+        )
 
     if selection == "active_only":
-        all_cards = await _fetch_cards(client, base_params, page_size=page_size, max_pages=max_pages, timeout=timeout)
+        all_cards = await _fetch_cards(
+            client, base_params, page_size=page_size, max_pages=max_pages, timeout=timeout
+        )
         archived_params = dict(base_params)
         archived_params["archived"] = True
         archived_params.pop("condition", None)
-        archived_cards = await _fetch_cards(client, archived_params, page_size=page_size, max_pages=max_pages, timeout=timeout)
+        archived_cards = await _fetch_cards(
+            client, archived_params, page_size=page_size, max_pages=max_pages, timeout=timeout
+        )
         archived_ids = {
-            item["id"]
-            for item in archived_cards
-            if isinstance(item, dict) and "id" in item
+            item["id"] for item in archived_cards if isinstance(item, dict) and "id" in item
         }
         return [
-            item for item in all_cards
+            item
+            for item in all_cards
             if not (isinstance(item, dict) and item.get("id") in archived_ids)
         ]
 
-    return await _fetch_cards(client, base_params, page_size=page_size, max_pages=max_pages, timeout=timeout)
+    return await _fetch_cards(
+        client, base_params, page_size=page_size, max_pages=max_pages, timeout=timeout
+    )
 
 
-def _shape_card_entity(item: dict[str, Any], *, compact: bool, fields: str | None) -> dict[str, Any]:
+def _shape_card_entity(
+    item: dict[str, Any], *, compact: bool, fields: str | None
+) -> dict[str, Any]:
     shaped = compact_response(item, compact)
     shaped = select_fields(shaped, fields)
     shaped, _ = strip_base64(shaped)

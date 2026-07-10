@@ -49,6 +49,11 @@ class TransportError(CliError):
         super().__init__(message=message, exit_code=5, error_type="transport_error")
 
 
+class MutationBlockedError(CliError):
+    def __init__(self, message: str):
+        super().__init__(message=message, exit_code=6, error_type="mutation_blocked")
+
+
 class InternalError(CliError):
     def __init__(self, message: str):
         super().__init__(message=message, exit_code=70, error_type="internal_error")

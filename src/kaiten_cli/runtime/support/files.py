@@ -196,7 +196,9 @@ def _source_from_url(url: str) -> DownloadSource:
     if parsed.scheme in {"http", "https"}:
         return DownloadSource(kind="direct_url", endpoint_path=None, direct_url=url)
 
-    raise ValidationError("Unsupported file URL. Use a Kaiten /api/... URL or an absolute http(s) URL.")
+    raise ValidationError(
+        "Unsupported file URL. Use a Kaiten /api/... URL or an absolute http(s) URL."
+    )
 
 
 def _file_id_from_endpoint(endpoint_path: str) -> str | None:
@@ -346,7 +348,9 @@ async def _download_once(
                 if resume_from == 0 and response.status_code != 200:
                     raise TransportError(f"File download failed with HTTP {response.status_code}.")
 
-                remote_filename = _content_disposition_filename(response.headers.get("content-disposition"))
+                remote_filename = _content_disposition_filename(
+                    response.headers.get("content-disposition")
+                )
                 if remote_filename and _output_allows_remote_filename(output) and resume_from == 0:
                     remote_target = _target_path(output, remote_filename)
                     if remote_target != target_path and not _part_path(remote_target).exists():
@@ -354,7 +358,9 @@ async def _download_once(
                         part_path = _part_path(target_path)
 
                 if target_path.exists() and not overwrite:
-                    raise ValidationError(f"Output file already exists: {target_path}. Use --overwrite to replace it.")
+                    raise ValidationError(
+                        f"Output file already exists: {target_path}. Use --overwrite to replace it."
+                    )
                 if part_path.exists() and not continue_enabled:
                     raise ValidationError(
                         f"Partial file already exists: {part_path}. Use --continue or --overwrite."
@@ -422,9 +428,13 @@ async def _download_with_refresh(
         if resolved.source.direct_url is not None:
             raise TransportError(f"File download failed with HTTP {result}.")
         if attempt == 1:
-            raise TransportError(f"File download failed with HTTP {result} after refreshing signed URL.")
+            raise TransportError(
+                f"File download failed with HTTP {result} after refreshing signed URL."
+            )
         _emit_debug(reporter, "download: signed URL expired, resolving it again")
-        resolved = await _resolve_signed_url(client, resolved.source, timeout=timeout, reporter=reporter)
+        resolved = await _resolve_signed_url(
+            client, resolved.source, timeout=timeout, reporter=reporter
+        )
 
     raise TransportError("File download failed.")
 
@@ -442,7 +452,9 @@ async def execute_file_download(
     del tool, path, query, body
     source = resolve_download_source(payload)
     resolved = await _resolve_signed_url(client, source, timeout=timeout, reporter=reporter)
-    result = await _download_with_refresh(client, resolved, payload, timeout=timeout, reporter=reporter)
+    result = await _download_with_refresh(
+        client, resolved, payload, timeout=timeout, reporter=reporter
+    )
     return {
         "path": str(result.path),
         "bytes": result.bytes_written,

@@ -50,7 +50,9 @@ def test_render_batch_execution_error_json_includes_data():
     payload = json.loads(
         render_error(
             "card-location-history.batch-get",
-            BatchExecutionError("all failed", {"items": [], "errors": [{"card_id": 1}], "meta": {"failed": 1}}),
+            BatchExecutionError(
+                "all failed", {"items": [], "errors": [{"card_id": 1}], "meta": {"failed": 1}}
+            ),
             True,
         )
     )

@@ -44,9 +44,9 @@ def test_build_request_for_create_api_key():
 async def test_execute_list_removed_cards_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/removed/cards", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/removed/cards", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1}]))
 
     tool = resolve_tool("removed-cards.list")
     payload = merge_inputs(tool, {})

@@ -32,7 +32,9 @@ TOOLS = (
             path_template="/spaces",
             query_fields=("archived",),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten spaces list --json",
@@ -53,9 +55,13 @@ TOOLS = (
             "properties": {"space_id": {"type": "integer", "description": "Space ID"}},
             "required": ["space_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/spaces/{space_id}", path_fields=("space_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/spaces/{space_id}", path_fields=("space_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten spaces get --space-id 123", description="Get a space by ID."),
+            ExampleSpec(
+                command="kaiten spaces get --space-id 123", description="Get a space by ID."
+            ),
         ),
     ),
     make_tool(
@@ -67,14 +73,19 @@ TOOLS = (
             "properties": {"space_id": {"type": "integer", "description": "Space ID"}},
             "required": ["space_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/spaces/{space_id}/topology", path_fields=("space_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/spaces/{space_id}/topology", path_fields=("space_id",)
+        ),
         response_policy=ResponsePolicy(result_kind="entity", heavy=True),
         runtime_behavior=RuntimeBehavior(
             execution_mode="aggregated",
             custom_executor=execute_space_topology_get,
         ),
         examples=(
-            ExampleSpec(command="kaiten space-topology get --space-id 123 --json", description="Fetch board topology for a space."),
+            ExampleSpec(
+                command="kaiten space-topology get --space-id 123 --json",
+                description="Fetch board topology for a space.",
+            ),
         ),
         usage_notes=(
             "Use this for report scaffolding instead of separate boards.list, columns.list, and lanes.list loops.",
@@ -95,7 +106,10 @@ TOOLS = (
                     "description": "Access type (default: for_everyone)",
                 },
                 "external_id": {"type": "string", "description": "External ID"},
-                "parent_entity_uid": {"type": "string", "description": "Parent entity UID for nesting spaces"},
+                "parent_entity_uid": {
+                    "type": "string",
+                    "description": "Parent entity UID for nesting spaces",
+                },
                 "sort_order": {"type": "number", "description": "Sort order"},
             },
             "required": ["title"],
@@ -103,10 +117,19 @@ TOOLS = (
         operation=OperationSpec(
             method="POST",
             path_template="/spaces",
-            body_fields=("title", "description", "access", "external_id", "parent_entity_uid", "sort_order"),
+            body_fields=(
+                "title",
+                "description",
+                "access",
+                "external_id",
+                "parent_entity_uid",
+                "sort_order",
+            ),
         ),
         examples=(
-            ExampleSpec(command='kaiten spaces create --title "CLI smoke"', description="Create a space."),
+            ExampleSpec(
+                command='kaiten spaces create --title "CLI smoke"', description="Create a space."
+            ),
         ),
     ),
     make_tool(
@@ -119,9 +142,16 @@ TOOLS = (
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "title": {"type": "string", "description": "New title"},
                 "description": {"type": "string", "description": "New description"},
-                "access": {"type": "string", "enum": ["for_everyone", "by_invite"], "description": "Access type"},
+                "access": {
+                    "type": "string",
+                    "enum": ["for_everyone", "by_invite"],
+                    "description": "Access type",
+                },
                 "external_id": {"type": "string", "description": "External ID"},
-                "parent_entity_uid": {"type": "string", "description": "Parent entity UID for nesting spaces"},
+                "parent_entity_uid": {
+                    "type": "string",
+                    "description": "Parent entity UID for nesting spaces",
+                },
                 "sort_order": {"type": "number", "description": "Sort order"},
             },
             "required": ["space_id"],
@@ -130,10 +160,20 @@ TOOLS = (
             method="PATCH",
             path_template="/spaces/{space_id}",
             path_fields=("space_id",),
-            body_fields=("title", "description", "access", "external_id", "parent_entity_uid", "sort_order"),
+            body_fields=(
+                "title",
+                "description",
+                "access",
+                "external_id",
+                "parent_entity_uid",
+                "sort_order",
+            ),
         ),
         examples=(
-            ExampleSpec(command='kaiten spaces update --space-id 123 --title "Updated"', description="Update a space."),
+            ExampleSpec(
+                command='kaiten spaces update --space-id 123 --title "Updated"',
+                description="Update a space.",
+            ),
         ),
     ),
     make_tool(
@@ -145,9 +185,13 @@ TOOLS = (
             "properties": {"space_id": {"type": "integer", "description": "Space ID"}},
             "required": ["space_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/spaces/{space_id}", path_fields=("space_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/spaces/{space_id}", path_fields=("space_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten spaces delete --space-id 123", description="Delete a space."),
+            ExampleSpec(
+                command="kaiten spaces delete --space-id 123", description="Delete a space."
+            ),
         ),
     ),
 )

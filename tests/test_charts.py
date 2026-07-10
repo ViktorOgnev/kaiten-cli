@@ -7,8 +7,14 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli
+from kaiten_cli.errors import MutationBlockedError
 from kaiten_cli.runtime.client import DEFAULT_TIMEOUT, HEAVY_TIMEOUT
-from kaiten_cli.runtime.executor import build_request, execute_tool, timeout_for_tool
+from kaiten_cli.runtime.executor import (
+    build_request,
+    enforce_mutation_policy,
+    execute_tool,
+    timeout_for_tool,
+)
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
 
@@ -30,24 +36,49 @@ def test_help_shows_charts_and_compute_jobs(runner):
 def test_resolve_chart_aliases():
     assert resolve_tool("kaiten_get_chart_boards").canonical_name == "charts.boards.get"
     assert resolve_tool("kaiten_chart_cfd").canonical_name == "charts.cfd.create"
-    assert resolve_tool("kaiten_chart_task_distribution").canonical_name == "charts.task-distribution.create"
+    assert (
+        resolve_tool("kaiten_chart_task_distribution").canonical_name
+        == "charts.task-distribution.create"
+    )
     assert resolve_tool("kaiten_get_compute_job").canonical_name == "compute-jobs.get"
 
 
 def test_build_request_for_chart_summary():
     tool = resolve_tool("charts.summary.get")
-    payload = merge_inputs(tool, {"space_id": 1, "date_from": "2026-01-01", "date_to": "2026-01-31", "done_columns": [10, 11]})
+    payload = merge_inputs(
+        tool,
+        {
+            "space_id": 1,
+            "date_from": "2026-01-01",
+            "date_to": "2026-01-31",
+            "done_columns": [10, 11],
+        },
+    )
 
     path, query, body = build_request(tool, payload)
 
     assert path == "/charts/summary"
     assert query is None
-    assert body == {"space_id": 1, "date_from": "2026-01-01", "date_to": "2026-01-31", "done_columns": [10, 11]}
+    assert body == {
+        "space_id": 1,
+        "date_from": "2026-01-01",
+        "date_to": "2026-01-31",
+        "done_columns": [10, 11],
+    }
 
 
 def test_build_request_for_chart_cfd():
     tool = resolve_tool("charts.cfd.create")
-    payload = merge_inputs(tool, {"space_id": 1, "date_from": "2026-01-01", "date_to": "2026-01-31", "selectedLanes": [4], "cardTypes": [2]})
+    payload = merge_inputs(
+        tool,
+        {
+            "space_id": 1,
+            "date_from": "2026-01-01",
+            "date_to": "2026-01-31",
+            "selectedLanes": [4],
+            "cardTypes": [2],
+        },
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -68,6 +99,31 @@ def test_timeout_policy_for_charts():
 
     assert timeout_for_tool(heavy_tool) == HEAVY_TIMEOUT
     assert timeout_for_tool(light_tool) == DEFAULT_TIMEOUT
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "charts.summary.get",
+        "charts.block-resolution.get",
+        "charts.due-dates.get",
+    ],
+)
+def test_read_only_policy_allows_chart_calculations(command):
+    tool = resolve_tool(command)
+
+    assert tool.operation.method == "POST"
+    assert tool.runtime_behavior.enforce_mutation_guard is False
+    enforce_mutation_policy(tool, read_only=True)
+
+
+@pytest.mark.parametrize("command", ["charts.cfd.create", "compute-jobs.cancel"])
+def test_read_only_policy_blocks_remote_chart_job_mutations(command):
+    tool = resolve_tool(command)
+
+    assert tool.runtime_behavior.enforce_mutation_guard is True
+    with pytest.raises(MutationBlockedError, match="blocked by read-only mode"):
+        enforce_mutation_policy(tool, read_only=True)
 
 
 @pytest.mark.asyncio
@@ -97,7 +153,9 @@ async def test_execute_create_chart_cfd(monkeypatch):
     )
 
     tool = resolve_tool("charts.cfd.create")
-    payload = merge_inputs(tool, {"space_id": 1, "date_from": "2026-01-01", "date_to": "2026-01-31"})
+    payload = merge_inputs(
+        tool, {"space_id": 1, "date_from": "2026-01-01", "date_to": "2026-01-31"}
+    )
     result = await execute_tool(tool, payload)
 
     assert route.called
@@ -111,7 +169,9 @@ def test_cli_chart_boards_alias_and_canonical_match(runner):
     )
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
-    canonical = runner.invoke(cli, ["--json", "charts", "boards", "get", "--space-id", "1"], env=env)
+    canonical = runner.invoke(
+        cli, ["--json", "charts", "boards", "get", "--space-id", "1"], env=env
+    )
     alias = runner.invoke(cli, ["--json", "kaiten_get_chart_boards", "--space-id", "1"], env=env)
 
     assert canonical.exit_code == 0

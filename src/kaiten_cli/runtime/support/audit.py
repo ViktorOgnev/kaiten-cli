@@ -31,7 +31,9 @@ async def fetch_all_space_activity(client, args: dict[str, Any], *, timeout: flo
     for page in range(max_pages):
         params["limit"] = page_size
         params["offset"] = page * page_size
-        result = await client.get(f"/spaces/{args['space_id']}/activity", params=params, timeout=timeout)
+        result = await client.get(
+            f"/spaces/{args['space_id']}/activity", params=params, timeout=timeout
+        )
         if not result:
             break
         all_activity.extend(result)

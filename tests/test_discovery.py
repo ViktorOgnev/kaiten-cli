@@ -9,6 +9,8 @@ def test_search_tools_finds_cards():
     assert results[0]["canonical_name"] == "cards.list"
     assert results[0]["method"] == "GET"
     assert results[0]["mutation"] is False
+    assert results[0]["read_only_allowed"] is True
+    assert results[0]["remote_side_effects"] is False
     assert results[0]["heavy"] is False
     assert results[0]["execution_mode"] == "direct_http"
     assert results[0]["cache_policy"] == "request_scope"
@@ -20,13 +22,18 @@ def test_describe_tool_contains_alias_and_arguments():
     description = describe_tool("cards.create")
     assert description["mcp_alias"] == "kaiten_create_card"
     assert description["mutation"] is True
+    assert description["read_only_allowed"] is False
+    assert description["remote_side_effects"] is True
     assert description["execution_mode"] == "direct_http"
     assert description["cache_policy"] == "none"
     assert description["input_modes"] == ["options", "from_file", "stdin_json"]
     assert "compact_supported" in description["response_policy"]
     assert description["response_policy"]["result_kind"] == "entity"
     assert any(arg["name"] == "title" and arg["required"] for arg in description["arguments"])
-    assert any(arg["name"] == "board_id" and arg["type_display"] == "integer" for arg in description["arguments"])
+    assert any(
+        arg["name"] == "board_id" and arg["type_display"] == "integer"
+        for arg in description["arguments"]
+    )
 
 
 def test_describe_tool_includes_live_contract_and_response_policy_metadata():
@@ -47,7 +54,10 @@ def test_describe_tool_includes_usage_notes_and_bulk_alternative():
     assert any("per-card read" in note for note in description["usage_notes"])
 
     bulk_description = describe_tool("cards.list-all")
-    assert any("selection=all|active_only|archived_only" in note for note in bulk_description["usage_notes"])
+    assert any(
+        "selection=all|active_only|archived_only" in note
+        for note in bulk_description["usage_notes"]
+    )
 
     card_get = describe_tool("cards.get")
     assert card_get["bulk_alternative"] == "cards.batch-get"
@@ -71,6 +81,14 @@ def test_describe_tool_includes_usage_notes_and_bulk_alternative():
 
     chart = describe_tool("charts.summary.get")
     assert any("card-location-history.batch-get" in note for note in chart["usage_notes"])
+    assert chart["mutation"] is True
+    assert chart["read_only_allowed"] is True
+    assert chart["remote_side_effects"] is False
+
+    snapshot_delete = describe_tool("snapshot.delete")
+    assert snapshot_delete["mutation"] is True
+    assert snapshot_delete["read_only_allowed"] is True
+    assert snapshot_delete["remote_side_effects"] is False
 
 
 def test_describe_tool_includes_persistent_cache_policy_for_safe_entity_reads():
@@ -145,4 +163,6 @@ def test_search_tools_uses_catalog_disambiguation_notes():
 
     card_field_value_results = search_tools("значения поля карточки справочник", limit=5)
     card_field_value_names = [result["canonical_name"] for result in card_field_value_results]
-    assert any(name.startswith("custom-properties.catalog-values") for name in card_field_value_names)
+    assert any(
+        name.startswith("custom-properties.catalog-values") for name in card_field_value_names
+    )

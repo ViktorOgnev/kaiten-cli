@@ -12,7 +12,9 @@ TREE_MAX_PAGES = 200
 
 def sort_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
     type_order = {"document_group": 0, "space": 1, "document": 2}
-    return sorted(entities, key=lambda entity: (type_order.get(entity["type"], 99), entity.get("title", "")))
+    return sorted(
+        entities, key=lambda entity: (type_order.get(entity["type"], 99), entity.get("title", ""))
+    )
 
 
 def strip_id_none(entity: dict[str, Any]) -> dict[str, Any]:
@@ -30,7 +32,9 @@ async def fetch_paginated_entities(
     rows: list[dict[str, Any]] = []
     for page in range(max_pages):
         offset = page * limit
-        response = await client.get(path, params={"limit": limit, "offset": offset}, timeout=timeout)
+        response = await client.get(
+            path, params={"limit": limit, "offset": offset}, timeout=timeout
+        )
         page_rows = response if isinstance(response, list) else []
         rows.extend(row for row in page_rows if isinstance(row, dict))
         if len(page_rows) < limit:
@@ -105,7 +109,9 @@ def effective_parent_uid(entity: dict[str, Any], known_uids: set[Any]) -> Any:
     return parent_uid
 
 
-def build_tree(entities: list[dict[str, Any]], root_uid: str | None, max_depth: int) -> list[dict[str, Any]]:
+def build_tree(
+    entities: list[dict[str, Any]], root_uid: str | None, max_depth: int
+) -> list[dict[str, Any]]:
     if root_uid is not None and not any(entity["uid"] == root_uid for entity in entities):
         raise ConfigError(f"Entity with uid '{root_uid}' not found")
 

@@ -61,7 +61,9 @@ def _write_text_atomic(path: Path, text: str, *, overwrite: bool) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     part_path = path.with_name(f"{path.name}.part")
     if part_path.exists() and not overwrite:
-        raise ValidationError(f"Partial file already exists: {part_path}. Use --overwrite to replace it.")
+        raise ValidationError(
+            f"Partial file already exists: {part_path}. Use --overwrite to replace it."
+        )
     part_path.write_text(text, encoding="utf-8")
     part_path.replace(path)
 
@@ -86,7 +88,10 @@ def _parse_document_data(data: Any) -> dict[str, Any]:
         try:
             parsed = json.loads(data)
         except json.JSONDecodeError:
-            return {"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": data}]}]}
+            return {
+                "type": "doc",
+                "content": [{"type": "paragraph", "content": [{"type": "text", "text": data}]}],
+            }
         if isinstance(parsed, dict):
             return parsed
     return {"type": "doc", "content": []}
@@ -94,7 +99,9 @@ def _parse_document_data(data: Any) -> dict[str, Any]:
 
 def _children(node: dict[str, Any]) -> list[dict[str, Any]]:
     content = node.get("content")
-    return [child for child in content if isinstance(child, dict)] if isinstance(content, list) else []
+    return (
+        [child for child in content if isinstance(child, dict)] if isinstance(content, list) else []
+    )
 
 
 def _attrs(node: dict[str, Any]) -> dict[str, Any]:
@@ -137,7 +144,9 @@ def _normalize_kaiten_file_url(url: str) -> str:
 
     api_match = API_FILE_RE.match(path)
     if api_match is not None:
-        return _api_file_link(api_match.group("kind"), api_match.group("owner"), api_match.group("file"))
+        return _api_file_link(
+            api_match.group("kind"), api_match.group("owner"), api_match.group("file")
+        )
 
     internal_match = INTERNAL_FILE_RE.search(path)
     if internal_match is not None:
@@ -198,7 +207,9 @@ def _apply_marks(text: str, marks: Any, *, document_uid: str | None) -> str:
             if kind == "documents" and document_uid:
                 href = _api_file_link(kind, document_uid, link["fileId"])
             elif kind and (link.get("entityId") or link.get("entityUid")):
-                href = _api_file_link(kind, link.get("entityId") or link.get("entityUid") or "", link["fileId"])
+                href = _api_file_link(
+                    kind, link.get("entityId") or link.get("entityUid") or "", link["fileId"]
+                )
             else:
                 href = _normalize_kaiten_file_url(str(href))
         else:
@@ -213,7 +224,9 @@ def _apply_marks(text: str, marks: Any, *, document_uid: str | None) -> str:
 def _inline(node: dict[str, Any], *, document_uid: str | None) -> str:
     node_type = node.get("type")
     if node_type == "text":
-        return _apply_marks(str(node.get("text") or ""), node.get("marks"), document_uid=document_uid)
+        return _apply_marks(
+            str(node.get("text") or ""), node.get("marks"), document_uid=document_uid
+        )
     if node_type == "hard_break":
         return "\n"
     if node_type == "mention":
@@ -258,14 +271,20 @@ def _render_table(node: dict[str, Any], *, document_uid: str | None) -> str:
     for row in _children(node):
         if row.get("type") not in {"table_row", "tableRow"}:
             continue
-        cells = [_escape_table_cell(_text_content(cell, document_uid=document_uid)) for cell in _children(row)]
+        cells = [
+            _escape_table_cell(_text_content(cell, document_uid=document_uid))
+            for cell in _children(row)
+        ]
         if cells:
             rows.append(cells)
     if not rows:
         return ""
     width = max(len(row) for row in rows)
     rows = [row + [""] * (width - len(row)) for row in rows]
-    lines = ["| " + " | ".join(rows[0]) + " |", "| " + " | ".join("---" for _ in range(width)) + " |"]
+    lines = [
+        "| " + " | ".join(rows[0]) + " |",
+        "| " + " | ".join("---" for _ in range(width)) + " |",
+    ]
     lines.extend("| " + " | ".join(row) + " |" for row in rows[1:])
     return "\n".join(lines)
 
@@ -281,7 +300,9 @@ def _block(node: dict[str, Any], *, document_uid: str | None) -> str:
     if node_type == "doc":
         return _blocks(_children(node), document_uid=document_uid)
     if node_type == "paragraph":
-        return "".join(_inline(child, document_uid=document_uid) for child in _children(node)).strip()
+        return "".join(
+            _inline(child, document_uid=document_uid) for child in _children(node)
+        ).strip()
     if node_type in {"heading", "heading1", "heading2", "heading3"}:
         level = int(attrs.get("level") or str(node_type).removeprefix("heading") or 1)
         return f"{'#' * min(max(level, 1), 6)} {_text_content(node, document_uid=document_uid).strip()}".rstrip()
@@ -293,7 +314,14 @@ def _block(node: dict[str, Any], *, document_uid: str | None) -> str:
         return _render_list(node, document_uid=document_uid, ordered=True)
     if node_type == "check_list":
         return _render_list(node, document_uid=document_uid, check_list=True)
-    if node_type in {"list_item", "check_list_item", "toggle_content", "columns", "column", "toggle"}:
+    if node_type in {
+        "list_item",
+        "check_list_item",
+        "toggle_content",
+        "columns",
+        "column",
+        "toggle",
+    }:
         return _blocks(_children(node), document_uid=document_uid)
     if node_type in {"blockquote", "alert"}:
         return _prefix_lines(_blocks(_children(node), document_uid=document_uid), "> ")
@@ -309,7 +337,13 @@ def _block(node: dict[str, Any], *, document_uid: str | None) -> str:
         return rendered or _blocks(_children(node), document_uid=document_uid)
     if node_type == "file":
         url = _link_for_file(attrs, document_uid=document_uid)
-        label = str(attrs.get("name") or attrs.get("title") or attrs.get("fileName") or attrs.get("fileId") or "file")
+        label = str(
+            attrs.get("name")
+            or attrs.get("title")
+            or attrs.get("fileName")
+            or attrs.get("fileId")
+            or "file"
+        )
         return f"[{_escape_link_text(label)}]({url})" if url else label
     if node_type in {"inline_card_link", "block_card_link"}:
         return str(attrs.get("url") or "")

@@ -24,18 +24,30 @@ TOOLS = (
             "properties": {
                 "name": {"type": "string", "description": "Stable snapshot name."},
                 "space_id": {"type": "integer", "description": "Source space ID."},
-                "board_ids": {"type": "array", "items": {"type": "integer"}, "description": "Optional board IDs to keep inside the snapshot."},
+                "board_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Optional board IDs to keep inside the snapshot.",
+                },
                 "preset": {
                     "type": "string",
                     "enum": ["basic", "analytics", "evidence", "full"],
                     "description": "Snapshot scope preset.",
                 },
-                "window_start": {"type": "string", "description": "Window start timestamp for analytics/full snapshots."},
-                "window_end": {"type": "string", "description": "Window end timestamp for analytics/full snapshots."},
+                "window_start": {
+                    "type": "string",
+                    "description": "Window start timestamp for analytics/full snapshots.",
+                },
+                "window_end": {
+                    "type": "string",
+                    "description": "Window end timestamp for analytics/full snapshots.",
+                },
             },
             "required": ["name", "space_id"],
         },
-        operation=OperationSpec(method="POST", path_template="/local/snapshots/{name}", path_fields=("name",)),
+        operation=OperationSpec(
+            method="POST", path_template="/local/snapshots/{name}", path_fields=("name",)
+        ),
         response_policy=ResponsePolicy(heavy=True, result_kind="entity"),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
@@ -44,10 +56,17 @@ TOOLS = (
             cache_policy="none",
             requires_profile=True,
             enforce_mutation_guard=False,
+            remote_side_effects=False,
         ),
         examples=(
-            ExampleSpec(command="kaiten snapshot build --name team-basic --space-id 10 --preset basic --json", description="Build a reusable local snapshot with topology and cards."),
-            ExampleSpec(command="kaiten snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z --json", description="Build an analytics snapshot with bounded activity and history data."),
+            ExampleSpec(
+                command="kaiten snapshot build --name team-basic --space-id 10 --preset basic --json",
+                description="Build a reusable local snapshot with topology and cards.",
+            ),
+            ExampleSpec(
+                command="kaiten snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z --json",
+                description="Build an analytics snapshot with bounded activity and history data.",
+            ),
         ),
         usage_notes=(
             "Build one snapshot, then run repeated local query cards/query metrics commands without extra Kaiten API calls.",
@@ -65,7 +84,9 @@ TOOLS = (
             },
             "required": ["name"],
         },
-        operation=OperationSpec(method="PATCH", path_template="/local/snapshots/{name}", path_fields=("name",)),
+        operation=OperationSpec(
+            method="PATCH", path_template="/local/snapshots/{name}", path_fields=("name",)
+        ),
         response_policy=ResponsePolicy(heavy=True, result_kind="entity"),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
@@ -73,9 +94,13 @@ TOOLS = (
             cache_policy="none",
             requires_profile=True,
             enforce_mutation_guard=False,
+            remote_side_effects=False,
         ),
         examples=(
-            ExampleSpec(command="kaiten snapshot refresh --name team-q1 --json", description="Refresh a previously built snapshot."),
+            ExampleSpec(
+                command="kaiten snapshot refresh --name team-q1 --json",
+                description="Refresh a previously built snapshot.",
+            ),
         ),
         usage_notes=(
             "refresh reuses the stored snapshot spec and rebuilds datasets in place; v1 is rebuild-oriented, not incremental.",
@@ -96,7 +121,9 @@ TOOLS = (
             requires_profile=False,
         ),
         examples=(
-            ExampleSpec(command="kaiten snapshot list --json", description="Show available local snapshots."),
+            ExampleSpec(
+                command="kaiten snapshot list --json", description="Show available local snapshots."
+            ),
         ),
     ),
     make_tool(
@@ -110,7 +137,9 @@ TOOLS = (
             },
             "required": ["name"],
         },
-        operation=OperationSpec(method="GET", path_template="/local/snapshots/{name}", path_fields=("name",)),
+        operation=OperationSpec(
+            method="GET", path_template="/local/snapshots/{name}", path_fields=("name",)
+        ),
         response_policy=ResponsePolicy(result_kind="entity"),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
@@ -119,7 +148,10 @@ TOOLS = (
             requires_profile=False,
         ),
         examples=(
-            ExampleSpec(command="kaiten snapshot show --name team-q1 --json", description="Inspect snapshot metadata and dataset counts."),
+            ExampleSpec(
+                command="kaiten snapshot show --name team-q1 --json",
+                description="Inspect snapshot metadata and dataset counts.",
+            ),
         ),
     ),
     make_tool(
@@ -133,7 +165,9 @@ TOOLS = (
             },
             "required": ["name"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/local/snapshots/{name}", path_fields=("name",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/local/snapshots/{name}", path_fields=("name",)
+        ),
         response_policy=ResponsePolicy(result_kind="entity"),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
@@ -141,9 +175,13 @@ TOOLS = (
             cache_policy="none",
             requires_profile=False,
             enforce_mutation_guard=False,
+            remote_side_effects=False,
         ),
         examples=(
-            ExampleSpec(command="kaiten snapshot delete --name team-q1 --json", description="Delete a local snapshot."),
+            ExampleSpec(
+                command="kaiten snapshot delete --name team-q1 --json",
+                description="Delete a local snapshot.",
+            ),
         ),
     ),
 )

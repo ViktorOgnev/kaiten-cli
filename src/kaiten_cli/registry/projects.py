@@ -16,7 +16,9 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/projects"),
         examples=(
-            ExampleSpec(command="kaiten projects list --json", description="List company projects."),
+            ExampleSpec(
+                command="kaiten projects list --json", description="List company projects."
+            ),
         ),
     ),
     make_tool(
@@ -28,9 +30,15 @@ TOOLS = (
             "properties": {
                 "title": {"type": "string", "description": "Project title (stored as 'name')"},
                 "description": {"type": "string", "description": "Project description"},
-                "work_calendar_id": {"type": "string", "description": "Work calendar UUID to attach to the project"},
+                "work_calendar_id": {
+                    "type": "string",
+                    "description": "Work calendar UUID to attach to the project",
+                },
                 "settings": {"type": "object", "description": "Project settings"},
-                "properties": {"type": "object", "description": "Custom property values as {id_<N>: value} pairs"},
+                "properties": {
+                    "type": "object",
+                    "description": "Custom property values as {id_<N>: value} pairs",
+                },
             },
             "required": ["title"],
         },
@@ -41,7 +49,10 @@ TOOLS = (
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
-            ExampleSpec(command='kaiten projects create --title "Platform" --json', description="Create a project."),
+            ExampleSpec(
+                command='kaiten projects create --title "Platform" --json',
+                description="Create a project.",
+            ),
         ),
     ),
     make_tool(
@@ -52,13 +63,24 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "project_id": {"type": "string", "description": "Project ID (UUID)"},
-                "with_cards_data": {"type": "boolean", "description": "Include full card data with path info and custom properties"},
+                "with_cards_data": {
+                    "type": "boolean",
+                    "description": "Include full card data with path info and custom properties",
+                },
             },
             "required": ["project_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/projects/{project_id}", path_fields=("project_id",), query_fields=("with_cards_data",)),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/projects/{project_id}",
+            path_fields=("project_id",),
+            query_fields=("with_cards_data",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten projects get --project-id p1 --json", description="Get a project by ID."),
+            ExampleSpec(
+                command="kaiten projects get --project-id p1 --json",
+                description="Get a project by ID.",
+            ),
         ),
     ),
     make_tool(
@@ -71,10 +93,20 @@ TOOLS = (
                 "project_id": {"type": "string", "description": "Project ID (UUID)"},
                 "title": {"type": "string", "description": "Project title (stored as 'name')"},
                 "description": {"type": "string", "description": "Project description"},
-                "condition": {"type": "string", "enum": ["active", "inactive"], "description": "Project condition (active or inactive)"},
-                "work_calendar_id": {"type": "string", "description": "Work calendar UUID to attach to the project"},
+                "condition": {
+                    "type": "string",
+                    "enum": ["active", "inactive"],
+                    "description": "Project condition (active or inactive)",
+                },
+                "work_calendar_id": {
+                    "type": "string",
+                    "description": "Work calendar UUID to attach to the project",
+                },
                 "settings": {"type": "object", "description": "Project settings"},
-                "properties": {"type": "object", "description": "Custom property values as {id_<N>: value} pairs; set a key to null to clear it"},
+                "properties": {
+                    "type": "object",
+                    "description": "Custom property values as {id_<N>: value} pairs; set a key to null to clear it",
+                },
             },
             "required": ["project_id"],
         },
@@ -82,11 +114,21 @@ TOOLS = (
             method="PATCH",
             path_template="/projects/{project_id}",
             path_fields=("project_id",),
-            body_fields=("title", "description", "condition", "work_calendar_id", "settings", "properties"),
+            body_fields=(
+                "title",
+                "description",
+                "condition",
+                "work_calendar_id",
+                "settings",
+                "properties",
+            ),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
-            ExampleSpec(command='kaiten projects update --project-id p1 --title "Platform" --json', description="Update a project."),
+            ExampleSpec(
+                command='kaiten projects update --project-id p1 --title "Platform" --json',
+                description="Update a project.",
+            ),
         ),
     ),
     make_tool(
@@ -100,9 +142,14 @@ TOOLS = (
             },
             "required": ["project_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/projects/{project_id}", path_fields=("project_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/projects/{project_id}", path_fields=("project_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten projects delete --project-id p1 --json", description="Delete a project."),
+            ExampleSpec(
+                command="kaiten projects delete --project-id p1 --json",
+                description="Delete a project.",
+            ),
         ),
     ),
     make_tool(
@@ -121,11 +168,18 @@ TOOLS = (
             },
             "required": ["project_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/projects/{project_id}/cards", path_fields=("project_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/projects/{project_id}/cards", path_fields=("project_id",)
+        ),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
-        runtime_behavior=RuntimeBehavior(execution_mode="synthetic", custom_executor=execute_project_cards_list),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="synthetic", custom_executor=execute_project_cards_list
+        ),
         examples=(
-            ExampleSpec(command="kaiten projects cards list --project-id p1 --compact --json", description="List project cards."),
+            ExampleSpec(
+                command="kaiten projects cards list --project-id p1 --compact --json",
+                description="List project cards.",
+            ),
         ),
     ),
     make_tool(
@@ -147,7 +201,10 @@ TOOLS = (
             body_fields=("card_id",),
         ),
         examples=(
-            ExampleSpec(command="kaiten projects cards add --project-id p1 --card-id 10 --json", description="Add a card to a project."),
+            ExampleSpec(
+                command="kaiten projects cards add --project-id p1 --card-id 10 --json",
+                description="Add a card to a project.",
+            ),
         ),
     ),
     make_tool(
@@ -162,9 +219,16 @@ TOOLS = (
             },
             "required": ["project_id", "card_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/projects/{project_id}/cards/{card_id}", path_fields=("project_id", "card_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/projects/{project_id}/cards/{card_id}",
+            path_fields=("project_id", "card_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten projects cards remove --project-id p1 --card-id 10 --json", description="Remove a card from a project."),
+            ExampleSpec(
+                command="kaiten projects cards remove --project-id p1 --card-id 10 --json",
+                description="Remove a card from a project.",
+            ),
         ),
     ),
     make_tool(
@@ -179,11 +243,11 @@ TOOLS = (
                 "offset": {"type": "integer", "description": "Pagination offset"},
             },
         },
-        operation=OperationSpec(method="GET", path_template="/sprints", query_fields=("active", "limit", "offset")),
-        response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
-        examples=(
-            ExampleSpec(command="kaiten sprints list --json", description="List sprints."),
+        operation=OperationSpec(
+            method="GET", path_template="/sprints", query_fields=("active", "limit", "offset")
         ),
+        response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
+        examples=(ExampleSpec(command="kaiten sprints list --json", description="List sprints."),),
     ),
     make_tool(
         canonical_name="sprints.create",
@@ -206,7 +270,10 @@ TOOLS = (
             body_fields=("title", "board_id", "goal", "start_date", "finish_date"),
         ),
         examples=(
-            ExampleSpec(command='kaiten sprints create --title "Sprint 1" --board-id 10 --json', description="Create a sprint."),
+            ExampleSpec(
+                command='kaiten sprints create --title "Sprint 1" --board-id 10 --json',
+                description="Create a sprint.",
+            ),
         ),
     ),
     make_tool(
@@ -217,7 +284,10 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "sprint_id": {"type": "integer", "description": "Sprint ID"},
-                "exclude_deleted_cards": {"type": "boolean", "description": "Exclude deleted cards from the sprint summary"},
+                "exclude_deleted_cards": {
+                    "type": "boolean",
+                    "description": "Exclude deleted cards from the sprint summary",
+                },
             },
             "required": ["sprint_id"],
         },
@@ -228,7 +298,9 @@ TOOLS = (
             query_fields=("exclude_deleted_cards",),
         ),
         examples=(
-            ExampleSpec(command="kaiten sprints get --sprint-id 1 --json", description="Get a sprint."),
+            ExampleSpec(
+                command="kaiten sprints get --sprint-id 1 --json", description="Get a sprint."
+            ),
         ),
     ),
     make_tool(
@@ -243,8 +315,14 @@ TOOLS = (
                 "goal": {"type": "string", "description": "Sprint goal"},
                 "start_date": {"type": "string", "description": "Start date (ISO 8601)"},
                 "finish_date": {"type": "string", "description": "Finish date (ISO 8601)"},
-                "active": {"type": "boolean", "description": "Set to false to finish/complete the sprint"},
-                "archive_done_cards": {"type": "boolean", "description": "Archive completed cards when finishing a sprint"},
+                "active": {
+                    "type": "boolean",
+                    "description": "Set to false to finish/complete the sprint",
+                },
+                "archive_done_cards": {
+                    "type": "boolean",
+                    "description": "Archive completed cards when finishing a sprint",
+                },
             },
             "required": ["sprint_id"],
         },
@@ -252,10 +330,20 @@ TOOLS = (
             method="PATCH",
             path_template="/sprints/{sprint_id}",
             path_fields=("sprint_id",),
-            body_fields=("title", "goal", "start_date", "finish_date", "active", "archive_done_cards"),
+            body_fields=(
+                "title",
+                "goal",
+                "start_date",
+                "finish_date",
+                "active",
+                "archive_done_cards",
+            ),
         ),
         examples=(
-            ExampleSpec(command="kaiten sprints update --sprint-id 1 --active false --json", description="Update a sprint."),
+            ExampleSpec(
+                command="kaiten sprints update --sprint-id 1 --active false --json",
+                description="Update a sprint.",
+            ),
         ),
     ),
     make_tool(
@@ -269,9 +357,13 @@ TOOLS = (
             },
             "required": ["sprint_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/sprints/{sprint_id}", path_fields=("sprint_id",)),
+        operation=OperationSpec(
+            method="DELETE", path_template="/sprints/{sprint_id}", path_fields=("sprint_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten sprints delete --sprint-id 1 --json", description="Delete a sprint."),
+            ExampleSpec(
+                command="kaiten sprints delete --sprint-id 1 --json", description="Delete a sprint."
+            ),
         ),
     ),
 )

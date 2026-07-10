@@ -16,14 +16,22 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
-                "compact": {"type": "boolean", "description": "Return compact response without heavy fields."},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields.",
+                },
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/subscribers", path_fields=("card_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/subscribers", path_fields=("card_id",)
+        ),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten card-subscribers list --card-id 10 --compact --json", description="List card subscribers."),
+            ExampleSpec(
+                command="kaiten card-subscribers list --card-id 10 --compact --json",
+                description="List card subscribers.",
+            ),
         ),
     ),
     make_tool(
@@ -38,9 +46,17 @@ TOOLS = (
             },
             "required": ["card_id", "user_id"],
         },
-        operation=OperationSpec(method="POST", path_template="/cards/{card_id}/subscribers", path_fields=("card_id",), body_fields=("user_id",)),
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_id}/subscribers",
+            path_fields=("card_id",),
+            body_fields=("user_id",),
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-subscribers add --card-id 10 --user-id 7 --json", description="Add a card subscriber."),
+            ExampleSpec(
+                command="kaiten card-subscribers add --card-id 10 --user-id 7 --json",
+                description="Add a card subscriber.",
+            ),
         ),
     ),
     make_tool(
@@ -55,9 +71,16 @@ TOOLS = (
             },
             "required": ["card_id", "user_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/subscribers/{user_id}", path_fields=("card_id", "user_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/subscribers/{user_id}",
+            path_fields=("card_id", "user_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten card-subscribers remove --card-id 10 --user-id 7 --json", description="Remove a card subscriber."),
+            ExampleSpec(
+                command="kaiten card-subscribers remove --card-id 10 --user-id 7 --json",
+                description="Remove a card subscriber.",
+            ),
         ),
     ),
     make_tool(
@@ -68,14 +91,24 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "column_id": {"type": "integer", "description": "Column ID"},
-                "compact": {"type": "boolean", "description": "Return compact response without heavy fields."},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact response without heavy fields.",
+                },
             },
             "required": ["column_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/columns/{column_id}/subscribers", path_fields=("column_id",)),
+        operation=OperationSpec(
+            method="GET",
+            path_template="/columns/{column_id}/subscribers",
+            path_fields=("column_id",),
+        ),
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten column-subscribers list --column-id 10 --compact --json", description="List column subscribers."),
+            ExampleSpec(
+                command="kaiten column-subscribers list --column-id 10 --compact --json",
+                description="List column subscribers.",
+            ),
         ),
     ),
     make_tool(
@@ -87,14 +120,25 @@ TOOLS = (
             "properties": {
                 "column_id": {"type": "integer", "description": "Column ID"},
                 "user_id": {"type": "integer", "description": "User ID to subscribe"},
-                "type": {"type": "integer", "description": "Subscription type (1=all, 2=mentions only)."},
+                "type": {
+                    "type": "integer",
+                    "description": "Subscription type (1=all, 2=mentions only).",
+                },
             },
             "required": ["column_id", "user_id"],
         },
-        operation=OperationSpec(method="POST", path_template="/columns/{column_id}/subscribers", path_fields=("column_id",), body_fields=("user_id", "type")),
+        operation=OperationSpec(
+            method="POST",
+            path_template="/columns/{column_id}/subscribers",
+            path_fields=("column_id",),
+            body_fields=("user_id", "type"),
+        ),
         runtime_behavior=RuntimeBehavior(request_shaper=column_subscriber_default_type_request),
         examples=(
-            ExampleSpec(command="kaiten column-subscribers add --column-id 10 --user-id 7 --json", description="Add a column subscriber."),
+            ExampleSpec(
+                command="kaiten column-subscribers add --column-id 10 --user-id 7 --json",
+                description="Add a column subscriber.",
+            ),
         ),
     ),
     make_tool(
@@ -109,9 +153,16 @@ TOOLS = (
             },
             "required": ["column_id", "user_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/columns/{column_id}/subscribers/{user_id}", path_fields=("column_id", "user_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/columns/{column_id}/subscribers/{user_id}",
+            path_fields=("column_id", "user_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten column-subscribers remove --column-id 10 --user-id 7 --json", description="Remove a column subscriber."),
+            ExampleSpec(
+                command="kaiten column-subscribers remove --column-id 10 --user-id 7 --json",
+                description="Remove a column subscriber.",
+            ),
         ),
     ),
 )

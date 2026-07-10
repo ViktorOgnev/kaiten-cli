@@ -27,7 +27,9 @@ def test_help_shows_service_desk_groups(runner):
 def test_resolve_service_desk_aliases():
     assert resolve_tool("kaiten_list_sd_requests").canonical_name == "service-desk.requests.list"
     assert resolve_tool("kaiten_create_sd_service").canonical_name == "service-desk.services.create"
-    assert resolve_tool("kaiten_update_sd_settings").canonical_name == "service-desk.settings.update"
+    assert (
+        resolve_tool("kaiten_update_sd_settings").canonical_name == "service-desk.settings.update"
+    )
     assert resolve_tool("kaiten_attach_card_sla").canonical_name == "card-slas.attach"
 
 
@@ -44,7 +46,9 @@ def test_build_request_for_delete_sd_service_uses_patch_archive():
 
 def test_build_request_for_sd_stats_maps_date_keys():
     tool = resolve_tool("service-desk.stats.get")
-    payload = merge_inputs(tool, {"date_from": "2026-01-01", "date_to": "2026-01-31", "report": True})
+    payload = merge_inputs(
+        tool, {"date_from": "2026-01-01", "date_to": "2026-01-31", "report": True}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -86,9 +90,9 @@ def test_build_request_for_attach_card_sla():
 async def test_execute_list_sd_services_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/service-desk/services", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1, "name": "Support"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/service-desk/services", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "name": "Support"}]))
 
     tool = resolve_tool("service-desk.services.list")
     payload = merge_inputs(tool, {})
@@ -103,9 +107,9 @@ async def test_execute_list_sd_services_injects_default_limit(monkeypatch):
 async def test_execute_list_sd_users_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/service-desk/users", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1, "full_name": "Alice"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/service-desk/users", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "full_name": "Alice"}]))
 
     tool = resolve_tool("service-desk.users.list")
     payload = merge_inputs(tool, {})
@@ -134,9 +138,9 @@ async def test_execute_list_sd_template_answers(monkeypatch):
 
 @respx.mock
 def test_cli_sd_services_alias_and_canonical_match(runner):
-    respx.get("https://sandbox.kaiten.ru/api/latest/service-desk/services", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[])
-    )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/service-desk/services", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[]))
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
     canonical = runner.invoke(cli, ["--json", "service-desk", "services", "list"], env=env)

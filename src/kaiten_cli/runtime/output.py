@@ -8,7 +8,9 @@ from typing import Any
 from kaiten_cli.errors import CliError
 
 
-def render_success(command: str, data: Any, json_mode: bool, stats: dict[str, Any] | None = None) -> str:
+def render_success(
+    command: str, data: Any, json_mode: bool, stats: dict[str, Any] | None = None
+) -> str:
     if json_mode:
         payload = {"success": True, "command": command, "data": data}
         if stats is not None:

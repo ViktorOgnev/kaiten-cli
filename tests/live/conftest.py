@@ -30,7 +30,9 @@ def _require_live_env() -> dict[str, str]:
     domain = os.environ.get("KAITEN_DOMAIN")
     token = os.environ.get("KAITEN_TOKEN")
     if not _truthy_env("KAITEN_LIVE"):
-        pytest.skip("Live suite is opt-in. Set KAITEN_LIVE=1|true to run it on explicit credentials or an active CLI profile.")
+        pytest.skip(
+            "Live suite is opt-in. Set KAITEN_LIVE=1|true to run it on explicit credentials or an active CLI profile."
+        )
     if config_override:
         env["KAITEN_CLI_CONFIG_PATH"] = config_override
     if domain and token:
@@ -41,7 +43,9 @@ def _require_live_env() -> dict[str, str]:
     active = config.get("active_profile")
     if active and active in config.get("profiles", {}):
         return env
-    pytest.skip("Set KAITEN_LIVE=1|true and provide KAITEN_DOMAIN/KAITEN_TOKEN or an active CLI profile.")
+    pytest.skip(
+        "Set KAITEN_LIVE=1|true and provide KAITEN_DOMAIN/KAITEN_TOKEN or an active CLI profile."
+    )
 
 
 class LiveHarness:
@@ -90,7 +94,9 @@ class LiveHarness:
 
     def run_tool(self, canonical_name: str, /, **kwargs: Any) -> dict[str, Any]:
         tool = resolve_tool(canonical_name)
-        result, payload = self._invoke([*tool.command_segments, *self._option_args(kwargs)], canonical_name)
+        result, payload = self._invoke(
+            [*tool.command_segments, *self._option_args(kwargs)], canonical_name
+        )
         assert result.exit_code == 0, f"{canonical_name}: {result.output}"
         assert payload["success"] is True, f"{canonical_name}: {result.output}"
         self.cover(canonical_name)
@@ -106,10 +112,14 @@ class LiveHarness:
     ) -> dict[str, Any]:
         statuses = set(expected_statuses)
         tool = resolve_tool(canonical_name)
-        result, payload = self._invoke([*tool.command_segments, *self._option_args(kwargs)], canonical_name)
+        result, payload = self._invoke(
+            [*tool.command_segments, *self._option_args(kwargs)], canonical_name
+        )
         assert payload["success"] is False, f"{canonical_name}: expected error, got {result.output}"
         status = payload.get("error", {}).get("status_code")
-        assert status in statuses, f"{canonical_name}: expected {sorted(statuses)}, got {result.output}"
+        assert status in statuses, (
+            f"{canonical_name}: expected {sorted(statuses)}, got {result.output}"
+        )
         self.cover(canonical_name)
         self._pause_for(canonical_name)
         return payload["error"]
@@ -124,14 +134,18 @@ class LiveHarness:
     ) -> tuple[bool, dict[str, Any]]:
         statuses = set(expected_error_statuses)
         tool = resolve_tool(canonical_name)
-        result, payload = self._invoke([*tool.command_segments, *self._option_args(kwargs)], canonical_name)
+        result, payload = self._invoke(
+            [*tool.command_segments, *self._option_args(kwargs)], canonical_name
+        )
         self.cover(canonical_name)
         self._pause_for(canonical_name)
         if payload["success"] is True:
             assert result.exit_code == 0, f"{canonical_name}: {result.output}"
             return True, payload["data"]
         status = payload.get("error", {}).get("status_code")
-        assert status in statuses, f"{canonical_name}: expected success or {sorted(statuses)}, got {result.output}"
+        assert status in statuses, (
+            f"{canonical_name}: expected success or {sorted(statuses)}, got {result.output}"
+        )
         return False, payload["error"]
 
     def run_non_tool(self, command: str, *args: str) -> dict[str, Any]:
@@ -192,10 +206,16 @@ def pytest_runtest_makereport(item, call):
 
 
 @pytest.fixture
-def live_harness(runner: CliRunner, live_env: dict[str, str], socket_enabled, request) -> LiveHarness:
+def live_harness(
+    runner: CliRunner, live_env: dict[str, str], socket_enabled, request
+) -> LiveHarness:
     harness = LiveHarness(runner, live_env)
     yield harness
     harness.cleanup()
     report = getattr(request.node, "rep_call", None)
-    if report is not None and report.passed and request.node.get_closest_marker("full_live_coverage"):
+    if (
+        report is not None
+        and report.passed
+        and request.node.get_closest_marker("full_live_coverage")
+    ):
         harness.assert_full_coverage()

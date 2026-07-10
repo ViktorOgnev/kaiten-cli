@@ -52,6 +52,7 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 
 - Start with read-only commands.
 - Normal profiles can mutate; treat real credentials as real writes.
+- For analysis-only workflows, use global `--read-only` or `KAITEN_CLI_READ_ONLY=1`; this blocks remote mutations while allowing local snapshot lifecycle operations and the POST-backed chart retrieval commands reported with `read_only_allowed=true`.
 - `KAITEN_LIVE=1|true` is the explicit per-run gate for the live test suite.
 - `profile add --sandbox` is deprecated compatibility metadata and does not affect mutations or live-test gating.
 - Prefer `--compact` and `--fields` to reduce payload and token cost.

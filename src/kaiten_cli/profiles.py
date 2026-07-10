@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from platformdirs import user_config_path
 
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.models import CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH, ResolvedProfile
+from kaiten_cli.models import (
+    CACHE_MODE_AUTO,
+    CACHE_MODE_OFF,
+    CACHE_MODE_READWRITE,
+    CACHE_MODE_REFRESH,
+    ResolvedProfile,
+)
 from kaiten_cli.runtime.endpoints import normalize_profile_domain
+from kaiten_cli.runtime.fs_security import PRIVATE_FILE_MODE, secure_directory, secure_existing_file
 
 CONFIG_ENV = "KAITEN_CLI_CONFIG_PATH"
 CACHE_MODE_VALUES = {CACHE_MODE_AUTO, CACHE_MODE_OFF, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
@@ -89,13 +98,44 @@ def load_config() -> dict[str, Any]:
     path = config_path()
     if not path.exists():
         return {"active_profile": None, "profiles": {}}
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        if not os.environ.get(CONFIG_ENV):
+            secure_directory(path.parent)
+        secure_existing_file(path)
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigError(f"Unable to read Kaiten CLI config at {path}: {exc}") from exc
 
 
 def save_config(config: dict[str, Any]) -> None:
     path = config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary_path: Path | None = None
+    descriptor: int | None = None
+    try:
+        secure_directory(path.parent, repair_existing=not bool(os.environ.get(CONFIG_ENV)))
+        descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+        temporary_path = Path(temporary_name)
+        fchmod = getattr(os, "fchmod", None)
+        if fchmod is not None:
+            fchmod(descriptor, PRIVATE_FILE_MODE)
+        else:  # pragma: no cover - Windows fallback
+            temporary_path.chmod(PRIVATE_FILE_MODE)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            descriptor = None
+            json.dump(config, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary_path.replace(path)
+        secure_existing_file(path)
+    except OSError as exc:
+        raise ConfigError(f"Unable to write Kaiten CLI config at {path}: {exc}") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        if temporary_path is not None:
+            with contextlib.suppress(OSError):
+                temporary_path.unlink(missing_ok=True)
 
 
 def redact_token(token: str | None) -> str | None:
@@ -152,7 +192,9 @@ def add_profile(
     if set_active or not config.get("active_profile"):
         config["active_profile"] = name
     save_config(config)
-    return sanitized_profile(name, config["profiles"][name], active=(config.get("active_profile") == name))
+    return sanitized_profile(
+        name, config["profiles"][name], active=(config.get("active_profile") == name)
+    )
 
 
 def use_profile(name: str) -> dict[str, Any]:

@@ -12,4 +12,3 @@ def test_resolve_canonical_name():
 def test_resolve_alias_name():
     tool = resolve_tool("kaiten_list_cards")
     assert tool.canonical_name == "cards.list"
-

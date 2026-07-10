@@ -154,9 +154,9 @@ def test_build_request_for_document_file_upload(tmp_path):
 async def test_execute_list_documents_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"uid": "doc-1", "title": "Spec"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"uid": "doc-1", "title": "Spec"}]))
 
     tool = resolve_tool("documents.list")
     payload = merge_inputs(tool, {})
@@ -171,7 +171,9 @@ async def test_execute_list_documents_injects_default_limit(monkeypatch):
 async def test_execute_list_documents_compact_and_fields_are_local_transforms(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "50"}).mock(
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "50"}
+    ).mock(
         return_value=Response(
             200,
             json=[
@@ -179,7 +181,11 @@ async def test_execute_list_documents_compact_and_fields_are_local_transforms(mo
                     "uid": "doc-1",
                     "title": "Spec",
                     "content": {"type": "doc"},
-                    "owner": {"id": 7, "full_name": "Alice", "avatar_url": "https://example.test/a.png"},
+                    "owner": {
+                        "id": 7,
+                        "full_name": "Alice",
+                        "avatar_url": "https://example.test/a.png",
+                    },
                 }
             ],
         )
@@ -280,13 +286,27 @@ async def test_execute_tree_children_list_builds_sorted_result(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(
-        return_value=Response(200, json=[{"id": 2, "uid": "space-b", "title": "Beta Space", "parent_entity_uid": "group-1"}])
+        return_value=Response(
+            200,
+            json=[
+                {"id": 2, "uid": "space-b", "title": "Beta Space", "parent_entity_uid": "group-1"}
+            ],
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[{"uid": "doc-2", "title": "API Spec", "parent_entity_uid": "group-1"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}
+    ).mock(
+        return_value=Response(
+            200, json=[{"uid": "doc-2", "title": "API Spec", "parent_entity_uid": "group-1"}]
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[{"uid": "group-2", "title": "Archive", "parent_entity_uid": "group-1"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "0"},
+    ).mock(
+        return_value=Response(
+            200, json=[{"uid": "group-2", "title": "Archive", "parent_entity_uid": "group-1"}]
+        )
     )
 
     tool = resolve_tool("tree.children.list")
@@ -294,8 +314,19 @@ async def test_execute_tree_children_list_builds_sorted_result(monkeypatch):
     result = await execute_tool(tool, payload)
 
     assert result == [
-        {"type": "document_group", "uid": "group-2", "title": "Archive", "parent_entity_uid": "group-1"},
-        {"type": "space", "uid": "space-b", "id": 2, "title": "Beta Space", "parent_entity_uid": "group-1"},
+        {
+            "type": "document_group",
+            "uid": "group-2",
+            "title": "Archive",
+            "parent_entity_uid": "group-1",
+        },
+        {
+            "type": "space",
+            "uid": "space-b",
+            "id": 2,
+            "title": "Beta Space",
+            "parent_entity_uid": "group-1",
+        },
         {"type": "document", "uid": "doc-2", "title": "API Spec", "parent_entity_uid": "group-1"},
     ]
 
@@ -306,14 +337,22 @@ async def test_execute_tree_get_builds_nested_tree(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(
-        return_value=Response(200, json=[{"id": 1, "uid": "space-a", "title": "Alpha Space", "parent_entity_uid": None}])
+        return_value=Response(
+            200,
+            json=[{"id": 1, "uid": "space-a", "title": "Alpha Space", "parent_entity_uid": None}],
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[{"uid": "doc-1", "title": "Notes", "parent_entity_uid": "space-a"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}
+    ).mock(
+        return_value=Response(
+            200, json=[{"uid": "doc-1", "title": "Notes", "parent_entity_uid": "space-a"}]
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[])
-    )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "0"},
+    ).mock(return_value=Response(200, json=[]))
 
     tool = resolve_tool("tree.get")
     payload = merge_inputs(tool, {"depth": 1})
@@ -343,9 +382,14 @@ async def test_execute_tree_get_fetches_documents_and_groups_after_first_page(mo
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(
-        return_value=Response(200, json=[{"id": 1, "uid": "space-a", "title": "Alpha Space", "parent_entity_uid": None}])
+        return_value=Response(
+            200,
+            json=[{"id": 1, "uid": "space-a", "title": "Alpha Space", "parent_entity_uid": None}],
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}).mock(
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}
+    ).mock(
         return_value=Response(
             200,
             json=[
@@ -354,10 +398,17 @@ async def test_execute_tree_get_fetches_documents_and_groups_after_first_page(mo
             ],
         )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "500"}).mock(
-        return_value=Response(200, json=[{"uid": "doc-501", "title": "Late Doc", "parent_entity_uid": "space-a"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "500"}
+    ).mock(
+        return_value=Response(
+            200, json=[{"uid": "doc-501", "title": "Late Doc", "parent_entity_uid": "space-a"}]
+        )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "0"}).mock(
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "0"},
+    ).mock(
         return_value=Response(
             200,
             json=[
@@ -366,8 +417,13 @@ async def test_execute_tree_get_fetches_documents_and_groups_after_first_page(mo
             ],
         )
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "500"}).mock(
-        return_value=Response(200, json=[{"uid": "group-501", "title": "Late Group", "parent_entity_uid": "space-a"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "500"},
+    ).mock(
+        return_value=Response(
+            200, json=[{"uid": "group-501", "title": "Late Group", "parent_entity_uid": "space-a"}]
+        )
     )
 
     tool = resolve_tool("tree.get")
@@ -384,17 +440,32 @@ async def test_execute_tree_get_fetches_documents_and_groups_after_first_page(mo
 async def test_execute_tree_get_promotes_missing_parent_group_to_root(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(return_value=Response(200, json=[]))
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[{"uid": "b-child", "title": "B Child", "parent_entity_uid": ORPHAN_GROUP_UID}])
+    respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(
+        return_value=Response(200, json=[])
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[{"uid": ORPHAN_GROUP_UID, "title": "B", "parent_entity_uid": "missing-parent"}])
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}
+    ).mock(
+        return_value=Response(
+            200,
+            json=[{"uid": "b-child", "title": "B Child", "parent_entity_uid": ORPHAN_GROUP_UID}],
+        )
+    )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "0"},
+    ).mock(
+        return_value=Response(
+            200,
+            json=[{"uid": ORPHAN_GROUP_UID, "title": "B", "parent_entity_uid": "missing-parent"}],
+        )
     )
 
     tool = resolve_tool("tree.get")
     full_tree = await execute_tool(tool, merge_inputs(tool, {"depth": 1}))
-    branch = await execute_tool(tool, merge_inputs(tool, {"root_uid": ORPHAN_GROUP_UID, "depth": 0}))
+    branch = await execute_tool(
+        tool, merge_inputs(tool, {"root_uid": ORPHAN_GROUP_UID, "depth": 0})
+    )
 
     assert full_tree == [
         {
@@ -441,13 +512,16 @@ async def test_fetch_paginated_entities_raises_when_safety_cap_is_full():
 
 @respx.mock
 def test_cli_nested_tree_alias_and_canonical_match(runner):
-    respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(return_value=Response(200, json=[]))
-    respx.get("https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}).mock(
+    respx.get("https://sandbox.kaiten.ru/api/latest/spaces").mock(
         return_value=Response(200, json=[])
     )
-    respx.get("https://sandbox.kaiten.ru/api/latest/document-groups", params={"limit": "500", "offset": "0"}).mock(
-        return_value=Response(200, json=[])
-    )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "500", "offset": "0"}
+    ).mock(return_value=Response(200, json=[]))
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "500", "offset": "0"},
+    ).mock(return_value=Response(200, json=[]))
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
     canonical = runner.invoke(cli, ["--json", "tree", "get"], env=env)

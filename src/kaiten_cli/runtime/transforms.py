@@ -120,8 +120,9 @@ def select_fields(data: Any, fields_str: str | None) -> Any:
 
     keys = {field.strip() for field in fields_str.split(",") if field.strip()}
     if isinstance(data, list):
-        return [{k: v for k, v in item.items() if k in keys} for item in data if isinstance(item, dict)]
+        return [
+            {k: v for k, v in item.items() if k in keys} for item in data if isinstance(item, dict)
+        ]
     if isinstance(data, dict):
         return {k: v for k, v in data.items() if k in keys}
     return data
-

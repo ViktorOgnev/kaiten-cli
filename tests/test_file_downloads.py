@@ -61,7 +61,9 @@ async def test_download_card_file_asks_for_json_not_redirect(monkeypatch, tmp_pa
         "https://sandbox.kaiten.ru/api/latest/cards/123/files/file-1",
         params={"prevent_redirect": "true", "response_type": "json"},
     ).mock(return_value=Response(200, json={"url": "https://storage.example.test/card.bin"}))
-    respx.get("https://storage.example.test/card.bin").mock(return_value=Response(200, content=b"card"))
+    respx.get("https://storage.example.test/card.bin").mock(
+        return_value=Response(200, content=b"card")
+    )
 
     tool = resolve_tool("files.download")
     payload = merge_inputs(
@@ -88,7 +90,9 @@ async def test_download_from_report_api_url(monkeypatch, tmp_path):
         "https://sandbox.kaiten.ru/api/latest/documents/doc-1/files/file-1",
         params={"prevent_redirect": "true", "response_type": "json"},
     ).mock(return_value=Response(200, json={"url": "https://storage.example.test/from-url.txt"}))
-    respx.get("https://storage.example.test/from-url.txt").mock(return_value=Response(200, content=b"url"))
+    respx.get("https://storage.example.test/from-url.txt").mock(
+        return_value=Response(200, content=b"url")
+    )
 
     tool = resolve_tool("files.download")
     payload = merge_inputs(
@@ -116,7 +120,9 @@ async def test_download_from_internal_files_url(monkeypatch, tmp_path):
         f"https://sandbox.kaiten.ru/api/latest/documents/{document_uid}/files/{file_uid}",
         params={"prevent_redirect": "true", "response_type": "json"},
     ).mock(return_value=Response(200, json={"url": "https://storage.example.test/image.png"}))
-    respx.get("https://storage.example.test/image.png").mock(return_value=Response(200, content=b"png"))
+    respx.get("https://storage.example.test/image.png").mock(
+        return_value=Response(200, content=b"png")
+    )
 
     tool = resolve_tool("files.download")
     payload = merge_inputs(
@@ -165,7 +171,9 @@ async def test_download_refuses_resume_when_range_is_ignored(monkeypatch, tmp_pa
     _env(monkeypatch)
     target = tmp_path / "file.txt"
     target.with_name("file.txt.part").write_bytes(b"abc")
-    respx.get("https://storage.example.test/file.txt").mock(return_value=Response(200, content=b"def"))
+    respx.get("https://storage.example.test/file.txt").mock(
+        return_value=Response(200, content=b"def")
+    )
 
     tool = resolve_tool("files.download")
     payload = merge_inputs(
@@ -191,7 +199,9 @@ async def test_download_refreshes_expired_signed_url(monkeypatch, tmp_path):
             Response(200, json={"url": "https://storage.example.test/fresh.txt"}),
         ]
     )
-    expired_route = respx.get("https://storage.example.test/expired.txt").mock(return_value=Response(403))
+    expired_route = respx.get("https://storage.example.test/expired.txt").mock(
+        return_value=Response(403)
+    )
     fresh_route = respx.get("https://storage.example.test/fresh.txt").mock(
         return_value=Response(200, content=b"fresh")
     )
@@ -221,7 +231,9 @@ async def test_download_refuses_existing_output_without_overwrite(monkeypatch, t
     _env(monkeypatch)
     target = tmp_path / "file.txt"
     target.write_bytes(b"old")
-    respx.get("https://storage.example.test/file.txt").mock(return_value=Response(200, content=b"new"))
+    respx.get("https://storage.example.test/file.txt").mock(
+        return_value=Response(200, content=b"new")
+    )
 
     tool = resolve_tool("files.download")
     payload = merge_inputs(

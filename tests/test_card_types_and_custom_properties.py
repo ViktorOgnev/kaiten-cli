@@ -27,13 +27,20 @@ def test_help_shows_card_types_and_custom_properties(runner):
 
 def test_resolve_card_type_and_custom_property_aliases():
     assert resolve_tool("kaiten_list_card_types").canonical_name == "card-types.list"
-    assert resolve_tool("kaiten_create_custom_property").canonical_name == "custom-properties.create"
-    assert resolve_tool("kaiten_delete_select_value").canonical_name == "custom-properties.select-values.delete"
+    assert (
+        resolve_tool("kaiten_create_custom_property").canonical_name == "custom-properties.create"
+    )
+    assert (
+        resolve_tool("kaiten_delete_select_value").canonical_name
+        == "custom-properties.select-values.delete"
+    )
 
 
 def test_build_request_for_delete_card_type_includes_replacement_body():
     tool = resolve_tool("card-types.delete")
-    payload = merge_inputs(tool, {"type_id": 10, "replace_type_id": 3, "has_to_replace_in_workflow": False})
+    payload = merge_inputs(
+        tool, {"type_id": 10, "replace_type_id": 3, "has_to_replace_in_workflow": False}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -84,9 +91,9 @@ def test_build_request_for_delete_select_value_uses_soft_delete_patch():
 async def test_execute_list_card_types_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/card-types", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": 1, "name": "Bug"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/card-types", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "name": "Bug"}]))
 
     tool = resolve_tool("card-types.list")
     payload = merge_inputs(tool, {})
@@ -127,7 +134,9 @@ def test_cli_select_values_alias_and_nested_canonical_match(runner):
         ["--json", "custom-properties", "select-values", "list", "--property-id", "3"],
         env=env,
     )
-    alias = runner.invoke(cli, ["--json", "kaiten_list_select_values", "--property-id", "3"], env=env)
+    alias = runner.invoke(
+        cli, ["--json", "kaiten_list_select_values", "--property-id", "3"], env=env
+    )
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0

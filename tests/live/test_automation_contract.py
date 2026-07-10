@@ -34,7 +34,9 @@ def test_automation_contract_known_good_payload(live_harness):
         access="for_everyone",
     )
     h.state["space_id"] = primary_space["id"]
-    h.push_cleanup("delete automation validation space", "spaces.delete", space_id=h.state["space_id"])
+    h.push_cleanup(
+        "delete automation validation space", "spaces.delete", space_id=h.state["space_id"]
+    )
 
     secondary_space = h.run_tool(
         "spaces.create",
@@ -43,7 +45,11 @@ def test_automation_contract_known_good_payload(live_harness):
         access="for_everyone",
     )
     h.state["secondary_space_id"] = secondary_space["id"]
-    h.push_cleanup("delete secondary automation validation space", "spaces.delete", space_id=h.state["secondary_space_id"])
+    h.push_cleanup(
+        "delete secondary automation validation space",
+        "spaces.delete",
+        space_id=h.state["secondary_space_id"],
+    )
 
     created, payload = h.run_tool_maybe(
         "automations.create",
@@ -60,7 +66,12 @@ def test_automation_contract_known_good_payload(live_harness):
         pytest.fail(f"Known-good automation payload is still rejected on sandbox: {payload}")
 
     automation_id = payload["id"]
-    h.push_cleanup("delete automation", "automations.delete", space_id=h.state["space_id"], automation_id=automation_id)
+    h.push_cleanup(
+        "delete automation",
+        "automations.delete",
+        space_id=h.state["space_id"],
+        automation_id=automation_id,
+    )
 
     h.run_tool_maybe(
         "automations.get",

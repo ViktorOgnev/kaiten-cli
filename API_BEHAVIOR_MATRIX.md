@@ -1,8 +1,20 @@
 # API Behavior Matrix
 
-Этот документ фиксирует живые API-контракты для `kaiten-cli`, наблюдавшиеся на текущем live test tenant.
+Этот документ фиксирует API-контракты для `kaiten-cli`, ранее наблюдавшиеся на live test tenant и закодированные в текущем live harness.
 
 Запуск live suite по-прежнему gated только через `KAITEN_LIVE=1|true`; special-case по домену или profile metadata для этого не используется.
+
+## Verification metadata
+
+| Поле | Значение |
+|------|----------|
+| Contract baseline | `kaiten-cli v0.1.22` |
+| Tenant class | Kaiten sandbox test tenant |
+| Текущий аудит | `2026-07-09`; live suite **не запускался** |
+| Последняя полная live campaign | `TBD`: дата и commit не подтверждены в репозитории |
+| Источник до следующего live run | checked-in contracts и `tests/live/`; записи ниже нельзя считать повторно подтверждёнными текущим аудитом |
+
+После следующей полной live campaign эту таблицу нужно обновить точными датой, commit SHA, версией CLI и tenant class. Secrets, tenant URL и идентификаторы тестовых сущностей сюда не записываются.
 
 ## Default rule
 

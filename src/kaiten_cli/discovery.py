@@ -14,6 +14,8 @@ def search_tools(query: str, limit: int = 5) -> list[dict]:
             "description": tool.description,
             "method": tool.operation.method,
             "mutation": tool.is_mutation,
+            "read_only_allowed": tool.read_only_allowed,
+            "remote_side_effects": tool.remote_side_effects,
             "heavy": tool.response_policy.heavy,
             "execution_mode": tool.execution_mode,
             "cache_policy": tool.cache_policy,

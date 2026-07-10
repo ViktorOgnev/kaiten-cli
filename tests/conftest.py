@@ -12,7 +12,9 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def isolated_config_env(request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path | None:
+def isolated_config_env(
+    request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Path | None:
     if request.node.get_closest_marker("live"):
         return None
     path = tmp_path / "config.json"

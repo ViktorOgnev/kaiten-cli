@@ -10,7 +10,11 @@ from kaiten_cli.errors import ValidationError
 from kaiten_cli.registry import resolve_tool
 from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import merge_inputs
-from kaiten_cli.runtime.support.card_move_url import parse_card_url, parse_target_url, validate_url_domain
+from kaiten_cli.runtime.support.card_move_url import (
+    parse_card_url,
+    parse_target_url,
+    validate_url_domain,
+)
 
 
 CARD_URL = "https://sandbox.kaiten.ru/space/1/boards/card/STORY-1"

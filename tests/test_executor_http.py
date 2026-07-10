@@ -4,12 +4,22 @@ import json
 
 import pytest
 import respx
-from httpx import Response
+from httpx import ReadTimeout, Response
 
 from kaiten_cli.app import cli, main
-from kaiten_cli.errors import BatchExecutionError, ValidationError
+from kaiten_cli.errors import (
+    BatchExecutionError,
+    MutationBlockedError,
+    TransportError,
+    ValidationError,
+)
 from kaiten_cli.models import OperationSpec, ToolSpec
-from kaiten_cli.runtime.executor import build_request, execute_tool
+from kaiten_cli.runtime.executor import (
+    build_request,
+    enforce_mutation_policy,
+    execute_tool,
+    read_only_enabled,
+)
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
 
@@ -22,12 +32,21 @@ async def test_execute_list_cards_compact_and_fields(monkeypatch):
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards").mock(
         return_value=Response(
             200,
-            json=[{"id": 1, "title": "Task", "description": "hidden", "owner": {"id": 7, "full_name": "Alice"}}],
+            json=[
+                {
+                    "id": 1,
+                    "title": "Task",
+                    "description": "hidden",
+                    "owner": {"id": 7, "full_name": "Alice"},
+                }
+            ],
         )
     )
 
     tool = resolve_tool("cards.list")
-    payload = merge_inputs(tool, {"board_id": 10, "limit": 5, "compact": True, "fields": "id,title"})
+    payload = merge_inputs(
+        tool, {"board_id": 10, "limit": 5, "compact": True, "fields": "id,title"}
+    )
     result = await execute_tool(tool, payload)
 
     assert route.called
@@ -291,6 +310,115 @@ async def test_execute_mutation_allows_normal_profiles(config_env, monkeypatch):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_read_only_environment_blocks_remote_mutation_before_http(config_env, monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    monkeypatch.setenv("KAITEN_CLI_READ_ONLY", "true")
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(201, json={"id": 1})
+    )
+    tool = resolve_tool("cards.create")
+    payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
+
+    with pytest.raises(MutationBlockedError, match="blocked by read-only mode"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 0
+
+
+def test_read_only_policy_allows_local_snapshot_mutations():
+    tool = resolve_tool("snapshot.delete")
+
+    assert tool.is_mutation is True
+    assert tool.runtime_behavior.enforce_mutation_guard is False
+    enforce_mutation_policy(tool, read_only=True)
+
+
+def test_read_only_environment_cannot_be_disabled_programmatically(monkeypatch):
+    monkeypatch.setenv("KAITEN_CLI_READ_ONLY", "true")
+
+    assert read_only_enabled(False) is True
+    with pytest.raises(MutationBlockedError, match="blocked by read-only mode"):
+        enforce_mutation_policy(resolve_tool("cards.create"), read_only=False)
+
+
+def test_cli_read_only_returns_structured_mutation_block(runner):
+    result = runner.invoke(
+        cli,
+        [
+            "--json",
+            "--read-only",
+            "cards",
+            "create",
+            "--title",
+            "Task",
+            "--board-id",
+            "1",
+        ],
+        env={"KAITEN_DOMAIN": "prod-tenant", "KAITEN_TOKEN": "test-token"},
+    )
+
+    assert result.exit_code == 6
+    payload = json.loads(result.output)
+    assert payload["success"] is False
+    assert payload["error"]["type"] == "mutation_blocked"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_mutation_is_not_retried_after_ambiguous_read_timeout(config_env, monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        side_effect=ReadTimeout("response was lost")
+    )
+    tool = resolve_tool("cards.create")
+    payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
+
+    with pytest.raises(TransportError, match="remote outcome is unknown"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_mutation_5xx_requires_remote_verification(config_env, monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(502, json={"message": "upstream failed"})
+    )
+    tool = resolve_tool("cards.create")
+    payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
+
+    with pytest.raises(TransportError, match="remote outcome is unknown"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_mutation_success_with_invalid_json_requires_remote_verification(
+    config_env, monkeypatch
+):
+    monkeypatch.setenv("KAITEN_DOMAIN", "prod-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(201, content=b"not-json")
+    )
+    tool = resolve_tool("cards.create")
+    payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
+
+    with pytest.raises(TransportError, match="remote change may have been applied"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_execute_direct_put_tool(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
@@ -338,12 +466,33 @@ def test_cli_cards_list_alias_and_canonical_use_numeric_options(runner):
 
     canonical = runner.invoke(
         cli,
-        ["--json", "cards", "list", "--board-id", "10", "--limit", "5", "--compact", "--fields", "id,title,state"],
+        [
+            "--json",
+            "cards",
+            "list",
+            "--board-id",
+            "10",
+            "--limit",
+            "5",
+            "--compact",
+            "--fields",
+            "id,title,state",
+        ],
         env=env,
     )
     alias = runner.invoke(
         cli,
-        ["--json", "kaiten_list_cards", "--board-id", "10", "--limit", "5", "--compact", "--fields", "id,title,state"],
+        [
+            "--json",
+            "kaiten_list_cards",
+            "--board-id",
+            "10",
+            "--limit",
+            "5",
+            "--compact",
+            "--fields",
+            "id,title,state",
+        ],
         env=env,
     )
 
@@ -391,15 +540,17 @@ def test_cli_boards_place_existing_alias_and_canonical_match(runner):
 
 @respx.mock
 def test_cli_verbose_writes_diagnostics_to_stderr_only(capsys):
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards", params={"board_id": "10", "limit": "5"}).mock(
-        return_value=Response(200, json=[{"id": 1, "title": "Task", "state": 2}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards", params={"board_id": "10", "limit": "5"}
+    ).mock(return_value=Response(200, json=[{"id": 1, "title": "Task", "state": 2}]))
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
     with pytest.MonkeyPatch.context() as monkeypatch:
         for key, value in env.items():
             monkeypatch.setenv(key, value)
-        exit_code = main(["--json", "--verbose", "cards", "list", "--board-id", "10", "--limit", "5"])
+        exit_code = main(
+            ["--json", "--verbose", "cards", "list", "--board-id", "10", "--limit", "5"]
+        )
 
     captured = capsys.readouterr()
 

@@ -6,18 +6,69 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests scripts
+      - name: Check formatting
+        run: ruff format --check src tests scripts
+      - name: Check generated documentation
+        run: python scripts/generate_reference_docs.py --check
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
       - name: Install test dependencies
         run: python -m pip install --upgrade pip && python -m pip install -e ".[test]"
       - name: Run test suite
         run: pytest -q
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[test]"
+      - name: Enforce branch coverage
+        run: pytest -q --cov=kaiten_cli --cov-branch --cov-report=term-missing --cov-fail-under=75
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project and auditor
+        run: python -m pip install --upgrade pip pip-audit && python -m pip install .
+      - name: Audit installed dependencies
+        run: python -m pip_audit --local
 
   build:
     runs-on: ubuntu-latest
@@ -30,8 +81,14 @@ jobs:
         run: python -m pip install --upgrade pip build
       - name: Build sdist and wheel
         run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+          if-no-files-found: error
 
   install-smoke:
+    needs: build
     runs-on: ubuntu-latest
     env:
       PIPX_HOME: ${{ github.workspace }}/.pipx
@@ -43,22 +100,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist
       - name: Install packaging tools
-        run: python -m pip install --upgrade pip build uv pipx
+        run: python -m pip install --upgrade pip uv pipx
       - name: Expose tool bin dir
         run: echo "${GITHUB_WORKSPACE}/.bin" >> "$GITHUB_PATH"
-      - name: Smoke test build
-        run: python -m build
-      - name: Compute git install spec
-        shell: bash
+      - name: Install wheel into the runner Python
+        run: python -m pip install dist/*.whl
+      - name: Verify wheel import and CLI
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            echo "GIT_INSTALL_SPEC=git+${{ github.event.pull_request.head.repo.clone_url }}@${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
-          else
-            echo "GIT_INSTALL_SPEC=git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.sha }}" >> "$GITHUB_ENV"
-          fi
-      - name: Install from git via pipx
-        run: python -m pipx install "$GIT_INSTALL_SPEC"
+          python -I -c "import kaiten_cli; print(kaiten_cli.__version__)"
+          kaiten --version
+          kaiten --help
+          kaiten search-tools cards
+      - name: Install wheel via pipx
+        run: python -m pipx install dist/*.whl
       - name: Verify pipx-installed CLI
         run: |
           kaiten --version
@@ -66,8 +126,8 @@ jobs:
           kaiten search-tools cards
       - name: Remove pipx install
         run: python -m pipx uninstall kaiten-cli
-      - name: Install from git via uv
-        run: uv tool install "$GIT_INSTALL_SPEC"
+      - name: Install wheel via uv
+        run: uv tool install dist/*.whl
       - name: Verify uv-installed CLI
         run: |
           kaiten --version

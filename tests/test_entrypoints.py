@@ -21,7 +21,9 @@ def test_python_module_entrypoint_help():
     root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     src_path = str(root / "src")
-    env["PYTHONPATH"] = src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
+    env["PYTHONPATH"] = (
+        src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
+    )
 
     result = subprocess.run(
         [sys.executable, "-m", "kaiten_cli", "--help"],
@@ -39,7 +41,9 @@ def test_python_module_entrypoint_version():
     root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     src_path = str(root / "src")
-    env["PYTHONPATH"] = src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
+    env["PYTHONPATH"] = (
+        src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
+    )
 
     result = subprocess.run(
         [sys.executable, "-m", "kaiten_cli", "--version"],

@@ -11,6 +11,7 @@
 - All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.
 - `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.
 - `--compact` and `--fields` only apply when the command metadata says they are supported.
+- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.
 - Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
 - Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.
 - For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
@@ -91,6 +92,8 @@ cards
 | Description | List users allowed to access a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -123,6 +126,8 @@ cards
 | Description | List card baselines. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -155,6 +160,8 @@ cards
 | Description | Add a Service Desk external recipient to a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -190,6 +197,8 @@ cards
 | Description | Remove a Service Desk external recipient from a card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -223,6 +232,8 @@ cards
 | Description | Archive a Kaiten card (set condition to archived). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -257,6 +268,8 @@ cards
 | Description | Fetch multiple cards by ID with bounded worker concurrency. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -295,6 +308,8 @@ cards
 | Description | Batch update cards matching criteria. Kaiten runs the update as a background job. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -336,6 +351,8 @@ cards
 | Description | Create a new Kaiten card. Title max 1024 chars, description max 32768 chars. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -396,6 +413,8 @@ cards
 | Description | Soft-delete a Kaiten card (sets condition to deleted). Cards with time logs cannot be deleted. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -430,6 +449,8 @@ cards
 | Description | Get a Kaiten card by ID. Supports numeric ID or card key (e.g. PROJ-123). |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -476,6 +497,8 @@ cards
 | Description | Search and list Kaiten cards with filtering. Conditions: 1=active, 2=archived. States: 1=queued, 2=inProgress, 3=done. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -562,6 +585,8 @@ cards
 | Description | Fetch all cards matching filters with automatic pagination. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -653,6 +678,8 @@ cards
 | Description | Move a Kaiten card to a different board, column, or lane. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -691,6 +718,8 @@ cards
 | Description | Move a Kaiten card by resolving card and target Kaiten UI URLs. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `aggregated` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -735,6 +764,8 @@ cards
 | Description | Update a Kaiten card. Use condition=2 to archive, set column_id/board_id to move. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -812,6 +843,8 @@ comments
 | Description | Fetch comments for multiple cards with bounded worker concurrency. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -850,6 +883,8 @@ comments
 | Description | Add a comment to a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -885,6 +920,8 @@ comments
 | Description | Delete a comment from a card (author only). |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -918,6 +955,8 @@ comments
 | Description | List all comments on a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -954,6 +993,8 @@ comments
 | Description | Update a comment on a card (author only). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1008,6 +1049,8 @@ users
 | Description | Add a member to a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1041,6 +1084,8 @@ users
 | Description | List all members assigned to a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1074,6 +1119,8 @@ users
 | Description | Remove a member from a card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1107,6 +1154,8 @@ users
 | Description | Update a card member role. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1142,6 +1191,8 @@ users
 | Description | Get the current authenticated Kaiten user profile. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1172,6 +1223,8 @@ _No tool-specific arguments._
 | Description | List users from the generic /users endpoint. For paginated administrative Members exports, prefer company-users.list. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1214,6 +1267,8 @@ _No tool-specific arguments._
 | Description | Update a user. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1267,6 +1322,8 @@ timesheet
 | Description | Fetch time logs for multiple cards with bounded worker concurrency. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -1307,6 +1364,8 @@ timesheet
 | Description | Log time spent on a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1343,6 +1402,8 @@ timesheet
 | Description | Delete a time log entry from a card (author only). |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1376,6 +1437,8 @@ timesheet
 | Description | List time logs for a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1415,6 +1478,8 @@ timesheet
 | Description | Update a time log entry on a card (author only). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1452,6 +1517,8 @@ timesheet
 | Description | List time logs across cards from the company timesheet endpoint. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1511,6 +1578,8 @@ tags
 | Description | Add a tag to a Kaiten card by name. Creates the tag if it doesn't exist. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1544,6 +1613,8 @@ tags
 | Description | List tags attached to a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1576,6 +1647,8 @@ tags
 | Description | Remove a tag from a Kaiten card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1609,6 +1682,8 @@ tags
 | Description | Create a new Kaiten tag. Color is assigned randomly by the server (1-17). |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1641,6 +1716,8 @@ tags
 | Description | Delete a Kaiten tag. Requires company tag management permission. May be blocked if an async operation is in progress. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1673,6 +1750,8 @@ tags
 | Description | List Kaiten tags. Note: API may return empty for company-level tags; tags are primarily card-scoped. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1709,6 +1788,8 @@ tags
 | Description | Update a Kaiten tag (name and/or color). Requires company tag management permission. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1774,6 +1855,8 @@ space-template-checklists
 | Description | List cards that share a checklist. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1807,6 +1890,8 @@ space-template-checklists
 | Description | Create an item in a checklist on a Kaiten card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1845,6 +1930,8 @@ space-template-checklists
 | Description | Delete an item from a checklist on a Kaiten card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1879,6 +1966,8 @@ space-template-checklists
 | Description | List all items in a checklist on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -1915,6 +2004,8 @@ space-template-checklists
 | Description | Update an item in a checklist on a Kaiten card. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1954,6 +2045,8 @@ space-template-checklists
 | Description | Create a checklist on a Kaiten card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1988,6 +2081,8 @@ space-template-checklists
 | Description | Delete a checklist from a Kaiten card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2021,6 +2116,8 @@ space-template-checklists
 | Description | List all checklists on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2056,6 +2153,8 @@ space-template-checklists
 | Description | Update a checklist on a Kaiten card. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2091,6 +2190,8 @@ space-template-checklists
 | Description | Create an item in a space template checklist. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2126,6 +2227,8 @@ space-template-checklists
 | Description | Delete an item from a space template checklist. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2160,6 +2263,8 @@ space-template-checklists
 | Description | Update an item in a space template checklist. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2196,6 +2301,8 @@ space-template-checklists
 | Description | Create a template checklist for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2230,6 +2337,8 @@ space-template-checklists
 | Description | Delete a template checklist from a space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2263,6 +2372,8 @@ space-template-checklists
 | Description | List template checklists for a space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2295,6 +2406,8 @@ space-template-checklists
 | Description | Update a template checklist for a space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2356,6 +2469,8 @@ current-user-blockers
 | Description | Add a category to a blocker. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2389,6 +2504,8 @@ current-user-blockers
 | Description | List blocker categories. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2419,6 +2536,8 @@ _No tool-specific arguments._
 | Description | Remove a category from a blocker. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2452,6 +2571,8 @@ _No tool-specific arguments._
 | Description | Add a user to a blocker. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2485,6 +2606,8 @@ _No tool-specific arguments._
 | Description | List users attached to a blocker. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2517,6 +2640,8 @@ _No tool-specific arguments._
 | Description | Remove a user from a blocker. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2550,6 +2675,8 @@ _No tool-specific arguments._
 | Description | Create a blocker on a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2584,6 +2711,8 @@ _No tool-specific arguments._
 | Description | Delete a blocker from a card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2617,6 +2746,8 @@ _No tool-specific arguments._
 | Description | Get a specific blocker on a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2650,6 +2781,8 @@ _No tool-specific arguments._
 | Description | List all blockers on a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2682,6 +2815,8 @@ _No tool-specific arguments._
 | Description | Update a blocker on a card. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2716,6 +2851,8 @@ _No tool-specific arguments._
 | Description | List blocker cards assigned to the current user. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2769,6 +2906,8 @@ planned-relations
 | Description | Add a child card to a given card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2802,6 +2941,8 @@ planned-relations
 | Description | Fetch child-card relations for multiple parent cards with bounded worker concurrency. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -2840,6 +2981,8 @@ planned-relations
 | Description | List all child cards of a given card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2875,6 +3018,8 @@ planned-relations
 | Description | Remove a child card from a given card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2908,6 +3053,8 @@ planned-relations
 | Description | Add a parent card to a given card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -2941,6 +3088,8 @@ planned-relations
 | Description | List all parent cards of a given card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -2973,6 +3122,8 @@ planned-relations
 | Description | Remove a parent card from a given card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3006,6 +3157,8 @@ planned-relations
 | Description | Create a planned relation (successor link) between two cards on Timeline/Gantt. The source card becomes a predecessor and the target card becomes its successor. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3040,6 +3193,8 @@ planned-relations
 | Description | Remove a planned relation (successor link) between two cards. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3073,6 +3228,8 @@ planned-relations
 | Description | Update the lag/lead gap of a planned relation between two cards. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3123,6 +3280,8 @@ external-links
 | Description | Create an external link on a Kaiten card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3157,6 +3316,8 @@ external-links
 | Description | Delete an external link from a Kaiten card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3190,6 +3351,8 @@ external-links
 | Description | List all external links on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -3222,6 +3385,8 @@ external-links
 | Description | Update an external link on a Kaiten card. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3274,6 +3439,8 @@ files
 | Description | Create a file attachment on a card by URL. This registers an external file link as a card attachment (does not upload binary data). File types: 1=attachment, 2=googleDrive, 3=dropBox, 4=box, 5=oneDrive, 6=yandexDisk. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3313,6 +3480,8 @@ files
 | Description | Delete a file attachment from a card. Files on blocked cards cannot be deleted. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3346,6 +3515,8 @@ files
 | Description | Download a Kaiten file attachment to disk. Supports card, document, comment, custom property, and conversation message file endpoints, plus Kaiten /api/... URLs. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3398,6 +3569,8 @@ files
 | Description | List all file attachments on a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -3430,6 +3603,8 @@ files
 | Description | Update a file attachment on a card (name, URL, sort order, cover, etc.). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3470,6 +3645,8 @@ files
 | Description | Upload a local binary file to a Kaiten card using multipart/form-data. |
 | Method | `PUT` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3524,6 +3701,8 @@ column-subscribers
 | Description | Add a subscriber to a Kaiten card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3557,6 +3736,8 @@ column-subscribers
 | Description | List all subscribers of a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -3592,6 +3773,8 @@ column-subscribers
 | Description | Remove a subscriber from a Kaiten card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3625,6 +3808,8 @@ column-subscribers
 | Description | Add a subscriber to a Kaiten column. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3659,6 +3844,8 @@ column-subscribers
 | Description | List all subscribers of a Kaiten column. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -3694,6 +3881,8 @@ column-subscribers
 | Description | Remove a subscriber from a Kaiten column. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3745,6 +3934,8 @@ spaces
 | Description | Fetch boards with their columns and lanes for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -3778,6 +3969,8 @@ spaces
 | Description | Create a new Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3815,6 +4008,8 @@ spaces
 | Description | Delete a Kaiten space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3847,6 +4042,8 @@ spaces
 | Description | Get a Kaiten space by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -3879,6 +4076,8 @@ spaces
 | Description | List all Kaiten spaces. Returns array of space objects with id, title, description, access type. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -3914,6 +4113,8 @@ spaces
 | Description | Update a Kaiten space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -3969,6 +4170,8 @@ boards
 | Description | Create a new board in a Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4008,6 +4211,8 @@ boards
 | Description | Delete a Kaiten board. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4044,6 +4249,8 @@ boards
 | Description | Get a Kaiten board by ID. Returns board with columns and lanes. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4076,6 +4283,8 @@ boards
 | Description | List boards in a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4111,6 +4320,8 @@ boards
 | Description | Place an existing board into a target space without moving it from its current primary space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4150,6 +4361,8 @@ boards
 | Description | Update a Kaiten board. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4210,6 +4423,8 @@ subcolumns
 | Description | Create a column on a Kaiten board. Type: 1=queue, 2=in_progress, 3=done. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4248,6 +4463,8 @@ subcolumns
 | Description | Delete a column from a Kaiten board. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4281,6 +4498,8 @@ subcolumns
 | Description | List columns on a Kaiten board. Column types: 1=queue, 2=in_progress, 3=done. Response includes: wip_limit, wip_limit_type (1=cards count, 2=size sum), last_moved_warning_after_days, archive_after_days, card_hide_after_days. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4313,6 +4532,8 @@ subcolumns
 | Description | Update a column on a Kaiten board. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4352,6 +4573,8 @@ subcolumns
 | Description | Create a subcolumn inside a Kaiten column. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4388,6 +4611,8 @@ subcolumns
 | Description | Delete a subcolumn from a Kaiten column. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4421,6 +4646,8 @@ subcolumns
 | Description | List all subcolumns of a Kaiten column. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -4453,6 +4680,8 @@ subcolumns
 | Description | Update a subcolumn of a Kaiten column. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4505,6 +4734,8 @@ lanes
 | Description | Create a lane (swimlane) on a Kaiten board. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4543,6 +4774,8 @@ lanes
 | Description | Delete a lane from a Kaiten board. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4576,6 +4809,8 @@ lanes
 | Description | List lanes (swimlanes) on a Kaiten board. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4608,6 +4843,8 @@ lanes
 | Description | Update a lane on a Kaiten board. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4668,6 +4905,8 @@ card-types.tree-entities
 | Description | Create a Kaiten card type. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4703,6 +4942,8 @@ card-types.tree-entities
 | Description | Delete a Kaiten card type. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4739,6 +4980,8 @@ card-types.tree-entities
 | Description | Get a Kaiten card type by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4771,6 +5014,8 @@ card-types.tree-entities
 | Description | List Kaiten card types. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -4805,6 +5050,8 @@ card-types.tree-entities
 | Description | Attach a tree entity to a card type. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4839,6 +5086,8 @@ card-types.tree-entities
 | Description | List tree entities attached to a card type. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -4871,6 +5120,8 @@ card-types.tree-entities
 | Description | Remove a tree entity from a card type. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4904,6 +5155,8 @@ card-types.tree-entities
 | Description | Update a Kaiten card type. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -4970,6 +5223,8 @@ custom-directory-records.cards
 | Description | Create a Kaiten Catalog (custom directory). |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5014,6 +5269,8 @@ custom-directory-records.cards
 | Description | Delete a Kaiten Catalog (custom directory). |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5054,6 +5311,8 @@ custom-directory-records.cards
 | Description | Get a Kaiten Catalog (custom directory). |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -5097,6 +5356,8 @@ custom-directory-records.cards
 | Description | List Kaiten Catalogs (custom directories). |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5143,6 +5404,8 @@ custom-directory-records.cards
 | Description | Update a Kaiten Catalog (custom directory). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5188,6 +5451,8 @@ custom-directory-records.cards
 | Description | Create a field (column) in a Kaiten Catalog. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5235,6 +5500,8 @@ custom-directory-records.cards
 | Description | Delete a field (column) from a Kaiten Catalog. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5276,6 +5543,8 @@ custom-directory-records.cards
 | Description | Get a field (column) of a Kaiten Catalog. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -5317,6 +5586,8 @@ custom-directory-records.cards
 | Description | List fields (columns) of a Kaiten Catalog. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5359,6 +5630,8 @@ custom-directory-records.cards
 | Description | Update a field (column) in a Kaiten Catalog. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5407,6 +5680,8 @@ custom-directory-records.cards
 | Description | List cards linked to a Kaiten Catalog record. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5451,6 +5726,8 @@ custom-directory-records.cards
 | Description | Create a record (row) in a Kaiten Catalog. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5493,6 +5770,8 @@ custom-directory-records.cards
 | Description | Delete a record (row) from a Kaiten Catalog. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5534,6 +5813,8 @@ custom-directory-records.cards
 | Description | Get a record (row) from a Kaiten Catalog. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -5576,6 +5857,8 @@ custom-directory-records.cards
 | Description | List records (rows) of a Kaiten Catalog. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5625,6 +5908,8 @@ custom-directory-records.cards
 | Description | Update a record (row) in a Kaiten Catalog. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5710,6 +5995,8 @@ custom-properties.tree-entities
 | Description | Create a catalog property value for a catalog-typed custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5751,6 +6038,8 @@ custom-properties.tree-entities
 | Description | Delete a catalog property value for a catalog-typed custom property. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5790,6 +6079,8 @@ custom-properties.tree-entities
 | Description | Get a catalog property value for a catalog-typed custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -5829,6 +6120,8 @@ custom-properties.tree-entities
 | Description | List catalog property values for a catalog-typed custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5871,6 +6164,8 @@ custom-properties.tree-entities
 | Description | Update a catalog property value for a catalog-typed custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5914,6 +6209,8 @@ custom-properties.tree-entities
 | Description | Create a collective score value for a card custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -5949,6 +6246,8 @@ custom-properties.tree-entities
 | Description | List collective score values for a card custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -5982,6 +6281,8 @@ custom-properties.tree-entities
 | Description | Update a collective score value for a card custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6018,6 +6319,8 @@ custom-properties.tree-entities
 | Description | Create a collective vote value for a card custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6053,6 +6356,8 @@ custom-properties.tree-entities
 | Description | Delete a collective vote value for a card custom property. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6087,6 +6392,8 @@ custom-properties.tree-entities
 | Description | List collective vote values for a card custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6120,6 +6427,8 @@ custom-properties.tree-entities
 | Description | Update a collective vote value for a card custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6156,6 +6465,8 @@ custom-properties.tree-entities
 | Description | Create a company custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6204,6 +6515,8 @@ custom-properties.tree-entities
 | Description | Delete a custom property. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6241,6 +6554,8 @@ custom-properties.tree-entities
 | Description | Get a custom property by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -6278,6 +6593,8 @@ custom-properties.tree-entities
 | Description | List company custom properties. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6325,6 +6642,8 @@ custom-properties.tree-entities
 | Description | Create a select value for a custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6360,6 +6679,8 @@ custom-properties.tree-entities
 | Description | Delete (soft) a select value by marking it as deleted. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6393,6 +6714,8 @@ custom-properties.tree-entities
 | Description | Get a single select value by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -6426,6 +6749,8 @@ custom-properties.tree-entities
 | Description | List select values for a custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6464,6 +6789,8 @@ custom-properties.tree-entities
 | Description | Update a select value for a custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6501,6 +6828,8 @@ custom-properties.tree-entities
 | Description | Attach a tree entity to a custom property. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6535,6 +6864,8 @@ custom-properties.tree-entities
 | Description | List tree entities attached to a custom property. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6567,6 +6898,8 @@ custom-properties.tree-entities
 | Description | Remove a tree entity from a custom property. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6600,6 +6933,8 @@ custom-properties.tree-entities
 | Description | Update a custom property. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6675,6 +7010,8 @@ documents
 | Description | Resolve a document file to a short-lived signed download URL. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6709,6 +7046,8 @@ documents
 | Description | Upload a local binary file to a Kaiten document using multipart/form-data. |
 | Method | `PUT` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6744,6 +7083,8 @@ documents
 | Description | Create a new Kaiten document group. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6782,6 +7123,8 @@ documents
 | Description | Delete a Kaiten document group. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6818,6 +7161,8 @@ documents
 | Description | Get a Kaiten document group by UID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -6854,6 +7199,8 @@ documents
 | Description | List Kaiten document groups. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -6892,6 +7239,8 @@ documents
 | Description | Update a Kaiten document group. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -6929,6 +7278,8 @@ documents
 | Description | Get a document data schema. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -6961,6 +7312,8 @@ documents
 | Description | Create a new Kaiten document. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7000,6 +7353,8 @@ documents
 | Description | Delete a Kaiten document. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7032,6 +7387,8 @@ documents
 | Description | Get a Kaiten document by UID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -7072,6 +7429,8 @@ documents
 | Description | List Kaiten documents. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -7114,6 +7473,8 @@ documents
 | Description | Update a Kaiten document. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7175,6 +7536,8 @@ webhooks
 | Description | Create an incoming card-creation webhook for a Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7214,6 +7577,8 @@ webhooks
 | Description | Delete an incoming card-creation webhook from a Kaiten space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7247,6 +7612,8 @@ webhooks
 | Description | List incoming card-creation webhooks for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -7279,6 +7646,8 @@ webhooks
 | Description | Update an incoming card-creation webhook in a Kaiten space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7319,6 +7688,8 @@ webhooks
 | Description | Create an external webhook for a Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7352,6 +7723,8 @@ webhooks
 | Description | Delete an external webhook from a Kaiten space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7387,6 +7760,8 @@ webhooks
 | Description | Get a specific external webhook for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -7422,6 +7797,8 @@ webhooks
 | Description | List all external webhooks for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -7454,6 +7831,8 @@ webhooks
 | Description | Update an external webhook for a Kaiten space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7512,6 +7891,8 @@ workflows
 | Description | Copy an automation to another space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7548,6 +7929,8 @@ workflows
 | Description | Create a new automation in a Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7589,6 +7972,8 @@ workflows
 | Description | Delete an automation from a Kaiten space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7624,6 +8009,8 @@ workflows
 | Description | Get a specific automation in a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -7659,6 +8046,8 @@ workflows
 | Description | List all automations for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -7691,6 +8080,8 @@ workflows
 | Description | Update an automation in a Kaiten space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7732,6 +8123,8 @@ workflows
 | Description | Create a new company workflow. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7768,6 +8161,8 @@ workflows
 | Description | Delete a company workflow. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7802,6 +8197,8 @@ workflows
 | Description | Get a specific company workflow by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -7836,6 +8233,8 @@ workflows
 | Description | List company workflows. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -7869,6 +8268,8 @@ workflows
 | Description | Update a company workflow. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7932,6 +8333,8 @@ sprints
 | Description | Add a card to a Kaiten project. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -7965,6 +8368,8 @@ sprints
 | Description | List cards in a Kaiten project. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8000,6 +8405,8 @@ sprints
 | Description | Remove a card from a Kaiten project. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8033,6 +8440,8 @@ sprints
 | Description | Create a new Kaiten project. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8069,6 +8478,8 @@ sprints
 | Description | Delete a Kaiten project. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8101,6 +8512,8 @@ sprints
 | Description | Get a Kaiten project by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -8134,6 +8547,8 @@ sprints
 | Description | List all Kaiten projects in the company. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8164,6 +8579,8 @@ _No tool-specific arguments._
 | Description | Update a Kaiten project. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8202,6 +8619,8 @@ _No tool-specific arguments._
 | Description | Create a new Kaiten sprint. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8240,6 +8659,8 @@ _No tool-specific arguments._
 | Description | Delete a Kaiten sprint. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8274,6 +8695,8 @@ _No tool-specific arguments._
 | Description | Get a Kaiten sprint by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -8309,6 +8732,8 @@ _No tool-specific arguments._
 | Description | List Kaiten sprints. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8345,6 +8770,8 @@ _No tool-specific arguments._
 | Description | Update a Kaiten sprint. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8433,6 +8860,8 @@ user-roles
 | Description | Create a new company group in Kaiten. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8465,6 +8894,8 @@ user-roles
 | Description | Delete a company group in Kaiten. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8497,6 +8928,8 @@ user-roles
 | Description | Get a company group by UID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -8529,6 +8962,8 @@ user-roles
 | Description | List company groups in Kaiten. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8563,6 +8998,8 @@ user-roles
 | Description | Update a company group in Kaiten. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8596,6 +9033,8 @@ user-roles
 | Description | List company users from the administrative Members section. Defaults to for_members_section=true with paginated limit/offset. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8642,6 +9081,8 @@ user-roles
 | Description | Remove a virtual company user. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8674,6 +9115,8 @@ user-roles
 | Description | Update a company user. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8709,6 +9152,8 @@ user-roles
 | Description | Add an admin to a company group. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8742,6 +9187,8 @@ user-roles
 | Description | List admins of a company group. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8775,6 +9222,8 @@ user-roles
 | Description | Remove an admin from a company group. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8808,6 +9257,8 @@ user-roles
 | Description | Attach a tree entity to a company group. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8843,6 +9294,8 @@ user-roles
 | Description | List tree entities attached to a company group. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -8875,6 +9328,8 @@ user-roles
 | Description | Remove a tree entity from a company group. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8908,6 +9363,8 @@ user-roles
 | Description | Update a tree entity attached to a company group. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8943,6 +9400,8 @@ user-roles
 | Description | Add a user to a company group. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -8976,6 +9435,8 @@ user-roles
 | Description | List users in a company group. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9009,6 +9470,8 @@ user-roles
 | Description | Remove a user from a company group. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9042,6 +9505,8 @@ user-roles
 | Description | Get a role by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -9074,6 +9539,8 @@ user-roles
 | Description | List available roles in Kaiten. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9108,6 +9575,8 @@ user-roles
 | Description | Add a user to a Kaiten space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9142,6 +9611,8 @@ user-roles
 | Description | Get a user in a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -9176,6 +9647,8 @@ user-roles
 | Description | List users of a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9209,6 +9682,8 @@ user-roles
 | Description | Remove a user from a Kaiten space. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9242,6 +9717,8 @@ user-roles
 | Description | Update a user's role in a Kaiten space. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9276,6 +9753,8 @@ user-roles
 | Description | Create a user role. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9310,6 +9789,8 @@ user-roles
 | Description | Delete a user role. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9342,6 +9823,8 @@ user-roles
 | Description | Get a user role. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -9374,6 +9857,8 @@ user-roles
 | Description | List user roles. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9408,6 +9893,8 @@ user-roles
 | Description | Update a user role. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9463,6 +9950,8 @@ scim.users
 | Description | Create a SCIM group. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9495,6 +9984,8 @@ scim.users
 | Description | Get a SCIM group. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -9527,6 +10018,8 @@ scim.users
 | Description | List SCIM groups. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9561,6 +10054,8 @@ scim.users
 | Description | Update a SCIM group. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9594,6 +10089,8 @@ scim.users
 | Description | Create a SCIM user. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9626,6 +10123,8 @@ scim.users
 | Description | Get a SCIM user. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -9658,6 +10157,8 @@ scim.users
 | Description | List SCIM users. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9692,6 +10193,8 @@ scim.users
 | Description | Update a SCIM user. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9754,6 +10257,8 @@ space-activity-all
 | Description | List Kaiten audit logs for the company. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -9791,6 +10296,8 @@ space-activity-all
 | Description | Get activity feed for a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9825,6 +10332,8 @@ space-activity-all
 | Description | Fetch location history for multiple cards with bounded worker concurrency. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -9862,6 +10371,8 @@ space-activity-all
 | Description | Get location history of a Kaiten card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -9897,6 +10408,8 @@ space-activity-all
 | Description | Get company-wide activity feed. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -9938,6 +10451,8 @@ space-activity-all
 | Description | Create a saved filter. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -9972,6 +10487,8 @@ space-activity-all
 | Description | Delete a saved filter. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10004,6 +10521,8 @@ space-activity-all
 | Description | Get a saved filter by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -10036,6 +10555,8 @@ space-activity-all
 | Description | List saved filters. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -10069,6 +10590,8 @@ space-activity-all
 | Description | Update a saved filter. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10104,6 +10627,8 @@ space-activity-all
 | Description | Fetch all space activity with automatic pagination. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -10145,6 +10670,8 @@ space-activity-all
 | Description | Get activity feed for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -10259,6 +10786,8 @@ space-sla-measurements
 | Description | Get SLA rule measurements for a card. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -10291,6 +10820,8 @@ space-sla-measurements
 | Description | Attach an SLA policy to a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10324,6 +10855,8 @@ space-sla-measurements
 | Description | Detach an SLA policy from a card. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10357,6 +10890,8 @@ space-sla-measurements
 | Description | Add a user to a Service Desk organization. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10391,6 +10926,8 @@ space-sla-measurements
 | Description | Add multiple users to a Service Desk organization. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10424,6 +10961,8 @@ space-sla-measurements
 | Description | Remove multiple users from a Service Desk organization. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10457,6 +10996,8 @@ space-sla-measurements
 | Description | Remove a user from a Service Desk organization. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10490,6 +11031,8 @@ space-sla-measurements
 | Description | Update a user's permissions in a Service Desk organization. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10526,6 +11069,8 @@ space-sla-measurements
 | Description | Create a Service Desk organization. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10559,6 +11104,8 @@ space-sla-measurements
 | Description | Delete a Service Desk organization. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10591,6 +11138,8 @@ space-sla-measurements
 | Description | Get a Service Desk organization by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -10623,6 +11172,8 @@ space-sla-measurements
 | Description | List Service Desk organizations. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -10658,6 +11209,8 @@ space-sla-measurements
 | Description | Update a Service Desk organization. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10692,6 +11245,8 @@ space-sla-measurements
 | Description | Create a new Service Desk request. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10729,6 +11284,8 @@ space-sla-measurements
 | Description | Delete a Service Desk request. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10763,6 +11320,8 @@ space-sla-measurements
 | Description | Get a Service Desk request by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -10797,6 +11356,8 @@ space-sla-measurements
 | Description | List Service Desk requests. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -10831,6 +11392,8 @@ space-sla-measurements
 | Description | Update a Service Desk request. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10868,6 +11431,8 @@ space-sla-measurements
 | Description | Create a new Service Desk service. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10915,6 +11480,8 @@ space-sla-measurements
 | Description | Archive a Service Desk service. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -10947,6 +11514,8 @@ space-sla-measurements
 | Description | Get a Service Desk service by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -10979,6 +11548,8 @@ space-sla-measurements
 | Description | List Service Desk services. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -11014,6 +11585,8 @@ space-sla-measurements
 | Description | Update a Service Desk service. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11062,6 +11635,8 @@ space-sla-measurements
 | Description | Get current Service Desk settings. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11092,6 +11667,8 @@ _No tool-specific arguments._
 | Description | Update Service Desk settings. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11124,6 +11701,8 @@ _No tool-specific arguments._
 | Description | Create a rule within an SLA policy. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11164,6 +11743,8 @@ _No tool-specific arguments._
 | Description | Delete a rule from an SLA policy. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11199,6 +11780,8 @@ _No tool-specific arguments._
 | Description | Update a rule within an SLA policy. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11240,6 +11823,8 @@ _No tool-specific arguments._
 | Description | Create a Service Desk SLA policy. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11275,6 +11860,8 @@ _No tool-specific arguments._
 | Description | Delete a Service Desk SLA policy. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11307,6 +11894,8 @@ _No tool-specific arguments._
 | Description | Get a Service Desk SLA policy by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11339,6 +11928,8 @@ _No tool-specific arguments._
 | Description | List Service Desk SLA policies. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -11372,6 +11963,8 @@ _No tool-specific arguments._
 | Description | Trigger recalculation of SLA measurements. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11404,6 +11997,8 @@ _No tool-specific arguments._
 | Description | Get Service Desk SLA statistics. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -11442,6 +12037,8 @@ _No tool-specific arguments._
 | Description | Update a Service Desk SLA policy. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11478,6 +12075,8 @@ _No tool-specific arguments._
 | Description | Get Service Desk statistics. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11513,6 +12112,8 @@ _No tool-specific arguments._
 | Description | Create a Service Desk template answer. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11546,6 +12147,8 @@ _No tool-specific arguments._
 | Description | Delete a Service Desk template answer. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11578,6 +12181,8 @@ _No tool-specific arguments._
 | Description | Get a Service Desk template answer by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11610,6 +12215,8 @@ _No tool-specific arguments._
 | Description | List Service Desk template answers. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -11640,6 +12247,8 @@ _No tool-specific arguments._
 | Description | Update a Service Desk template answer. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11674,6 +12283,8 @@ _No tool-specific arguments._
 | Description | List Service Desk users. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -11710,6 +12321,8 @@ _No tool-specific arguments._
 | Description | Generate a temporary password for a Service Desk user. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11744,6 +12357,8 @@ _No tool-specific arguments._
 | Description | Update a Service Desk user profile. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11780,6 +12395,8 @@ _No tool-specific arguments._
 | Description | Add a custom property as a vote property for a Service Desk service. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11813,6 +12430,8 @@ _No tool-specific arguments._
 | Description | Remove a vote property from a Service Desk service. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11846,6 +12465,8 @@ _No tool-specific arguments._
 | Description | Get SLA rule measurements for all cards in a space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11917,6 +12538,8 @@ compute-jobs
 | Description | Get blocker resolution time data for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -11942,6 +12565,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
 
 ### `charts.boards.get`
 
@@ -11952,6 +12576,8 @@ compute-jobs
 | Description | Get board structure for chart configuration in a space. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -11984,6 +12610,8 @@ compute-jobs
 | Description | Build a Cumulative Flow Diagram (CFD) for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12016,6 +12644,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.control.create`
 
@@ -12026,6 +12655,8 @@ compute-jobs
 | Description | Build a Control Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12060,6 +12691,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.cycle-time.create`
 
@@ -12070,6 +12702,8 @@ compute-jobs
 | Description | Build a Cycle Time Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12102,6 +12736,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.due-dates.get`
 
@@ -12112,6 +12747,8 @@ compute-jobs
 | Description | Get due dates analysis for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12147,6 +12784,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
 
 ### `charts.lead-time.create`
 
@@ -12157,6 +12795,8 @@ compute-jobs
 | Description | Build a Lead Time Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12191,6 +12831,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.sales-funnel.create`
 
@@ -12201,6 +12842,8 @@ compute-jobs
 | Description | Build a Sales Funnel Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12232,6 +12875,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.spectral.create`
 
@@ -12242,6 +12886,8 @@ compute-jobs
 | Description | Build a Spectral Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12276,6 +12922,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.summary.get`
 
@@ -12286,6 +12933,8 @@ compute-jobs
 | Description | Get done-card summary for a space within a date range. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12313,6 +12962,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
 
 ### `charts.task-distribution.create`
 
@@ -12323,6 +12973,8 @@ compute-jobs
 | Description | Build a Task Distribution Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12352,6 +13004,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.throughput-capacity.create`
 
@@ -12362,6 +13015,8 @@ compute-jobs
 | Description | Build a Throughput Capacity Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12393,6 +13048,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `charts.throughput-demand.create`
 
@@ -12403,6 +13059,8 @@ compute-jobs
 | Description | Build a Throughput Demand Chart for a space. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12434,6 +13092,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
+- This request can create a transient compute job, so global read-only mode blocks it.
 
 ### `compute-jobs.cancel`
 
@@ -12444,6 +13103,8 @@ compute-jobs
 | Description | Cancel a running or queued compute job. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12478,6 +13139,8 @@ compute-jobs
 | Description | Get the status and result of an asynchronous compute job. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12526,6 +13189,8 @@ tree.children
 | Description | List tree entities from Kaiten. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12560,6 +13225,8 @@ tree.children
 | Description | List direct children of an entity in the Kaiten sidebar tree. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -12599,6 +13266,8 @@ tree.children
 | Description | Build a nested entity tree from the Kaiten sidebar. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `aggregated` |
 | Cache policy | `persistent_heavy` |
 | Cache strategy | `heavy_persistent` |
@@ -12670,6 +13339,8 @@ user-timers
 | Description | Create a new API key. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12704,6 +13375,8 @@ user-timers
 | Description | Delete an API key. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12738,6 +13411,8 @@ user-timers
 | Description | List all API keys for the current user. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12768,6 +13443,8 @@ _No tool-specific arguments._
 | Description | Get a specific calendar by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -12800,6 +13477,8 @@ _No tool-specific arguments._
 | Description | List calendars. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12833,6 +13512,8 @@ _No tool-specific arguments._
 | Description | Get current company information. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12863,6 +13544,8 @@ _No tool-specific arguments._
 | Description | Get a websocket JWT for the current user. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12893,6 +13576,8 @@ _No tool-specific arguments._
 | Description | Update current company information. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -12925,6 +13610,8 @@ _No tool-specific arguments._
 | Description | List removed boards from the recycle bin. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12960,6 +13647,8 @@ _No tool-specific arguments._
 | Description | List removed cards from the recycle bin. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -12995,6 +13684,8 @@ _No tool-specific arguments._
 | Description | Create a new user timer for a card. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13029,6 +13720,8 @@ _No tool-specific arguments._
 | Description | Delete a user timer. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13063,6 +13756,8 @@ _No tool-specific arguments._
 | Description | Get a specific user timer by ID. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `persistent_opt_in` |
 | Cache strategy | `entity_or_reference_persistent` |
@@ -13097,6 +13792,8 @@ _No tool-specific arguments._
 | Description | List all user timers. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `direct_http` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
@@ -13129,6 +13826,8 @@ _No tool-specific arguments._
 | Description | Update a user timer (e.g. pause or resume). |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13180,6 +13879,8 @@ snapshot
 | Description | Build a persistent local sqlite snapshot for headless reads, analytics, and report workflows. |
 | Method | `POST` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13220,6 +13921,8 @@ snapshot
 | Description | Delete a local snapshot from sqlite storage. |
 | Method | `DELETE` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13252,6 +13955,8 @@ snapshot
 | Description | List locally stored snapshots with schema version and dataset counts. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13282,6 +13987,8 @@ _No tool-specific arguments._
 | Description | Rebuild an existing local snapshot in place using its stored snapshot definition. |
 | Method | `PATCH` |
 | Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13316,6 +14023,8 @@ _No tool-specific arguments._
 | Description | Show local snapshot metadata, schema version, dataset counts, and the last build trace summary. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13361,6 +14070,8 @@ query
 | Description | Run local card filtering against a stored snapshot without calling the Kaiten API. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -13403,6 +14114,8 @@ query
 | Description | Compute local metrics over a stored snapshot without calling the Kaiten API. |
 | Method | `GET` |
 | Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |

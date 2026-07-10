@@ -101,7 +101,10 @@ def test_json_config_error_envelope_contains_guidance(runner, config_env, monkey
     assert payload["success"] is False
     assert payload["error"]["type"] == "config_error"
     assert "Missing Kaiten credentials." in payload["error"]["message"]
-    assert "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active" in payload["error"]["message"]
+    assert (
+        "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active"
+        in payload["error"]["message"]
+    )
     assert "export KAITEN_DOMAIN=<company-subdomain-or-url>" in payload["error"]["message"]
 
 
@@ -119,7 +122,9 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert payload["data"]["quickstart"]
     assert payload["data"]["docs"]["repository"] == "https://github.com/ViktorOgnev/kaiten-cli"
     assert payload["data"]["docs"]["command_reference"].endswith("/COMMAND_REFERENCE.md")
-    assert payload["data"]["docs"]["skills"]["heavy_data"].endswith("/skills/kaiten-cli-heavy-data/SKILL.md")
+    assert payload["data"]["docs"]["skills"]["heavy_data"].endswith(
+        "/skills/kaiten-cli-heavy-data/SKILL.md"
+    )
 
 
 def test_agent_help_human_output_is_bootstrap_focused(runner):
@@ -149,6 +154,12 @@ def test_discovery_commands_human_output_is_not_raw_json(runner):
     assert "Arguments:" in describe.output
     assert "--board-id (integer, optional)" in describe.output
     assert "Examples:" in describe.output
+
+    chart_description = runner.invoke(cli, ["describe", "charts.summary.get"])
+    assert chart_description.exit_code == 0
+    assert "mutation=yes" in chart_description.output
+    assert "read-only=allowed" in chart_description.output
+    assert "remote-effects=no" in chart_description.output
 
     examples = runner.invoke(cli, ["examples", "cards.list-all"])
     assert examples.exit_code == 0

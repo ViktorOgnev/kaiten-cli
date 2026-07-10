@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from kaiten_cli.runtime.fs_security import open_private_append
 
 REDACTED_ARG_VALUE = "[REDACTED]"
 _SENSITIVE_FLAGS = {"--token"}
@@ -88,13 +89,17 @@ class ExecutionStats:
     disk_cache_misses: int = 0
     disk_cache_expired: int = 0
     disk_cache_bypasses: int = 0
-    _groups: dict[tuple[str, str, str], ExecutionGroupStats] = field(default_factory=dict, init=False)
+    _groups: dict[tuple[str, str, str], ExecutionGroupStats] = field(
+        default_factory=dict, init=False
+    )
 
     def _group(self, *, source: str, method: str, path_family: str) -> ExecutionGroupStats:
         key = (source, method.upper(), path_family)
         group = self._groups.get(key)
         if group is None:
-            group = ExecutionGroupStats(source=source, method=method.upper(), path_family=path_family)
+            group = ExecutionGroupStats(
+                source=source, method=method.upper(), path_family=path_family
+            )
             self._groups[key] = group
         return group
 
@@ -277,7 +282,6 @@ class TraceRecorder:
             payload["cache_bypasses"] = stats.cache_bypasses()
         if bulk_meta:
             payload.update(bulk_meta)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as handle:
+        with open_private_append(self.path, repair_parent=False) as handle:
             handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
             handle.write("\n")

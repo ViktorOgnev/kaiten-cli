@@ -58,7 +58,7 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.9"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.22"
 ```
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
@@ -79,6 +79,8 @@ python -m kaiten_cli --help
   Как устроен explicit live harness и per-run validation.
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
   Зафиксированные live/API contracts текущего test tenant.
+- [SECURITY.md](SECURITY.md)
+  Политика сообщения об уязвимостях и правила обращения с локальными credentials и данными.
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
   Heavy-data workflow guidance для LLM и headless scripts.
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
@@ -230,6 +232,8 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | `KAITEN_DOMAIN` | Да | Tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host (`62.84.125.64:3200`, `http://localhost:3000`) |
 | `KAITEN_TOKEN` | Да | API-токен пользователя |
 | `KAITEN_LIVE` | Нет | `1` или `true` для opt-in live validation на явно переданных credentials/profile |
+| `KAITEN_CLI_READ_ONLY` | Нет | `1` или `true`, чтобы блокировать Kaiten mutation-команды в текущем процессе |
+| `KAITEN_CLI_STORAGE_READ_ONLY` | Нет | `1` или `true`, чтобы читать существующие snapshots без локальных schema/write операций и блокировать snapshot lifecycle writes; gateway устанавливает автоматически |
 | `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
 | `KAITEN_TRACE_FILE` | Нет | JSONL-файл для append-only command trace |
 
@@ -265,6 +269,19 @@ export KAITEN_TOKEN=<api-token>
 ```
 
 `--sandbox` у `profile add` остаётся только как deprecated compatibility metadata. Он больше не разрешает мутации и не участвует в live-test gating.
+
+### Read-only policy
+
+По умолчанию обычный профиль может выполнять мутации. Для аналитического или agent workflow включайте явный read-only policy:
+
+```bash
+kaiten --read-only --json spaces list --compact --fields id,title
+KAITEN_CLI_READ_ONLY=1 kaiten --json cards get --card-id 123
+```
+
+Policy блокирует команды, которые меняют удалённое состояние Kaiten. Локальные snapshot-операции остаются доступны: они пишут только в локальный sqlite и используют Kaiten API для чтения. POST-backed аналитические чтения `charts summary get`, `charts block-resolution get` и `charts due-dates get` тоже разрешены; команды `charts ... create`, создающие transient compute job, блокируются. `search-tools` и `describe` возвращают `read_only_allowed`, поэтому automation не должна выводить policy только из HTTP method или поля `mutation`.
+
+Agent gateway передаёт дочернему CLI `KAITEN_CLI_READ_ONLY=1` и `KAITEN_CLI_STORAGE_READ_ONLY=1`, использует read-only filesystem sandbox и отключает ambient Codex user config/rules. Поэтому он может читать уже существующие snapshots, но не build/refresh/delete их. Это защита от случайной записи, а не непреодолимая authorization boundary: Codex-процесс имеет shell и Kaiten credentials. Используйте gateway только для доверенного ввода и, где возможно, с credentials, чьи серверные права не допускают записи. Для non-loopback deployment обязательны bearer token, TLS reverse proxy/private network и proxy-level connection/time limits; встроенный сервер сам TLS не предоставляет.
 
 ### Приоритет конфигурации
 
@@ -375,7 +392,15 @@ Persistent cache deliberately cost-aware:
 - очищается после успешных mutation-команд для текущего profile/domain.
 - при несовместимой локальной sqlite-схеме или повреждённом файле persistent cache автоматически удаляется и создаётся заново.
 
-Ключ кэша строится по raw API request: `profile/domain + method + path + params`. `compact` и `fields` в ключ не входят, потому что это post-processing уже после ответа API.
+Ключ кэша строится по raw API request: `profile/domain + credential fingerprint + method + path + params`. `compact` и `fields` в ключ не входят, потому что это post-processing уже после ответа API.
+
+### Чувствительность и очистка локального cache
+
+Persistent cache содержит исходные ответы Kaiten API и может включать названия, описания, пользовательские данные и другие закрытые поля. Файл `http-cache.sqlite3` хранится в platform-specific user cache directory (`~/Library/Caches/kaiten-cli/` на macOS, `${XDG_CACHE_HOME:-~/.cache}/kaiten-cli/` на Linux) и создаётся с доступом только для текущего пользователя. Не прикладывайте его к issue, отчёту или git-репозиторию без отдельной очистки данных.
+
+- `--cache-mode off` отключает чтение и запись persistent cache для запуска.
+- `--cache-mode refresh` обновляет данные для конкретного запроса, но не очищает весь store.
+- Для полной очистки завершите процессы `kaiten` и удалите `http-cache.sqlite3`; CLI создаст его заново при следующем cacheable read.
 
 ### Примеры
 
@@ -490,6 +515,11 @@ kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by bo
 - `full` объединяет analytics + evidence.
 - `query metrics` в текущем виде generic: это локальный общий metric layer, а не tenant-specific flow profile engine.
 - Local-first path остаётся explicit. Обычные transport-команды не подменяются snapshot behavior автоматически.
+
+Snapshot store также содержит рабочие данные Kaiten: в зависимости от preset это могут быть карточки, комментарии, история перемещений и time logs. `snapshots.sqlite3` хранится в platform-specific user data directory (`~/Library/Application Support/kaiten-cli/` на macOS, `${XDG_DATA_HOME:-~/.local/share}/kaiten-cli/` на Linux) с доступом только для текущего пользователя.
+
+- Удалить один набор данных: `kaiten --json snapshot delete --name <name>`.
+- Для полной очистки завершите процессы `kaiten` и удалите `snapshots.sqlite3`; это безвозвратно удалит все локальные snapshots, но не изменит данные в Kaiten.
 
 Для LLM и headless scripts это preferred path, когда вопросы повторяются над одной и той же группой карточек.
 

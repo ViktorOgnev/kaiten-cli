@@ -13,12 +13,24 @@ from click.exceptions import NoArgsIsHelpError
 
 from kaiten_cli import __version__
 from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
-from kaiten_cli.errors import BatchExecutionError, CliError, ConfigError, InternalError, ValidationError
+from kaiten_cli.errors import (
+    BatchExecutionError,
+    CliError,
+    ConfigError,
+    InternalError,
+    ValidationError,
+)
 from kaiten_cli.models import GlobalOptions, ToolSpec
-from kaiten_cli.profiles import add_profile, list_profiles, remove_profile, show_profile, use_profile
+from kaiten_cli.profiles import (
+    add_profile,
+    list_profiles,
+    remove_profile,
+    show_profile,
+    use_profile,
+)
 from kaiten_cli.registry import iter_module_tools, iter_tools
 from kaiten_cli.registry.module_docs import MODULE_SPECS_BY_KEY
-from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics
+from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics, read_only_enabled
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
 from kaiten_cli.runtime.trace import ExecutionStats, TraceRecorder, bulk_trace_meta
@@ -96,7 +108,9 @@ def _echo_human_result(ctx: click.Context, text: str) -> None:
 def _fail(ctx: click.Context, command: str | None, error: CliError) -> None:
     options = _ctx_options(ctx)
     stats = ctx.meta.pop("last_stats_payload", None)
-    click.echo(render_error(command, error, options.json_mode, stats=stats), err=not options.json_mode)
+    click.echo(
+        render_error(command, error, options.json_mode, stats=stats), err=not options.json_mode
+    )
     ctx.exit(error.exit_code)
 
 
@@ -240,6 +254,8 @@ def _render_search_tools_text(query: str, results: list[dict[str, Any]]) -> str:
         flags = [
             str(item.get("method", "GET")),
             "mutation" if item.get("mutation") else "read",
+            "read-only=allowed" if item.get("read_only_allowed") else "read-only=blocked",
+            "remote-effects=yes" if item.get("remote_side_effects") else "remote-effects=no",
             str(item.get("execution_mode", "direct_http")),
             f"cache={item.get('cache_policy', 'unknown')}",
         ]
@@ -273,6 +289,8 @@ def _render_describe_text(description: dict[str, Any]) -> str:
         (
             f"API: {description.get('method', '')} {description.get('path_template', '')} "
             f"| mutation={_yes_no(description.get('mutation'))} "
+            f"| read-only={('allowed' if description.get('read_only_allowed') else 'blocked')} "
+            f"| remote-effects={_yes_no(description.get('remote_side_effects'))} "
             f"| mode={description.get('execution_mode', '')}"
         ),
         (
@@ -307,8 +325,7 @@ def _render_describe_text(description: dict[str, Any]) -> str:
             enum_display = _format_enum(argument.get("enum"))
             arg_description = argument.get("description") or "No description."
             lines.append(
-                f"  {option_name} ({type_display}, {required}{enum_display}): "
-                f"{arg_description}"
+                f"  {option_name} ({type_display}, {required}{enum_display}): {arg_description}"
             )
     else:
         lines.append("  No tool-specific arguments.")
@@ -456,7 +473,8 @@ def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback)
         ctx.meta["last_stats_payload"] = stats_payload
         _emit_stats_summary(ctx, stats_payload)
         if recorder is not None:
-            recorder.write(
+            _write_trace_safely(
+                recorder,
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
@@ -471,7 +489,8 @@ def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback)
         stats = getattr(error, "_kaiten_trace_stats", None)
         ctx.meta["last_stats_payload"] = _stats_payload(stats, duration_ms=duration_ms)
         if recorder is not None:
-            recorder.write(
+            _write_trace_safely(
+                recorder,
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
@@ -486,7 +505,8 @@ def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback)
         stats = getattr(exc, "_kaiten_trace_stats", None)
         ctx.meta["last_stats_payload"] = _stats_payload(stats, duration_ms=duration_ms)
         if recorder is not None:
-            recorder.write(
+            _write_trace_safely(
+                recorder,
                 canonical_name=command,
                 execution_mode=execution_mode,
                 argv=_current_argv(ctx),
@@ -496,6 +516,18 @@ def _run_traced(ctx: click.Context, command: str, execution_mode: str, callback)
                 bulk_meta={},
             )
         raise
+
+
+def _write_trace_safely(recorder: TraceRecorder, **kwargs: Any) -> None:
+    """Keep observability failures from changing the primary command outcome."""
+
+    try:
+        recorder.write(**kwargs)
+    except Exception as error:
+        click.echo(
+            f"Warning: trace record was not written ({type(error).__name__}).",
+            err=True,
+        )
 
 
 def _dynamic_callback(tool: ToolSpec):
@@ -522,6 +554,7 @@ def _dynamic_callback(tool: ToolSpec):
                     cache_mode=options.cache_mode,
                     cache_ttl_seconds=options.cache_ttl_seconds,
                     reporter=reporter,
+                    read_only=options.read_only,
                 ),
             )
             _echo_result(ctx, tool.canonical_name, result)
@@ -623,10 +656,25 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     epilog=CLI_EPILOG,
 )
 @click.version_option(version=__version__, prog_name="kaiten")
-@click.option("--json", "json_mode", is_flag=True, default=False, help="Emit machine-readable JSON output.")
-@click.option("--profile", "profile_name", type=click.STRING, default=None, help="Configuration profile to use.")
-@click.option("--from-file", type=click.Path(exists=True, dir_okay=False, path_type=str), default=None, help="Load the full JSON payload from a file.")
-@click.option("--stdin-json", is_flag=True, default=False, help="Read the full JSON payload from stdin.")
+@click.option(
+    "--json", "json_mode", is_flag=True, default=False, help="Emit machine-readable JSON output."
+)
+@click.option(
+    "--profile",
+    "profile_name",
+    type=click.STRING,
+    default=None,
+    help="Configuration profile to use.",
+)
+@click.option(
+    "--from-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=str),
+    default=None,
+    help="Load the full JSON payload from a file.",
+)
+@click.option(
+    "--stdin-json", is_flag=True, default=False, help="Read the full JSON payload from stdin."
+)
 @click.option("--verbose", is_flag=True, default=False, help="Enable verbose diagnostics.")
 @click.option(
     "--cache-mode",
@@ -646,6 +694,12 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     default=None,
     help="Append compact execution traces as JSONL.",
 )
+@click.option(
+    "--read-only",
+    is_flag=True,
+    default=False,
+    help="Block commands that mutate Kaiten; KAITEN_CLI_READ_ONLY=1 enables the same policy.",
+)
 @click.option("--no-color", is_flag=True, default=False, help="Disable colorized output.")
 @click.pass_context
 def cli(
@@ -658,6 +712,7 @@ def cli(
     cache_mode: str | None,
     cache_ttl_seconds: int | None,
     trace_file: str | None,
+    read_only: bool,
     no_color: bool,
 ) -> None:
     if no_color:
@@ -673,6 +728,7 @@ def cli(
         cache_mode=cache_mode,
         cache_ttl_seconds=cache_ttl_seconds,
         trace_file=trace_file or os.environ.get("KAITEN_TRACE_FILE"),
+        read_only=read_only or read_only_enabled(),
     )
 
 
@@ -727,7 +783,9 @@ def describe_command(ctx: click.Context, identifier: str) -> None:
 @click.pass_context
 def examples_command(ctx: click.Context, identifier: str) -> None:
     try:
-        result = _run_traced(ctx, "examples", "meta", lambda: ({"examples": tool_examples(identifier)}, None))
+        result = _run_traced(
+            ctx, "examples", "meta", lambda: ({"examples": tool_examples(identifier)}, None)
+        )
         if _ctx_options(ctx).json_mode:
             _echo_result(ctx, "examples", result)
         else:
@@ -783,7 +841,9 @@ def profile_group() -> None:
     type=click.STRING,
     help="Kaiten tenant subdomain or full base URL, for example acme or https://acme.kaiten.ru.",
 )
-@click.option("--token", required=True, type=click.STRING, help="Kaiten API token for this profile.")
+@click.option(
+    "--token", required=True, type=click.STRING, help="Kaiten API token for this profile."
+)
 @click.option(
     "--sandbox/--no-sandbox",
     default=False,
@@ -851,7 +911,11 @@ def profile_add_command(
 @click.pass_context
 def profile_use_command(ctx: click.Context, name: str) -> None:
     try:
-        _echo_result(ctx, "profile.use", _run_traced(ctx, "profile.use", "meta", lambda: (use_profile(name), None)))
+        _echo_result(
+            ctx,
+            "profile.use",
+            _run_traced(ctx, "profile.use", "meta", lambda: (use_profile(name), None)),
+        )
     except CliError as error:
         _fail(ctx, "profile.use", error)
     except Exception as exc:  # pragma: no cover
@@ -866,7 +930,11 @@ def profile_use_command(ctx: click.Context, name: str) -> None:
 @click.pass_context
 def profile_list_command(ctx: click.Context) -> None:
     try:
-        _echo_result(ctx, "profile.list", _run_traced(ctx, "profile.list", "meta", lambda: (list_profiles(), None)))
+        _echo_result(
+            ctx,
+            "profile.list",
+            _run_traced(ctx, "profile.list", "meta", lambda: (list_profiles(), None)),
+        )
     except CliError as error:
         _fail(ctx, "profile.list", error)
     except Exception as exc:  # pragma: no cover
@@ -882,7 +950,11 @@ def profile_list_command(ctx: click.Context) -> None:
 @click.pass_context
 def profile_show_command(ctx: click.Context, name: str | None) -> None:
     try:
-        _echo_result(ctx, "profile.show", _run_traced(ctx, "profile.show", "meta", lambda: (show_profile(name), None)))
+        _echo_result(
+            ctx,
+            "profile.show",
+            _run_traced(ctx, "profile.show", "meta", lambda: (show_profile(name), None)),
+        )
     except CliError as error:
         _fail(ctx, "profile.show", error)
     except Exception as exc:  # pragma: no cover
@@ -898,7 +970,11 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
 @click.pass_context
 def profile_remove_command(ctx: click.Context, name: str) -> None:
     try:
-        _echo_result(ctx, "profile.remove", _run_traced(ctx, "profile.remove", "meta", lambda: (remove_profile(name), None)))
+        _echo_result(
+            ctx,
+            "profile.remove",
+            _run_traced(ctx, "profile.remove", "meta", lambda: (remove_profile(name), None)),
+        )
     except CliError as error:
         _fail(ctx, "profile.remove", error)
     except Exception as exc:  # pragma: no cover

@@ -18,9 +18,14 @@ TOOLS = (
             },
             "required": ["card_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/cards/{card_id}/external-links", path_fields=("card_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/cards/{card_id}/external-links", path_fields=("card_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten external-links list --card-id 10 --json", description="List external links on a card."),
+            ExampleSpec(
+                command="kaiten external-links list --card-id 10 --json",
+                description="List external links on a card.",
+            ),
         ),
     ),
     make_tool(
@@ -32,7 +37,10 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "url": {"type": "string", "description": "URL of the external link"},
-                "description": {"type": "string", "description": "Description of the external link"},
+                "description": {
+                    "type": "string",
+                    "description": "Description of the external link",
+                },
             },
             "required": ["card_id", "url"],
         },
@@ -43,7 +51,10 @@ TOOLS = (
             body_fields=("url", "description"),
         ),
         examples=(
-            ExampleSpec(command='kaiten external-links create --card-id 10 --url "https://example.com" --json', description="Attach an external link to a card."),
+            ExampleSpec(
+                command='kaiten external-links create --card-id 10 --url "https://example.com" --json',
+                description="Attach an external link to a card.",
+            ),
         ),
     ),
     make_tool(
@@ -56,7 +67,10 @@ TOOLS = (
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "link_id": {"type": "integer", "description": "External link ID"},
                 "url": {"type": "string", "description": "URL of the external link"},
-                "description": {"type": "string", "description": "Description of the external link"},
+                "description": {
+                    "type": "string",
+                    "description": "Description of the external link",
+                },
             },
             "required": ["card_id", "link_id"],
         },
@@ -67,7 +81,10 @@ TOOLS = (
             body_fields=("url", "description"),
         ),
         examples=(
-            ExampleSpec(command='kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json', description="Update a card external link."),
+            ExampleSpec(
+                command='kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json',
+                description="Update a card external link.",
+            ),
         ),
     ),
     make_tool(
@@ -82,9 +99,16 @@ TOOLS = (
             },
             "required": ["card_id", "link_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/cards/{card_id}/external-links/{link_id}", path_fields=("card_id", "link_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_id}/external-links/{link_id}",
+            path_fields=("card_id", "link_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten external-links delete --card-id 10 --link-id 20 --json", description="Delete a card external link."),
+            ExampleSpec(
+                command="kaiten external-links delete --card-id 10 --link-id 20 --json",
+                description="Delete a card external link.",
+            ),
         ),
     ),
 )

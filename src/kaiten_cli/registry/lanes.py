@@ -18,9 +18,14 @@ TOOLS = (
             },
             "required": ["board_id"],
         },
-        operation=OperationSpec(method="GET", path_template="/boards/{board_id}/lanes", path_fields=("board_id",)),
+        operation=OperationSpec(
+            method="GET", path_template="/boards/{board_id}/lanes", path_fields=("board_id",)
+        ),
         examples=(
-            ExampleSpec(command="kaiten lanes list --board-id 10 --json", description="List lanes on a board."),
+            ExampleSpec(
+                command="kaiten lanes list --board-id 10 --json",
+                description="List lanes on a board.",
+            ),
         ),
     ),
     make_tool(
@@ -35,8 +40,14 @@ TOOLS = (
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "row_count": {"type": "integer", "description": "Number of sub-rows to split into"},
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "wip_limit_type": {"type": "integer", "description": "WIP limit type (1=cards count, 2=size sum)"},
-                "default_card_type_id": {"type": "integer", "description": "Default card type ID for new cards in this lane"},
+                "wip_limit_type": {
+                    "type": "integer",
+                    "description": "WIP limit type (1=cards count, 2=size sum)",
+                },
+                "default_card_type_id": {
+                    "type": "integer",
+                    "description": "Default card type ID for new cards in this lane",
+                },
             },
             "required": ["board_id", "title"],
         },
@@ -44,10 +55,20 @@ TOOLS = (
             method="POST",
             path_template="/boards/{board_id}/lanes",
             path_fields=("board_id",),
-            body_fields=("title", "sort_order", "row_count", "wip_limit", "wip_limit_type", "default_card_type_id"),
+            body_fields=(
+                "title",
+                "sort_order",
+                "row_count",
+                "wip_limit",
+                "wip_limit_type",
+                "default_card_type_id",
+            ),
         ),
         examples=(
-            ExampleSpec(command='kaiten lanes create --board-id 10 --title "Backend" --json', description="Create a board lane."),
+            ExampleSpec(
+                command='kaiten lanes create --board-id 10 --title "Backend" --json',
+                description="Create a board lane.",
+            ),
         ),
     ),
     make_tool(
@@ -63,9 +84,19 @@ TOOLS = (
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "row_count": {"type": "integer", "description": "Number of sub-rows to split into"},
                 "wip_limit": {"type": "integer", "description": "WIP limit"},
-                "wip_limit_type": {"type": "integer", "description": "WIP limit type (1=cards count, 2=size sum)"},
-                "default_card_type_id": {"type": "integer", "description": "Default card type ID for new cards in this lane"},
-                "condition": {"type": "integer", "enum": [1, 2], "description": "1=active, 2=archived"},
+                "wip_limit_type": {
+                    "type": "integer",
+                    "description": "WIP limit type (1=cards count, 2=size sum)",
+                },
+                "default_card_type_id": {
+                    "type": "integer",
+                    "description": "Default card type ID for new cards in this lane",
+                },
+                "condition": {
+                    "type": "integer",
+                    "enum": [1, 2],
+                    "description": "1=active, 2=archived",
+                },
             },
             "required": ["board_id", "lane_id"],
         },
@@ -73,10 +104,21 @@ TOOLS = (
             method="PATCH",
             path_template="/boards/{board_id}/lanes/{lane_id}",
             path_fields=("board_id", "lane_id"),
-            body_fields=("title", "sort_order", "row_count", "wip_limit", "wip_limit_type", "default_card_type_id", "condition"),
+            body_fields=(
+                "title",
+                "sort_order",
+                "row_count",
+                "wip_limit",
+                "wip_limit_type",
+                "default_card_type_id",
+                "condition",
+            ),
         ),
         examples=(
-            ExampleSpec(command='kaiten lanes update --board-id 10 --lane-id 20 --title "Backend" --json', description="Update a lane."),
+            ExampleSpec(
+                command='kaiten lanes update --board-id 10 --lane-id 20 --title "Backend" --json',
+                description="Update a lane.",
+            ),
         ),
     ),
     make_tool(
@@ -91,9 +133,16 @@ TOOLS = (
             },
             "required": ["board_id", "lane_id"],
         },
-        operation=OperationSpec(method="DELETE", path_template="/boards/{board_id}/lanes/{lane_id}", path_fields=("board_id", "lane_id")),
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/boards/{board_id}/lanes/{lane_id}",
+            path_fields=("board_id", "lane_id"),
+        ),
         examples=(
-            ExampleSpec(command="kaiten lanes delete --board-id 10 --lane-id 20 --json", description="Delete a lane."),
+            ExampleSpec(
+                command="kaiten lanes delete --board-id 10 --lane-id 20 --json",
+                description="Delete a lane.",
+            ),
         ),
     ),
 )

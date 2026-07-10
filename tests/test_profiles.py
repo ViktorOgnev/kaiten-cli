@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import stat
+
 import pytest
 
 from kaiten_cli.errors import ConfigError
@@ -17,7 +20,9 @@ from kaiten_cli.runtime.client import KaitenClient
 
 
 def test_profile_lifecycle(config_env):
-    added = add_profile("sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True)
+    added = add_profile(
+        "sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True
+    )
     assert added["active"] is True
     assert added["sandbox"] is True
     assert added["cache_mode"] == "auto"
@@ -40,6 +45,54 @@ def test_profile_lifecycle(config_env):
     use_profile("sandbox")
     removed = remove_profile("sandbox")
     assert removed["name"] == "sandbox"
+
+
+def test_profile_config_is_private_and_atomically_replaced(config_env):
+    add_profile("main", domain="sandbox", token="secret-token", set_active=True)
+    path = config_path()
+    first_inode = path.stat().st_ino
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(path.parent.stat().st_mode) == 0o700
+
+    add_profile("second", domain="sandbox", token="second-token")
+
+    assert path.stat().st_ino != first_inode
+    assert (
+        json.loads(path.read_text(encoding="utf-8"))["profiles"]["second"]["token"]
+        == "second-token"
+    )
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_profile_load_repairs_permissive_file_mode(config_env):
+    add_profile("main", domain="sandbox", token="secret-token", set_active=True)
+    path = config_path()
+    path.chmod(0o644)
+
+    assert show_profile()["name"] == "main"
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_profile_load_reports_corrupt_json_as_config_error(config_env):
+    path = config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{broken", encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="Unable to read Kaiten CLI config"):
+        show_profile()
+
+
+def test_config_override_preserves_existing_parent_mode(monkeypatch, tmp_path):
+    shared_directory = tmp_path / "shared-config"
+    shared_directory.mkdir(mode=0o755)
+    shared_directory.chmod(0o755)
+    monkeypatch.setenv("KAITEN_CLI_CONFIG_PATH", str(shared_directory / "config.json"))
+
+    save_config({"active_profile": None, "profiles": {}})
+
+    assert stat.S_IMODE(shared_directory.stat().st_mode) == 0o755
+    assert stat.S_IMODE(config_path().stat().st_mode) == 0o600
 
 
 def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
@@ -233,7 +286,10 @@ def test_resolve_profile_guides_setup_when_missing(config_env, monkeypatch):
 
     message = str(excinfo.value)
     assert f"Config file: {config_path()}" in message
-    assert "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active" in message
+    assert (
+        "kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active"
+        in message
+    )
     assert "export KAITEN_DOMAIN=<company-subdomain-or-url>" in message
     assert "kaiten --json spaces list --compact --fields id,title" in message
 

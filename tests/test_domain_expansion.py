@@ -62,11 +62,17 @@ def test_resolve_new_aliases():
     assert resolve_tool("kaiten_download_file").canonical_name == "files.download"
     assert resolve_tool("kaiten_create_card_file").canonical_name == "files.create"
     assert resolve_tool("kaiten_add_card_child").canonical_name == "card-children.add"
-    assert resolve_tool("kaiten_batch_list_card_children").canonical_name == "card-children.batch-list"
+    assert (
+        resolve_tool("kaiten_batch_list_card_children").canonical_name == "card-children.batch-list"
+    )
     assert resolve_tool("kaiten_add_card_parent").canonical_name == "card-parents.add"
     assert resolve_tool("kaiten_add_planned_relation").canonical_name == "planned-relations.add"
-    assert resolve_tool("kaiten_update_planned_relation").canonical_name == "planned-relations.update"
-    assert resolve_tool("kaiten_remove_planned_relation").canonical_name == "planned-relations.remove"
+    assert (
+        resolve_tool("kaiten_update_planned_relation").canonical_name == "planned-relations.update"
+    )
+    assert (
+        resolve_tool("kaiten_remove_planned_relation").canonical_name == "planned-relations.remove"
+    )
     assert resolve_tool("kaiten_batch_get_cards").canonical_name == "cards.batch-get"
     assert resolve_tool("kaiten_batch_list_comments").canonical_name == "comments.batch-list"
     assert resolve_tool("kaiten_create_project").canonical_name == "projects.create"
@@ -95,7 +101,9 @@ def test_build_request_for_create_checklist_item():
 
 def test_build_request_for_update_comment_html_format():
     tool = resolve_tool("comments.update")
-    payload = merge_inputs(tool, {"card_id": 10, "comment_id": 30, "text": "<b>hi</b>", "format": "html"})
+    payload = merge_inputs(
+        tool, {"card_id": 10, "comment_id": 30, "text": "<b>hi</b>", "format": "html"}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -117,7 +125,10 @@ def test_build_request_for_add_card_tag():
 
 def test_build_request_for_create_card_file():
     tool = resolve_tool("files.create")
-    payload = merge_inputs(tool, {"card_id": 10, "url": "https://example.com/a.png", "name": "a.png", "card_cover": True})
+    payload = merge_inputs(
+        tool,
+        {"card_id": 10, "url": "https://example.com/a.png", "name": "a.png", "card_cover": True},
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -150,7 +161,9 @@ def test_build_request_for_add_planned_relation_defaults_type():
 
 def test_build_request_for_update_planned_relation():
     tool = resolve_tool("planned-relations.update")
-    payload = merge_inputs(tool, {"card_id": 10, "target_card_id": 11, "gap": 2, "gap_type": "days"})
+    payload = merge_inputs(
+        tool, {"card_id": 10, "target_card_id": 11, "gap": 2, "gap_type": "days"}
+    )
 
     path, query, body = build_request(tool, payload)
 
@@ -258,8 +271,12 @@ def test_cli_project_cards_alias_and_nested_canonical_match(runner):
     )
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
-    canonical = runner.invoke(cli, ["--json", "projects", "cards", "list", "--project-id", "p1"], env=env)
-    alias = runner.invoke(cli, ["--json", "kaiten_list_project_cards", "--project-id", "p1"], env=env)
+    canonical = runner.invoke(
+        cli, ["--json", "projects", "cards", "list", "--project-id", "p1"], env=env
+    )
+    alias = runner.invoke(
+        cli, ["--json", "kaiten_list_project_cards", "--project-id", "p1"], env=env
+    )
 
     assert canonical.exit_code == 0
     assert alias.exit_code == 0
@@ -305,17 +322,44 @@ def test_cli_planned_relation_update_alias_and_canonical_match(runner):
     route = respx.patch(
         "https://sandbox.kaiten.ru/api/latest/cards/10/planned-relation/11",
         json={"gap": 2, "gap_type": "days"},
-    ).mock(return_value=Response(200, json={"source_id": 10, "target_id": 11, "gap": 2, "gap_type": "days"}))
+    ).mock(
+        return_value=Response(
+            200, json={"source_id": 10, "target_id": 11, "gap": 2, "gap_type": "days"}
+        )
+    )
     env = {"KAITEN_DOMAIN": "sandbox", "KAITEN_TOKEN": "test-token"}
 
     canonical = runner.invoke(
         cli,
-        ["--json", "planned-relations", "update", "--card-id", "10", "--target-card-id", "11", "--gap", "2", "--gap-type", "days"],
+        [
+            "--json",
+            "planned-relations",
+            "update",
+            "--card-id",
+            "10",
+            "--target-card-id",
+            "11",
+            "--gap",
+            "2",
+            "--gap-type",
+            "days",
+        ],
         env=env,
     )
     alias = runner.invoke(
         cli,
-        ["--json", "kaiten_update_planned_relation", "--card-id", "10", "--target-card-id", "11", "--gap", "2", "--gap-type", "days"],
+        [
+            "--json",
+            "kaiten_update_planned_relation",
+            "--card-id",
+            "10",
+            "--target-card-id",
+            "11",
+            "--gap",
+            "2",
+            "--gap-type",
+            "days",
+        ],
         env=env,
     )
 
@@ -385,7 +429,9 @@ async def test_execute_get_blocker_filters_list(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10/blockers").mock(
-        return_value=Response(200, json=[{"id": 2, "reason": "Blocked"}, {"id": 3, "reason": "Waiting"}])
+        return_value=Response(
+            200, json=[{"id": 2, "reason": "Blocked"}, {"id": 3, "reason": "Waiting"}]
+        )
     )
 
     tool = resolve_tool("blockers.get")
@@ -402,7 +448,17 @@ async def test_execute_list_project_cards_compact(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     route = respx.get("https://sandbox.kaiten.ru/api/latest/projects/p1/cards").mock(
-        return_value=Response(200, json=[{"id": 1, "title": "Task", "owner": {"id": 7, "full_name": "Alice"}, "description": "secret"}])
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": 1,
+                    "title": "Task",
+                    "owner": {"id": 7, "full_name": "Alice"},
+                    "description": "secret",
+                }
+            ],
+        )
     )
 
     tool = resolve_tool("projects.cards.list")
@@ -445,9 +501,9 @@ async def test_execute_list_project_cards_falls_back_to_project_payload_on_405(m
 async def test_execute_list_calendars_injects_default_limit(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/calendars", params={"limit": "50"}).mock(
-        return_value=Response(200, json=[{"id": "cal-1", "name": "Default"}])
-    )
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/calendars", params={"limit": "50"}
+    ).mock(return_value=Response(200, json=[{"id": "cal-1", "name": "Default"}]))
 
     tool = resolve_tool("calendars.list")
     payload = merge_inputs(tool, {})

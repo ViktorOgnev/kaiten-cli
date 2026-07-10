@@ -74,14 +74,26 @@ LIST_CARD_SCHEMA = {
             "description": "Comma-separated responsible user IDs",
         },
         "column_ids": {"type": "string", "description": "Comma-separated column IDs"},
-        "exclude_board_ids": {"type": "string", "description": "Comma-separated board IDs to exclude"},
-        "exclude_lane_ids": {"type": "string", "description": "Comma-separated lane IDs to exclude"},
+        "exclude_board_ids": {
+            "type": "string",
+            "description": "Comma-separated board IDs to exclude",
+        },
+        "exclude_lane_ids": {
+            "type": "string",
+            "description": "Comma-separated lane IDs to exclude",
+        },
         "exclude_column_ids": {
             "type": "string",
             "description": "Comma-separated column IDs to exclude",
         },
-        "exclude_owner_ids": {"type": "string", "description": "Comma-separated owner IDs to exclude"},
-        "exclude_card_ids": {"type": "string", "description": "Comma-separated card IDs to exclude"},
+        "exclude_owner_ids": {
+            "type": "string",
+            "description": "Comma-separated owner IDs to exclude",
+        },
+        "exclude_card_ids": {
+            "type": "string",
+            "description": "Comma-separated card IDs to exclude",
+        },
         "organization_ids": {
             "type": "string",
             "description": "Comma-separated Service Desk organization IDs",
