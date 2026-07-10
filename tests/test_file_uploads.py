@@ -6,6 +6,7 @@ import pytest
 import respx
 from httpx import Response
 
+from kaiten_cli import __version__
 from kaiten_cli.app import cli
 from kaiten_cli.errors import ValidationError
 from kaiten_cli.registry import resolve_tool
@@ -73,6 +74,10 @@ async def test_upload_card_file_sends_multipart_put(monkeypatch, tmp_path):
     request = route.calls[0].request
     assert request.headers["authorization"] == "Bearer test-token"
     assert request.headers["accept"] == "application/json"
+    assert request.headers["user-agent"] == f"kaiten-cli/{__version__}"
+    assert request.headers["x-kaiten-client-type"] == "cli"
+    assert request.headers["x-kaiten-client-name"] == "kaiten-cli"
+    assert request.headers["x-kaiten-client-version"] == __version__
     assert request.headers["content-type"].startswith("multipart/form-data; boundary=")
     assert request.headers["content-type"] != "application/json"
     body = request.content

@@ -8,7 +8,7 @@
 
 | Поле | Значение |
 |------|----------|
-| Contract baseline | `kaiten-cli v0.1.22` |
+| Contract baseline | `kaiten-cli v0.1.23` |
 | Tenant class | Kaiten sandbox test tenant |
 | Текущий аудит | `2026-07-09`; live suite **не запускался** |
 | Последняя полная live campaign | `TBD`: дата и commit не подтверждены в репозитории |

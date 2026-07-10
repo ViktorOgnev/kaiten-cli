@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 
+from kaiten_cli import __version__
 from kaiten_cli.errors import ApiError, ConfigError, TransportError
 from kaiten_cli.models import CACHE_POLICY_NONE, DebugReporter
 from kaiten_cli.runtime.cache import ExecutionContext
@@ -29,6 +30,15 @@ RETRY_JITTER_MAX = 0.25
 RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 DEFAULT_TIMEOUT = 20.0
 HEAVY_TIMEOUT = 60.0
+CLIENT_TYPE = "cli"
+CLIENT_NAME = "kaiten-cli"
+CLIENT_USER_AGENT = f"{CLIENT_NAME}/{__version__}"
+CLIENT_IDENTITY_HEADERS = {
+    "User-Agent": CLIENT_USER_AGENT,
+    "X-Kaiten-Client-Type": CLIENT_TYPE,
+    "X-Kaiten-Client-Name": CLIENT_NAME,
+    "X-Kaiten-Client-Version": __version__,
+}
 
 
 class KaitenClient:
@@ -71,6 +81,7 @@ class KaitenClient:
                 headers={
                     "Authorization": f"Bearer {self.token}",
                     "Accept": "application/json",
+                    **CLIENT_IDENTITY_HEADERS,
                 },
             )
         return self._client

@@ -7,7 +7,7 @@
 ## Статус проверки
 
 - На `2026-07-09` в рамках текущего аудита live suite **не запускался**.
-- Текущий contract baseline — `kaiten-cli v0.1.22`; tenant class ранее зафиксированных контрактов — Kaiten sandbox test tenant.
+- Текущий contract baseline — `kaiten-cli v0.1.23`; tenant class ранее зафиксированных контрактов — Kaiten sandbox test tenant.
 - Дата и commit последней полной live campaign не подтверждены в репозитории и остаются `TBD`.
 - До нового запуска [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md) описывает ранее наблюдавшиеся и закодированные контракты, а не свежую проверку production или sandbox API.
 

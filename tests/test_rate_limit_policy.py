@@ -8,6 +8,7 @@ import pytest
 import respx
 from httpx import Response
 
+from kaiten_cli import __version__
 from kaiten_cli.errors import ApiError, TransportError
 from kaiten_cli.models import ResolvedProfile
 from kaiten_cli.runtime.cache import ExecutionContext
@@ -64,6 +65,27 @@ def test_retry_after_supports_http_date(monkeypatch):
     header = formatdate(1_012.0, usegmt=True)
 
     assert KaitenClient._parse_retry_after(header) == pytest.approx(12.0)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_api_requests_send_cli_identity_headers():
+    client = KaitenClient(domain="sandbox", token="token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
+        return_value=Response(200, json={"id": 1})
+    )
+
+    try:
+        await client.get("/cards/1")
+    finally:
+        await client.close()
+
+    assert route.called
+    headers = route.calls[0].request.headers
+    assert headers["user-agent"] == f"kaiten-cli/{__version__}"
+    assert headers["x-kaiten-client-type"] == "cli"
+    assert headers["x-kaiten-client-name"] == "kaiten-cli"
+    assert headers["x-kaiten-client-version"] == __version__
 
 
 @pytest.mark.asyncio

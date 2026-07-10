@@ -40,7 +40,7 @@ def test_primary_docs_expose_current_install_safety_and_live_metadata():
     live_validation = (root / "LIVE_VALIDATION.md").read_text(encoding="utf-8")
     behavior_matrix = (root / "API_BEHAVIOR_MATRIX.md").read_text(encoding="utf-8")
 
-    assert "@v0.1.22" in readme
+    assert "@v0.1.23" in readme
     assert "@v0.1.9" not in readme
     assert "KAITEN_CLI_READ_ONLY" in readme
     assert "http-cache.sqlite3" in readme
