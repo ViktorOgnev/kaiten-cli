@@ -312,6 +312,22 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 kaiten profile show
 ```
 
+Для профиля, который всегда должен блокировать удалённые мутации, добавьте
+`--read-only`:
+
+```bash
+kaiten profile add analyst \
+  --domain <company-subdomain-or-url> \
+  --token <api-token> \
+  --read-only \
+  --set-active
+```
+
+Настройка сохраняется в профиле и применяется для активного или явно выбранного
+через `--profile` профиля. Её можно снять командой `profile add` с
+`--no-read-only`. Глобальные `--read-only` и `KAITEN_CLI_READ_ONLY` по-прежнему
+включают read-only независимо от настройки профиля.
+
 `--domain` и `KAITEN_DOMAIN` принимают tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host с портом для локальных/dev-инсталляций.
 
 Если нужен фиксированный TTL persistent cache для этого profile вместо default `auto`:

@@ -109,12 +109,10 @@ async def execute_tool_with_diagnostics(
     read_only: bool | None = None,
 ) -> tuple[Any, ExecutionStats]:
     effective_read_only = read_only_enabled(read_only)
-    _emit_debug(
-        reporter,
-        f"safety: read_only={effective_read_only} mutation={tool.is_mutation} "
-        f"guarded={tool.runtime_behavior.enforce_mutation_guard}",
-    )
-    enforce_mutation_policy(tool, read_only=effective_read_only)
+    if effective_read_only:
+        # Preserve the existing fail-closed behavior for explicit/env read-only:
+        # a mutation is blocked before credentials or a network client are needed.
+        enforce_mutation_policy(tool, read_only=True)
     profile: ResolvedProfile | None = None
     context: ExecutionContext | None = None
     client: KaitenClient | None = None
@@ -129,8 +127,10 @@ async def execute_tool_with_diagnostics(
             "profile: "
             f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
             f"sandbox_metadata={profile.sandbox} cache_mode={profile.cache_mode} "
-            f"cache_ttl_seconds={profile.cache_ttl_seconds}",
+            f"cache_ttl_seconds={profile.cache_ttl_seconds} "
+            f"read_only={profile.read_only}",
         )
+        effective_read_only = effective_read_only or profile.read_only
         context = ExecutionContext.for_profile(profile, reporter=reporter)
         client = KaitenClient(
             domain=profile.domain,
@@ -142,6 +142,12 @@ async def execute_tool_with_diagnostics(
         )
     else:
         _emit_debug(reporter, "profile: not required for this command")
+    _emit_debug(
+        reporter,
+        f"safety: read_only={effective_read_only} mutation={tool.is_mutation} "
+        f"guarded={tool.runtime_behavior.enforce_mutation_guard}",
+    )
+    enforce_mutation_policy(tool, read_only=effective_read_only)
     path, query, body = build_request(tool, payload)
     request_path = request_path_for_tool(tool, path, client)
     timeout = timeout_for_tool(tool)

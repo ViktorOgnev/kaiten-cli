@@ -208,6 +208,26 @@ def test_profile_add_and_resolve_cache_settings(config_env):
     assert resolved.cache_ttl_seconds == 120
 
 
+def test_profile_read_only_is_persisted_and_resolved(config_env):
+    added = add_profile(
+        "main", domain="sandbox", token="secret-token", read_only=True, set_active=True
+    )
+
+    assert added["read_only"] is True
+    assert show_profile()["read_only"] is True
+    assert list_profiles()[0]["read_only"] is True
+    assert resolve_profile().read_only is True
+
+
+def test_profile_update_without_read_only_flag_preserves_policy(config_env):
+    add_profile("main", domain="sandbox", token="secret-token", read_only=True, set_active=True)
+
+    updated = add_profile("main", domain="sandbox", token="new-token")
+
+    assert updated["read_only"] is True
+    assert resolve_profile().read_only is True
+
+
 def test_resolve_profile_cli_cache_overrides_profile_defaults(config_env):
     add_profile(
         "main",

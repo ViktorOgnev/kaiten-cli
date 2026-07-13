@@ -185,6 +185,7 @@ class ResolvedProfile:
     domain: str
     token: str
     sandbox: bool = False
+    read_only: bool = False
     source: str = "unknown"
     cache_mode: str = CACHE_MODE_AUTO
     cache_ttl_seconds: int = 60

@@ -174,15 +174,20 @@ def add_profile(
     domain: str,
     token: str,
     sandbox: bool = False,
+    read_only: bool | None = None,
     set_active: bool = False,
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
 ) -> dict[str, Any]:
     config = load_config()
+    existing = config.get("profiles", {}).get(name, {})
     profile = {
         "domain": normalize_profile_domain(domain),
         "token": token,
         "sandbox": sandbox,
+        "read_only": bool(existing.get("read_only", False))
+        if read_only is None
+        else read_only,
     }
     if cache_mode is not None:
         profile["cache_mode"] = _normalize_cache_mode(cache_mode)
@@ -237,6 +242,7 @@ def show_profile(name: str | None = None) -> dict[str, Any]:
             "active": False,
             "domain": None,
             "sandbox": False,
+            "read_only": False,
             "token_masked": None,
             "cache_mode": CACHE_MODE_AUTO,
             "cache_ttl_seconds": 60,
@@ -253,6 +259,7 @@ def sanitized_profile(name: str, raw: dict[str, Any], *, active: bool) -> dict[s
         "active": active,
         "domain": normalize_profile_domain(str(raw.get("domain", ""))),
         "sandbox": bool(raw.get("sandbox", False)),
+        "read_only": bool(raw.get("read_only", False)),
         "token_masked": redact_token(raw.get("token")),
         "cache_mode": _normalize_cache_mode(raw.get("cache_mode")),
         "cache_ttl_seconds": _normalize_cache_ttl_seconds(raw.get("cache_ttl_seconds")),
@@ -276,6 +283,7 @@ def resolve_profile(
             domain=normalize_profile_domain(str(selected.get("domain", ""))),
             token=str(selected.get("token", "")),
             sandbox=bool(selected.get("sandbox", False)),
+            read_only=bool(selected.get("read_only", False)),
             source=source,
             cache_mode=_normalize_cache_mode(cache_mode_override or selected.get("cache_mode")),
             cache_ttl_seconds=_normalize_cache_ttl_seconds(

@@ -840,7 +840,7 @@ def profile_group() -> None:
 
 @profile_group.command(
     "add",
-    help="Create or update a named profile with Kaiten domain, API token and cache defaults.",
+    help="Create or update a named profile with credentials, safety and cache defaults.",
     short_help="Create or update a profile.",
 )
 @click.argument("name", type=click.STRING, metavar="NAME")
@@ -857,6 +857,11 @@ def profile_group() -> None:
     "--sandbox/--no-sandbox",
     default=False,
     help="Deprecated compatibility metadata. Does not affect mutations or live-test gating.",
+)
+@click.option(
+    "--read-only/--no-read-only",
+    default=None,
+    help="Persist read-only policy for this profile; mutations remain blocked when it is selected.",
 )
 @click.option(
     "--cache-mode",
@@ -882,6 +887,7 @@ def profile_add_command(
     domain: str,
     token: str,
     sandbox: bool,
+    read_only: bool | None,
     cache_mode: str | None,
     cache_ttl_seconds: int | None,
     set_active: bool,
@@ -897,6 +903,7 @@ def profile_add_command(
                     domain=domain,
                     token=token,
                     sandbox=sandbox,
+                    read_only=read_only,
                     cache_mode=cache_mode,
                     cache_ttl_seconds=cache_ttl_seconds,
                     set_active=set_active,

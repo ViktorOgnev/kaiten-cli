@@ -326,6 +326,24 @@ async def test_read_only_environment_blocks_remote_mutation_before_http(config_e
     assert route.call_count == 0
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_read_only_profile_blocks_remote_mutation_before_http(config_env):
+    from kaiten_cli.profiles import add_profile
+
+    add_profile("safe", domain="prod-tenant", token="test-token", read_only=True, set_active=True)
+    route = respx.post("https://prod-tenant.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(201, json={"id": 1})
+    )
+    tool = resolve_tool("cards.create")
+    payload = merge_inputs(tool, {"title": "Task", "board_id": 1})
+
+    with pytest.raises(MutationBlockedError, match="blocked by read-only mode"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 0
+
+
 def test_read_only_policy_allows_local_snapshot_mutations():
     tool = resolve_tool("snapshot.delete")
 
