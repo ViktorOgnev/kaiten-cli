@@ -37,6 +37,41 @@ kaiten agent-help
 kaiten search-tools cards
 ```
 
+### Если команда `kaiten` не найдена
+
+`uv tool` и `pipx` устанавливают исполняемые файлы в отдельный каталог. Если
+после установки shell отвечает `bash: kaiten: command not found`, добавьте этот
+каталог в `PATH`:
+
+Для установки через `uv`:
+
+```bash
+uv tool update-shell
+exec "$SHELL" -l
+```
+
+Если команда всё ещё не находится, проверьте каталог и добавьте его вручную:
+
+```bash
+uv tool dir --bin
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Чтобы сохранить настройку для следующих терминалов, добавьте эту строку в
+`~/.bashrc` или `~/.zshrc`, затем перезапустите shell:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Для установки через `pipx` используйте:
+
+```bash
+pipx ensurepath
+exec "$SHELL" -l
+```
+
 ### Skills для LLM и агентов
 
 Если агент работает с этим CLI через git-репозиторий, оптимальные workflow описаны в skills format, а не размазаны по длинным prose docs:
