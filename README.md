@@ -28,6 +28,15 @@ python3 -m venv .venv
 .venv/bin/pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git"
 ```
 
+### Проверка установки
+
+```bash
+kaiten --version
+kaiten --help
+kaiten agent-help
+kaiten search-tools cards
+```
+
 ### Если команда `kaiten` не найдена
 
 `uv tool` и `pipx` устанавливают исполняемые файлы в отдельный каталог. Если
@@ -61,15 +70,6 @@ source ~/.bashrc
 ```bash
 pipx ensurepath
 exec "$SHELL" -l
-```
-
-### Проверка установки
-
-```bash
-kaiten --version
-kaiten --help
-kaiten agent-help
-kaiten search-tools cards
 ```
 
 ### Skills для LLM и агентов
