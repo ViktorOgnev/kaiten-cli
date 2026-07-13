@@ -40,37 +40,59 @@ kaiten search-tools cards
 ### Если команда `kaiten` не найдена
 
 `uv tool` и `pipx` устанавливают исполняемые файлы в отдельный каталог. Если
-после установки shell отвечает `bash: kaiten: command not found`, добавьте этот
-каталог в `PATH`:
+после установки терминал сообщает, что команда не найдена, сначала разрешите
+менеджеру установки добавить этот каталог в `PATH`.
 
 Для установки через `uv`:
 
 ```bash
 uv tool update-shell
-exec "$SHELL" -l
 ```
 
-Если команда всё ещё не находится, проверьте каталог и добавьте его вручную:
-
-```bash
-uv tool dir --bin
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-Чтобы сохранить настройку для следующих терминалов, добавьте эту строку в
-`~/.bashrc` или `~/.zshrc`, затем перезапустите shell:
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-Для установки через `pipx` используйте:
+Для установки через `pipx`:
 
 ```bash
 pipx ensurepath
-exec "$SHELL" -l
 ```
+
+После этого полностью закройте и заново откройте терминал, затем повторите
+`kaiten --version`.
+
+Если команда по-прежнему не находится, узнайте фактический каталог исполняемых
+файлов у того менеджера, через который установлен CLI:
+
+```bash
+uv tool dir --bin
+pipx environment --value PIPX_BIN_DIR
+```
+
+На macOS и Linux с Bash или Zsh добавьте нужный каталог в `PATH` текущего
+терминала:
+
+```bash
+# uv
+export PATH="$(uv tool dir --bin):$PATH"
+
+# pipx
+export PATH="$(pipx environment --value PIPX_BIN_DIR):$PATH"
+```
+
+Для постоянной настройки добавьте соответствующую строку `export PATH=...` в
+`~/.bashrc` для Bash или `~/.zshrc` для Zsh и заново откройте терминал.
+
+В Windows PowerShell добавьте каталог в `PATH` текущей сессии:
+
+```powershell
+# uv
+$env:Path = "$(uv tool dir --bin);$env:Path"
+
+# pipx
+$env:Path = "$(pipx environment --value PIPX_BIN_DIR);$env:Path"
+```
+
+Для постоянной настройки в Windows добавьте каталог, выведенный менеджером, в
+пользовательскую переменную `Path` и заново откройте терминал. В WSL используйте
+инструкцию для Linux.
 
 ### Skills для LLM и агентов
 
