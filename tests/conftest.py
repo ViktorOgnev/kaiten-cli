@@ -23,6 +23,10 @@ def isolated_config_env(
         "kaiten_cli.runtime.cache.persistent_cache_path",
         lambda: tmp_path / "http-cache.sqlite3",
     )
+    monkeypatch.setattr(
+        "kaiten_cli.update_check.update_cache_path",
+        lambda: tmp_path / "update-check.json",
+    )
     return path
 
 

@@ -16,6 +16,10 @@ For repeated report and analytics workflows there is also a local-first path:
 
 `registry -> discovery/app -> input merge -> executor -> local snapshot store -> local query/metrics`
 
+Successful interactive commands have an independent post-command path:
+
+`app -> install metadata -> cached Git tag check -> optional installer confirmation`
+
 Main layers:
 
 - `src/kaiten_cli/registry/`
@@ -61,6 +65,20 @@ Each CLI invocation builds one execution context for the selected profile.
 - optional JSONL trace output can be appended through `--trace-file` or `KAITEN_TRACE_FILE`
 
 This keeps freshness controls explicit (`refresh` / `off`) while reducing repeated entity, page, and card-scoped reads in synthetic, aggregated, worker-pooled, and external-script paths.
+
+## Post-command Update Check
+
+`update_check.py` is outside the Kaiten execution/runtime path. It recognizes only
+remote Git installations described by standard Python `direct_url.json` metadata,
+detects the owning `pipx`, `uv tool`, or pip environment, and compares the
+installed version with stable `vX.Y.Z` tags from the same remote.
+
+The check runs only after a successful interactive command, is cached for 24
+hours, and is disabled for JSON/non-TTY/help/version/completion calls. Network and
+metadata failures are fail-open. The cache stores a source hash rather than the
+Git URL, and installer commands are passed directly to `subprocess` without a
+shell. A confirmed update is a separate local side effect and does not alter the
+already completed Kaiten command.
 
 ## Mutation Safety
 

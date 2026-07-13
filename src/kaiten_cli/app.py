@@ -34,6 +34,7 @@ from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics, read
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
 from kaiten_cli.runtime.trace import ExecutionStats, TraceRecorder, bulk_trace_meta
+from kaiten_cli.update_check import maybe_offer_update
 
 
 _CURRENT_ARGV: list[str] | None = None
@@ -700,6 +701,12 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
     default=False,
     help="Block commands that mutate Kaiten; KAITEN_CLI_READ_ONLY=1 enables the same policy.",
 )
+@click.option(
+    "--no-update-check",
+    is_flag=True,
+    default=False,
+    help="Skip the post-command check for a newer kaiten-cli release.",
+)
 @click.option("--no-color", is_flag=True, default=False, help="Disable colorized output.")
 @click.pass_context
 def cli(
@@ -713,6 +720,7 @@ def cli(
     cache_ttl_seconds: int | None,
     trace_file: str | None,
     read_only: bool,
+    no_update_check: bool,
     no_color: bool,
 ) -> None:
     if no_color:
@@ -729,6 +737,7 @@ def cli(
         cache_ttl_seconds=cache_ttl_seconds,
         trace_file=trace_file or os.environ.get("KAITEN_TRACE_FILE"),
         read_only=read_only or read_only_enabled(),
+        update_check=not no_update_check,
     )
 
 
@@ -988,13 +997,14 @@ for tool in iter_tools():
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
+    args = list(sys.argv[1:] if argv is None else argv)
     json_mode = "--json" in args
     try:
         global _CURRENT_ARGV
         _CURRENT_ARGV = list(args)
-        cli.main(args=args, prog_name="kaiten", standalone_mode=False)
-        return 0
+        click_result = cli.main(args=args, prog_name="kaiten", standalone_mode=False)
+        if isinstance(click_result, int) and click_result != 0:
+            return click_result
     except NoArgsIsHelpError as error:
         sys.stdout.write(error.format_message() + "\n")
         return 0
@@ -1014,6 +1024,10 @@ def main(argv: list[str] | None = None) -> int:
         return cli_error.exit_code
     finally:
         _CURRENT_ARGV = None
+    try:
+        return maybe_offer_update(args)
+    except Exception:  # pragma: no cover - update checks must never break the primary command
+        return 0
 
 
 if __name__ == "__main__":  # pragma: no cover

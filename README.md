@@ -58,8 +58,36 @@ pipx upgrade kaiten-cli
 По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.23"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.24"
 ```
+
+После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
+проверяет стабильные теги `vX.Y.Z` в том же Git-репозитории. Если найден новый
+релиз, появляется вопрос `Update now ...? [y/N]`. Основная команда к этому
+моменту уже завершена; подтверждённое обновление применяется со следующего запуска.
+
+Способ обновления соответствует способу установки:
+
+- `uv tool` → `uv tool upgrade kaiten-cli`;
+- `pipx` → `pipx upgrade kaiten-cli`;
+- virtualenv/pip → текущий `python -m pip install --upgrade <git-source>`.
+
+Для установки, закреплённой на `@vX.Y.Z`, подтверждение переносит pin на новый
+стабильный тег через тот же менеджер. Проверка не запускается для `--json`,
+non-TTY, help/version, shell completion, local editable checkout, wheel-файла или
+неизвестного источника. Ошибки сети и проверки тегов не влияют на результат
+основной команды.
+
+Разово отключить проверку можно флагом `--no-update-check`, постоянно —
+переменной окружения:
+
+```bash
+export KAITEN_CLI_UPDATE_CHECK=0
+```
+
+Результат проверки и 24-часовой интервал хранятся локально в приватном
+`update-check.json` в cache-каталоге `kaiten-cli`; Git credentials туда не
+записываются.
 
 Если пакет установлен в текущий Python environment, доступен и module entrypoint:
 
@@ -234,6 +262,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | `KAITEN_LIVE` | Нет | `1` или `true` для opt-in live validation на явно переданных credentials/profile |
 | `KAITEN_CLI_READ_ONLY` | Нет | `1` или `true`, чтобы блокировать Kaiten mutation-команды в текущем процессе |
 | `KAITEN_CLI_STORAGE_READ_ONLY` | Нет | `1` или `true`, чтобы читать существующие snapshots без локальных schema/write операций и блокировать snapshot lifecycle writes; gateway устанавливает автоматически |
+| `KAITEN_CLI_UPDATE_CHECK` | Нет | `0`, `false`, `no` или `off`, чтобы отключить post-command проверку новых Git release tags |
 | `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
 | `KAITEN_TRACE_FILE` | Нет | JSONL-файл для append-only command trace |
 

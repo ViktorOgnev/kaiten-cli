@@ -176,6 +176,7 @@ class GlobalOptions:
     cache_ttl_seconds: int | None = None
     trace_file: str | None = None
     read_only: bool = False
+    update_check: bool = True
 
 
 @dataclass(slots=True)
