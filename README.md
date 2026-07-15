@@ -1,13 +1,18 @@
 # kaiten-cli
 
-Нативный git-installable CLI для работы с [Kaiten](https://kaiten.ru), построенный как отдельный execution surface поверх того же доменного слоя, который раньше использовался для `kaiten-mcp`.
+`kaiten-cli` — это интерфейс командной строки для Kaiten. Он позволяет работать с данными и выполнять привычные действия прямо из терминала, без перехода в веб-интерфейс.
 
-Проект не является MCP proxy и не импортирует `kaiten-mcp` в runtime.  
-Источник истины для CLI — локальный registry в `src/kaiten_cli/registry/`.
+Его можно использовать самостоятельно или подключать к автоматизации: те же команды могут запускать человек, программа или LLM-агент.
+
+Проект устанавливается напрямую из Git и использует тот же доменный слой, который ранее применялся в `kaiten-mcp`.
+
+`kaiten-cli` работает самостоятельно: он не перенаправляет команды в MCP и не зависит от `kaiten-mcp` во время выполнения.
+
+Источник истины для CLI — локальный реестр `src/kaiten_cli/registry/`.
 
 ## Быстрый старт
 
-### Установка из git
+### Установка из Git
 
 Рекомендуемый путь:
 
@@ -21,7 +26,7 @@ uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
 pipx install git+https://github.com/ViktorOgnev/kaiten-cli.git
 ```
 
-Fallback в локальную virtualenv:
+Установка в локальное виртуальное окружение:
 
 ```bash
 python3 -m venv .venv
@@ -40,8 +45,8 @@ kaiten search-tools cards
 ### Если команда `kaiten` не найдена
 
 `uv tool` и `pipx` устанавливают исполняемые файлы в отдельный каталог. Если
-после установки терминал сообщает, что команда не найдена, сначала разрешите
-менеджеру установки добавить этот каталог в `PATH`.
+после установки терминал сообщает, что команда не найдена, менеджер установки
+должен добавить этот каталог в `PATH`.
 
 Для установки через `uv`:
 
@@ -55,18 +60,18 @@ uv tool update-shell
 pipx ensurepath
 ```
 
-После этого полностью закройте и заново откройте терминал, затем повторите
-`kaiten --version`.
+После этого терминал необходимо полностью закрыть и открыть заново, а затем
+повторно выполнить `kaiten --version`.
 
-Если команда по-прежнему не находится, узнайте фактический каталог исполняемых
-файлов у того менеджера, через который установлен CLI:
+Если команда по-прежнему не находится, фактический каталог исполняемых файлов
+можно получить у того менеджера, через который установлен CLI:
 
 ```bash
 uv tool dir --bin
 pipx environment --value PIPX_BIN_DIR
 ```
 
-На macOS и Linux с Bash или Zsh добавьте нужный каталог в `PATH` текущего
+На macOS и Linux с Bash или Zsh нужный каталог можно добавить в `PATH` текущего
 терминала:
 
 ```bash
@@ -77,10 +82,11 @@ export PATH="$(uv tool dir --bin):$PATH"
 export PATH="$(pipx environment --value PIPX_BIN_DIR):$PATH"
 ```
 
-Для постоянной настройки добавьте соответствующую строку `export PATH=...` в
-`~/.bashrc` для Bash или `~/.zshrc` для Zsh и заново откройте терминал.
+Для постоянной настройки соответствующую строку `export PATH=...` необходимо
+добавить в `~/.bashrc` для Bash или `~/.zshrc` для Zsh, а затем заново открыть
+терминал.
 
-В Windows PowerShell добавьте каталог в `PATH` текущей сессии:
+В Windows PowerShell каталог можно добавить в `PATH` текущей сессии:
 
 ```powershell
 # uv
@@ -90,32 +96,32 @@ $env:Path = "$(uv tool dir --bin);$env:Path"
 $env:Path = "$(pipx environment --value PIPX_BIN_DIR);$env:Path"
 ```
 
-Для постоянной настройки в Windows добавьте каталог, выведенный менеджером, в
-пользовательскую переменную `Path` и заново откройте терминал. В WSL используйте
-инструкцию для Linux.
+Для постоянной настройки в Windows каталог, выведенный менеджером, необходимо
+добавить в пользовательскую переменную `Path`, а затем заново открыть терминал.
+Для WSL применяется инструкция для Linux.
 
-### Skills для LLM и агентов
+### Рекомендации для LLM-агентов
 
-Если агент работает с этим CLI через git-репозиторий, оптимальные workflow описаны в skills format, а не размазаны по длинным prose docs:
+Рекомендуемые сценарии работы агентов с CLI описаны в отдельных файлах навыков:
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)  
-  Как не строить N+1 path, когда идти в bulk reads, а когда уже пора собирать локальный snapshot.
+  Как избежать множества отдельных запросов, когда использовать массовое чтение, а когда создавать локальный снимок данных.
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)  
-  Как собирать Kanban-метрики через snapshot/query слой и не возвращаться к per-card history loops.
+  Как рассчитывать канбан-метрики по локальному снимку данных и не запрашивать историю каждой карточки отдельно.
 
 ### Обновление
 
-Если CLI уже установлен из branch-based git URL, обновление подтягивается вручную:
+Если CLI установлен по адресу ветки Git, обновление выполняется вручную:
 
 ```bash
 uv tool upgrade kaiten-cli
 pipx upgrade kaiten-cli
 ```
 
-По умолчанию установка идёт с текущего `master`. Если нужен зафиксированный релиз, можно pin'иться на tag:
+По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.24"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.25"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -127,12 +133,13 @@ uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.24"
 
 - `uv tool` → `uv tool upgrade kaiten-cli`;
 - `pipx` → `pipx upgrade kaiten-cli`;
-- virtualenv/pip → текущий `python -m pip install --upgrade <git-source>`.
+- виртуальное окружение и pip → текущий `python -m pip install --upgrade <git-source>`.
 
-Для установки, закреплённой на `@vX.Y.Z`, подтверждение переносит pin на новый
-стабильный тег через тот же менеджер. Проверка не запускается для `--json`,
-non-TTY, help/version, shell completion, local editable checkout, wheel-файла или
-неизвестного источника. Ошибки сети и проверки тегов не влияют на результат
+Для установки, закреплённой на `@vX.Y.Z`, подтверждение заменяет текущий тег на
+новый с помощью того же менеджера. Проверка не запускается в режиме `--json`,
+в неинтерактивном терминале, для команд справки и версии, при настройке
+автодополнения оболочки, для локальной установки в режиме `editable`, wheel-файла
+или неизвестного источника. Ошибки сети и проверки тегов не влияют на результат
 основной команды.
 
 Разово отключить проверку можно флагом `--no-update-check`, постоянно —
@@ -142,11 +149,11 @@ non-TTY, help/version, shell completion, local editable checkout, wheel-файл
 export KAITEN_CLI_UPDATE_CHECK=0
 ```
 
-Результат проверки и 24-часовой интервал хранятся локально в приватном
-`update-check.json` в cache-каталоге `kaiten-cli`; Git credentials туда не
+Результат проверки и 24-часовой интервал хранятся локально в закрытом файле
+`update-check.json` в каталоге кэша `kaiten-cli`. Данные доступа к Git в него не
 записываются.
 
-Если пакет установлен в текущий Python environment, доступен и module entrypoint:
+Если пакет установлен в текущем окружении Python, его также можно запустить как модуль:
 
 ```bash
 python -m kaiten_cli --help
@@ -155,44 +162,44 @@ python -m kaiten_cli --help
 ## Карта документации
 
 - [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
-  Полный generated справочник по всем canonical командам и MCP aliases на одной странице.
+  Полный автоматически созданный справочник по основным командам и их псевдонимам MCP.
 - [ARCHITECTURE.md](ARCHITECTURE.md)
-  Архитектурная карта, execution modes и docs model.
+  Архитектурная карта, режимы выполнения и устройство документации.
 - [AGENTS.md](AGENTS.md)
-  Короткий agent-facing guide и discovery-first flow.
+  Краткое руководство для агентов и порядок знакомства с возможностями CLI.
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
-  Как устроен explicit live harness и per-run validation.
+  Как устроена явно включаемая проверка на реальном API.
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
-  Зафиксированные live/API contracts текущего test tenant.
+  Подтверждённые особенности API текущего тестового контура.
 - [SECURITY.md](SECURITY.md)
-  Политика сообщения об уязвимостях и правила обращения с локальными credentials и данными.
+  Правила сообщения об уязвимостях и обращения с локальными данными доступа.
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
-  Heavy-data workflow guidance для LLM и headless scripts.
+  Рекомендации по массовому чтению данных для LLM-агентов и автоматических сценариев.
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
-  Metrics workflow guidance для LLM и headless scripts.
+  Рекомендации по расчёту метрик для LLM-агентов и автоматических сценариев.
 
 ## Что уже есть
 
-- canonical commands: `kaiten <namespace...> <action>`
-- MCP-compatible aliases: `kaiten kaiten_list_cards`
-- `--version` и module entrypoint: `python -m kaiten_cli`
-- `--json` с жёстким success/error envelope и runtime `stats`
-- discovery-команды: `search-tools`, `describe`, `examples`
-- profiles и явный `KAITEN_LIVE` gate для live validation
-- request-scoped GET cache внутри одного execution path
-- `--cache-mode auto` по умолчанию: adaptive persistent disk cache для repeated safe reads и тяжёлой аналитики
-- persistent local sqlite snapshots для headless analytics и repeated report workflows
-- local-only `query cards` / `query metrics` поверх snapshot storage
-- Markdown export для карточек и документов через обычные `cards get` / `documents get`
-- low-load HTTP client: throttling, bounded retry, explicit timeouts
-- локальные transforms: `compact`, `fields`, strip-base64
-- полный паритет по набору инструментов с текущим локальным registry snapshot
-- strict alias-set regression против checked-in snapshot
-- full live validation campaign с explicit opt-in и teardown discipline
+- основные команды вида `kaiten <namespace...> <action>`;
+- совместимые с MCP псевдонимы, например `kaiten kaiten_list_cards`;
+- вывод версии и запуск как модуля: `--version`, `python -m kaiten_cli`;
+- единая структура успешных ответов и ошибок в режиме `--json`, включая статистику выполнения `stats`;
+- команды поиска и изучения возможностей: `search-tools`, `describe`, `examples`;
+- профили доступа и явное включение проверки на реальном API через `KAITEN_LIVE`;
+- кэш GET-запросов в пределах одного запуска;
+- адаптивный постоянный дисковый кэш в режиме `--cache-mode auto` для повторного чтения и ресурсоёмкой аналитики;
+- локальные снимки данных в SQLite для автоматической аналитики и повторного построения отчётов;
+- локальные команды `query cards` и `query metrics` для работы со снимками данных;
+- экспорт карточек и документов в Markdown через команды `cards get` и `documents get`;
+- HTTP-клиент с ограничением частоты запросов, повторными попытками и явными ограничениями времени ожидания;
+- локальное сокращение ответов с помощью `compact`, `fields` и удаления данных в формате base64;
+- полное соответствие набора инструментов текущему снимку локального реестра;
+- автоматическая проверка набора псевдонимов по сохранённому эталону;
+- полная проверка на реальном API с явным включением и обязательной очисткой тестовых данных.
 
-## Markdown export и файлы
+## Экспорт в Markdown и работа с файлами
 
-Markdown не является отдельным Kaiten endpoint и не требует отдельной команды. По умолчанию `cards get` и `documents get` возвращают JSON из API, как раньше. Если нужен локальный `.md`, добавьте `--markdown`: CLI делает тот же read, локально рендерит Markdown и сохраняет файл.
+Экспорт в Markdown не требует отдельного метода API или отдельной команды. По умолчанию `cards get` и `documents get` возвращают JSON. Флаг `--markdown` преобразует тот же ответ в Markdown и сохраняет его в локальный файл `.md`.
 
 ```bash
 kaiten --json documents get --document-uid <document_uid> --markdown --output ./document.md
@@ -208,7 +215,7 @@ kaiten --json cards get --card-id 123 --markdown --output ./card.md
 /api/cards/<card_id_or_uid>/files/<file_uid>
 ```
 
-Это ссылки для последующего использования, а не сами бинарные данные. Скачать файл из карточки, документа или сохранённого Markdown можно через `files download`; команда сама резолвит короткоживущую storage-ссылку и по умолчанию возобновляет `.part` файл через HTTP Range, как `wget --continue`.
+Это ссылки для последующего использования, а не сами двоичные данные. Команда `files download` скачивает файл из карточки, документа или сохранённого Markdown. Она сама получает временную ссылку на хранилище и по умолчанию продолжает загрузку частично сохранённого файла `.part` с помощью HTTP Range, как `wget --continue`.
 
 ```bash
 kaiten --json files download --entity-type document --document-uid <document_uid> --file-id <file_uid> --output ./downloads/
@@ -216,13 +223,13 @@ kaiten --json files download --entity-type card --card-id 123 --file-id <file_ui
 kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./downloads/
 ```
 
-Загрузить локальный бинарный файл в карточку можно через `files upload`; команда отправляет `multipart/form-data` с полем `file` в публичный card-files endpoint Kaiten.
+Команда `files upload` загружает локальный файл в карточку и отправляет `multipart/form-data` с полем `file` в публичный метод API Kaiten для файлов карточки.
 
 ```bash
 kaiten --json files upload --card-id 123 --file ./report.json
 ```
 
-Отдельный запуск CLI не переиспользует in-memory результат предыдущей команды. По умолчанию `--cache-mode auto` сохраняет cacheable safe reads на диск с adaptive TTL; для freshness-critical повтора используйте `--cache-mode refresh`.
+Новый запуск CLI не использует результат предыдущей команды, оставшийся в памяти. По умолчанию режим `--cache-mode auto` сохраняет на диск ответы на подходящие запросы чтения и автоматически выбирает срок их хранения. Режим `--cache-mode refresh` следует использовать, когда важно получить актуальные данные.
 
 ```bash
 kaiten --json --cache-mode refresh documents get --document-uid <document_uid> --markdown --output ./document.md --overwrite
@@ -230,7 +237,7 @@ kaiten --json --cache-mode refresh documents get --document-uid <document_uid> -
 
 ## Каталоги
 
-В интерфейсе Kaiten эта сущность называется «Каталоги»: таблицы/базы данных вроде клиентов, контактов, оборудования или подрядчиков. В Developers API тот же объект называется `custom-directories`, поэтому в CLI используются команды:
+В интерфейсе Kaiten эта сущность называется «Каталоги»: это таблицы или базы данных, например со списками клиентов, контактов, оборудования или подрядчиков. В API для разработчиков тот же объект называется `custom-directories`, поэтому в CLI используются следующие команды:
 
 ```bash
 kaiten --json custom-directories list --include-fields --include-records-count
@@ -239,23 +246,23 @@ kaiten --json custom-directory-records list --directory-id <directory_uuid> --pr
 kaiten --json custom-directory-records cards list --directory-id <directory_uuid> --record-id <record_uuid>
 ```
 
-Модель такая: `custom-directories` управляет самим каталогом, `custom-directory-fields` — его колонками, `custom-directory-records` — строками/записями. Поле карточки типа «Справочник» — это `custom-properties` с API type `catalog`; команды `custom-properties catalog-values ...` относятся к значениям такого поля и не являются CRUD для раздела «Каталоги».
+`custom-directories` управляет самим каталогом, `custom-directory-fields` — его колонками, а `custom-directory-records` — строками или записями. Поле карточки типа «Справочник» представлено как `custom-properties` с типом API `catalog`. Команды `custom-properties catalog-values ...` работают со значениями такого поля и не предназначены для создания, чтения, изменения или удаления каталогов.
 
-Если запрос говорит только «каталог», «справочник» или `catalog`, сначала уточните смысл перед мутацией:
+Если в запросе указано только «каталог», «справочник» или `catalog`, перед изменением данных необходимо уточнить, какая сущность имеется в виду:
 
-| Что имелось в виду | CLI namespace |
+| Что имелось в виду | Пространство имён CLI |
 |---|---|
-| UI «Каталоги», справочник-таблица с колонками и записями | `custom-directories`, `custom-directory-fields`, `custom-directory-records` |
-| Само поле карточки типа «Справочник» / catalog | `custom-properties` с `type=catalog` |
-| Значения поля карточки типа «Справочник» / catalog | `custom-properties catalog-values` |
+| Раздел «Каталоги» в веб-интерфейсе, таблица с колонками и записями | `custom-directories`, `custom-directory-fields`, `custom-directory-records` |
+| Само поле карточки типа «Справочник» с типом API `catalog` | `custom-properties` с `type=catalog` |
+| Значения поля карточки типа «Справочник» с типом API `catalog` | `custom-properties catalog-values` |
 | Папка/контейнер документов в дереве | `document-groups`, `tree` для чтения структуры |
 
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` сейчас **350** canonical инструментов в **31** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **350** основных инструментов. Количество модулей реестра: **31**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
-| Область | Модуль | Кол-во | Справочник |
+| Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
 | Карточки | `cards` | 15 | [Раздел](COMMAND_REFERENCE.md#module-cards) |
 | Комментарии | `comments` | 5 | [Раздел](COMMAND_REFERENCE.md#module-comments) |
@@ -273,11 +280,11 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Колонки и подколонки | `columns` | 8 | [Раздел](COMMAND_REFERENCE.md#module-columns) |
 | Дорожки | `lanes` | 4 | [Раздел](COMMAND_REFERENCE.md#module-lanes) |
 | Типы карточек | `card_types` | 8 | [Раздел](COMMAND_REFERENCE.md#module-card-types) |
-| Каталоги / Custom directories | `custom_directories` | 16 | [Раздел](COMMAND_REFERENCE.md#module-custom-directories) |
-| Кастомные свойства | `custom_properties` | 25 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
+| Каталоги | `custom_directories` | 16 | [Раздел](COMMAND_REFERENCE.md#module-custom-directories) |
+| Пользовательские свойства | `custom_properties` | 25 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
 | Документы | `documents` | 13 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
-| Автоматизации и воркфлоу | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
+| Автоматизации и рабочие процессы | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
 | Роли и группы | `roles_and_groups` | 30 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Раздел](COMMAND_REFERENCE.md#module-scim) |
@@ -286,44 +293,44 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Графики и аналитика | `charts` | 15 | [Раздел](COMMAND_REFERENCE.md#module-charts) |
 | Дерево сущностей | `tree` | 3 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
-| Локальные snapshots | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
+| Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31 modules** | **350** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31** | **350** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
 
 - `src/kaiten_cli/registry/`
-  Каталог всех инструментов. Здесь объявляются `ToolSpec`, canonical names, aliases, schemas и metadata.
+  Каталог всех инструментов. Здесь объявляются `ToolSpec`, основные имена команд, псевдонимы, схемы и метаданные.
 - `src/kaiten_cli/runtime/`
-  Исполняемый слой: request building, HTTP client, cache, trace, local snapshot store, synthetic и aggregated execution.
+  Исполняемый слой: формирование запросов, HTTP-клиент, кэш, трассировка, локальное хранилище снимков данных и выполнение составных команд.
 - `src/kaiten_cli/runtime/support/`
-  Вспомогательные bounded helper-модули для runtime.
+  Вспомогательные модули исполняемого слоя с заданными ограничениями.
 - `src/kaiten_cli/`
-  Stable package surface и shared core: `app.py`, `discovery.py`, `profiles.py`, `models.py`, `errors.py`.
+  Стабильный интерфейс пакета и общие компоненты: `app.py`, `discovery.py`, `profiles.py`, `models.py`, `errors.py`.
 
-Если коротко: `registry` описывает инструменты, `runtime` их исполняет.
+Если коротко: `registry` описывает инструменты, а `runtime` выполняет их команды.
 
 ## Требования
 
 - Python >= 3.11
-- Kaiten account или отдельный тестовый tenant с API token
-- API token Kaiten
+- учётная запись Kaiten или отдельный тестовый контур с токеном API
+- токен API Kaiten
 
 ## Переменные окружения
 
 | Переменная | Обязательна | Описание |
 |------------|-------------|----------|
-| `KAITEN_DOMAIN` | Да | Tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host (`62.84.125.64:3200`, `http://localhost:3000`) |
+| `KAITEN_DOMAIN` | Да | Поддомен компании (`company`), полный адрес Kaiten (`https://company.kaiten.ru`) или другой адрес сервера (`62.84.125.64:3200`, `http://localhost:3000`) |
 | `KAITEN_TOKEN` | Да | API-токен пользователя |
-| `KAITEN_LIVE` | Нет | `1` или `true` для opt-in live validation на явно переданных credentials/profile |
-| `KAITEN_CLI_READ_ONLY` | Нет | `1` или `true`, чтобы блокировать Kaiten mutation-команды в текущем процессе |
-| `KAITEN_CLI_STORAGE_READ_ONLY` | Нет | `1` или `true`, чтобы читать существующие snapshots без локальных schema/write операций и блокировать snapshot lifecycle writes; gateway устанавливает автоматически |
-| `KAITEN_CLI_UPDATE_CHECK` | Нет | `0`, `false`, `no` или `off`, чтобы отключить post-command проверку новых Git release tags |
-| `KAITEN_CLI_CONFIG_PATH` | Нет | Путь до файла profiles/config |
-| `KAITEN_TRACE_FILE` | Нет | JSONL-файл для append-only command trace |
+| `KAITEN_LIVE` | Нет | `1` или `true` для явного запуска проверки на реальном API с указанными данными доступа или профилем |
+| `KAITEN_CLI_READ_ONLY` | Нет | `1` или `true`, чтобы блокировать команды, изменяющие данные Kaiten в текущем процессе |
+| `KAITEN_CLI_STORAGE_READ_ONLY` | Нет | `1` или `true`, чтобы читать существующие локальные снимки без изменения схемы и данных и блокировать их создание, обновление и удаление; шлюз для агентов устанавливает значение автоматически |
+| `KAITEN_CLI_UPDATE_CHECK` | Нет | `0`, `false`, `no` или `off`, чтобы отключить проверку новых тегов Git после выполнения команды |
+| `KAITEN_CLI_CONFIG_PATH` | Нет | Путь к файлу профилей и настроек |
+| `KAITEN_TRACE_FILE` | Нет | JSONL-файл для последовательной записи сведений о выполненных командах |
 
-CLI читает переменные окружения только из текущего процесса или из сохранённого profile-конфига.
+CLI читает переменные окружения текущего процесса и настройки сохранённого профиля.
 
 ## Настройка доступа
 
@@ -334,9 +341,9 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 kaiten profile show
 ```
 
-`--domain` и `KAITEN_DOMAIN` принимают tenant (`company`), Kaiten URL (`https://company.kaiten.ru`) или custom host с портом для локальных/dev-инсталляций.
+`--domain` и `KAITEN_DOMAIN` принимают поддомен компании (`company`), полный адрес Kaiten (`https://company.kaiten.ru`) или другой адрес с портом для локальной установки и среды разработки.
 
-Если нужен фиксированный TTL persistent cache для этого profile вместо default `auto`:
+Если для профиля требуется фиксированный срок хранения постоянного кэша вместо автоматического режима `auto`:
 
 ```bash
 kaiten profile add main \
@@ -347,71 +354,71 @@ kaiten profile add main \
   --set-active
 ```
 
-Временный fallback через переменные окружения:
+Временная настройка через переменные окружения:
 
 ```bash
 export KAITEN_DOMAIN=<company-subdomain-or-url>
 export KAITEN_TOKEN=<api-token>
 ```
 
-`--sandbox` у `profile add` остаётся только как deprecated compatibility metadata. Он больше не разрешает мутации и не участвует в live-test gating.
+Параметр `--sandbox` команды `profile add` сохранён только для обратной совместимости и считается устаревшим. Он не разрешает изменение данных и не влияет на запуск проверок на реальном API.
 
-### Read-only policy
+### Режим только для чтения
 
-По умолчанию обычный профиль может выполнять мутации. Для аналитического или agent workflow включайте явный read-only policy:
+По умолчанию обычный профиль может изменять данные. Для аналитики и работы агентов предусмотрен явный режим только для чтения:
 
 ```bash
 kaiten --read-only --json spaces list --compact --fields id,title
 KAITEN_CLI_READ_ONLY=1 kaiten --json cards get --card-id 123
 ```
 
-Policy блокирует команды, которые меняют удалённое состояние Kaiten. Локальные snapshot-операции остаются доступны: они пишут только в локальный sqlite и используют Kaiten API для чтения. POST-backed аналитические чтения `charts summary get`, `charts block-resolution get` и `charts due-dates get` тоже разрешены; команды `charts ... create`, создающие transient compute job, блокируются. `search-tools` и `describe` возвращают `read_only_allowed`, поэтому automation не должна выводить policy только из HTTP method или поля `mutation`.
+Режим блокирует команды, которые изменяют данные в Kaiten. Операции с локальными снимками остаются доступны: они записывают данные только в локальную базу SQLite и обращаются к API Kaiten для чтения. Аналитические команды чтения `charts summary get`, `charts block-resolution get` и `charts due-dates get`, использующие POST-запросы, также разрешены. Команды `charts ... create`, создающие временную вычислительную задачу, блокируются. Команды `search-tools` и `describe` возвращают поле `read_only_allowed`, поэтому автоматизация не должна определять допустимость операции только по методу HTTP или полю `mutation`.
 
-Agent gateway передаёт дочернему CLI `KAITEN_CLI_READ_ONLY=1` и `KAITEN_CLI_STORAGE_READ_ONLY=1`, использует read-only filesystem sandbox и отключает ambient Codex user config/rules. Поэтому он может читать уже существующие snapshots, но не build/refresh/delete их. Это защита от случайной записи, а не непреодолимая authorization boundary: Codex-процесс имеет shell и Kaiten credentials. Используйте gateway только для доверенного ввода и, где возможно, с credentials, чьи серверные права не допускают записи. Для non-loopback deployment обязательны bearer token, TLS reverse proxy/private network и proxy-level connection/time limits; встроенный сервер сам TLS не предоставляет.
+Шлюз для агентов передаёт дочернему процессу CLI переменные `KAITEN_CLI_READ_ONLY=1` и `KAITEN_CLI_STORAGE_READ_ONLY=1`, ограничивает файловую систему режимом чтения и отключает пользовательские настройки и правила Codex. Поэтому процесс может читать существующие локальные снимки, но не может создавать, обновлять или удалять их. Это защита от случайной записи, а не полная граница безопасности: процесс Codex сохраняет доступ к оболочке и данным доступа Kaiten. Шлюз следует использовать только для доверенного ввода и, по возможности, с учётной записью, серверные права которой не допускают запись. При доступе не только с локального компьютера обязательны токен Bearer, обратный прокси-сервер с TLS или закрытая сеть, а также ограничения соединений и времени ожидания на уровне прокси-сервера. Встроенный сервер не поддерживает TLS самостоятельно.
 
 ### Приоритет конфигурации
 
-CLI резолвит credentials в таком порядке:
+CLI определяет данные доступа в следующем порядке:
 
 1. `--profile <name>`
-2. активный profile из config
-3. `KAITEN_DOMAIN` + `KAITEN_TOKEN` из environment
+2. активный профиль из файла настроек
+3. `KAITEN_DOMAIN` и `KAITEN_TOKEN` из переменных окружения
 
-Это важно и для локального использования, и для агентов: сохранённый active profile имеет приоритет над env fallback, если явно не передан другой `--profile`.
+Сохранённый активный профиль имеет приоритет над переменными окружения, если явно не передан другой `--profile`. Это правило одинаково для локального использования и работы агентов.
 
-## Ввод и shaping ответа
+## Ввод данных и сокращение ответа
 
-CLI поддерживает три режима входного payload:
+CLI поддерживает три способа передачи входных данных:
 
-- обычные CLI options: `kaiten cards list --board-id 10 --limit 5`
-- `--from-file payload.json` для полного JSON payload из файла
-- `--stdin-json` для JSON payload из stdin
+- обычные параметры командной строки: `kaiten cards list --board-id 10 --limit 5`;
+- `--from-file payload.json` для полного объекта JSON из файла;
+- `--stdin-json` для объекта JSON из стандартного ввода.
 
-Для сложных объектов и массивов можно передавать JSON прямо в option-значении или вынести их в файл. Если нужно дословно передать большое тело запроса, `--from-file` обычно надёжнее и дешевле для LLM-агента, чем длинная строка аргументов.
+Сложные объекты и массивы можно передавать как значение параметра JSON или вынести в файл. Для большого тела запроса `--from-file` обычно надёжнее и требует меньше токенов LLM, чем длинная строка аргументов.
 
-Для уменьшения latency, размера ответа и downstream token cost:
+Чтобы сократить время выполнения, размер ответа и расход токенов при последующей обработке:
 
-- используйте `--compact`, если команда его поддерживает
-- ограничивайте поля через `--fields id,title,...`
-- учитывайте, что base64-поля автоматически срезаются из ответа
+- следует использовать `--compact`, если команда поддерживает этот параметр;
+- набор полей можно ограничить через `--fields id,title,...`;
+- поля в формате base64 автоматически удаляются из ответа.
 
-Часть команд работает не как прямой single-request passthrough:
+Некоторые команды выполняют больше одного прямого запроса:
 
-- `direct_http`: один HTTP-вызов к Kaiten API
-- `synthetic`: результат собирается из fallback или shape-specific runtime logic
-- `aggregated`: CLI делает bounded pagination или несколько чтений и агрегирует результат
+- `direct_http`: один HTTP-запрос к API Kaiten;
+- `synthetic`: результат формируется по запасному сценарию или с учётом структуры ответа;
+- `aggregated`: CLI выполняет ограниченную постраничную загрузку или несколько запросов чтения и объединяет результат.
 
-`describe <tool>` и `search-tools <query>` показывают эти metadata, что полезно перед вызовом тяжёлых команд.
+Команды `describe <tool>` и `search-tools <query>` показывают эти метаданные. Их рекомендуется проверять перед запуском ресурсоёмких команд.
 
 ## Дерево сущностей
 
-`tree.get` и `tree.children.list` — aggregated-команды: они сами собирают локальный каталог из пространств, документов и групп документов, а затем строят дерево.
+`tree.get` и `tree.children.list` относятся к типу `aggregated`: они собирают локальный каталог пространств, документов и групп документов, а затем строят дерево.
 
 - `/spaces` читается одним запросом.
 - `/documents` и `/document-groups` читаются внутренней пагинацией по `limit=500` с `offset=0,500,1000...` до первой короткой страницы.
 - Пользователю не нужно и нельзя передавать `limit`, `offset`, `page-size` или `max-pages` для `tree.get`: публичные параметры остаются `root_uid` и `depth`.
-- Если внутренний safety cap достигнут на полной странице, CLI падает с ошибкой, чтобы не вернуть молча обрезанное дерево.
-- Видимые сущности с отсутствующим или недоступным `parent_entity_uid` показываются на root-уровне полного дерева.
+- Если внутренний защитный предел достигнут на полной странице, CLI завершает работу с ошибкой и не возвращает незаметно обрезанное дерево.
+- Видимые сущности с отсутствующим или недоступным `parent_entity_uid` показываются на верхнем уровне полного дерева.
 
 Примеры:
 
@@ -423,12 +430,12 @@ kaiten --json --cache-mode refresh tree get --depth 1
 
 ## Как работает кэш
 
-В CLI есть два разных кэша и default `auto`-режим для disk reuse.
+В CLI есть два вида кэша. Автоматический режим `auto` позволяет повторно использовать данные, сохранённые на диске.
 
-- `request-scoped`
+- В пределах одного запуска (`request-scoped`)
   Работает автоматически внутри одного запуска `kaiten`.
-- `persistent`
-  Живёт между разными CLI-процессами. В `auto` включается для cacheable safe reads и получает TTL по стоимости запроса.
+- Постоянный (`persistent`)
+  Сохраняется между запусками CLI. В режиме `auto` используется для подходящих запросов чтения, а срок хранения выбирается с учётом стоимости запроса.
 
 ### Что происходит без флагов
 
@@ -438,91 +445,91 @@ kaiten --json --cache-mode refresh tree get --depth 1
 kaiten --json cards get --card-id 123
 ```
 
-то CLI работает в `--cache-mode auto`: safe entity/reference reads могут переиспользовать disk cache, а тяжёлые aggregated/batch paths получают более длинный TTL. При этом safe GET reads внутри одного execution path всё равно защищены request-scoped cache и in-flight dedup.
+CLI работает в режиме `--cache-mode auto`: запросы чтения сущностей и справочных данных могут использовать дисковый кэш, а ресурсоёмкие составные и пакетные команды получают более длительный срок хранения. Кэш в пределах одного запуска также предотвращает повторные и одновременно выполняемые одинаковые GET-запросы.
 
-### Когда пользователь реально видит выгоду
+### Когда кэш особенно полезен
 
-- `single call`
-  Для обычного one-shot `GET` кэш почти незаметен.
-- `aggregated` или `synthetic`
-  Встроенный request-scoped cache экономит повторные чтения внутри одного запуска.
-- `shell/LLM workflow`
-  Если один и тот же safe `GET` вызывается много раз из разных CLI-процессов, default `auto` уже пишет reusable disk cache.
-- `heavy analytics`
-  Если команда собирает много страниц, много card-scoped reads или закрытое историческое окно, TTL автоматически становится длиннее.
-- `dense entity loops`
-  Если внешний скрипт недавно записал много однотипных entity reads вроде `/cards/<id>`, `auto` продлевает TTL для этой группы записей.
+- Одиночный запрос
+  Для одного GET-запроса польза кэша обычно незаметна.
+- Составные команды типов `aggregated` и `synthetic`
+  Встроенный кэш исключает повторные чтения внутри одного запуска.
+- Сценарий терминала или LLM-агента
+  Если один и тот же GET-запрос выполняется из нескольких процессов CLI, режим `auto` сохраняет пригодный для повторного использования дисковый кэш.
+- Ресурсоёмкая аналитика
+  Для команды, которая загружает много страниц, выполняет много запросов по карточкам или читает закрытый исторический период, срок хранения автоматически увеличивается.
+- Плотные циклы чтения сущностей
+  Если внешний сценарий недавно выполнил много однотипных запросов, например `/cards/<id>`, режим `auto` увеличивает срок хранения для этой группы записей.
 
-### Режимы persistent cache
+### Режимы постоянного кэша
 
 - `--cache-mode auto`
-  Default. Читать/писать disk cache для cacheable safe reads; TTL выбирается по cache policy, размеру ответа и историчности окна.
+  Режим по умолчанию. Читает и записывает дисковый кэш для подходящих запросов чтения. Срок хранения зависит от правил кэширования, размера ответа и давности запрошенного периода.
 - `--cache-mode off`
-  Только request-scoped cache внутри текущего запуска.
+  Использует кэш только в пределах текущего запуска.
 - `--cache-mode readwrite`
-  Читать и записывать persistent disk cache с фиксированным `--cache-ttl-seconds`.
+  Читает и записывает постоянный дисковый кэш с фиксированным сроком `--cache-ttl-seconds`.
 - `--cache-mode refresh`
-  Игнорировать disk read, сходить в API и перезаписать cache.
+  Не использует сохранённый ответ, запрашивает данные из API и обновляет кэш.
 - `--cache-ttl-seconds`
-  TTL для persistent cache. Можно задавать на команду или сохранить в profile.
+  Задаёт срок хранения постоянного кэша. Значение можно передать отдельной команде или сохранить в профиле.
 
 ### Что кэшируется и что нет
 
-Persistent cache deliberately cost-aware:
+Постоянный кэш учитывает стоимость запросов:
 
-- подходит для safe reference/entity reads;
-- полезен для типичных `*.get`, discovery list-команд, batch reads и aggregated pagination;
-- для тяжёлых команд вроде `cards.list-all`, `space-activity-all.get`, `card-location-history.batch-get`, `comments.batch-list`, `card-children.batch-list`, `time-logs.batch-list` TTL в `auto` длиннее, чтобы повторный LLM/script workflow не собирал тот же массив заново;
-- для плотных серий однотипных entity reads TTL повышается по path-family, чтобы внешний loop не сбрасывал уже собранную выборку слишком быстро;
-- не предназначен для polling и volatile reads;
-- очищается после успешных mutation-команд для текущего profile/domain.
-- при несовместимой локальной sqlite-схеме или повреждённом файле persistent cache автоматически удаляется и создаётся заново.
+- подходит для чтения справочных данных и отдельных сущностей;
+- полезен для обычных команд `*.get`, команд получения списков, пакетного чтения и составной постраничной загрузки;
+- для ресурсоёмких команд, включая `cards.list-all`, `space-activity-all.get`, `card-location-history.batch-get`, `comments.batch-list`, `card-children.batch-list` и `time-logs.batch-list`, режим `auto` устанавливает более длительный срок хранения, чтобы повторный сценарий не собирал тот же массив заново;
+- для плотных серий однотипных запросов срок хранения увеличивается по группе путей, чтобы внешний сценарий не потерял уже собранную выборку слишком быстро;
+- не предназначен для частого опроса быстро меняющихся данных;
+- очищается после успешной команды, изменяющей данные текущего профиля и домена;
+- при несовместимой схеме SQLite или повреждённом файле автоматически удаляется и создаётся заново.
 
-Ключ кэша строится по raw API request: `profile/domain + credential fingerprint + method + path + params`. `compact` и `fields` в ключ не входят, потому что это post-processing уже после ответа API.
+Ключ кэша строится по исходным параметрам запроса API: `profile/domain + credential fingerprint + method + path + params`. Параметры `compact` и `fields` в ключ не входят, поскольку применяются после получения ответа API.
 
-### Чувствительность и очистка локального cache
+### Состав и очистка локального кэша
 
-Persistent cache содержит исходные ответы Kaiten API и может включать названия, описания, пользовательские данные и другие закрытые поля. Файл `http-cache.sqlite3` хранится в platform-specific user cache directory (`~/Library/Caches/kaiten-cli/` на macOS, `${XDG_CACHE_HOME:-~/.cache}/kaiten-cli/` на Linux) и создаётся с доступом только для текущего пользователя. Не прикладывайте его к issue, отчёту или git-репозиторию без отдельной очистки данных.
+Постоянный кэш содержит исходные ответы API Kaiten и может включать названия, описания, пользовательские данные и другие закрытые поля. Файл `http-cache.sqlite3` хранится в стандартном пользовательском каталоге кэша операционной системы: `~/Library/Caches/kaiten-cli/` в macOS или `${XDG_CACHE_HOME:-~/.cache}/kaiten-cli/` в Linux. Доступ к файлу получает только текущий пользователь. Файл нельзя прикладывать к сообщению об ошибке, отчёту или Git-репозиторию без предварительной очистки данных.
 
-- `--cache-mode off` отключает чтение и запись persistent cache для запуска.
-- `--cache-mode refresh` обновляет данные для конкретного запроса, но не очищает весь store.
-- Для полной очистки завершите процессы `kaiten` и удалите `http-cache.sqlite3`; CLI создаст его заново при следующем cacheable read.
+- `--cache-mode off` отключает чтение и запись постоянного кэша для текущего запуска.
+- `--cache-mode refresh` обновляет данные конкретного запроса, но не очищает всё хранилище.
+- Для полной очистки необходимо завершить процессы `kaiten` и удалить `http-cache.sqlite3`. CLI создаст файл заново при следующем подходящем запросе чтения.
 
 ### Примеры
 
-Обычный repeated read в default `auto`:
+Повторное чтение в режиме `auto`:
 
 ```bash
 kaiten --json cards get --card-id 123 --compact --fields id,title,state
 ```
 
-Принудительно обновить stale read:
+Принудительное получение актуальных данных:
 
 ```bash
 kaiten --json --cache-mode refresh spaces list --compact --fields id,title
 ```
 
-Сценарий, где `auto` сохраняет per-card chunks для повторных скриптов с пересекающимися card ids:
+Пример, в котором режим `auto` сохраняет ответы по отдельным карточкам для повторных сценариев с пересекающимися идентификаторами:
 
 ```bash
 kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
 ```
 
-Для bulk/read-heavy workflows смотри [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md), для аналитических сценариев — [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md).
+Рекомендации по массовому чтению больших объёмов данных приведены в [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md), а по аналитическим сценариям — в [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md).
 
-## High-cardinality reads
+## Массовое чтение данных
 
-Если сценарий требует сотни однотипных чтений, не спаунь `kaiten` отдельным процессом на каждый объект.
+Если требуется выполнить сотни однотипных запросов, не следует запускать отдельный процесс `kaiten` для каждого объекта.
 
-- Для массовой истории перемещений используйте `card-location-history.batch-get`, а не цикл из `card-location-history.get`.
-- Для detail enrichment по карточкам используйте `cards.batch-get`, а не цикл из `cards.get`.
-- Для work-log analytics используйте `time-logs.batch-list`, а не цикл из `time-logs.list`.
-- Для relation-heavy расследований используйте `card-children.batch-list`, а не цикл из `card-children.list`.
-- Для comment-heavy расследований используйте `comments.batch-list`, а не цикл из `comments.list`.
-- Для bulk population по карточкам используйте `cards.list-all --selection all|active_only|archived_only`.
-- Для topology scaffolding используйте `space-topology.get`, а не связку из `boards.list`, `columns.list` и `lanes.list`.
-- `cards.list-all --selection active_only` нормализован в CLI как `all_cards - archived_subset`, чтобы не перекладывать эту логику на внешний скрипт.
-- Если workflow состоит из многих повторных reference/entity GET, оставляйте default `--cache-mode auto`; используйте `--cache-mode readwrite` только когда нужен фиксированный TTL.
+- Для массового получения истории перемещений предназначена команда `card-location-history.batch-get`, которая заменяет цикл из `card-location-history.get`.
+- Для дополнения карточек подробными данными предназначена `cards.batch-get`, которая заменяет цикл из `cards.get`.
+- Для анализа журналов времени предназначена `time-logs.batch-list`, которая заменяет цикл из `time-logs.list`.
+- Для исследования связей карточек предназначена `card-children.batch-list`, которая заменяет цикл из `card-children.list`.
+- Для массового чтения комментариев предназначена `comments.batch-list`, которая заменяет цикл из `comments.list`.
+- Для получения полной выборки карточек предназначена `cards.list-all --selection all|active_only|archived_only`.
+- Для построения структуры пространства предназначена `space-topology.get`, которая заменяет последовательность `boards.list`, `columns.list` и `lanes.list`.
+- `cards.list-all --selection active_only` представлена в CLI как `all_cards - archived_subset`, поэтому внешнему сценарию не требуется воспроизводить эту логику.
+- Для множества повторных GET-запросов к справочным данным и сущностям следует сохранять режим `--cache-mode auto`. Режим `--cache-mode readwrite` нужен только при фиксированном сроке хранения.
 
 Примеры:
 
@@ -537,35 +544,35 @@ kaiten --json space-topology get --space-id 10
 kaiten --json cards get --card-id 101 --compact --fields id,title,state
 ```
 
-## Investigation and report workflows
+## Сбор данных для исследований и отчётов
 
-Если агент или внешний скрипт строит отчёт, сначала собери дешёвые bulk primitives, а уже потом переходи к постобработке:
+При построении отчёта агентом или внешней программой сначала следует собрать данные с помощью массовых команд, а затем переходить к обработке:
 
-- `space-topology.get` для boards + columns + lanes в одном CLI вызове
-- `cards.list-all` для population
-- `cards.batch-get` для detail enrichment только после локального сужения candidate set
-- `time-logs.batch-list` для work logs без per-card loops
-- `space-activity-all.get` вместо ручной пагинации вокруг `space-activity.get`
-- `card-children.batch-list` и `comments.batch-list` вместо per-card relation/comment loops
-- `card-location-history.batch-get` только когда действительно нужна история перемещений
+- `space-topology.get` получает доски, колонки и дорожки одним вызовом CLI;
+- `cards.list-all` формирует исходную выборку карточек;
+- `cards.batch-get` дополняет карточки подробными данными после локального сужения выборки;
+- `time-logs.batch-list` получает журналы времени без отдельного цикла по каждой карточке;
+- `space-activity-all.get` заменяет ручную постраничную загрузку через `space-activity.get`;
+- `card-children.batch-list` и `comments.batch-list` заменяют отдельные циклы чтения связей и комментариев каждой карточки;
+- `card-location-history.batch-get` используется только тогда, когда действительно нужна история перемещений.
 
-Если нужно потом разбирать, почему путь оказался дорогим или неоптимальным, включай command trace:
+Для последующего анализа стоимости и эффективности сценария можно включить трассировку команд:
 
 ```bash
 kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --selection active_only
 ```
 
-Обычный `--json` ответ уже содержит top-level `stats`: command duration, реальные HTTP/API requests, API wait time, cache hit/miss counters и grouped aggregates по method/path-family. Trace пишет те же stats в JSONL и добавляет batch metadata вроде `requested_count` / `unique_count` / `workers`.
+Обычный ответ `--json` уже содержит раздел верхнего уровня `stats`: длительность команды, фактическое количество HTTP-запросов к API, время ожидания API, количество попаданий и промахов кэша, а также сводные данные по методам и группам путей. Трассировка записывает ту же статистику в JSONL и добавляет сведения о пакетной обработке, например `requested_count`, `unique_count` и `workers`.
 
-## Local-first analytics and headless workflows
+## Локальная аналитика и автоматические сценарии
 
-Если нужно много раз читать одну и ту же рабочую выборку, не задавай Kaiten API один и тот же вопрос заново на каждом шаге. Собери локальный snapshot один раз, дальше считай и фильтруй локально:
+Если одна и та же рабочая выборка используется многократно, не следует повторно запрашивать её из API Kaiten на каждом шаге. Данные можно один раз сохранить в локальный снимок, а затем рассчитывать показатели и применять фильтры без обращения к API:
 
-1. `snapshot build` для сборки working set в локальный sqlite
-2. `query cards --view summary` для локальной выборки по фильтрам и candidate reduction
-3. `query metrics` для локальных count / WIP / throughput / lead time / cycle time / aging
-4. `query cards --view detail|evidence` только для уже narrowed candidate set
-5. Только потом, если нужно, отдельные mutation-команды Kaiten API
+1. `snapshot build` сохраняет рабочую выборку в локальную базу SQLite.
+2. `query cards --view summary` фильтрует данные и сокращает выборку локально.
+3. `query metrics` локально рассчитывает количество карточек, WIP, пропускную способность, сквозное время выполнения, время цикла и возраст карточек.
+4. `query cards --view detail|evidence` раскрывает подробности только для уже сокращённой выборки.
+5. Отдельные команды изменения данных через API Kaiten выполняются после локального анализа, если они необходимы.
 
 Базовый пример:
 
@@ -589,29 +596,29 @@ kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by bo
 
 Что важно:
 
-- `snapshot build` и `snapshot refresh` читают Kaiten API один раз на выбранный scope и сохраняют datasets локально.
-- `snapshot refresh` в v1 rebuild-oriented: он пересобирает snapshot целиком, а не делает incremental sync.
-- `snapshot show` и `snapshot list` показывают `schema_version`, чтобы локальная схема была versioned и пригодной для будущих migrations.
-- snapshot storage считается derived local state: если локальный sqlite store несовместим с новой схемой CLI или повреждён, он автоматически пересоздаётся. Старые snapshots в таком случае теряются.
-- `query cards` и `query metrics` не ходят в Kaiten API вообще.
-- `query cards` по умолчанию работает в `summary` view; `detail` и `evidence` используются только когда нужно раскрыть narrowed candidate set.
-- `basic` preset сохраняет topology + card population summary.
-- `analytics` добавляет space activity, card location history и time logs.
-- `evidence` добавляет detail-enriched cards, child relations и comments.
-- `full` объединяет analytics + evidence.
-- `query metrics` в текущем виде generic: это локальный общий metric layer, а не tenant-specific flow profile engine.
-- Local-first path остаётся explicit. Обычные transport-команды не подменяются snapshot behavior автоматически.
+- `snapshot build` и `snapshot refresh` один раз читают данные выбранной области из API Kaiten и сохраняют их локально.
+- В версии 1 команда `snapshot refresh` полностью пересобирает снимок и не выполняет частичную синхронизацию изменений.
+- `snapshot show` и `snapshot list` показывают `schema_version`, чтобы версию локальной схемы можно было учитывать при будущих миграциях.
+- Хранилище снимков считается производным локальным состоянием. Если база SQLite повреждена или несовместима с новой схемой CLI, она создаётся заново. Старые снимки в таком случае теряются.
+- `query cards` и `query metrics` работают без обращения к API Kaiten.
+- По умолчанию `query cards` использует представление `summary`. Представления `detail` и `evidence` нужны только для раскрытия уже сокращённой выборки.
+- Набор `basic` сохраняет структуру пространства и краткую выборку карточек.
+- Набор `analytics` добавляет активность пространства, историю перемещений карточек и журналы времени.
+- Набор `evidence` добавляет подробные данные карточек, дочерние связи и комментарии.
+- Набор `full` объединяет данные наборов `analytics` и `evidence`.
+- В текущем виде `query metrics` является общим локальным слоем расчёта метрик и не содержит правил потока, зависящих от конкретной организации.
+- Локальный сценарий включается явно. Обычные транспортные команды не переключаются на работу со снимками автоматически.
 
-Snapshot store также содержит рабочие данные Kaiten: в зависимости от preset это могут быть карточки, комментарии, история перемещений и time logs. `snapshots.sqlite3` хранится в platform-specific user data directory (`~/Library/Application Support/kaiten-cli/` на macOS, `${XDG_DATA_HOME:-~/.local/share}/kaiten-cli/` на Linux) с доступом только для текущего пользователя.
+Хранилище снимков также содержит рабочие данные Kaiten: в зависимости от выбранного набора это могут быть карточки, комментарии, история перемещений и журналы времени. Файл `snapshots.sqlite3` хранится в стандартном пользовательском каталоге данных операционной системы: `~/Library/Application Support/kaiten-cli/` в macOS или `${XDG_DATA_HOME:-~/.local/share}/kaiten-cli/` в Linux. Доступ к нему получает только текущий пользователь.
 
 - Удалить один набор данных: `kaiten --json snapshot delete --name <name>`.
-- Для полной очистки завершите процессы `kaiten` и удалите `snapshots.sqlite3`; это безвозвратно удалит все локальные snapshots, но не изменит данные в Kaiten.
+- Для полной очистки необходимо завершить процессы `kaiten` и удалить `snapshots.sqlite3`. Это безвозвратно удалит все локальные снимки, но не изменит данные в Kaiten.
 
-Для LLM и headless scripts это preferred path, когда вопросы повторяются над одной и той же группой карточек.
+Этот способ рекомендуется для LLM-агентов и автоматических сценариев, которые многократно работают с одной и той же группой карточек.
 
 ## Первые команды
 
-Read-only smoke после настройки доступа:
+Проверка чтения после настройки доступа:
 
 ```bash
 kaiten --json spaces list --compact --fields id,title
@@ -620,25 +627,25 @@ kaiten search-tools "project cards"
 kaiten snapshot list --json
 ```
 
-Если нужна диагностика без загрязнения JSON stdout:
+Диагностические сообщения можно вывести отдельно от JSON в стандартном выводе:
 
 ```bash
 kaiten --json --verbose cards list --board-id 10 --limit 5
 ```
 
-Verbose diagnostics пишутся в `stderr` и показывают resolved profile source, request path, timeout class, custom execution path и compact runtime stats summary.
+Подробные диагностические сообщения записываются в `stderr` и показывают источник выбранного профиля, путь запроса, класс ограничения времени ожидания, специальный способ выполнения и краткую статистику команды.
 
-Если нужна post-hoc трассировка длинного сценария:
+Для последующего анализа длинного сценария можно сохранить трассировку:
 
 ```bash
 kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get --card-ids '[101,102,103]'
 ```
 
-Это не заменяет stdout-ответ команды: `--json` всё равно возвращает `data` и `stats`, а trace дополнительно уходит в отдельный JSONL-файл.
+Трассировка не заменяет ответ команды в стандартном выводе: режим `--json` по-прежнему возвращает `data` и `stats`, а дополнительные сведения записываются в отдельный JSONL-файл.
 
-## Troubleshooting
+## Устранение неполадок
 
-Если видишь `Missing Kaiten credentials`:
+Если появляется ошибка `Missing Kaiten credentials`:
 
 ```bash
 kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
@@ -654,13 +661,13 @@ kaiten profile use <name>
 
 ## Тесты
 
-Локальный baseline:
+Базовая локальная проверка:
 
 ```bash
 .venv/bin/pytest -q
 ```
 
-Live validation запускается отдельно и только после зелёных локальных тестов. Единственный gate для него — `KAITEN_LIVE=1|true`; сами credentials можно передать через env или через обычный active profile:
+Проверка на реальном API запускается отдельно и только после успешных локальных тестов. Для её включения требуется `KAITEN_LIVE=1|true`. Данные доступа можно передать через переменные окружения или обычный активный профиль:
 
 ```bash
 KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
@@ -668,30 +675,28 @@ KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
   tests/live/test_sandbox_live_full.py
 ```
 
-## Performance reference workflows
+## Сравнение производительности
 
-Для воспроизводимого сравнения `naive loop -> bulk transport -> snapshot/query` есть repo-level harness:
+Для воспроизводимого сравнения последовательных запросов, массового чтения и работы с локальным снимком предусмотрен отдельный сценарий проверки в репозитории:
 
 ```bash
 .venv/bin/python scripts/benchmark_reference_workflows.py --spec path/to/workflows.json
 ```
 
-Он запускает заданные CLI-команды, собирает stdout bytes, wall time и trace JSONL, чтобы сравнивать не только latency, но и реальный `http_request_count`.
+Он запускает заданные команды CLI, измеряет размер ответа в стандартном выводе и общее время выполнения, а также сохраняет трассировку JSONL. Это позволяет сравнивать не только время ответа, но и фактическое значение `http_request_count`.
 
-`README.md` остаётся source of truth для установки, настройки и повседневного использования CLI. Полный каталог команд живёт в `COMMAND_REFERENCE.md`, а архитектурная карта — в `ARCHITECTURE.md`.
+`README.md` остаётся источником истины для установки, настройки и повседневного использования CLI. Полный каталог команд находится в `COMMAND_REFERENCE.md`, а архитектурная карта — в `ARCHITECTURE.md`.
 
 Релизная политика:
 
-- каждый пользовательский релиз сопровождается bump версии в CLI и git tag вида `vX.Y.Z`
-- branch-based install не обновляется автоматически; нужен явный `uv tool upgrade kaiten-cli` или `pipx upgrade kaiten-cli`
-- install с `@vX.Y.Z` считается pinned и сам на следующий tag не переключается
+- каждый пользовательский выпуск сопровождается увеличением версии CLI и тегом Git вида `vX.Y.Z`;
+- установка из ветки не обновляется автоматически: требуется явный запуск `uv tool upgrade kaiten-cli` или `pipx upgrade kaiten-cli`;
+- установка с `@vX.Y.Z` закреплена на указанном теге и не переключается на следующий тег автоматически.
 
-## Дисклеймер
+## Статус проекта
 
-Настоящий репозиторий и размещённое в нём программное обеспечение предоставляются по принципу “как есть” (“as is”) и “по мере доступности” (“as available”), без каких-либо гарантий, явных или подразумеваемых. Автор не предоставляет никаких заверений и гарантий в отношении корректности, надёжности, безопасности, пригодности для конкретных целей или отсутствия ошибок в данном решении.
+Kaiten CLI Community Edition — публичный проект сообщества, предназначенный для автоматизации работы с Kaiten и создания интеграций.
 
-Используя данный программный продукт, вы подтверждаете, что принимаете на себя все риски, связанные с его использованием, включая, но не ограничиваясь, прямыми, косвенными, случайными или последующими убытками.
+Проект поддерживает Виктор Огнев. Предложения по развитию, сообщения об ошибках и изменения от участников сообщества приветствуются.
 
-Автор настоящего репозитория является единственным разработчиком и правообладателем данного кода. Данное решение разработано и распространяется независимо и не является официальным продуктом или услугой компании Kaiten Software.
-
-Компания Kaiten Software не несёт никакой ответственности за качество работы, производительность, результаты использования или любые последствия, связанные с использованием данного решения. Любые упоминания Kaiten Software приведены исключительно в информационных целях и не означают одобрения, поддержки или аффилированности.
+На проект не распространяется стандартное коммерческое соглашение Kaiten об уровне обслуживания (SLA), если иное прямо не предусмотрено отдельным соглашением. По вопросам официальной корпоративной поддержки, усиления защиты локальной установки Kaiten, аудита безопасности или разработки индивидуальных интеграций можно обратиться в [Kaiten](https://kaiten.ru/contacts).

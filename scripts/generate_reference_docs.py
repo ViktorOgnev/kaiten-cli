@@ -24,6 +24,12 @@ README_PATH = ROOT / "README.md"
 COMMAND_REFERENCE_PATH = ROOT / "COMMAND_REFERENCE.md"
 README_START = "<!-- BEGIN GENERATED COMMAND SUMMARY -->"
 README_END = "<!-- END GENERATED COMMAND SUMMARY -->"
+README_MODULE_LABELS = {
+    "custom_directories": "Каталоги",
+    "custom_properties": "Пользовательские свойства",
+    "automations": "Автоматизации и рабочие процессы",
+    "snapshot": "Локальные снимки",
+}
 
 
 def _load_module_tools(spec: ModuleDocSpec) -> tuple[ToolSpec, ...]:
@@ -55,17 +61,18 @@ def _render_readme_summary(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec, ..
     total_tools = sum(len(tools) for _, tools in modules)
     lines = [
         README_START,
-        f"В `kaiten-cli` сейчас **{total_tools}** canonical инструментов в **{len(modules)}** registry modules. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).",
+        f"В `kaiten-cli` доступно **{total_tools}** основных инструментов. Количество модулей реестра: **{len(modules)}**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).",
         "",
-        "| Область | Модуль | Кол-во | Справочник |",
+        "| Область | Модуль | Инструментов | Справочник |",
         "|---|---|---:|---|",
     ]
     for spec, tools in modules:
+        label = README_MODULE_LABELS.get(spec.key, spec.label)
         lines.append(
-            f"| {spec.label} | `{spec.key}` | {len(tools)} | [Раздел](COMMAND_REFERENCE.md#{_module_anchor(spec)}) |"
+            f"| {label} | `{spec.key}` | {len(tools)} | [Раздел](COMMAND_REFERENCE.md#{_module_anchor(spec)}) |"
         )
     lines.append(
-        f"| **Итого** | **{len(modules)} modules** | **{total_tools}** | [Полный справочник](COMMAND_REFERENCE.md) |"
+        f"| **Итого** | **{len(modules)}** | **{total_tools}** | [Полный справочник](COMMAND_REFERENCE.md) |"
     )
     lines.append(README_END)
     return "\n".join(lines)

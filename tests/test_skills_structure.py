@@ -41,8 +41,8 @@ def test_repo_contains_expected_skill_files():
     assert "skills/kaiten-cli-metrics/SKILL.md" in readme
     assert "COMMAND_REFERENCE.md" in readme
     assert "## Как работает кэш" in readme
-    assert "## Investigation and report workflows" in readme
-    assert "## Local-first analytics and headless workflows" in readme
+    assert "## Сбор данных для исследований и отчётов" in readme
+    assert "## Локальная аналитика и автоматические сценарии" in readme
     assert "card-children.batch-list" in readme
     assert "comments.batch-list" in readme
     assert "space-topology.get" in readme
@@ -56,9 +56,9 @@ def test_repo_contains_expected_skill_files():
     assert "--cache-ttl-seconds" in readme
     assert "request-scoped" in readme
     assert "persistent" in readme
-    assert "Local-first path остаётся explicit" in readme
+    assert "Локальный сценарий включается явно" in readme
     assert "benchmark_reference_workflows.py" in readme
-    assert "Полный generated справочник" in readme
+    assert "Полный автоматически созданный справочник" in readme
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in agents
     assert "COMMAND_REFERENCE.md" in agents
     assert "--trace-file" in agents
