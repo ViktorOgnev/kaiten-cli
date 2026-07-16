@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import httpx
 import pytest
 
 
@@ -721,6 +722,65 @@ def _exercise_projects_documents_and_tree(h) -> None:
 
     h.run_tool("tree.children.list", parent_entity_uid=h.state["doc_group_uid"])
     h.run_tool("tree.get", root_uid=h.state["doc_group_uid"], depth=2)
+
+    initial_share = h.run_tool("tree-entities.share.get", entity_uid=h.state["doc_group_uid"])
+    assert initial_share["shared"] is False
+
+    enabled_share = h.run_tool("tree-entities.share.enable", entity_uid=h.state["doc_group_uid"])
+    assert enabled_share["shared"] is True
+    assert enabled_share["changed"] is True
+    assert enabled_share["public_url"].endswith(enabled_share["uid"])
+    h.push_cleanup(
+        "disable document group share",
+        "tree-entities.share.disable",
+        entity_uid=h.state["doc_group_uid"],
+    )
+    public_response = httpx.get(enabled_share["public_url"], timeout=20)
+    assert public_response.status_code == 200
+
+    updated_share = h.run_tool(
+        "tree-entities.share.update",
+        entity_uid=h.state["doc_group_uid"],
+        expired_at=_iso_datetime(2),
+    )
+    assert updated_share["shared"] is True
+    assert updated_share["changed"] is True
+
+    batch_get = h.run_tool(
+        "tree-entities.share.batch-get",
+        entity_uids=[h.state["doc_group_uid"], h.state["document_uid"]],
+        workers=2,
+    )
+    assert batch_get["meta"]["succeeded"] == 2
+    assert batch_get["items"][0]["shared"] is True
+    assert batch_get["items"][1]["shared"] is False
+
+    batch_enable = h.run_tool(
+        "tree-entities.share.batch-enable",
+        entity_uids=[h.state["doc_group_uid"], h.state["document_uid"]],
+        workers=2,
+    )
+    assert batch_enable["meta"]["succeeded"] == 2
+    assert batch_enable["meta"]["changed"] == 1
+    assert batch_enable["meta"]["unchanged"] == 1
+    h.push_cleanup(
+        "disable document share",
+        "tree-entities.share.disable",
+        entity_uid=h.state["document_uid"],
+    )
+
+    enabled_again = h.run_tool("tree-entities.share.enable", entity_uid=h.state["document_uid"])
+    assert enabled_again["changed"] is False
+    assert enabled_again["public_url"]
+
+    disabled_document = h.run_tool(
+        "tree-entities.share.disable", entity_uid=h.state["document_uid"]
+    )
+    assert disabled_document["shared"] is False
+    assert disabled_document["changed"] is True
+    disabled_group = h.run_tool("tree-entities.share.disable", entity_uid=h.state["doc_group_uid"])
+    assert disabled_group["shared"] is False
+    assert disabled_group["changed"] is True
 
 
 def _exercise_company_metadata(h) -> None:

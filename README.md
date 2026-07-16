@@ -121,7 +121,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.25"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.26"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -260,7 +260,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **350** основных инструментов. Количество модулей реестра: **31**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **356** основных инструментов. Количество модулей реестра: **31**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -291,11 +291,11 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Раздел](COMMAND_REFERENCE.md#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Раздел](COMMAND_REFERENCE.md#module-charts) |
-| Дерево сущностей | `tree` | 3 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
+| Дерево сущностей | `tree` | 9 | [Раздел](COMMAND_REFERENCE.md#module-tree) |
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31** | **350** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **31** | **356** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
@@ -427,6 +427,29 @@ kaiten --json tree get --depth 1
 kaiten --json tree get --root-uid <uid> --depth 0
 kaiten --json --cache-mode refresh tree get --depth 1
 ```
+
+### Публичные ссылки на сущности дерева
+
+Команды `tree-entities share` позволяют получить уже существующую публичную ссылку или управлять публикацией пространства, документа, группы документов или карты историй. CLI возвращает готовый URL вида `<адрес-профиля>/p/<share-uid>`; это отдельный механизм общих сущностей, не поле `public` документа и не публикация публичной базы знаний.
+
+Получение и создание одной ссылки идемпотентны:
+
+```bash
+kaiten --json tree-entities share get --entity-uid <entity-uuid>
+kaiten --json tree-entities share enable --entity-uid <entity-uuid>
+kaiten --json tree-entities share update --entity-uid <entity-uuid> --expired-at "2099-01-01T00:00:00Z"
+kaiten --json tree-entities share update --entity-uid <entity-uuid> --expired-at null
+kaiten --json tree-entities share disable --entity-uid <entity-uuid>
+```
+
+Для массовой публикации передаётся явный массив UUID. CLI не публикует автоматически найденное поддерево, удаляет дубликаты с сохранением исходного порядка и возвращает успешные элементы, ошибки по отдельным сущностям и счётчики `changed`/`unchanged`:
+
+```bash
+kaiten --json tree-entities share batch-get --entity-uids '["<entity-uuid-1>","<entity-uuid-2>"]'
+kaiten --json tree-entities share batch-enable --entity-uids '["<entity-uuid-1>","<entity-uuid-2>"]' --workers 2
+```
+
+Число параллельных работников ограничено диапазоном от 1 до 6, по умолчанию используется 2. Повторный запуск безопасен: активные ссылки возвращаются без изменений, а отключённые или истёкшие ссылки реактивируются с прежним `share-uid`.
 
 ## Как работает кэш
 

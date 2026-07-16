@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **350** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **356** canonical commands across **31** registry modules.
 
 ## Conventions
 
@@ -47,7 +47,7 @@
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
 | Графики и аналитика | `charts` | 15 | [Open](#module-charts) |
-| Дерево сущностей | `tree` | 3 | [Open](#module-tree) |
+| Дерево сущностей | `tree` | 9 | [Open](#module-tree) |
 | Утилиты | `utilities` | 15 | [Open](#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Open](#module-query) |
@@ -13165,7 +13165,7 @@ compute-jobs
 - Refresh hint: No cache refresh is needed.
 
 <a id="module-tree"></a>
-## Дерево сущностей (`tree`) — 3 commands
+## Дерево сущностей (`tree`) — 9 commands
 
 Entity tree and tree navigation commands.
 
@@ -13176,6 +13176,13 @@ tree
   get
 tree-entities
   list
+tree-entities.share
+  batch-enable
+  batch-get
+  disable
+  enable
+  get
+  update
 tree.children
   list
 ```
@@ -13215,6 +13222,247 @@ tree.children
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
 - Refresh hint: No disk cache is read by default for this command.
+
+### `tree-entities.share.batch-enable`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share batch-enable` |
+| MCP alias | `kaiten_batch_enable_tree_entity_shares` |
+| Description | Idempotently enable public links for explicit tree entity UUIDs. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `aggregated` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entities/share/batch` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uids` | `array` | yes | — | Explicit tree entity UUIDs to process in input order. |
+| `expired_at` | `string|null` | no | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+| `workers` | `integer` | no | — | Parallel workers (default 2, max 6). |
+
+**Examples**
+
+- Publish several entities and return every public link.: `kaiten tree-entities share batch-enable --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]' --workers 2 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
+- Only explicit entity UUIDs are accepted; the command does not publish an inferred query result or subtree.
+- The result contains ordered items, per-entity errors, and changed/unchanged counters so partial failures remain visible and reruns stay safe.
+
+### `tree-entities.share.batch-get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share batch-get` |
+| MCP alias | `kaiten_batch_get_tree_entity_shares` |
+| Description | Get public sharing states and links for explicit tree entity UUIDs. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `aggregated` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/tree-entities/share/batch` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uids` | `array` | yes | — | Explicit tree entity UUIDs to process in input order. |
+| `workers` | `integer` | no | — | Parallel workers (default 2, max 6). |
+
+**Examples**
+
+- Get public links for several entities with bounded concurrency.: `kaiten tree-entities share batch-get --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]' --json`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
+- The command deduplicates UUIDs, preserves first-seen order, and returns per-entity errors without hiding successful links.
+
+### `tree-entities.share.disable`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share disable` |
+| MCP alias | `kaiten_disable_tree_entity_share` |
+| Description | Idempotently disable a tree entity public link. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entities/{entity_uid}/share` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+
+**Examples**
+
+- Disable a public link without failing when it is already disabled.: `kaiten tree-entities share disable --entity-uid 11111111-1111-4111-8111-111111111111 --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
+
+### `tree-entities.share.enable`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share enable` |
+| MCP alias | `kaiten_enable_tree_entity_share` |
+| Description | Idempotently enable a public link for a tree entity. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entities/{entity_uid}/share` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+| `expired_at` | `string|null` | no | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+
+**Examples**
+
+- Enable sharing and return the public link.: `kaiten tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111 --json`
+- Enable sharing with an expiration timestamp.: `kaiten tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z" --json`
+
+**Notes**
+
+- Bulk alternative: `tree-entities.share.batch-enable`
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
+- Repeated execution is safe: active shares are returned unchanged, while disabled or expired shares are reactivated using the existing share UID.
+
+### `tree-entities.share.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share get` |
+| MCP alias | `kaiten_get_tree_entity_share` |
+| Description | Get the public sharing state and ready-to-use public link for a tree entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/tree-entities/{entity_uid}/share` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+
+**Examples**
+
+- Get an existing public link without changing sharing state.: `kaiten tree-entities share get --entity-uid 11111111-1111-4111-8111-111111111111 --json`
+
+**Notes**
+
+- Bulk alternative: `tree-entities.share.batch-get`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Refresh hint: No disk cache is read by default for this command.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
+
+### `tree-entities.share.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten tree-entities share update` |
+| MCP alias | `kaiten_update_tree_entity_share` |
+| Description | Idempotently set or clear a tree entity public-link expiration. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entities/{entity_uid}/share` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+| `expired_at` | `string|null` | yes | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+
+**Examples**
+
+- Set a public-link expiration timestamp.: `kaiten tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z" --json`
+- Remove the public-link expiration timestamp.: `kaiten tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at null --json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Refresh hint: No cache refresh is needed.
+- The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
+- GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
+- Supported tree entity types are spaces, documents, document groups, and story maps.
+- This is shared-entity publication, not the legacy document `public` field or knowledge-base public-site publishing.
 
 ### `tree.children.list`
 

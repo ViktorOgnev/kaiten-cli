@@ -20,8 +20,10 @@ kaiten_add_space_user
 kaiten_archive_card
 kaiten_attach_card_sla
 kaiten_batch_add_sd_org_users
+kaiten_batch_enable_tree_entity_shares
 kaiten_batch_get_card_location_history
 kaiten_batch_get_cards
+kaiten_batch_get_tree_entity_shares
 kaiten_batch_list_card_children
 kaiten_batch_list_comments
 kaiten_batch_list_time_logs
@@ -131,7 +133,9 @@ kaiten_delete_user_timer
 kaiten_delete_webhook
 kaiten_delete_workflow
 kaiten_detach_card_sla
+kaiten_disable_tree_entity_share
 kaiten_download_file
+kaiten_enable_tree_entity_share
 kaiten_get_all_space_activity
 kaiten_get_automation
 kaiten_get_board
@@ -179,6 +183,7 @@ kaiten_get_space_topology
 kaiten_get_space_user
 kaiten_get_sprint
 kaiten_get_tree
+kaiten_get_tree_entity_share
 kaiten_get_user_role
 kaiten_get_user_timer
 kaiten_get_webhook
@@ -341,6 +346,7 @@ kaiten_update_sprint
 kaiten_update_subcolumn
 kaiten_update_tag
 kaiten_update_time_log
+kaiten_update_tree_entity_share
 kaiten_update_user
 kaiten_update_user_role
 kaiten_update_user_timer
