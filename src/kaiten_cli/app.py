@@ -6,12 +6,20 @@ import os
 import sys
 import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import click
 from click.exceptions import NoArgsIsHelpError
 
 from kaiten_cli import __version__
+from kaiten_cli.completion import (
+    SUPPORTED_SHELLS,
+    completion_status,
+    generate_completion_source,
+    install_completion,
+    uninstall_completion,
+)
 from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
 from kaiten_cli.errors import (
     BatchExecutionError,
@@ -104,6 +112,39 @@ def _echo_result(ctx: click.Context, command: str, data: Any) -> None:
 def _echo_human_result(ctx: click.Context, text: str) -> None:
     _discard_result_stats(ctx)
     click.echo(text)
+
+
+def _render_completion_text(action: str, data: dict[str, Any]) -> str:
+    configured = "yes" if data.get("configured") else "no"
+    headline = (
+        f"Shell completion dry run for {data['shell']}."
+        if data.get("dry_run")
+        else f"Shell completion {action} for {data['shell']}."
+    )
+    lines = [
+        headline,
+        f"Configured: {configured}",
+        f"Script: {data['script_path']}",
+        f"Shell config: {data['config_path']}",
+    ]
+    if data.get("dry_run"):
+        lines.append("Dry run: no files were changed.")
+    elif action == "installed":
+        lines.append(f"Restart the shell: {data['restart_command']}")
+    warnings = data.get("warnings") or []
+    if warnings:
+        lines.append("Warnings:")
+        lines.extend(f"  - {warning}" for warning in warnings)
+    return "\n".join(lines)
+
+
+def _echo_completion_result(
+    ctx: click.Context, command: str, action: str, data: dict[str, Any]
+) -> None:
+    if _ctx_options(ctx).json_mode:
+        _echo_result(ctx, command, data)
+    else:
+        _echo_human_result(ctx, _render_completion_text(action, data))
 
 
 def _fail(ctx: click.Context, command: str | None, error: CliError) -> None:
@@ -825,6 +866,141 @@ def agent_help_command(ctx: click.Context) -> None:
         _fail(ctx, "agent-help", error)
     except Exception as exc:  # pragma: no cover
         _emit_internal(ctx, "agent-help", exc)
+
+
+@cli.group(
+    "completion",
+    no_args_is_help=True,
+    help="Install, inspect, generate or remove shell completion for Kaiten CLI.",
+    short_help="Manage Bash and Zsh completion.",
+    context_settings=CLICK_CONTEXT_SETTINGS,
+)
+def completion_group() -> None:
+    """Manage shell completion."""
+
+
+def _completion_config_option(function):
+    return click.option(
+        "--config",
+        "config_path",
+        type=click.Path(dir_okay=False, path_type=Path),
+        default=None,
+        help="Override the shell startup file to update or inspect.",
+    )(function)
+
+
+def _completion_shell_option(function):
+    return click.option(
+        "--shell",
+        type=click.Choice(SUPPORTED_SHELLS),
+        default=None,
+        help="Target shell. Defaults to the basename of SHELL.",
+    )(function)
+
+
+@completion_group.command(
+    "install",
+    help="Generate a static completion script and register it in the shell startup file.",
+    short_help="Install shell completion safely.",
+)
+@_completion_shell_option
+@_completion_config_option
+@click.option("--dry-run", is_flag=True, help="Show intended changes without writing files.")
+@click.pass_context
+def completion_install_command(
+    ctx: click.Context,
+    shell: str | None,
+    config_path: Path | None,
+    dry_run: bool,
+) -> None:
+    try:
+        result = install_completion(
+            ctx.find_root().command,
+            shell=shell,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+        _echo_completion_result(ctx, "completion.install", "installed", result)
+    except CliError as error:
+        _fail(ctx, "completion.install", error)
+    except Exception as exc:  # pragma: no cover - safety net
+        _emit_internal(ctx, "completion.install", exc)
+
+
+@completion_group.command(
+    "status",
+    help="Inspect whether the current completion script and shell registration are ready.",
+    short_help="Check shell completion status.",
+)
+@_completion_shell_option
+@_completion_config_option
+@click.pass_context
+def completion_status_command(
+    ctx: click.Context,
+    shell: str | None,
+    config_path: Path | None,
+) -> None:
+    try:
+        result = completion_status(
+            ctx.find_root().command,
+            shell=shell,
+            config_path=config_path,
+        )
+        _echo_completion_result(ctx, "completion.status", "status", result)
+    except CliError as error:
+        _fail(ctx, "completion.status", error)
+    except Exception as exc:  # pragma: no cover - safety net
+        _emit_internal(ctx, "completion.status", exc)
+
+
+@completion_group.command(
+    "source",
+    help="Print the Click completion source script without modifying shell files.",
+    short_help="Print a completion script.",
+)
+@click.argument("shell", type=click.Choice(SUPPORTED_SHELLS), metavar="SHELL")
+@click.pass_context
+def completion_source_command(ctx: click.Context, shell: str) -> None:
+    try:
+        result = generate_completion_source(ctx.find_root().command, shell)
+        if _ctx_options(ctx).json_mode:
+            _echo_result(ctx, "completion.source", {"shell": shell, "source": result})
+        else:
+            _discard_result_stats(ctx)
+            click.echo(result, nl=False)
+    except CliError as error:
+        _fail(ctx, "completion.source", error)
+    except Exception as exc:  # pragma: no cover - safety net
+        _emit_internal(ctx, "completion.source", exc)
+
+
+@completion_group.command(
+    "uninstall",
+    help="Remove only the managed shell registration and generated completion script.",
+    short_help="Uninstall managed shell completion.",
+)
+@_completion_shell_option
+@_completion_config_option
+@click.option("--dry-run", is_flag=True, help="Show intended changes without writing files.")
+@click.pass_context
+def completion_uninstall_command(
+    ctx: click.Context,
+    shell: str | None,
+    config_path: Path | None,
+    dry_run: bool,
+) -> None:
+    try:
+        result = uninstall_completion(
+            ctx.find_root().command,
+            shell=shell,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+        _echo_completion_result(ctx, "completion.uninstall", "uninstalled", result)
+    except CliError as error:
+        _fail(ctx, "completion.uninstall", error)
+    except Exception as exc:  # pragma: no cover - safety net
+        _emit_internal(ctx, "completion.uninstall", exc)
 
 
 @cli.group(

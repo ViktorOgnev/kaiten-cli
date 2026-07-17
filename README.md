@@ -100,6 +100,62 @@ $env:Path = "$(pipx environment --value PIPX_BIN_DIR);$env:Path"
 добавить в пользовательскую переменную `Path`, а затем заново открыть терминал.
 Для WSL применяется инструкция для Linux.
 
+### Автодополнение команд
+
+Обычная установка Python-пакета через `uv tool` или `pipx` не должна сама
+изменять пользовательские настройки shell. После того как команда `kaiten`
+стала доступна в `PATH`, автодополнение для текущего Bash или Zsh устанавливается
+явной командой:
+
+```bash
+kaiten completion install
+```
+
+Команда определяет shell по переменной `SHELL`, создаёт статический completion-
+скрипт и добавляет в `~/.bashrc` или `~/.zshrc` только маркированный блок
+`kaiten-cli completion`. Повторный запуск обновляет этот блок без дублирования.
+Перед изменением файлов доступен режим проверки:
+
+```bash
+kaiten completion install --dry-run
+kaiten completion status
+```
+
+Если shell нужно указать явно:
+
+```bash
+kaiten completion install --shell zsh
+kaiten completion install --shell bash
+```
+
+Click поддерживает Bash версии 4.4 и новее. На macOS системный Bash может быть
+старее, а login-сессия Bash может не читать `~/.bashrc`; команда сообщит об этом
+и предложит указать нужный startup-файл через `--config`.
+
+После установки необходимо открыть новую сессию shell или выполнить команду,
+которую напечатает CLI, например `exec zsh`. Проверить работу можно так:
+
+```bash
+kaiten cards <Tab>
+kaiten cards list --<Tab>
+```
+
+Для ручной настройки можно вывести скрипт без изменения файлов:
+
+```bash
+kaiten completion source zsh
+kaiten completion source bash
+```
+
+Удаление затрагивает только созданный скрипт и управляемый блок:
+
+```bash
+kaiten completion uninstall
+```
+
+Встроенная установка completion сейчас поддерживает Bash и Zsh. Для Fish и
+PowerShell необходимо использовать отдельную ручную настройку.
+
 ### Рекомендации для LLM-агентов
 
 Рекомендуемые сценарии работы агентов с CLI описаны в отдельных файлах навыков:
@@ -121,7 +177,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.26"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.27"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки

@@ -27,6 +27,7 @@ def test_help_shows_top_level_commands(runner):
     assert "agent-help" in result.output
     assert "describe" in result.output
     assert "examples" in result.output
+    assert "completion" in result.output
     assert "profile" in result.output
     assert "snapshot" in result.output
     assert "query" in result.output
@@ -38,6 +39,7 @@ def test_help_shows_top_level_commands(runner):
     assert "Spaces and top-level workspace reads." in result.output
     assert "Local-only query and metrics commands over" in result.output
     assert "Manage Kaiten profiles." in result.output
+    assert "Manage Bash and Zsh completion." in result.output
 
 
 def test_all_visible_commands_support_short_help(runner):
