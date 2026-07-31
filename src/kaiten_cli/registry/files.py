@@ -93,23 +93,23 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command=(
-                    "kaiten files download --entity-type document --document-uid <document_uid> "
-                    "--file-id <file_uid> --json"
+                    "kaiten --json files download --entity-type document "
+                    "--document-uid <document_uid> --file-id <file_uid>"
                 ),
                 description="Download a document attachment into the current directory.",
             ),
             ExampleSpec(
                 command=(
-                    "kaiten files download --entity-type card --card-id 123 --file-id <file_uid> "
-                    "--output ./downloads/ --json"
+                    "kaiten --json files download --entity-type card --card-id 123 "
+                    "--file-id <file_uid> --output ./downloads/"
                 ),
                 description="Download a card attachment into a directory.",
             ),
             ExampleSpec(
                 command=(
-                    "kaiten files download --url "
+                    "kaiten --json files download --url "
                     '"https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" '
-                    "--output ./file.bin --overwrite --json"
+                    "--output ./file.bin --overwrite"
                 ),
                 description="Download from a Kaiten report/browser file URL.",
             ),
@@ -137,7 +137,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten files list --card-id 10 --json", description="List card files."
+                command="kaiten --json files list --card-id 10", description="List card files."
             ),
         ),
     ),
@@ -188,7 +188,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten files create --card-id 10 --url "https://example.com/a.png" --name "a.png" --json',
+                command='kaiten --json files create --card-id 10 --url "https://example.com/a.png" --name "a.png"',
                 description="Attach a URL-backed file to a card.",
             ),
         ),
@@ -215,7 +215,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten files upload --card-id 123 --file ./report.json --json",
+                command="kaiten --json files upload --card-id 123 --file ./report.json",
                 description="Upload a local file to a card.",
             ),
         ),
@@ -273,7 +273,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten files update --card-id 10 --file-id 20 --name "a-v2.png" --json',
+                command='kaiten --json files update --card-id 10 --file-id 20 --name "a-v2.png"',
                 description="Update a card file attachment.",
             ),
         ),
@@ -297,7 +297,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten files delete --card-id 10 --file-id 20 --json",
+                command="kaiten --json files delete --card-id 10 --file-id 20",
                 description="Delete a card file.",
             ),
         ),

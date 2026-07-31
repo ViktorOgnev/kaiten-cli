@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import shlex
 
 from click import Group
 
 from kaiten_cli.app import cli, main
+from kaiten_cli.registry import iter_tools
 
 
 def _visible_command_paths(command, path=()):
@@ -29,6 +31,7 @@ def test_help_shows_top_level_commands(runner):
     assert "examples" in result.output
     assert "completion" in result.output
     assert "profile" in result.output
+    assert "trace" in result.output
     assert "snapshot" in result.output
     assert "query" in result.output
     assert "cards" in result.output
@@ -119,7 +122,7 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert payload["command"] == "agent-help"
     assert payload["data"]["summary"] == "Kaiten API CLI optimized for humans and agents."
     assert payload["data"]["llm_bootstrap"]
-    assert payload["data"]["llm_bootstrap"][0].startswith("Discover first:")
+    assert payload["data"]["llm_bootstrap"][0].startswith("Discover once")
     assert any("snapshot" in line for line in payload["data"]["llm_bootstrap"])
     assert payload["data"]["quickstart"]
     assert payload["data"]["docs"]["repository"] == "https://github.com/ViktorOgnev/kaiten-cli"
@@ -127,6 +130,11 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert payload["data"]["docs"]["skills"]["heavy_data"].endswith(
         "/skills/kaiten-cli-heavy-data/SKILL.md"
     )
+    assert payload["data"]["docs"]["skills"]["mutations"].endswith(
+        "/skills/kaiten-cli-mutations/SKILL.md"
+    )
+    assert any("profile probe" in line for line in payload["data"]["llm_bootstrap"])
+    assert any("trace summarize" in line for line in payload["data"]["llm_bootstrap"])
 
 
 def test_agent_help_human_output_is_bootstrap_focused(runner):
@@ -136,9 +144,12 @@ def test_agent_help_human_output_is_bootstrap_focused(runner):
     assert "Kaiten agent bootstrap" in result.output
     assert "LLM bootstrap:" in result.output
     assert 'discover: kaiten search-tools "wip cards"' in result.output
-    assert "snapshot once for repeated analytics" in result.output
+    assert "snapshot a population before its second use" in result.output
     assert "command reference:" in result.output
     assert "skills heavy-data:" in result.output
+    assert "skills mutations:" in result.output
+    assert "profile probe" in result.output
+    assert "trace summarize" in result.output
 
 
 def test_discovery_commands_human_output_is_not_raw_json(runner):
@@ -156,6 +167,7 @@ def test_discovery_commands_human_output_is_not_raw_json(runner):
     assert "Arguments:" in describe.output
     assert "--board-id (integer, optional)" in describe.output
     assert "Examples:" in describe.output
+    assert "Cache modes: auto, off, readwrite, refresh" in describe.output
 
     chart_description = runner.invoke(cli, ["describe", "charts.summary.get"])
     assert chart_description.exit_code == 0
@@ -167,7 +179,7 @@ def test_discovery_commands_human_output_is_not_raw_json(runner):
     assert examples.exit_code == 0
     assert not examples.output.lstrip().startswith("{")
     assert "Examples for: cards.list-all" in examples.output
-    assert "1. kaiten cards list-all" in examples.output
+    assert "1. kaiten --json cards list-all" in examples.output
 
 
 def test_discovery_commands_json_output_stays_machine_readable(runner):
@@ -185,10 +197,175 @@ def test_discovery_commands_json_output_stays_machine_readable(runner):
     assert describe_payload["success"] is True
     assert describe_payload["command"] == "describe"
     assert describe_payload["data"]["canonical_name"] == "cards.list-all"
+    cache_guidance = describe_payload["data"]["cache_guidance"]
+    assert cache_guidance["default_mode"] == "auto"
+    assert cache_guidance["available_modes"] == ["auto", "off", "readwrite", "refresh"]
+    assert cache_guidance["recommended_mode"] == "auto"
+    assert "once" in cache_guidance["refresh_hint"]
+    assert "debugging" in cache_guidance["off_hint"]
+    assert "--cache-ttl-seconds" in cache_guidance["readwrite_hint"]
 
     examples = runner.invoke(cli, ["--json", "examples", "cards.list-all"])
     assert examples.exit_code == 0
     examples_payload = json.loads(examples.output)
     assert examples_payload["success"] is True
     assert examples_payload["command"] == "examples"
-    assert examples_payload["data"]["examples"][0].startswith("kaiten cards list-all")
+    assert examples_payload["data"]["examples"][0].startswith(
+        "kaiten --json cards list-all"
+    )
+
+
+def test_registry_examples_keep_root_json_before_the_command(runner):
+    examples = [example.command for tool in iter_tools() for example in tool.examples]
+
+    assert len(examples) == 383
+    assert sum("--json" in shlex.split(command) for command in examples) == 369
+    for command in examples:
+        tokens = shlex.split(command)
+        if "--json" in tokens:
+            assert tokens[0:2] == ["kaiten", "--json"], command
+
+    representative = (
+        "cards.get",
+        "cards.create",
+        "snapshot.build",
+    )
+    by_name = {tool.canonical_name: tool for tool in iter_tools()}
+    for canonical_name in representative:
+        command = by_name[canonical_name].examples[0].command
+        result = runner.invoke(cli, [*shlex.split(command)[1:], "--help"])
+        assert result.exit_code == 0, command
+
+
+def test_dotted_registry_aliases_are_hidden_but_parse(runner):
+    root_help = runner.invoke(cli, ["--help"])
+    assert "cards.create" not in root_help.output
+
+    for command in (
+        "cards.create",
+        "service-desk.organization-users.update",
+        "snapshot.build",
+    ):
+        result = runner.invoke(cli, [command, "--help"])
+        assert result.exit_code == 0, command
+
+
+def test_validation_details_for_misplaced_global_options(capsys):
+    cases = (
+        (["profile", "list", "--json"], "--json", "profile.list"),
+        (
+            ["--json", "cards", "get", "--card-id", "1", "--cache-mode", "refresh"],
+            "--cache-mode",
+            "cards.get",
+        ),
+        (
+            ["--json", "cards", "get", "--card-id", "1", "--read-only"],
+            "--read-only",
+            "cards.get",
+        ),
+    )
+
+    for argv, option, canonical_name in cases:
+        assert main(argv) == 2
+        payload = json.loads(capsys.readouterr().out)
+        details = payload["error"]["details"]
+        assert details["code"] == "global_option_position"
+        assert details["option"] == option
+        assert details["canonical_name"] == canonical_name
+        assert details["suggested_usage"].startswith("kaiten ")
+
+    assert (
+        main(
+            [
+                "cards",
+                "get",
+                "--card-id",
+                "1",
+                "--json",
+                "--cache-mode",
+                "refresh",
+            ]
+        )
+        == 2
+    )
+    multi_flag_payload = json.loads(capsys.readouterr().out)
+    assert multi_flag_payload["error"]["details"]["suggested_usage"] == (
+        "kaiten --json --cache-mode <auto|off|readwrite|refresh> "
+        "cards get [command options]"
+    )
+
+
+def test_validation_details_for_unsupported_shaping(capsys):
+    assert main(["--json", "boards", "get", "--board-id", "1", "--fields", "id"]) == 2
+    payload = json.loads(capsys.readouterr().out)
+    details = payload["error"]["details"]
+
+    assert details == {
+        "code": "unsupported_shaping_option",
+        "option": "--fields",
+        "canonical_name": "boards.get",
+        "suggested_usage": "kaiten boards get [supported options]",
+        "supported_options": ["--board-id"],
+        "next": "kaiten describe boards.get",
+    }
+
+    assert (
+        main(
+            [
+                "--json",
+                "card-children",
+                "list",
+                "--card-id",
+                "1",
+                "--fields",
+                "id",
+            ]
+        )
+        == 2
+    )
+    bulk_payload = json.loads(capsys.readouterr().out)
+    assert bulk_payload["error"]["details"]["bulk_alternative"] == (
+        "card-children.batch-list"
+    )
+    assert bulk_payload["error"]["details"]["supported_options"] == ["--card-id"]
+
+
+def test_tool_specific_profile_is_not_treated_as_misplaced_global(runner):
+    result = runner.invoke(
+        cli,
+        [
+            "--profile",
+            "tenant",
+            "custom-directory-records",
+            "list",
+            "--directory-id",
+            "directory",
+            "--profile",
+            "summary",
+            "--help",
+        ],
+    )
+
+    assert result.exit_code == 0
+
+
+def test_validation_suggestion_does_not_echo_sensitive_arguments(capsys):
+    assert (
+        main(
+            [
+                "profile",
+                "add",
+                "prod",
+                "--domain",
+                "private.example",
+                "--token",
+                "super-secret-token",
+                "--json",
+            ]
+        )
+        == 2
+    )
+    rendered = capsys.readouterr().out
+
+    assert "private.example" not in rendered
+    assert "super-secret-token" not in rendered

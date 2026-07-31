@@ -26,7 +26,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command='kaiten card-types list --query "bug" --json',
+                command='kaiten --json card-types list --query "bug"',
                 description="List card types.",
             ),
         ),
@@ -47,7 +47,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-types get --type-id 42 --json", description="Get a card type."
+                command="kaiten --json card-types get --type-id 42", description="Get a card type."
             ),
         ),
     ),
@@ -75,7 +75,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten card-types create --name "Feature" --letter F --color 3 --json',
+                command='kaiten --json card-types create --name "Feature" --letter F --color 3',
                 description="Create a card type.",
             ),
         ),
@@ -103,7 +103,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten card-types update --type-id 42 --name "Bug" --json',
+                command='kaiten --json card-types update --type-id 42 --name "Bug"',
                 description="Update a card type.",
             ),
         ),
@@ -145,7 +145,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-types delete --type-id 42 --replace-type-id 1 --json",
+                command="kaiten --json card-types delete --type-id 42 --replace-type-id 1",
                 description="Delete a card type with replacement.",
             ),
         ),
@@ -167,7 +167,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-types tree-entities list --type-id 42 --json",
+                command="kaiten --json card-types tree-entities list --type-id 42",
                 description="List card type tree entities.",
             ),
         ),
@@ -197,7 +197,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten card-types tree-entities add --type-id 42 --tree-entity-uid entity-uuid --json",
+                command="kaiten --json card-types tree-entities add --type-id 42 --tree-entity-uid entity-uuid",
                 description="Attach a tree entity to a card type.",
             ),
         ),
@@ -221,7 +221,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-types tree-entities remove --type-id 42 --tree-entity-uid entity-uuid --json",
+                command="kaiten --json card-types tree-entities remove --type-id 42 --tree-entity-uid entity-uuid",
                 description="Remove a tree entity from a card type.",
             ),
         ),

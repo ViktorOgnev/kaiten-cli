@@ -23,7 +23,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten lanes list --board-id 10 --json",
+                command="kaiten --json lanes list --board-id 10",
                 description="List lanes on a board.",
             ),
         ),
@@ -66,7 +66,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten lanes create --board-id 10 --title "Backend" --json',
+                command='kaiten --json lanes create --board-id 10 --title "Backend"',
                 description="Create a board lane.",
             ),
         ),
@@ -116,7 +116,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten lanes update --board-id 10 --lane-id 20 --title "Backend" --json',
+                command='kaiten --json lanes update --board-id 10 --lane-id 20 --title "Backend"',
                 description="Update a lane.",
             ),
         ),
@@ -140,7 +140,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten lanes delete --board-id 10 --lane-id 20 --json",
+                command="kaiten --json lanes delete --board-id 10 --lane-id 20",
                 description="Delete a lane.",
             ),
         ),

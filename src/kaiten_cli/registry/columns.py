@@ -23,7 +23,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten columns list --board-id 10 --json",
+                command="kaiten --json columns list --board-id 10",
                 description="List columns on a board.",
             ),
         ),
@@ -63,7 +63,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten columns create --board-id 10 --title "Doing" --type 2 --json',
+                command='kaiten --json columns create --board-id 10 --title "Doing" --type 2',
                 description="Create a board column.",
             ),
         ),
@@ -100,7 +100,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten columns update --board-id 10 --column-id 20 --title "Review" --json',
+                command='kaiten --json columns update --board-id 10 --column-id 20 --title "Review"',
                 description="Rename a board column.",
             ),
         ),
@@ -124,7 +124,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten columns delete --board-id 10 --column-id 20 --json",
+                command="kaiten --json columns delete --board-id 10 --column-id 20",
                 description="Delete a board column.",
             ),
         ),
@@ -147,7 +147,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten subcolumns list --column-id 20 --json",
+                command="kaiten --json subcolumns list --column-id 20",
                 description="List subcolumns for a column.",
             ),
         ),
@@ -178,7 +178,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten subcolumns create --column-id 20 --title "Blocked" --json',
+                command='kaiten --json subcolumns create --column-id 20 --title "Blocked"',
                 description="Create a subcolumn.",
             ),
         ),
@@ -210,7 +210,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked" --json',
+                command='kaiten --json subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked"',
                 description="Update a subcolumn.",
             ),
         ),
@@ -234,7 +234,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten subcolumns delete --column-id 20 --subcolumn-id 30 --json",
+                command="kaiten --json subcolumns delete --column-id 20 --subcolumn-id 30",
                 description="Delete a subcolumn.",
             ),
         ),

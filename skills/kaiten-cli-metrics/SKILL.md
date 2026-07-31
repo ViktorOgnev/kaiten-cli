@@ -102,6 +102,12 @@ kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id
 - Dense same-family entity loops also get TTL escalation after enough recent writes, so wrapper scripts should usually keep `auto`.
 - Do not force tiny TTLs in wrapper scripts for historical or high-cardinality metric runs; keep `auto` or build a snapshot.
 - Use `refresh` before a final report if data freshness is critical.
+- Apply `refresh` to one freshness boundary only; never put it inside an
+  entity or pagination loop.
+- Use `off` only for cache debugging, privacy-sensitive reads, or high-churn
+  polling.
+- Use `readwrite` only with an explicit `--cache-ttl-seconds` when the report
+  contract requires a fixed TTL.
 
 Examples:
 
@@ -125,6 +131,19 @@ Use chart submission plus `compute-jobs get` polling only for the chart result i
 
 If the tenant returns `404` or feature-unavailable responses on chart tools, switch early to `cards.list-all`, `space-activity-all.get`, and `card-location-history.batch-get` instead of probing more chart variants.
 
+## Cache guidance
+
+Keep all four cache modes and choose them deliberately:
+
+- `--cache-mode auto`: recommended default for ordinary and analytical
+  workflows; omit the flag.
+- `--cache-mode refresh`: use once before a freshness-critical result, never
+  inside an entity loop; use `snapshot refresh` for an existing snapshot.
+- `--cache-mode off`: use only for cache diagnostics, privacy requirements, or
+  high-frequency polling.
+- `--cache-mode readwrite`: use only for a deliberately fixed TTL and always
+  pair it with `--cache-ttl-seconds`.
+
 ## Trace for long analytics runs
 
 Every `--json` response includes top-level `stats` with command duration, `http_request_count`, `api_wait_ms`, cache counters, and grouped method/path-family aggregates. Inspect those fields before widening a metric query.
@@ -136,6 +155,14 @@ kaiten --json --trace-file ./kaiten-trace.jsonl card-location-history batch-get 
 ```
 
 The trace persists runtime stats across commands and reveals real HTTP request counts even when the outer agent log only sees the wrapper command.
+
+Trace is required for wrappers with at least three CLI commands, expected runs
+above ten HTTP requests, or unavoidable loops. Review it without sending
+payloads back to Kaiten:
+
+```bash
+kaiten --json trace summarize --file ./kaiten-trace.jsonl
+```
 
 ## Quick decision rule
 

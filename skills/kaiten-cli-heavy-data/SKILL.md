@@ -15,6 +15,10 @@ Use this skill when the task smells like bulk reads, exports, audits, migrations
 - Keep local card reads in `query cards --view summary` by default; switch to `detail` or `evidence` only after narrowing the candidate set.
 - Treat `aggregated` and `synthetic` tools as more expensive than `direct_http`.
 - Reduce response size before asking the LLM to inspect it.
+- When two or more entity IDs are known and `describe` reports a
+  `bulk_alternative`, use the bulk command.
+- When the same population is needed a second time, build a snapshot and query
+  it locally.
 
 ## Anti-patterns
 
@@ -136,11 +140,24 @@ For heavy LLM/script analytics, keep `auto` unless freshness is critical. Batch 
 kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id
 ```
 
-Use `refresh` when correctness matters more than reuse:
+Keep all four modes and choose them deliberately:
+
+- `--cache-mode auto`: default for ordinary, batch, heavy, and agent workflows; omit the
+  flag.
+- `--cache-mode refresh`: one freshness-critical command that must bypass the saved answer;
+  never put it inside an entity loop.
+- `--cache-mode off`: cache debugging, privacy-sensitive reads, or high-churn polling.
+- `--cache-mode readwrite`: fixed-TTL automation; always pair it with an explicit
+  `--cache-ttl-seconds`.
+
+Use `refresh` once when correctness matters more than reuse:
 
 ```bash
 kaiten --json --cache-mode refresh spaces list --compact --fields id,title
 ```
+
+For a reused snapshot, prefer `snapshot refresh` once over adding
+`--cache-mode refresh` to every source read.
 
 ## Diagnostics
 
@@ -168,6 +185,14 @@ kaiten --json --trace-file ./kaiten-trace.jsonl cards list-all --board-id 10 --s
 ```
 
 Trace persists the same runtime stats across commands and helps explain real HTTP cost when outer agent logs only show the wrapper script.
+
+Tracing is required when a wrapper runs at least three CLI commands, the
+workflow is expected to exceed ten HTTP requests, or an external loop is
+unavoidable. Summarize the trace locally:
+
+```bash
+kaiten --json trace summarize --file ./kaiten-trace.jsonl
+```
 
 ## Quick decision rule
 

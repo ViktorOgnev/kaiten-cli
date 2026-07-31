@@ -24,7 +24,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten automations list --space-id 1 --json",
+                command="kaiten --json automations list --space-id 1",
                 description="List space automations.",
             ),
         ),
@@ -74,7 +74,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten automations create --space-id 1 --name Auto --type on_action --trigger \'{"type":"card_created"}\' --actions \'[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]\' --json',
+                command='kaiten --json automations create --space-id 1 --name Auto --type on_action --trigger \'{"type":"card_created"}\' --actions \'[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]\'',
                 description="Create an automation using the known live-valid add_assignee payload shape.",
             ),
         ),
@@ -98,7 +98,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten automations get --space-id 1 --automation-id auto-1 --json",
+                command="kaiten --json automations get --space-id 1 --automation-id auto-1",
                 description="Get an automation.",
             ),
         ),
@@ -137,7 +137,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten automations update --space-id 1 --automation-id auto-1 --status disabled --json",
+                command="kaiten --json automations update --space-id 1 --automation-id auto-1 --status disabled",
                 description="Disable an automation.",
             ),
         ),
@@ -161,7 +161,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten automations delete --space-id 1 --automation-id auto-1 --json",
+                command="kaiten --json automations delete --space-id 1 --automation-id auto-1",
                 description="Delete an automation.",
             ),
         ),
@@ -188,7 +188,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=automation_copy_request),
         examples=(
             ExampleSpec(
-                command="kaiten automations copy --space-id 1 --automation-id auto-1 --target-space-id 2 --json",
+                command="kaiten --json automations copy --space-id 1 --automation-id auto-1 --target-space-id 2",
                 description="Copy an automation.",
             ),
         ),
@@ -209,7 +209,7 @@ TOOLS = (
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten workflows list --json", description="List workflows."),
+            ExampleSpec(command="kaiten --json workflows list", description="List workflows."),
         ),
     ),
     make_tool(
@@ -240,7 +240,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten workflows create --name Flow --stages \'[{"id":"1","name":"Todo","type":"queue"}]\' --transitions \'[{"id":"t1"}]\' --json',
+                command='kaiten --json workflows create --name Flow --stages \'[{"id":"1","name":"Todo","type":"queue"}]\' --transitions \'[{"id":"t1"}]\'',
                 description="Create a workflow.",
             ),
         ),
@@ -263,7 +263,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten workflows get --workflow-id wf-1 --json",
+                command="kaiten --json workflows get --workflow-id wf-1",
                 description="Get a workflow.",
             ),
         ),
@@ -298,7 +298,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten workflows update --workflow-id wf-1 --name Flow2 --json",
+                command="kaiten --json workflows update --workflow-id wf-1 --name Flow2",
                 description="Update a workflow.",
             ),
         ),
@@ -321,7 +321,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten workflows delete --workflow-id wf-1 --json",
+                command="kaiten --json workflows delete --workflow-id wf-1",
                 description="Delete a workflow.",
             ),
         ),

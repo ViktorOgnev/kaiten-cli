@@ -93,11 +93,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten documents list --query "Design" --json',
+                command='kaiten --json documents list --query "Design"',
                 description="List documents.",
             ),
             ExampleSpec(
-                command="kaiten documents list --compact --fields uid,title --json",
+                command="kaiten --json documents list --compact --fields uid,title",
                 description="List documents with a narrow response surface.",
             ),
         ),
@@ -132,7 +132,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(
-                command='kaiten documents create --title "Spec" --text "# Header" --json',
+                command='kaiten --json documents create --title "Spec" --text "# Header"',
                 description="Create a document from markdown.",
             ),
         ),
@@ -171,11 +171,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten documents get --document-uid doc-1 --json",
+                command="kaiten --json documents get --document-uid doc-1",
                 description="Get a document.",
             ),
             ExampleSpec(
-                command="kaiten documents get --document-uid doc-1 --markdown --output ./doc.md --json",
+                command="kaiten --json documents get --document-uid doc-1 --markdown --output ./doc.md",
                 description="Save a document as Markdown.",
             ),
         ),
@@ -215,7 +215,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(
-                command='kaiten documents update --document-uid doc-1 --text "**bold**" --json',
+                command='kaiten --json documents update --document-uid doc-1 --text "**bold**"',
                 description="Update a document body.",
             ),
         ),
@@ -239,7 +239,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten documents delete --document-uid doc-1 --json",
+                command="kaiten --json documents delete --document-uid doc-1",
                 description="Delete a document.",
             ),
         ),
@@ -264,7 +264,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=prevent_redirect_request),
         examples=(
             ExampleSpec(
-                command="kaiten document-files get-url --document-uid doc-1 --file-id file-1 --json",
+                command="kaiten --json document-files get-url --document-uid doc-1 --file-id file-1",
                 description="Resolve a private document file URL for download.",
             ),
         ),
@@ -296,7 +296,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten document-files upload --document-uid doc-1 --file ./screenshot.png --json",
+                command="kaiten --json document-files upload --document-uid doc-1 --file ./screenshot.png",
                 description="Upload a local file to a document.",
             ),
         ),
@@ -321,7 +321,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten document-schemas get --schema-id 1 --json",
+                command="kaiten --json document-schemas get --schema-id 1",
                 description="Get a document data schema.",
             ),
         ),
@@ -346,7 +346,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command='kaiten document-groups list --query "Engineering" --json',
+                command='kaiten --json document-groups list --query "Engineering"',
                 description="List document groups.",
             ),
         ),
@@ -379,7 +379,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
         examples=(
             ExampleSpec(
-                command='kaiten document-groups create --title "Engineering" --json',
+                command='kaiten --json document-groups create --title "Engineering"',
                 description="Create a document group.",
             ),
         ),
@@ -401,7 +401,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten document-groups get --group-uid grp-1 --json",
+                command="kaiten --json document-groups get --group-uid grp-1",
                 description="Get a document group.",
             ),
         ),
@@ -427,7 +427,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten document-groups update --group-uid grp-1 --title "Docs" --json',
+                command='kaiten --json document-groups update --group-uid grp-1 --title "Docs"',
                 description="Update a document group.",
             ),
         ),
@@ -451,7 +451,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten document-groups delete --group-uid grp-1 --json",
+                command="kaiten --json document-groups delete --group-uid grp-1",
                 description="Delete a document group.",
             ),
         ),

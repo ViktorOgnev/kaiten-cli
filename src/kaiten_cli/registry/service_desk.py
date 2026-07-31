@@ -29,7 +29,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk requests list --json",
+                command="kaiten --json service-desk requests list",
                 description="List Service Desk requests.",
             ),
         ),
@@ -55,7 +55,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten service-desk requests create --title "Help" --service-id 1 --json',
+                command='kaiten --json service-desk requests create --title "Help" --service-id 1',
                 description="Create a request.",
             ),
         ),
@@ -76,7 +76,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk requests get --request-id 1 --json",
+                command="kaiten --json service-desk requests get --request-id 1",
                 description="Get a request.",
             ),
         ),
@@ -103,7 +103,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk requests update --request-id 1 --priority high --json",
+                command="kaiten --json service-desk requests update --request-id 1 --priority high",
                 description="Update a request.",
             ),
         ),
@@ -124,7 +124,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk requests delete --request-id 1 --json",
+                command="kaiten --json service-desk requests delete --request-id 1",
                 description="Delete a request.",
             ),
         ),
@@ -150,7 +150,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk services list --json", description="List services."
+                command="kaiten --json service-desk services list", description="List services."
             ),
         ),
     ),
@@ -170,7 +170,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk services get --service-id 1 --json",
+                command="kaiten --json service-desk services get --service-id 1",
                 description="Get a service.",
             ),
         ),
@@ -238,7 +238,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk services create --name Support --board-id 1 --position 1 --lng en --json",
+                command="kaiten --json service-desk services create --name Support --board-id 1 --position 1 --lng en",
                 description="Create a service.",
             ),
         ),
@@ -308,7 +308,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk services update --service-id 1 --archived --json",
+                command="kaiten --json service-desk services update --service-id 1 --archived",
                 description="Update a service.",
             ),
         ),
@@ -330,7 +330,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=archive_service_request),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk services delete --service-id 1 --json",
+                command="kaiten --json service-desk services delete --service-id 1",
                 description="Archive a service.",
             ),
         ),
@@ -356,7 +356,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organizations list --json",
+                command="kaiten --json service-desk organizations list",
                 description="List organizations.",
             ),
         ),
@@ -380,7 +380,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organizations create --name Org --json",
+                command="kaiten --json service-desk organizations create --name Org",
                 description="Create an organization.",
             ),
         ),
@@ -403,7 +403,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organizations get --organization-id 1 --json",
+                command="kaiten --json service-desk organizations get --organization-id 1",
                 description="Get an organization.",
             ),
         ),
@@ -429,7 +429,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organizations update --organization-id 1 --name Org2 --json",
+                command="kaiten --json service-desk organizations update --organization-id 1 --name Org2",
                 description="Update an organization.",
             ),
         ),
@@ -452,7 +452,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organizations delete --organization-id 1 --json",
+                command="kaiten --json service-desk organizations delete --organization-id 1",
                 description="Delete an organization.",
             ),
         ),
@@ -474,7 +474,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla list --json", description="List SLA policies."
+                command="kaiten --json service-desk sla list", description="List SLA policies."
             ),
         ),
     ),
@@ -492,7 +492,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla get --sla-id sla-1 --json",
+                command="kaiten --json service-desk sla get --sla-id sla-1",
                 description="Get an SLA policy.",
             ),
         ),
@@ -521,7 +521,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla create --name SLA --rules '[]' --json",
+                command="kaiten --json service-desk sla create --name SLA --rules '[]'",
                 description="Create an SLA policy.",
             ),
         ),
@@ -555,7 +555,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla update --sla-id sla-1 --status inactive --json",
+                command="kaiten --json service-desk sla update --sla-id sla-1 --status inactive",
                 description="Update an SLA policy.",
             ),
         ),
@@ -574,7 +574,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla delete --sla-id sla-1 --json",
+                command="kaiten --json service-desk sla delete --sla-id sla-1",
                 description="Delete an SLA policy.",
             ),
         ),
@@ -587,7 +587,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/service-desk/template-answers"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk template-answers list --json",
+                command="kaiten --json service-desk template-answers list",
                 description="List template answers.",
             ),
         ),
@@ -610,7 +610,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk template-answers get --template-answer-id ta-1 --json",
+                command="kaiten --json service-desk template-answers get --template-answer-id ta-1",
                 description="Get a template answer.",
             ),
         ),
@@ -634,7 +634,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten service-desk template-answers create --name Hello --text "Hi" --json',
+                command='kaiten --json service-desk template-answers create --name Hello --text "Hi"',
                 description="Create a template answer.",
             ),
         ),
@@ -663,7 +663,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten service-desk template-answers update --template-answer-id ta-1 --text "Hello" --json',
+                command='kaiten --json service-desk template-answers update --template-answer-id ta-1 --text "Hello"',
                 description="Update a template answer.",
             ),
         ),
@@ -686,7 +686,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk template-answers delete --template-answer-id ta-1 --json",
+                command="kaiten --json service-desk template-answers delete --template-answer-id ta-1",
                 description="Delete a template answer.",
             ),
         ),
@@ -726,7 +726,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla-rules create --sla-id sla-1 --type response --json",
+                command="kaiten --json service-desk sla-rules create --sla-id sla-1 --type response",
                 description="Create an SLA rule.",
             ),
         ),
@@ -767,7 +767,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla-rules update --sla-id sla-1 --rule-id rule-1 --estimated-time 60 --json",
+                command="kaiten --json service-desk sla-rules update --sla-id sla-1 --rule-id rule-1 --estimated-time 60",
                 description="Update an SLA rule.",
             ),
         ),
@@ -791,7 +791,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla-rules delete --sla-id sla-1 --rule-id rule-1 --json",
+                command="kaiten --json service-desk sla-rules delete --sla-id sla-1 --rule-id rule-1",
                 description="Delete an SLA rule.",
             ),
         ),
@@ -812,7 +812,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla recalculate --sla-id sla-1 --json",
+                command="kaiten --json service-desk sla recalculate --sla-id sla-1",
                 description="Recalculate SLA measurements.",
             ),
         ),
@@ -839,7 +839,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk users list --json",
+                command="kaiten --json service-desk users list",
                 description="List Service Desk users.",
             ),
         ),
@@ -865,7 +865,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten service-desk users update --user-id 1 --full-name "Alice" --json',
+                command='kaiten --json service-desk users update --user-id 1 --full-name "Alice"',
                 description="Update a Service Desk user.",
             ),
         ),
@@ -886,7 +886,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk users set-temp-password --user-id 1 --json",
+                command="kaiten --json service-desk users set-temp-password --user-id 1",
                 description="Generate a temporary password.",
             ),
         ),
@@ -912,7 +912,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organization-users add --organization-id 1 --user-id 2 --json",
+                command="kaiten --json service-desk organization-users add --organization-id 1 --user-id 2",
                 description="Add an organization user.",
             ),
         ),
@@ -938,7 +938,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organization-users update --organization-id 1 --user-id 2 --permissions 7 --json",
+                command="kaiten --json service-desk organization-users update --organization-id 1 --user-id 2 --permissions 7",
                 description="Update organization-user permissions.",
             ),
         ),
@@ -962,7 +962,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organization-users remove --organization-id 1 --user-id 2 --json",
+                command="kaiten --json service-desk organization-users remove --organization-id 1 --user-id 2",
                 description="Remove an organization user.",
             ),
         ),
@@ -991,7 +991,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organization-users batch-add --organization-id 1 --user-ids '[1,2]' --json",
+                command="kaiten --json service-desk organization-users batch-add --organization-id 1 --user-ids '[1,2]'",
                 description="Batch-add organization users.",
             ),
         ),
@@ -1020,7 +1020,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk organization-users batch-remove --organization-id 1 --user-ids '[1,2]' --json",
+                command="kaiten --json service-desk organization-users batch-remove --organization-id 1 --user-ids '[1,2]'",
                 description="Batch-remove organization users.",
             ),
         ),
@@ -1033,7 +1033,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/sd-settings/current"),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk settings get --json",
+                command="kaiten --json service-desk settings get",
                 description="Get Service Desk settings.",
             ),
         ),
@@ -1059,7 +1059,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk settings update --service-desk-settings '{}' --json",
+                command="kaiten --json service-desk settings update --service-desk-settings '{}'",
                 description="Update Service Desk settings.",
             ),
         ),
@@ -1085,7 +1085,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=service_desk_stats_query_request),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk stats get --date-from 2026-01-01 --json",
+                command="kaiten --json service-desk stats get --date-from 2026-01-01",
                 description="Get Service Desk statistics.",
             ),
         ),
@@ -1122,7 +1122,7 @@ TOOLS = (
         response_policy=ResponsePolicy(heavy=True),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk sla stats --sla-id sla-1 --json",
+                command="kaiten --json service-desk sla stats --sla-id sla-1",
                 description="Get Service Desk SLA statistics.",
             ),
         ),
@@ -1147,7 +1147,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk vote-properties add --service-id 1 --id 2 --json",
+                command="kaiten --json service-desk vote-properties add --service-id 1 --id 2",
                 description="Add a vote property.",
             ),
         ),
@@ -1171,7 +1171,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten service-desk vote-properties remove --service-id 1 --property-id 2 --json",
+                command="kaiten --json service-desk vote-properties remove --service-id 1 --property-id 2",
                 description="Remove a vote property.",
             ),
         ),
@@ -1196,7 +1196,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-slas attach --card-id 1 --sla-id sla-1 --json",
+                command="kaiten --json card-slas attach --card-id 1 --sla-id sla-1",
                 description="Attach an SLA to a card.",
             ),
         ),
@@ -1220,7 +1220,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-slas detach --card-id 1 --sla-id sla-1 --json",
+                command="kaiten --json card-slas detach --card-id 1 --sla-id sla-1",
                 description="Detach an SLA from a card.",
             ),
         ),
@@ -1241,7 +1241,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-sla-measurements get --card-id 1 --json",
+                command="kaiten --json card-sla-measurements get --card-id 1",
                 description="Get card SLA measurements.",
             ),
         ),
@@ -1262,7 +1262,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-sla-measurements get --space-id 1 --json",
+                command="kaiten --json space-sla-measurements get --space-id 1",
                 description="Get space SLA measurements.",
             ),
         ),

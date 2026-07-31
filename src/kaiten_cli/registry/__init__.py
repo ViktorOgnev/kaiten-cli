@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import difflib
+from typing import Any
 
 from kaiten_cli.models import (
     CACHE_POLICY_NONE,
@@ -141,32 +142,50 @@ def examples_for(identifier: str) -> list[str]:
     return example_commands(tool.examples)
 
 
-def cache_guidance_for(tool: ToolSpec) -> dict[str, str]:
+def cache_guidance_for(tool: ToolSpec) -> dict[str, Any]:
+    common = {
+        "default_mode": "auto",
+        "available_modes": ["auto", "off", "readwrite", "refresh"],
+        "recommended_mode": "auto",
+        "off_hint": (
+            "Use --cache-mode off only for cache debugging, privacy-sensitive reads, "
+            "or high-churn polling."
+        ),
+        "readwrite_hint": (
+            "Use --cache-mode readwrite with an explicit --cache-ttl-seconds value "
+            "when a fixed TTL is required."
+        ),
+    }
     if tool.cache_policy == CACHE_POLICY_NONE:
         return {
+            **common,
             "strategy": "none",
             "guidance": "This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.",
             "refresh_hint": "No cache refresh is needed.",
         }
     if tool.cache_policy == CACHE_POLICY_PERSISTENT_HEAVY:
         return {
+            **common,
             "strategy": "heavy_persistent",
             "guidance": "Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.",
-            "refresh_hint": "Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.",
+            "refresh_hint": "Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.",
         }
     if tool.cache_policy == CACHE_POLICY_PERSISTENT_OPT_IN:
         return {
+            **common,
             "strategy": "entity_or_reference_persistent",
             "guidance": "Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.",
-            "refresh_hint": "Use --cache-mode refresh to force a fresh API read and rewrite the cache.",
+            "refresh_hint": "Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.",
         }
     if tool.cache_policy == CACHE_POLICY_REQUEST_SCOPE:
         return {
+            **common,
             "strategy": "request_scope",
             "guidance": "Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.",
             "refresh_hint": "No disk cache is read by default for this command.",
         }
     return {
+        **common,
         "strategy": tool.cache_policy,
         "guidance": "Check command notes for cache behavior.",
         "refresh_hint": "Use --cache-mode refresh only if the command supports persistent cache.",

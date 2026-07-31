@@ -13,17 +13,26 @@ class CliError(Exception):
     message: str
     exit_code: int
     error_type: str
+    details: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.error_type, "message": self.message}
+        payload: dict[str, Any] = {"type": self.error_type, "message": self.message}
+        if self.details:
+            payload["details"] = self.details
+        return payload
 
     def __str__(self) -> str:
         return self.message
 
 
 class ValidationError(CliError):
-    def __init__(self, message: str):
-        super().__init__(message=message, exit_code=2, error_type="validation_error")
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None):
+        super().__init__(
+            message=message,
+            exit_code=2,
+            error_type="validation_error",
+            details=details,
+        )
 
 
 class ConfigError(CliError):

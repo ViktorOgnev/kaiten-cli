@@ -132,6 +132,7 @@ async def execute_tool_with_diagnostics(
             f"cache_ttl_seconds={profile.cache_ttl_seconds}",
         )
         context = ExecutionContext.for_profile(profile, reporter=reporter)
+        context.stats.cache_policy = tool.cache_policy
         client = KaitenClient(
             domain=profile.domain,
             token=profile.token,
@@ -194,7 +195,12 @@ async def execute_tool_with_diagnostics(
         if tool.response_policy.fields_supported:
             result = select_fields(result, payload.get("fields"))
         result, _ = strip_base64(result)
-    return result, context.stats if context is not None else ExecutionStats()
+    return (
+        result,
+        context.stats
+        if context is not None
+        else ExecutionStats(cache_policy=tool.cache_policy),
+    )
 
 
 def execute_tool_sync(

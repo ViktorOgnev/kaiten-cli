@@ -31,7 +31,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-members list --card-id 10 --compact --json",
+                command="kaiten --json card-members list --card-id 10 --compact",
                 description="List members on a card.",
             ),
         ),
@@ -56,7 +56,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-members add --card-id 10 --user-id 7 --json",
+                command="kaiten --json card-members add --card-id 10 --user-id 7",
                 description="Add a member to a card.",
             ),
         ),
@@ -80,7 +80,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-members remove --card-id 10 --user-id 7 --json",
+                command="kaiten --json card-members remove --card-id 10 --user-id 7",
                 description="Remove a member from a card.",
             ),
         ),
@@ -111,7 +111,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten card-members update --card-id 10 --member-id 7 --role-id role-uuid --json",
+                command="kaiten --json card-members update --card-id 10 --member-id 7 --role-id role-uuid",
                 description="Update a card member role.",
             ),
         ),
@@ -191,7 +191,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten users list --query "alice" --compact --json',
+                command='kaiten --json users list --query "alice" --compact',
                 description="Search users by name.",
             ),
         ),
@@ -207,7 +207,7 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/users/current"),
         examples=(
-            ExampleSpec(command="kaiten users current --json", description="Get the current user."),
+            ExampleSpec(command="kaiten --json users current", description="Get the current user."),
         ),
     ),
     make_tool(
@@ -236,7 +236,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten users update --user-id 7 --full-name "Alice Smith" --json',
+                command='kaiten --json users update --user-id 7 --full-name "Alice Smith"',
                 description="Update a user.",
             ),
         ),

@@ -108,7 +108,7 @@ def test_describe_tool_includes_persistent_cache_policy_for_safe_entity_reads():
 def test_tool_examples_non_empty():
     examples = tool_examples("cards.list")
     assert examples
-    assert examples[0].startswith("kaiten cards list")
+    assert examples[0].startswith("kaiten --json cards list")
 
 
 def test_search_tools_exposes_usage_notes_and_bulk_alternative():

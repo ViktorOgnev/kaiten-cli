@@ -30,7 +30,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-children list --card-id 10 --json",
+                command="kaiten --json card-children list --card-id 10",
                 description="List child cards.",
             ),
         ),
@@ -76,11 +76,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-children batch-list --card-ids '[1,2,3]' --json",
+                command="kaiten --json card-children batch-list --card-ids '[1,2,3]'",
                 description="Fetch child-card relations for several parent cards.",
             ),
             ExampleSpec(
-                command="kaiten card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title --json",
+                command="kaiten --json card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title",
                 description="Fetch narrowed child-card payloads with bounded concurrency.",
             ),
         ),
@@ -113,7 +113,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=card_child_add_request),
         examples=(
             ExampleSpec(
-                command="kaiten card-children add --card-id 10 --child-card-id 11 --json",
+                command="kaiten --json card-children add --card-id 10 --child-card-id 11",
                 description="Add a child card relation.",
             ),
         ),
@@ -137,7 +137,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-children remove --card-id 10 --child-id 11 --json",
+                command="kaiten --json card-children remove --card-id 10 --child-id 11",
                 description="Remove a child card relation.",
             ),
         ),
@@ -158,7 +158,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-parents list --card-id 10 --json",
+                command="kaiten --json card-parents list --card-id 10",
                 description="List parent cards.",
             ),
         ),
@@ -187,7 +187,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=card_parent_add_request),
         examples=(
             ExampleSpec(
-                command="kaiten card-parents add --card-id 10 --parent-card-id 11 --json",
+                command="kaiten --json card-parents add --card-id 10 --parent-card-id 11",
                 description="Add a parent card relation.",
             ),
         ),
@@ -211,7 +211,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-parents remove --card-id 10 --parent-id 11 --json",
+                command="kaiten --json card-parents remove --card-id 10 --parent-id 11",
                 description="Remove a parent card relation.",
             ),
         ),
@@ -251,7 +251,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=planned_relation_add_request),
         examples=(
             ExampleSpec(
-                command="kaiten planned-relations add --card-id 10 --target-card-id 11 --json",
+                command="kaiten --json planned-relations add --card-id 10 --target-card-id 11",
                 description="Create a finish-to-start planned relation.",
             ),
         ),
@@ -291,7 +291,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days --json",
+                command="kaiten --json planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days",
                 description="Set a 2-day lag for a planned relation.",
             ),
         ),
@@ -321,7 +321,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten planned-relations remove --card-id 10 --target-card-id 11 --json",
+                command="kaiten --json planned-relations remove --card-id 10 --target-card-id 11",
                 description="Remove a planned relation.",
             ),
         ),

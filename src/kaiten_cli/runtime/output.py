@@ -36,5 +36,18 @@ def render_error(
         return json.dumps(payload, ensure_ascii=False, default=str)
     prefix = error.error_type.replace("_", " ").capitalize()
     if hasattr(error, "status_code"):
-        return f"{prefix} {getattr(error, 'status_code')}: {error.message}"
-    return f"{prefix}: {error.message}"
+        headline = f"{prefix} {getattr(error, 'status_code')}: {error.message}"
+    else:
+        headline = f"{prefix}: {error.message}"
+    if not error.details:
+        return headline
+    lines = [headline]
+    if suggested_usage := error.details.get("suggested_usage"):
+        lines.append(f"Suggested usage: {suggested_usage}")
+    if supported_options := error.details.get("supported_options"):
+        lines.append(f"Supported options: {', '.join(supported_options)}")
+    if bulk_alternative := error.details.get("bulk_alternative"):
+        lines.append(f"Bulk alternative: {bulk_alternative}")
+    if next_step := error.details.get("next"):
+        lines.append(f"Next: {next_step}")
+    return "\n".join(lines)

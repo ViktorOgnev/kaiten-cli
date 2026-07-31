@@ -73,7 +73,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=200, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directories list --include-fields --include-records-count --json",
+                command="kaiten --json custom-directories list --include-fields --include-records-count",
                 description="List Catalogs with field metadata and record counts.",
             ),
         ),
@@ -107,7 +107,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directories get --directory-id dir-uuid --json",
+                command="kaiten --json custom-directories get --directory-id dir-uuid",
                 description="Get a Catalog.",
             ),
         ),
@@ -145,7 +145,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-directories create --name "Contacts" --settings \'{"multi_select":false,"allow_editing":true}\' --json',
+                command='kaiten --json custom-directories create --name "Contacts" --settings \'{"multi_select":false,"allow_editing":true}\'',
                 description="Create a Catalog.",
             ),
         ),
@@ -183,7 +183,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-directories update --directory-id dir-uuid --name "Clients" --json',
+                command='kaiten --json custom-directories update --directory-id dir-uuid --name "Clients"',
                 description="Update a Catalog.",
             ),
         ),
@@ -205,7 +205,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directories delete --directory-id dir-uuid --json",
+                command="kaiten --json custom-directories delete --directory-id dir-uuid",
                 description="Delete a Catalog.",
             ),
         ),
@@ -233,7 +233,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-fields list --directory-id dir-uuid --json",
+                command="kaiten --json custom-directory-fields list --directory-id dir-uuid",
                 description="List Catalog fields.",
             ),
         ),
@@ -255,7 +255,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-fields get --directory-id dir-uuid --field-id field-uuid --json",
+                command="kaiten --json custom-directory-fields get --directory-id dir-uuid --field-id field-uuid",
                 description="Get a Catalog field.",
             ),
         ),
@@ -302,7 +302,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-fields create --directory-id dir-uuid --name Email --type email --json",
+                command="kaiten --json custom-directory-fields create --directory-id dir-uuid --name Email --type email",
                 description="Create a Catalog field.",
             ),
         ),
@@ -351,7 +351,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-fields update --directory-id dir-uuid --field-id field-uuid --required --json",
+                command="kaiten --json custom-directory-fields update --directory-id dir-uuid --field-id field-uuid --required",
                 description="Update a Catalog field.",
             ),
         ),
@@ -373,7 +373,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid --json",
+                command="kaiten --json custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid",
                 description="Delete a Catalog field.",
             ),
         ),
@@ -436,7 +436,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=encode_object_query_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-records list --directory-id dir-uuid --profile summary --json",
+                command="kaiten --json custom-directory-records list --directory-id dir-uuid --profile summary",
                 description="List Catalog records.",
             ),
         ),
@@ -467,7 +467,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-records get --directory-id dir-uuid --record-id record-uuid --json",
+                command="kaiten --json custom-directory-records get --directory-id dir-uuid --record-id record-uuid",
                 description="Get a Catalog record.",
             ),
         ),
@@ -498,7 +498,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-directory-records create --directory-id dir-uuid --values \'{"field-uuid":"Alice"}\' --json',
+                command='kaiten --json custom-directory-records create --directory-id dir-uuid --values \'{"field-uuid":"Alice"}\'',
                 description="Create a Catalog record.",
             ),
         ),
@@ -535,7 +535,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-directory-records update --directory-id dir-uuid --record-id record-uuid --values \'{"field-uuid":"Bob"}\' --json',
+                command='kaiten --json custom-directory-records update --directory-id dir-uuid --record-id record-uuid --values \'{"field-uuid":"Bob"}\'',
                 description="Update a Catalog record.",
             ),
         ),
@@ -557,7 +557,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-records delete --directory-id dir-uuid --record-id record-uuid --json",
+                command="kaiten --json custom-directory-records delete --directory-id dir-uuid --record-id record-uuid",
                 description="Delete a Catalog record.",
             ),
         ),
@@ -590,7 +590,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=100, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid --json",
+                command="kaiten --json custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid",
                 description="List cards linked to a Catalog record.",
             ),
         ),

@@ -40,7 +40,7 @@ TOOLS = (
                 description="List boards in a space.",
             ),
             ExampleSpec(
-                command="kaiten boards list --space-id 1 --fields id,title --json",
+                command="kaiten --json boards list --space-id 1 --fields id,title",
                 description="List boards with narrow fields.",
             ),
         ),
@@ -170,11 +170,11 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=board_place_existing_request),
         examples=(
             ExampleSpec(
-                command="kaiten boards place-existing --space-id 2 --board-id 10 --json",
+                command="kaiten --json boards place-existing --space-id 2 --board-id 10",
                 description="Show an existing board in another space without moving it.",
             ),
             ExampleSpec(
-                command="kaiten boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2 --json",
+                command="kaiten --json boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2",
                 description="Place an existing board at an explicit position.",
             ),
         ),

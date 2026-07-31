@@ -27,7 +27,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blockers list --card-id 10 --json",
+                command="kaiten --json blockers list --card-id 10",
                 description="List blockers on a card.",
             ),
         ),
@@ -52,7 +52,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blockers get --card-id 10 --blocker-id 20 --json",
+                command="kaiten --json blockers get --card-id 10 --blocker-id 20",
                 description="Get a blocker by filtering the blocker list.",
             ),
         ),
@@ -84,7 +84,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten blockers create --card-id 10 --reason "Waiting for review" --json',
+                command='kaiten --json blockers create --card-id 10 --reason "Waiting for review"',
                 description="Create a blocker on a card.",
             ),
         ),
@@ -110,7 +110,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten blockers update --card-id 10 --blocker-id 20 --reason "Waiting for review" --json',
+                command='kaiten --json blockers update --card-id 10 --blocker-id 20 --reason "Waiting for review"',
                 description="Update a blocker.",
             ),
         ),
@@ -134,7 +134,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blockers delete --card-id 10 --blocker-id 20 --json",
+                command="kaiten --json blockers delete --card-id 10 --blocker-id 20",
                 description="Delete a blocker.",
             ),
         ),
@@ -148,7 +148,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-categories list --json",
+                command="kaiten --json blocker-categories list",
                 description="List blocker categories.",
             ),
         ),
@@ -173,7 +173,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-categories add --blocker-id 20 --category-uuid cat-uuid --json",
+                command="kaiten --json blocker-categories add --blocker-id 20 --category-uuid cat-uuid",
                 description="Add a blocker category.",
             ),
         ),
@@ -197,7 +197,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-categories remove --blocker-id 20 --category-uuid cat-uuid --json",
+                command="kaiten --json blocker-categories remove --blocker-id 20 --category-uuid cat-uuid",
                 description="Remove a blocker category.",
             ),
         ),
@@ -219,7 +219,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-users list --blocker-id 20 --compact --json",
+                command="kaiten --json blocker-users list --blocker-id 20 --compact",
                 description="List blocker users.",
             ),
         ),
@@ -244,7 +244,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-users add --blocker-id 20 --user-id 7 --json",
+                command="kaiten --json blocker-users add --blocker-id 20 --user-id 7",
                 description="Add a blocker user.",
             ),
         ),
@@ -268,7 +268,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten blocker-users remove --blocker-id 20 --user-id 7 --json",
+                command="kaiten --json blocker-users remove --blocker-id 20 --user-id 7",
                 description="Remove a blocker user.",
             ),
         ),
@@ -282,7 +282,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten current-user-blockers list --json",
+                command="kaiten --json current-user-blockers list",
                 description="List current user blockers.",
             ),
         ),

@@ -22,5 +22,8 @@ dist/
 .DS_Store
 /ARCHITECTURE_REVIEW.md
 /docs/archive/
+/docs/audits/
+/scripts/analyze_codex_kaiten_sessions.py
+/tests/test_analyze_codex_kaiten_sessions.py
 /PLAN*.md
 /PARITY_CHECKLIST.md

@@ -35,7 +35,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=scim_query_request),
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten scim users list --json", description="List SCIM users."),
+            ExampleSpec(command="kaiten --json scim users list", description="List SCIM users."),
         ),
     ),
     make_tool(
@@ -55,7 +55,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten scim users get --user-id user-id --json",
+                command="kaiten --json scim users get --user-id user-id",
                 description="Get a SCIM user.",
             ),
         ),
@@ -78,7 +78,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten scim users create --payload \'{"userName":"alice@example.com"}\' --json',
+                command='kaiten --json scim users create --payload \'{"userName":"alice@example.com"}\'',
                 description="Create a SCIM user.",
             ),
         ),
@@ -105,7 +105,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten scim users update --user-id user-id --payload '{\"active\":false}' --json",
+                command="kaiten --json scim users update --user-id user-id --payload '{\"active\":false}'",
                 description="Update a SCIM user.",
             ),
         ),
@@ -131,7 +131,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=scim_query_request),
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten scim groups list --json", description="List SCIM groups."),
+            ExampleSpec(command="kaiten --json scim groups list", description="List SCIM groups."),
         ),
     ),
     make_tool(
@@ -151,7 +151,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten scim groups get --group-id group-id --json",
+                command="kaiten --json scim groups get --group-id group-id",
                 description="Get a SCIM group.",
             ),
         ),
@@ -174,7 +174,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten scim groups create --payload \'{"displayName":"Engineering"}\' --json',
+                command='kaiten --json scim groups create --payload \'{"displayName":"Engineering"}\'',
                 description="Create a SCIM group.",
             ),
         ),
@@ -201,7 +201,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten scim groups update --group-id group-id --payload \'{"displayName":"Ops"}\' --json',
+                command='kaiten --json scim groups update --group-id group-id --payload \'{"displayName":"Ops"}\'',
                 description="Update a SCIM group.",
             ),
         ),

@@ -252,6 +252,44 @@ def test_cli_json_stats_counts_api_wait_and_groups(monkeypatch, capsys):
     assert stats["groups"][0]["http_request_count"] == 1
 
 
+@pytest.mark.parametrize("cache_mode", ["auto", "refresh", "off", "readwrite"])
+@respx.mock
+def test_cli_json_stats_reports_effective_cache_mode_policy_and_ttl(
+    cache_mode, monkeypatch, capsys, tmp_path
+):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    monkeypatch.setattr(
+        "kaiten_cli.runtime.cache.persistent_cache_path",
+        lambda: tmp_path / f"{cache_mode}.sqlite3",
+    )
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/123").mock(
+        return_value=Response(200, json={"id": 123, "title": "Task"})
+    )
+
+    exit_code = main(
+        [
+            "--json",
+            "--cache-mode",
+            cache_mode,
+            "--cache-ttl-seconds",
+            "37",
+            "cards",
+            "get",
+            "--card-id",
+            "123",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["stats"]["cache"] == {
+        "mode": cache_mode,
+        "policy": "persistent_opt_in",
+        "ttl_seconds": 37 if cache_mode in {"refresh", "readwrite"} else None,
+    }
+
+
 @respx.mock
 def test_cli_json_stats_cache_hit_does_not_count_api(monkeypatch, capsys):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")

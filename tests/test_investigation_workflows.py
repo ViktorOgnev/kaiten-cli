@@ -241,6 +241,12 @@ def test_trace_file_records_tool_stats_and_batch_meta(monkeypatch, tmp_path, cap
     assert entry["requested_count"] == 2
     assert entry["unique_count"] == 1
     assert entry["workers"] == 2
+    assert entry["cache"] == {
+        "mode": "auto",
+        "policy": "persistent_heavy",
+        "ttl_seconds": None,
+    }
+    assert stdout_payload["stats"]["cache"] == entry["cache"]
     assert stat.S_IMODE(trace_file.stat().st_mode) == 0o600
 
 
@@ -343,3 +349,101 @@ def test_trace_file_from_env_redacts_tokens(config_env, monkeypatch, tmp_path, c
     assert entry["execution_mode"] == "meta"
     token_index = entry["argv"].index("--token")
     assert entry["argv"][token_index + 1] == "[REDACTED]"
+
+
+def test_trace_summarize_streams_bounded_payload_free_recommendations(
+    tmp_path, capsys
+):
+    trace_file = tmp_path / "trace.jsonl"
+    entries = []
+    for index in range(5):
+        entries.append(
+            {
+                "canonical_name": "cards.get",
+                "execution_mode": "direct_http",
+                "exit_code": 0,
+                "duration_ms": 10,
+                "argv": [
+                    "--json",
+                    "--token",
+                    f"secret-{index}",
+                    "cards",
+                    "get",
+                    "--card-id",
+                    str(index),
+                ],
+                "stats": {
+                    "cache": {
+                        "mode": "refresh" if index < 2 else "auto",
+                        "policy": "persistent_opt_in",
+                        "ttl_seconds": 60,
+                    },
+                    "http_request_count": 2,
+                    "api_wait_ms": 5,
+                    "retry_count": 0,
+                    "cache_hits": {"request": 0, "inflight_dedup": 0, "disk": 0},
+                    "cache_misses": {"request": 1, "disk": 1},
+                    "cache_bypasses": {"disk": 1 if index < 2 else 0},
+                    "groups": [
+                        {
+                            "path_family": "/cards/:id",
+                            "http_request_count": 2,
+                        }
+                    ],
+                },
+            }
+        )
+    repeated_population = {
+        "canonical_name": "cards.list-all",
+        "execution_mode": "aggregated",
+        "exit_code": 0,
+        "duration_ms": 20,
+        "argv": ["--json", "cards", "list-all", "--board-id", "10"],
+        "stats": {
+            "cache": {
+                "mode": "auto",
+                "policy": "persistent_heavy",
+                "ttl_seconds": 60,
+            },
+            "http_request_count": 1,
+            "api_wait_ms": 2,
+            "retry_count": 0,
+            "groups": [],
+        },
+    }
+    entries.extend([repeated_population, repeated_population])
+    trace_file.write_text(
+        "\n".join(json.dumps(entry) for entry in entries)
+        + '\n{"broken":\n'
+        + json.dumps(
+            {
+                "canonical_name": "unsafe payload",
+                "argv": ["private-description"],
+                "payload": {"text": "must-not-leak"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--json", "trace", "summarize", "--file", str(trace_file)]) == 0
+    rendered = capsys.readouterr().out
+    payload = json.loads(rendered)
+    data = payload["data"]
+
+    assert data["lines"] == 9
+    assert data["entries"] == 8
+    assert data["invalid_lines"] == 1
+    assert data["http_request_count"] == 12
+    assert data["path_families"] == [
+        {"path_family": "/cards/:id", "count": 10}
+    ]
+    assert [item["code"] for item in data["recommendations"]] == [
+        "prefer_batch",
+        "prefer_snapshot",
+        "prefer_auto",
+    ]
+    assert "argv" not in rendered
+    assert "private-description" not in rendered
+    assert "must-not-leak" not in rendered
+    assert "secret-" not in rendered

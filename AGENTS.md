@@ -9,6 +9,7 @@ For optimized LLM workflows, start with:
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
+- [skills/kaiten-cli-mutations/SKILL.md](skills/kaiten-cli-mutations/SKILL.md)
 
 ## Discovery-first flow
 
@@ -20,6 +21,10 @@ kaiten search-tools cards
 kaiten describe cards.list
 kaiten examples cards.list
 ```
+
+Run discovery once per unfamiliar command family, mutation workflow, or heavy
+read. Reuse the discovered contract inside the same workflow instead of
+repeating `describe` before every call.
 
 Use `--json` by default for machine-safe parsing:
 
@@ -57,11 +62,15 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 - `profile add --sandbox` is deprecated compatibility metadata and does not affect mutations or live-test gating.
 - Prefer `--compact` and `--fields` to reduce payload and token cost.
 - Request-scoped cache for safe GETs is built in; default `--cache-mode auto` also persists cacheable safe reads across CLI processes.
-- Keep `auto` for LLM/script analytics unless freshness is critical; use `--cache-mode refresh` to rebuild from Kaiten API and `--cache-mode off` to bypass disk cache.
+- Omit `--cache-mode` for ordinary workflows: this keeps the default `auto`.
+- Use `--cache-mode refresh` once at a freshness boundary; never put it inside an entity loop. For a reused local working set, prefer `snapshot refresh`.
+- Use `--cache-mode off` only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Use `--cache-mode readwrite` only with an explicit, meaningful `--cache-ttl-seconds` when a fixed TTL is required.
 - Heavy/batch reads and dense repeated entity reads get longer adaptive TTLs in `auto`; do not force tiny TTLs in wrapper scripts unless freshness is the main requirement.
 - JSON responses include top-level `stats`; check `http_request_count`, `api_wait_ms`, cache counters, and grouped path families before repeating expensive calls.
 - Use `--verbose` when you need request-path and execution diagnostics; diagnostics stay in `stderr`.
 - Use `--trace-file` or `KAITEN_TRACE_FILE` when you need a JSONL trace of real command cost across a longer workflow.
+- Trace is required for wrappers with at least three CLI commands, expected runs above ten HTTP requests, or unavoidable loops. Review it with `kaiten --json trace summarize --file <trace.jsonl>`.
 - Treat `aggregated` and `synthetic` tools as potentially more expensive than `direct_http`.
 - For high-cardinality reads, follow the heavy-data skill instead of inventing a per-entity loop.
 - For metrics workflows, follow the metrics skill instead of reconstructing raw history one card at a time.
@@ -69,4 +78,7 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 - Keep `query cards` in `summary` view by default; use `detail` or `evidence` only after local candidate reduction.
 - Treat `query metrics` as a generic local metrics layer unless a workflow explicitly defines tenant-specific flow semantics outside the CLI.
 - Prefer `space-topology.get`, `cards.batch-get`, `time-logs.batch-list`, `space-activity-all.get`, `card-children.batch-list`, `comments.batch-list`, and `card-location-history.batch-get` over manual orchestration loops.
+- When two or more entity IDs are known and `describe` reports `bulk_alternative`, use the bulk command.
+- When the same population is needed a second time, build a snapshot and continue with local `query cards` / `query metrics`.
+- Before a live mutation, use `kaiten --json --profile <name> --read-only profile probe`, then follow the mutation skill: discovery, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.
 - Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).

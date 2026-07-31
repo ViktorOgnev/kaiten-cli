@@ -15,7 +15,7 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/api-keys"),
         examples=(
-            ExampleSpec(command="kaiten api-keys list --json", description="List API keys."),
+            ExampleSpec(command="kaiten --json api-keys list", description="List API keys."),
         ),
     ),
     make_tool(
@@ -32,7 +32,7 @@ TOOLS = (
         operation=OperationSpec(method="POST", path_template="/api-keys", body_fields=("name",)),
         examples=(
             ExampleSpec(
-                command='kaiten api-keys create --name "local-dev" --json',
+                command='kaiten --json api-keys create --name "local-dev"',
                 description="Create an API key.",
             ),
         ),
@@ -53,7 +53,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten api-keys delete --key-id 1 --json", description="Delete an API key."
+                command="kaiten --json api-keys delete --key-id 1", description="Delete an API key."
             ),
         ),
     ),
@@ -65,7 +65,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/companies/current"),
         examples=(
             ExampleSpec(
-                command="kaiten company current --json",
+                command="kaiten --json company current",
                 description="Get current company information.",
             ),
         ),
@@ -78,7 +78,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/token-please"),
         examples=(
             ExampleSpec(
-                command="kaiten company socket-token --json", description="Get a websocket JWT."
+                command="kaiten --json company socket-token", description="Get a websocket JWT."
             ),
         ),
     ),
@@ -97,7 +97,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten company update --name "Acme" --json',
+                command='kaiten --json company update --name "Acme"',
                 description="Update current company information.",
             ),
         ),
@@ -119,7 +119,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten calendars list --limit 5 --json", description="List calendars."
+                command="kaiten --json calendars list --limit 5", description="List calendars."
             ),
         ),
     ),
@@ -139,7 +139,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten calendars get --calendar-id cal-1 --json",
+                command="kaiten --json calendars get --calendar-id cal-1",
                 description="Get a calendar by ID.",
             ),
         ),
@@ -161,7 +161,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten removed-cards list --json", description="List removed cards."
+                command="kaiten --json removed-cards list", description="List removed cards."
             ),
         ),
     ),
@@ -182,7 +182,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten removed-boards list --json", description="List removed boards."
+                command="kaiten --json removed-boards list", description="List removed boards."
             ),
         ),
     ),
@@ -193,7 +193,7 @@ TOOLS = (
         input_schema={"type": "object", "properties": {}},
         operation=OperationSpec(method="GET", path_template="/user-timers"),
         examples=(
-            ExampleSpec(command="kaiten user-timers list --json", description="List user timers."),
+            ExampleSpec(command="kaiten --json user-timers list", description="List user timers."),
         ),
     ),
     make_tool(
@@ -212,7 +212,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-timers create --card-id 10 --json",
+                command="kaiten --json user-timers create --card-id 10",
                 description="Create a user timer.",
             ),
         ),
@@ -233,7 +233,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-timers get --timer-id 10 --json",
+                command="kaiten --json user-timers get --timer-id 10",
                 description="Get a user timer.",
             ),
         ),
@@ -258,7 +258,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-timers update --timer-id 10 --paused --json",
+                command="kaiten --json user-timers update --timer-id 10 --paused",
                 description="Pause a user timer.",
             ),
         ),
@@ -279,7 +279,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-timers delete --timer-id 10 --json",
+                command="kaiten --json user-timers delete --timer-id 10",
                 description="Delete a user timer.",
             ),
         ),
