@@ -456,6 +456,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill.",
+            "Treat dashboards as experimental and iterations/private files as beta; run discovery first and expect feature/version gates.",
         ],
         "quickstart": [
             'Discover commands: kaiten search-tools "wip cards"',
@@ -467,6 +468,8 @@ def _agent_help_payload() -> dict[str, Any]:
             "Configure credentials: kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active",
             "Probe authentication safely: kaiten --json --profile main --read-only profile probe",
             "Summarize a trace locally: kaiten --json trace summarize --file <trace.jsonl>",
+            "Explore dashboards safely: kaiten --json dashboards list --fields id,title,is_public,role --compact",
+            "Explore iterations safely: kaiten --json iterations list --space-uid <space_uuid> --status planned,active --compact",
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",
@@ -485,6 +488,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.",
+            "Dashboards are experimental; iterations and private files are beta and may be unavailable on older installations or tariffs.",
         ],
         "docs": {
             "repository": REPOSITORY_URL,
@@ -524,6 +528,7 @@ def _agent_help_text() -> str:
             "15. summarize: kaiten --json trace summarize --file <trace.jsonl>",
             "16. before mutations: kaiten --json --profile <name> --read-only profile probe",
             "17. live validation only runs when KAITEN_LIVE=1|true",
+            "18. dashboards are experimental; iterations/private files are beta, so discover and probe before use",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -534,6 +539,8 @@ def _agent_help_text() -> str:
             "  kaiten --json card-location-history batch-get --card-ids '[101,102,103]' --workers 2 --fields changed,column_id",
             "  kaiten --json snapshot build --name team-basic --space-id 10 --preset basic",
             "  kaiten --json query metrics --snapshot team-basic --metric count --group-by board_id",
+            "  kaiten --json dashboards list --fields id,title,is_public,role --compact",
+            "  kaiten --json iterations list --space-uid <space_uuid> --status planned,active --compact",
             "",
             "Docs:",
             f"  repo: {REPOSITORY_URL}",

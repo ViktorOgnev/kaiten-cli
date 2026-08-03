@@ -75,7 +75,7 @@ def test_build_request_for_create_custom_property_includes_optional_body():
     }
 
 
-def test_build_request_for_delete_select_value_uses_soft_delete_patch():
+def test_build_request_for_delete_select_value_uses_official_delete_without_payload():
     tool = resolve_tool("custom-properties.select-values.delete")
     payload = merge_inputs(tool, {"property_id": 3, "value_id": 10})
 
@@ -83,7 +83,26 @@ def test_build_request_for_delete_select_value_uses_soft_delete_patch():
 
     assert path == "/company/custom-properties/3/select-values/10"
     assert query is None
-    assert body == {"deleted": True}
+    assert body is None
+    assert tool.operation.method == "DELETE"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_delete_select_value_sends_delete_without_payload(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.delete(
+        "https://sandbox.kaiten.ru/api/latest/company/custom-properties/3/select-values/10"
+    ).mock(return_value=Response(200, json={"id": 10, "deleted": True}))
+    tool = resolve_tool("custom-properties.select-values.delete")
+
+    result = await execute_tool(tool, merge_inputs(tool, {"property_id": 3, "value_id": 10}))
+
+    assert route.called
+    assert route.calls[0].request.method == "DELETE"
+    assert route.calls[0].request.content == b""
+    assert result == {"id": 10, "deleted": True}
 
 
 @pytest.mark.asyncio

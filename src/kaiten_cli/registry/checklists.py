@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import execute_checklist_items_list, execute_checklists_list
+from kaiten_cli.runtime.behaviors import (
+    checklist_item_compat_request,
+    execute_checklist_items_list,
+    execute_checklists_list,
+)
 
 
 TOOLS = (
@@ -68,13 +72,51 @@ TOOLS = (
         ),
     ),
     make_tool(
+        canonical_name="checklists.get",
+        mcp_alias="kaiten_get_checklist",
+        description="Get one checklist with its items from a Kaiten card.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_id": {"type": "integer", "description": "Card ID."},
+                "checklist_id": {"type": "integer", "description": "Checklist ID."},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact output without heavy nested fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return.",
+                },
+            },
+            "required": ["card_id", "checklist_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_id}/checklists/{checklist_id}",
+            path_fields=("card_id", "checklist_id"),
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True, fields_supported=True, result_kind="entity"
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json checklists get --card-id 10 --checklist-id 20 --fields id,name,items",
+                description="Get one checklist with items.",
+            ),
+        ),
+    ),
+    make_tool(
         canonical_name="checklists.create",
         mcp_alias="kaiten_create_checklist",
         description="Create a checklist on a Kaiten card.",
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
+                "card_id": {
+                    "type": "integer",
+                    "description": "Card ID",
+                },
                 "name": {"type": "string", "description": "Checklist name"},
                 "sort_order": {"type": "number", "description": "Sort order"},
             },
@@ -100,7 +142,10 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
+                "card_id": {
+                    "type": "integer",
+                    "description": "Card ID",
+                },
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "name": {"type": "string", "description": "Checklist name"},
                 "sort_order": {"type": "number", "description": "Sort order"},
@@ -184,7 +229,10 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
+                "card_id": {
+                    "type": "integer",
+                    "description": "Optional card ID for the legacy nested route.",
+                },
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "text": {"type": "string", "description": "Item text"},
                 "checked": {"type": "boolean", "description": "Whether the item is checked"},
@@ -192,20 +240,26 @@ TOOLS = (
                 "user_id": {"type": "integer", "description": "Assigned user ID"},
                 "due_date": {"type": "string", "description": "Due date (ISO 8601 format)"},
             },
-            "required": ["card_id", "checklist_id", "text"],
+            "required": ["checklist_id", "text"],
         },
         operation=OperationSpec(
             method="POST",
-            path_template="/cards/{card_id}/checklists/{checklist_id}/items",
-            path_fields=("card_id", "checklist_id"),
+            path_template="/checklists/{checklist_id}/items",
+            path_fields=("checklist_id",),
             body_fields=("text", "checked", "sort_order", "user_id", "due_date"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=checklist_item_compat_request),
         examples=(
             ExampleSpec(
+                command='kaiten --json checklist-items create --checklist-id 20 --text "Ship it"',
+                description="Create a checklist item through the official top-level route.",
+            ),
+            ExampleSpec(
                 command='kaiten --json checklist-items create --card-id 10 --checklist-id 20 --text "Ship it"',
-                description="Create a checklist item.",
+                description="Create through the compatible legacy nested route.",
             ),
         ),
+        usage_notes=("--card-id is optional and preserves the legacy nested route.",),
     ),
     make_tool(
         canonical_name="checklist-items.update",
@@ -214,7 +268,10 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
+                "card_id": {
+                    "type": "integer",
+                    "description": "Optional card ID for the legacy nested route.",
+                },
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "item_id": {"type": "integer", "description": "Checklist item ID"},
                 "text": {"type": "string", "description": "Item text"},
@@ -223,20 +280,22 @@ TOOLS = (
                 "user_id": {"type": "integer", "description": "Assigned user ID"},
                 "due_date": {"type": "string", "description": "Due date (ISO 8601 format)"},
             },
-            "required": ["card_id", "checklist_id", "item_id"],
+            "required": ["checklist_id", "item_id"],
         },
         operation=OperationSpec(
             method="PATCH",
-            path_template="/cards/{card_id}/checklists/{checklist_id}/items/{item_id}",
-            path_fields=("card_id", "checklist_id", "item_id"),
+            path_template="/checklists/{checklist_id}/items/{item_id}",
+            path_fields=("checklist_id", "item_id"),
             body_fields=("text", "checked", "sort_order", "user_id", "due_date"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=checklist_item_compat_request),
         examples=(
             ExampleSpec(
-                command="kaiten --json checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked",
+                command="kaiten --json checklist-items update --checklist-id 20 --item-id 30 --checked",
                 description="Update a checklist item.",
             ),
         ),
+        usage_notes=("--card-id is optional and preserves the legacy nested route.",),
     ),
     make_tool(
         canonical_name="checklist-items.delete",
@@ -245,23 +304,28 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
+                "card_id": {
+                    "type": "integer",
+                    "description": "Optional card ID for the legacy nested route.",
+                },
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "item_id": {"type": "integer", "description": "Checklist item ID"},
             },
-            "required": ["card_id", "checklist_id", "item_id"],
+            "required": ["checklist_id", "item_id"],
         },
         operation=OperationSpec(
             method="DELETE",
-            path_template="/cards/{card_id}/checklists/{checklist_id}/items/{item_id}",
-            path_fields=("card_id", "checklist_id", "item_id"),
+            path_template="/checklists/{checklist_id}/items/{item_id}",
+            path_fields=("checklist_id", "item_id"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=checklist_item_compat_request),
         examples=(
             ExampleSpec(
-                command="kaiten --json checklist-items delete --card-id 10 --checklist-id 20 --item-id 30",
+                command="kaiten --json checklist-items delete --checklist-id 20 --item-id 30",
                 description="Delete a checklist item.",
             ),
         ),
+        usage_notes=("--card-id is optional and preserves the legacy nested route.",),
     ),
     make_tool(
         canonical_name="space-template-checklists.list",

@@ -99,6 +99,42 @@ def test_build_request_for_create_checklist_item():
     assert body == {"text": "Review", "checked": True, "user_id": 7}
 
 
+def test_checklist_item_mutations_use_official_top_level_routes_without_card_id():
+    cases = (
+        (
+            "checklist-items.create",
+            {"checklist_id": 20, "text": "Review"},
+            "/checklists/20/items",
+            {"text": "Review"},
+        ),
+        (
+            "checklist-items.update",
+            {"checklist_id": 20, "item_id": 30, "checked": True},
+            "/checklists/20/items/30",
+            {"checked": True},
+        ),
+        (
+            "checklist-items.delete",
+            {"checklist_id": 20, "item_id": 30},
+            "/checklists/20/items/30",
+            None,
+        ),
+    )
+
+    for name, raw_payload, expected_path, expected_body in cases:
+        tool = resolve_tool(name)
+        payload = merge_inputs(tool, raw_payload)
+        path, query, body = build_request(tool, payload)
+        assert (path, query, body) == (expected_path, None, expected_body)
+
+
+def test_build_request_for_get_checklist():
+    tool = resolve_tool("checklists.get")
+    payload = merge_inputs(tool, {"card_id": 10, "checklist_id": 20})
+
+    assert build_request(tool, payload) == ("/cards/10/checklists/20", None, None)
+
+
 def test_build_request_for_update_comment_html_format():
     tool = resolve_tool("comments.update")
     payload = merge_inputs(

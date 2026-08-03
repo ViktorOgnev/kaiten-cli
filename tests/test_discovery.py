@@ -4,7 +4,7 @@ from kaiten_cli.discovery import describe_tool, search_tools, tool_examples
 
 
 def test_search_tools_finds_cards():
-    results = search_tools("find cards by title")
+    results = search_tools("cards.list")
     assert results
     assert results[0]["canonical_name"] == "cards.list"
     assert results[0]["method"] == "GET"

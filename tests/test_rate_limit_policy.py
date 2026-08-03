@@ -67,6 +67,18 @@ def test_retry_after_supports_http_date(monkeypatch):
     assert KaitenClient._parse_retry_after(header) == pytest.approx(12.0)
 
 
+def test_rate_limit_budget_is_40_requests_per_second():
+    assert RATE_LIMIT_DELAY == pytest.approx(0.025)
+    assert 1 / RATE_LIMIT_DELAY == pytest.approx(40.0)
+
+
+def test_rate_limit_reset_supports_epoch_seconds(monkeypatch):
+    monkeypatch.setattr("kaiten_cli.runtime.client.time.time", lambda: 1_000.0)
+
+    assert KaitenClient._parse_rate_limit_reset("1012.5") == pytest.approx(12.5)
+    assert KaitenClient._parse_rate_limit_reset("invalid") is None
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_api_requests_send_cli_identity_headers():
@@ -115,6 +127,63 @@ async def test_get_retry_after_is_capped_and_retried(monkeypatch):
     assert route.call_count == 2
     assert sleeps == [MAX_RETRY_AFTER]
     assert result == {"id": 1}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_uses_rate_limit_reset_when_retry_after_is_absent(monkeypatch):
+    client = KaitenClient(domain="sandbox", token="token")
+    client._rate_limit = AsyncMock()
+    sleeps: list[float] = []
+
+    async def fake_sleep(value: float) -> None:
+        sleeps.append(value)
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr("kaiten_cli.runtime.client.time.time", lambda: 1_000.0)
+    monkeypatch.setattr("kaiten_cli.runtime.client.random.uniform", lambda _start, _end: 0.0)
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
+        side_effect=[
+            Response(
+                429,
+                json={"message": "slow down"},
+                headers={"X-RateLimit-Reset": "1007.5"},
+            ),
+            Response(200, json={"id": 1}),
+        ]
+    )
+
+    try:
+        result = await client.get("/cards/1")
+    finally:
+        await client.close()
+
+    assert route.call_count == 2
+    assert sleeps == [7.5]
+    assert result == {"id": 1}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_mutation_429_is_not_retried(monkeypatch):
+    client = KaitenClient(domain="sandbox", token="token")
+    client._rate_limit = AsyncMock()
+    route = respx.post("https://sandbox.kaiten.ru/api/latest/cards").mock(
+        return_value=Response(
+            429,
+            json={"message": "slow down"},
+            headers={"Retry-After": "1"},
+        )
+    )
+
+    try:
+        with pytest.raises(ApiError) as exc_info:
+            await client.post("/cards", json={"title": "No retry"})
+    finally:
+        await client.close()
+
+    assert exc_info.value.status_code == 429
+    assert route.call_count == 1
 
 
 @pytest.mark.asyncio

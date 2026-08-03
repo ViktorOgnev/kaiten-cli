@@ -22,7 +22,8 @@ from kaiten_cli.runtime.endpoints import profile_api_base_url, profile_origin
 logger = logging.getLogger(__name__)
 
 API_VERSION = "latest"
-RATE_LIMIT_DELAY = 0.22
+# Keep the client below Kaiten's 50 requests/second API limit.
+RATE_LIMIT_DELAY = 0.025
 RETRY_DELAY = 2.0
 MAX_RETRIES = 3
 MAX_RETRY_AFTER = 30.0
@@ -119,6 +120,16 @@ class KaitenClient:
         return max(0.0, parsed.timestamp() - time.time())
 
     @staticmethod
+    def _parse_rate_limit_reset(value: str | None) -> float | None:
+        if not value:
+            return None
+        try:
+            reset_at = float(value)
+        except (TypeError, ValueError):
+            return None
+        return max(0.0, reset_at - time.time())
+
+    @staticmethod
     def _ambiguous_mutation_error(method: str, path: str, detail: str) -> TransportError:
         return TransportError(
             f"{detail} calling {method} {path}. The request was not retried because it may "
@@ -165,8 +176,13 @@ class KaitenClient:
                         status_code=response.status_code,
                     )
                 if response.status_code == 429 and retryable and attempt < attempts - 1:
-                    retry_after = response.headers.get("Retry-After")
-                    parsed_retry_after = self._parse_retry_after(retry_after)
+                    parsed_retry_after = self._parse_retry_after(
+                        response.headers.get("Retry-After")
+                    )
+                    if parsed_retry_after is None:
+                        parsed_retry_after = self._parse_rate_limit_reset(
+                            response.headers.get("X-RateLimit-Reset")
+                        )
                     delay = self._retry_delay(attempt, parsed_retry_after)
                     self._debug(f"retry: rate-limited on {method} {path}, waiting {delay:.2f}s")
                     logger.warning("Rate limited, retrying after %.2fs", delay)
@@ -270,10 +286,15 @@ class KaitenClient:
         )
 
     async def post(
-        self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT
+        self,
+        path: str,
+        *,
+        json: dict[str, Any] | None = None,
+        files: Any = None,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         try:
-            return await self._request("POST", path, json=json, timeout=timeout)
+            return await self._request("POST", path, json=json, files=files, timeout=timeout)
         finally:
             await self._invalidate_after_remote_mutation()
 

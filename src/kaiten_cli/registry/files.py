@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from kaiten_cli.models import CACHE_POLICY_NONE, ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.support.files import execute_file_download, execute_file_upload
+from kaiten_cli.runtime.support.files import (
+    execute_file_download,
+    execute_file_upload,
+    execute_private_file_upload,
+)
 
 
 TOOLS = (
@@ -107,6 +111,28 @@ TOOLS = (
             ),
             ExampleSpec(
                 command=(
+                    "kaiten --json files download --entity-type card --card-uid <card_uid> "
+                    "--file-id <private_file_uid> --output ./downloads/"
+                ),
+                description="Download a beta private card file with streaming and resume.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten --json files download --entity-type comment --card-uid <card_uid> "
+                    "--comment-uid <comment_uid> --file-id <private_file_uid>"
+                ),
+                description="Download a beta private comment file.",
+            ),
+            ExampleSpec(
+                command=(
+                    "kaiten --json files download --entity-type custom_property "
+                    "--card-uid <card_uid> --custom-property-uid <property_uid> "
+                    "--file-id <private_file_uid>"
+                ),
+                description="Download a beta private custom-property file.",
+            ),
+            ExampleSpec(
+                command=(
                     "kaiten --json files download --url "
                     '"https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" '
                     "--output ./file.bin --overwrite"
@@ -119,6 +145,7 @@ TOOLS = (
             "Downloads stream to <target>.part first and are renamed into place only after completion.",
             "Existing .part files are resumed with HTTP Range by default, similar to wget --continue.",
             "For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.",
+            "Private card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.",
         ),
     ),
     make_tool(
@@ -301,5 +328,179 @@ TOOLS = (
                 description="Delete a card file.",
             ),
         ),
+    ),
+    make_tool(
+        canonical_name="private-card-files.upload",
+        mcp_alias="kaiten_upload_private_card_file",
+        description="Upload a beta private file to a card using multipart POST.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "file": {"type": "string", "description": "Local file path to upload."},
+            },
+            "required": ["card_uid", "file"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_uid}/files",
+            path_fields=("card_uid",),
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_private_file_upload,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-card-files upload --card-uid <card_uid> --file ./report.pdf",
+                description="Upload a private card file.",
+            ),
+        ),
+        usage_notes=(
+            "Beta endpoint; availability depends on private-files feature flags in the Kaiten installation.",
+            "Uses multipart/form-data field `file` with POST; classic files.upload remains PUT.",
+        ),
+    ),
+    make_tool(
+        canonical_name="private-card-files.delete",
+        mcp_alias="kaiten_delete_private_card_file",
+        description="Delete a beta private card file.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "file_id": {"type": "string", "description": "Private file UUID."},
+            },
+            "required": ["card_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_uid}/files/{file_id}",
+            path_fields=("card_uid", "file_id"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-card-files delete --card-uid <card_uid> --file-id <file_uid>",
+                description="Delete a private card file.",
+            ),
+        ),
+        usage_notes=("Beta private-files endpoint.",),
+    ),
+    make_tool(
+        canonical_name="private-comment-files.upload",
+        mcp_alias="kaiten_upload_private_comment_file",
+        description="Upload a beta private file to a card comment using multipart POST.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "comment_uid": {"type": "string", "description": "Comment UUID."},
+                "file": {"type": "string", "description": "Local file path to upload."},
+            },
+            "required": ["card_uid", "comment_uid", "file"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_uid}/comments/{comment_uid}/files",
+            path_fields=("card_uid", "comment_uid"),
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_private_file_upload,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-comment-files upload --card-uid <card_uid> --comment-uid <comment_uid> --file ./evidence.png",
+                description="Upload a private comment file.",
+            ),
+        ),
+        usage_notes=("Beta private-files endpoint.",),
+    ),
+    make_tool(
+        canonical_name="private-comment-files.delete",
+        mcp_alias="kaiten_delete_private_comment_file",
+        description="Delete a beta private comment file.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "comment_uid": {"type": "string", "description": "Comment UUID."},
+                "file_id": {"type": "string", "description": "Private file UUID."},
+            },
+            "required": ["card_uid", "comment_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="DELETE",
+            path_template="/cards/{card_uid}/comments/{comment_uid}/files/{file_id}",
+            path_fields=("card_uid", "comment_uid", "file_id"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-comment-files delete --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>",
+                description="Delete a private comment file.",
+            ),
+        ),
+        usage_notes=("Beta private-files endpoint.",),
+    ),
+    make_tool(
+        canonical_name="private-custom-property-files.upload",
+        mcp_alias="kaiten_upload_private_custom_property_file",
+        description="Upload a beta private file to a card custom property using multipart POST.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "property_uid": {"type": "string", "description": "Custom property UUID."},
+                "file": {"type": "string", "description": "Local file path to upload."},
+            },
+            "required": ["card_uid", "property_uid", "file"],
+        },
+        operation=OperationSpec(
+            method="POST",
+            path_template="/cards/{card_uid}/custom-properties/{property_uid}/files",
+            path_fields=("card_uid", "property_uid"),
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            custom_executor=execute_private_file_upload,
+            cache_policy=CACHE_POLICY_NONE,
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-custom-property-files upload --card-uid <card_uid> --property-uid <property_uid> --file ./contract.pdf",
+                description="Upload a private custom-property file.",
+            ),
+        ),
+        usage_notes=("Beta private-files endpoint.",),
+    ),
+    make_tool(
+        canonical_name="private-custom-property-files.delete",
+        mcp_alias="kaiten_delete_private_custom_property_file",
+        description="Delete a beta private custom-property file.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "property_uid": {"type": "string", "description": "Custom property UUID."},
+                "file_id": {"type": "string", "description": "Private file UUID."},
+            },
+            "required": ["card_uid", "property_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="DELETE",
+            path_template=(
+                "/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"
+            ),
+            path_fields=("card_uid", "property_uid", "file_id"),
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-custom-property-files delete --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>",
+                description="Delete a private custom-property file.",
+            ),
+        ),
+        usage_notes=("Beta private-files endpoint.",),
     ),
 )

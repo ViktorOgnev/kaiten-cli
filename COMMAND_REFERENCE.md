@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **356** canonical commands across **31** registry modules.
+`kaiten-cli` currently exposes **389** canonical commands across **33** registry modules.
 
 ## Conventions
 
@@ -26,11 +26,11 @@
 | Участники и пользователи | `members` | 7 | [Open](#module-members) |
 | Логи времени | `time_logs` | 6 | [Open](#module-time-logs) |
 | Теги | `tags` | 7 | [Open](#module-tags) |
-| Чеклисты | `checklists` | 16 | [Open](#module-checklists) |
+| Чеклисты | `checklists` | 17 | [Open](#module-checklists) |
 | Блокировки | `blockers` | 12 | [Open](#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Open](#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Open](#module-external-links) |
-| Файлы карточек | `files` | 6 | [Open](#module-files) |
+| Файлы карточек | `files` | 12 | [Open](#module-files) |
 | Подписчики | `subscribers` | 6 | [Open](#module-subscribers) |
 | Пространства | `spaces` | 6 | [Open](#module-spaces) |
 | Доски | `boards` | 6 | [Open](#module-boards) |
@@ -40,10 +40,12 @@
 | Каталоги / Custom directories | `custom_directories` | 16 | [Open](#module-custom-directories) |
 | Кастомные свойства | `custom_properties` | 25 | [Open](#module-custom-properties) |
 | Документы | `documents` | 13 | [Open](#module-documents) |
+| Дашборды | `dashboards` | 16 | [Open](#module-dashboards) |
+| Итерации | `iterations` | 9 | [Open](#module-iterations) |
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
-| Роли и группы | `roles_and_groups` | 30 | [Open](#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 31 | [Open](#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Open](#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
@@ -1937,7 +1939,7 @@ tags
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-checklists"></a>
-## Чеклисты (`checklists`) — 16 commands
+## Чеклисты (`checklists`) — 17 commands
 
 Чеклисты и checklist items.
 
@@ -1954,6 +1956,7 @@ checklist-items
 checklists
   create
   delete
+  get
   list
   update
 space-template-checklist-items
@@ -2019,7 +2022,7 @@ space-template-checklists
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
-| Path template | `/cards/{card_id}/checklists/{checklist_id}/items` |
+| Path template | `/checklists/{checklist_id}/items` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -2028,7 +2031,7 @@ space-template-checklists
 
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
 | `checklist_id` | `integer` | yes | — | Checklist ID |
 | `text` | `string` | yes | — | Item text |
 | `checked` | `boolean` | no | — | Whether the item is checked |
@@ -2038,7 +2041,8 @@ space-template-checklists
 
 **Examples**
 
-- Create a checklist item.: `kaiten --json checklist-items create --card-id 10 --checklist-id 20 --text "Ship it"`
+- Create a checklist item through the official top-level route.: `kaiten --json checklist-items create --checklist-id 20 --text "Ship it"`
+- Create through the compatible legacy nested route.: `kaiten --json checklist-items create --card-id 10 --checklist-id 20 --text "Ship it"`
 
 **Notes**
 
@@ -2047,6 +2051,7 @@ space-template-checklists
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- --card-id is optional and preserves the legacy nested route.
 
 ### `checklist-items.delete`
 
@@ -2062,7 +2067,7 @@ space-template-checklists
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
-| Path template | `/cards/{card_id}/checklists/{checklist_id}/items/{item_id}` |
+| Path template | `/checklists/{checklist_id}/items/{item_id}` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -2071,13 +2076,13 @@ space-template-checklists
 
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
 | `checklist_id` | `integer` | yes | — | Checklist ID |
 | `item_id` | `integer` | yes | — | Checklist item ID |
 
 **Examples**
 
-- Delete a checklist item.: `kaiten --json checklist-items delete --card-id 10 --checklist-id 20 --item-id 30`
+- Delete a checklist item.: `kaiten --json checklist-items delete --checklist-id 20 --item-id 30`
 
 **Notes**
 
@@ -2086,6 +2091,7 @@ space-template-checklists
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- --card-id is optional and preserves the legacy nested route.
 
 ### `checklist-items.list`
 
@@ -2142,7 +2148,7 @@ space-template-checklists
 | Execution mode | `direct_http` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
-| Path template | `/cards/{card_id}/checklists/{checklist_id}/items/{item_id}` |
+| Path template | `/checklists/{checklist_id}/items/{item_id}` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -2151,7 +2157,7 @@ space-template-checklists
 
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
 | `checklist_id` | `integer` | yes | — | Checklist ID |
 | `item_id` | `integer` | yes | — | Checklist item ID |
 | `text` | `string` | no | — | Item text |
@@ -2162,7 +2168,7 @@ space-template-checklists
 
 **Examples**
 
-- Update a checklist item.: `kaiten --json checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked`
+- Update a checklist item.: `kaiten --json checklist-items update --checklist-id 20 --item-id 30 --checked`
 
 **Notes**
 
@@ -2171,6 +2177,7 @@ space-template-checklists
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- --card-id is optional and preserves the legacy nested route.
 
 ### `checklists.create`
 
@@ -2246,6 +2253,46 @@ space-template-checklists
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
 - Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+
+### `checklists.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten checklists get` |
+| MCP alias | `kaiten_get_checklist` |
+| Description | Get one checklist with its items from a Kaiten card. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/cards/{card_id}/checklists/{checklist_id}` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID. |
+| `checklist_id` | `integer` | yes | — | Checklist ID. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Get one checklist with items.: `kaiten --json checklists get --card-id 10 --checklist-id 20 --fields id,name,items`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
@@ -3661,7 +3708,7 @@ external-links
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-files"></a>
-## Файлы карточек (`files`) — 6 commands
+## Файлы карточек (`files`) — 12 commands
 
 Файлы и вложения карточек.
 
@@ -3674,6 +3721,15 @@ files
   download
   list
   update
+  upload
+private-card-files
+  delete
+  upload
+private-comment-files
+  delete
+  upload
+private-custom-property-files
+  delete
   upload
 ```
 
@@ -3802,6 +3858,9 @@ files
 
 - Download a document attachment into the current directory.: `kaiten --json files download --entity-type document --document-uid <document_uid> --file-id <file_uid>`
 - Download a card attachment into a directory.: `kaiten --json files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/`
+- Download a beta private card file with streaming and resume.: `kaiten --json files download --entity-type card --card-uid <card_uid> --file-id <private_file_uid> --output ./downloads/`
+- Download a beta private comment file.: `kaiten --json files download --entity-type comment --card-uid <card_uid> --comment-uid <comment_uid> --file-id <private_file_uid>`
+- Download a beta private custom-property file.: `kaiten --json files download --entity-type custom_property --card-uid <card_uid> --custom-property-uid <property_uid> --file-id <private_file_uid>`
 - Download from a Kaiten report/browser file URL.: `kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./file.bin --overwrite`
 
 **Notes**
@@ -3815,6 +3874,7 @@ files
 - Downloads stream to <target>.part first and are renamed into place only after completion.
 - Existing .part files are resumed with HTTP Range by default, similar to wget --continue.
 - For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.
+- Private card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.
 
 ### `files.list`
 
@@ -3938,6 +3998,245 @@ files
 - Uploads the local file as multipart/form-data field `file`.
 - The uploaded filename is the local file basename.
 - This command uses the public card file endpoint; the beta private file endpoint is not used.
+
+### `private-card-files.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-card-files delete` |
+| MCP alias | `kaiten_delete_private_card_file` |
+| Description | Delete a beta private card file. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `file_id` | `string` | yes | — | Private file UUID. |
+
+**Examples**
+
+- Delete a private card file.: `kaiten --json private-card-files delete --card-uid <card_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta private-files endpoint.
+
+### `private-card-files.upload`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-card-files upload` |
+| MCP alias | `kaiten_upload_private_card_file` |
+| Description | Upload a beta private file to a card using multipart POST. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/files` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `file` | `string` | yes | — | Local file path to upload. |
+
+**Examples**
+
+- Upload a private card file.: `kaiten --json private-card-files upload --card-uid <card_uid> --file ./report.pdf`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta endpoint; availability depends on private-files feature flags in the Kaiten installation.
+- Uses multipart/form-data field `file` with POST; classic files.upload remains PUT.
+
+### `private-comment-files.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-comment-files delete` |
+| MCP alias | `kaiten_delete_private_comment_file` |
+| Description | Delete a beta private comment file. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/comments/{comment_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | Comment UUID. |
+| `file_id` | `string` | yes | — | Private file UUID. |
+
+**Examples**
+
+- Delete a private comment file.: `kaiten --json private-comment-files delete --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta private-files endpoint.
+
+### `private-comment-files.upload`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-comment-files upload` |
+| MCP alias | `kaiten_upload_private_comment_file` |
+| Description | Upload a beta private file to a card comment using multipart POST. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/comments/{comment_uid}/files` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | Comment UUID. |
+| `file` | `string` | yes | — | Local file path to upload. |
+
+**Examples**
+
+- Upload a private comment file.: `kaiten --json private-comment-files upload --card-uid <card_uid> --comment-uid <comment_uid> --file ./evidence.png`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta private-files endpoint.
+
+### `private-custom-property-files.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-custom-property-files delete` |
+| MCP alias | `kaiten_delete_private_custom_property_file` |
+| Description | Delete a beta private custom-property file. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `property_uid` | `string` | yes | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | Private file UUID. |
+
+**Examples**
+
+- Delete a private custom-property file.: `kaiten --json private-custom-property-files delete --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta private-files endpoint.
+
+### `private-custom-property-files.upload`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-custom-property-files upload` |
+| MCP alias | `kaiten_upload_private_custom_property_file` |
+| Description | Upload a beta private file to a card custom property using multipart POST. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/custom-properties/{property_uid}/files` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `property_uid` | `string` | yes | — | Custom property UUID. |
+| `file` | `string` | yes | — | Local file path to upload. |
+
+**Examples**
+
+- Upload a private custom-property file.: `kaiten --json private-custom-property-files upload --card-uid <card_uid> --property-uid <property_uid> --file ./contract.pdf`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Beta private-files endpoint.
 
 <a id="module-subscribers"></a>
 ## Подписчики (`subscribers`) — 6 commands
@@ -7154,8 +7453,8 @@ custom-properties.tree-entities
 |---|---|
 | CLI command | `kaiten custom-properties select-values delete` |
 | MCP alias | `kaiten_delete_select_value` |
-| Description | Delete (soft) a select value by marking it as deleted. |
-| Method | `PATCH` |
+| Description | Delete (soft) a select value through the official DELETE route. |
+| Method | `DELETE` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
 | Remote side effects | `yes` |
@@ -8046,6 +8345,1102 @@ documents
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - `parent_entity_uid` places the document under a document group/container in the sidebar tree.
 - Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+
+<a id="module-dashboards"></a>
+## Дашборды (`dashboards`) — 16 commands
+
+Experimental dashboards, collaborators, widgets and compute jobs.
+
+**Namespace tree**
+
+```text
+dashboard-compute-jobs
+  create
+  get
+dashboard-users
+  add
+  list
+  remove
+  update
+dashboard-widgets
+  create
+  delete
+  list
+  update
+dashboards
+  clone
+  create
+  delete
+  get
+  list
+  update
+```
+
+### `dashboard-compute-jobs.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-compute-jobs create` |
+| MCP alias | `kaiten_create_dashboard_compute_job` |
+| Description | Queue computation for up to 100 widgets on an accessible dashboard. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/compute-jobs` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `widget_ids` | `array` | yes | — | JSON array containing 1 to 100 widget UUIDs. |
+| `force` | `boolean` | no | — | Force recomputation. |
+
+**Examples**
+
+- Queue widget computation and receive a compute_job_id.: `kaiten --json dashboard-compute-jobs create --dashboard-id <dashboard_uuid> --widget-ids '["<widget_uuid>"]'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- A successful queue operation returns HTTP 202.
+
+### `dashboard-compute-jobs.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-compute-jobs get` |
+| MCP alias | `kaiten_get_dashboard_compute_job` |
+| Description | Poll a dashboard compute job without reusing cached status. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/compute-jobs/{job_id}` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `job_id` | `string|integer` | yes | — | Compute job ID returned by create. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Poll queued/running/completed/failed status.: `kaiten --json dashboard-compute-jobs get --dashboard-id <dashboard_uuid> --job-id 123`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Polling bypasses both request and persistent cache.
+
+### `dashboard-users.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-users add` |
+| MCP alias | `kaiten_add_dashboard_user` |
+| Description | Grant a company user viewer or editor access to a dashboard. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | Company user UUID. |
+| `role` | `string` | yes | `viewer`, `editor` | Dashboard role. |
+
+**Examples**
+
+- Grant view access.: `kaiten --json dashboard-users add --dashboard-id <dashboard_uuid> --user-uid <user_uuid> --role viewer`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- The user must already belong to the company.
+
+### `dashboard-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-users list` |
+| MCP alias | `kaiten_list_dashboard_users` |
+| Description | List users with explicit access to a dashboard. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/dashboards/{dashboard_id}/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `limit` | `integer` | no | — | Maximum users to return (server cap 50). |
+| `offset` | `integer` | no | — | Pagination offset. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List dashboard collaborators.: `kaiten --json dashboard-users list --dashboard-id <dashboard_uuid> --fields user_uid,role`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Only owners and editors can list or manage access.
+
+### `dashboard-users.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-users remove` |
+| MCP alias | `kaiten_remove_dashboard_user` |
+| Description | Revoke a collaborator's explicit dashboard access. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/users/{user_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | Company user UUID. |
+
+**Examples**
+
+- Remove explicit dashboard access.: `kaiten --json dashboard-users remove --dashboard-id <dashboard_uuid> --user-uid <user_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- The dashboard owner cannot be removed.
+
+### `dashboard-users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-users update` |
+| MCP alias | `kaiten_update_dashboard_user` |
+| Description | Change a dashboard collaborator role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/users/{user_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | Company user UUID. |
+| `role` | `string` | yes | `viewer`, `editor` | New dashboard role. |
+
+**Examples**
+
+- Promote a collaborator to editor.: `kaiten --json dashboard-users update --dashboard-id <dashboard_uuid> --user-uid <user_uuid> --role editor`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- The owner role cannot be changed or downgraded.
+
+### `dashboard-widgets.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-widgets create` |
+| MCP alias | `kaiten_create_dashboard_widget` |
+| Description | Create a widget without freezing the evolving source/config schema client-side. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/widgets` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `title` | `string` | yes | — | Widget title. |
+| `source` | `string` | yes | — | Widget source; current examples include metric, cardList, distribution, cardsTrend. |
+| `visualization` | `string` | yes | — | Visualization identifier accepted by the current Kaiten installation. |
+| `config` | `object` | yes | — | Source-specific widget config JSON. |
+
+**Examples**
+
+- Create a card-list widget using server-validated config.: `kaiten --json dashboard-widgets create --dashboard-id <dashboard_uuid> --title "Cards" --source cardList --visualization table --config '{"filter":{}}'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Source, visualization and config are validated by Kaiten because their schema changes quickly.
+- Current sources include distribution, cardsTrend, velocity, throughput, cycleTimeTrends, burndown, cfd, cycleTime, controlChart, blockResolutionTime, metric, fieldSum, sprintProgress, cardList, dueDates and timeSpent. Current visualizations include bar, horizontalBar, pie, donut, table, line, area, stackedArea, scatter, percentileHistogram, number, numberTrend and battery. Values are intentionally not client-enumerated because the dashboard schema is experimental.
+
+### `dashboard-widgets.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-widgets delete` |
+| MCP alias | `kaiten_delete_dashboard_widget` |
+| Description | Delete a dashboard widget. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/widgets/{widget_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `widget_id` | `string` | yes | — | Widget UUID. |
+
+**Examples**
+
+- Delete a widget.: `kaiten --json dashboard-widgets delete --dashboard-id <dashboard_uuid> --widget-id <widget_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+
+### `dashboard-widgets.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-widgets list` |
+| MCP alias | `kaiten_list_dashboard_widgets` |
+| Description | List dashboard widgets through dashboards.get?include=widgets. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `synthetic` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/dashboards/{dashboard_id}` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Extract widgets from a dashboard read.: `kaiten --json dashboard-widgets list --dashboard-id <dashboard_uuid> --fields id,title,source,visualization`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+
+### `dashboard-widgets.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboard-widgets update` |
+| MCP alias | `kaiten_update_dashboard_widget` |
+| Description | Update a dashboard widget; config is merged by the server. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}/widgets/{widget_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `widget_id` | `string` | yes | — | Widget UUID. |
+| `title` | `string` | no | — | Widget title. |
+| `source` | `string` | no | — | Widget source. |
+| `visualization` | `string` | no | — | Visualization identifier. |
+| `config` | `object` | no | — | Partial config merged by Kaiten. |
+
+**Examples**
+
+- Rename a widget.: `kaiten --json dashboard-widgets update --dashboard-id <dashboard_uuid> --widget-id <widget_uuid> --title "Open cards"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Current sources include distribution, cardsTrend, velocity, throughput, cycleTimeTrends, burndown, cfd, cycleTime, controlChart, blockResolutionTime, metric, fieldSum, sprintProgress, cardList, dueDates and timeSpent. Current visualizations include bar, horizontalBar, pie, donut, table, line, area, stackedArea, scatter, percentileHistogram, number, numberTrend and battery. Values are intentionally not client-enumerated because the dashboard schema is experimental.
+
+### `dashboards.clone`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards clone` |
+| MCP alias | `kaiten_clone_dashboard` |
+| Description | Create a personal dashboard copy with new widget IDs. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `source_dashboard_id` | `string` | yes | — | Accessible source dashboard UUID. |
+| `title` | `string` | yes | — | Title for the new dashboard. |
+| `is_public` | `boolean` | no | — | Override copied visibility; otherwise inherit it. |
+
+**Examples**
+
+- Clone an accessible dashboard into a personal copy.: `kaiten --json dashboards clone --source-dashboard-id <dashboard_uuid> --title "My copy"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Clone copies layout, filter and widgets with fresh widget IDs; shared users are not copied.
+
+### `dashboards.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards create` |
+| MCP alias | `kaiten_create_dashboard` |
+| Description | Create a private or public dashboard owned by the current user. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `title` | `string` | yes | — | Dashboard title. |
+| `is_public` | `boolean` | no | — | Make the dashboard visible company-wide (default false). |
+
+**Examples**
+
+- Create a private dashboard.: `kaiten --json dashboards create --title "Team health"`
+- Create a public dashboard.: `kaiten --json dashboards create --title "Company metrics" --is-public`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Only the owner can change title/publicity or delete a dashboard; editors can change layout/filter and manage users/widgets, while viewers have read access.
+
+### `dashboards.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards delete` |
+| MCP alias | `kaiten_delete_dashboard` |
+| Description | Archive a dashboard owned by the current user. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+
+**Examples**
+
+- Archive an owned dashboard.: `kaiten --json dashboards delete --dashboard-id <dashboard_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Only the dashboard owner can delete it.
+
+### `dashboards.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards get` |
+| MCP alias | `kaiten_get_dashboard` |
+| Description | Get a dashboard and optionally include its widgets. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/dashboards/{dashboard_id}` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `include` | `string` | no | — | Comma-separated relations to include; currently widgets. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Get dashboard configuration and widgets.: `kaiten --json dashboards get --dashboard-id <dashboard_uuid> --include widgets`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Only the owner can change title/publicity or delete a dashboard; editors can change layout/filter and manage users/widgets, while viewers have read access.
+
+### `dashboards.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards list` |
+| MCP alias | `kaiten_list_dashboards` |
+| Description | List dashboards visible to the current user, including public dashboards. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/dashboards` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `search` | `string` | no | — | Search dashboard titles. |
+| `limit` | `integer` | no | — | Maximum dashboards to return (server cap 50). |
+| `offset` | `integer` | no | — | Pagination offset. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Find visible dashboards by title.: `kaiten --json dashboards list --search "Requests" --fields id,title,is_public,role --compact`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+
+### `dashboards.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten dashboards update` |
+| MCP alias | `kaiten_update_dashboard` |
+| Description | Update dashboard metadata, filter, or layout. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/dashboards/{dashboard_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| `title` | `string` | no | — | New title (owner only). |
+| `is_public` | `boolean` | no | — | New visibility (owner only). |
+| `filter` | `object|null` | no | — | Dashboard filter JSON; use null to clear it. |
+| `layout` | `object` | no | — | Responsive dashboard layout keyed by breakpoint and widget UUID. |
+
+**Examples**
+
+- Update an editable dashboard layout.: `kaiten --json dashboards update --dashboard-id <dashboard_uuid> --layout '{"lg":{}}'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Dashboards are experimental and not yet documented in the public REST catalog; older Kaiten installations may return 404 or 405.
+- Only the owner can change title/publicity or delete a dashboard; editors can change layout/filter and manage users/widgets, while viewers have read access.
+
+<a id="module-iterations"></a>
+## Итерации (`iterations`) — 9 commands
+
+Beta iterations, iteration cards and card history.
+
+**Namespace tree**
+
+```text
+card-iterations-history
+  list
+iteration-cards
+  add
+  list
+  remove
+iterations
+  create
+  delete
+  get
+  list
+  update
+```
+
+### `card-iterations-history.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-iterations-history list` |
+| MCP alias | `kaiten_list_card_iterations_history` |
+| Description | List iteration membership history for a card. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_uid}/iterations-history` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Inspect a card's iteration history.: `kaiten --json card-iterations-history list --card-uid <card_uuid> --fields iteration_id,status,added_at,removed_at`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+
+### `iteration-cards.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iteration-cards add` |
+| MCP alias | `kaiten_add_iteration_card` |
+| Description | Add an active card from the space primary boards to an iteration. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}/cards` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `card_uid` | `string` | yes | — | Card UUID. |
+
+**Examples**
+
+- Add a card to a planned or active iteration.: `kaiten --json iteration-cards add --space-uid <space_uuid> --iteration-id <iteration_uuid> --card-uid <card_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+- Only active cards on a primary board of the same space can be added.
+
+### `iteration-cards.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iteration-cards list` |
+| MCP alias | `kaiten_list_iteration_cards` |
+| Description | List active or removed card relations for an iteration. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}/cards` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `status` | `string` | no | `active`, `removed` | Relation status filter. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List active iteration cards.: `kaiten --json iteration-cards list --space-uid <space_uuid> --iteration-id <iteration_uuid> --status active --fields card_uid,status`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+
+### `iteration-cards.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iteration-cards remove` |
+| MCP alias | `kaiten_remove_iteration_card` |
+| Description | Remove a card from a non-closed iteration. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}/cards/{card_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `card_uid` | `string` | yes | — | Card UUID. |
+
+**Examples**
+
+- Remove a card from an open iteration.: `kaiten --json iteration-cards remove --space-uid <space_uuid> --iteration-id <iteration_uuid> --card-uid <card_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+- Cards cannot be removed from a closed iteration.
+
+### `iterations.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iterations create` |
+| MCP alias | `kaiten_create_iteration` |
+| Description | Create a planned iteration in a space. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/iterations` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `title` | `string` | yes | — | Iteration title. |
+| `goal` | `string` | no | — | Iteration goal. |
+| `start_date` | `string` | no | — | ISO 8601 start date. |
+| `finish_date` | `string` | no | — | ISO 8601 finish date. |
+
+**Examples**
+
+- Create a dated planned iteration.: `kaiten --json iterations create --space-uid <space_uuid> --title "Iteration 12" --start-date 2026-08-03 --finish-date 2026-08-17`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+
+### `iterations.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iterations delete` |
+| MCP alias | `kaiten_delete_iteration` |
+| Description | Delete an iteration and optionally move its cards to another iteration. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `new_iteration_id` | `string` | no | — | Target planned/active iteration for cards before deletion. |
+
+**Examples**
+
+- Delete and move cards to a valid target iteration.: `kaiten --json iterations delete --space-uid <space_uuid> --iteration-id <iteration_uuid> --new-iteration-id <target_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+- The transfer target must belong to the same space and be planned or active.
+
+### `iterations.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iterations get` |
+| MCP alias | `kaiten_get_iteration` |
+| Description | Get an iteration by UUID within a space. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `persistent_opt_in` |
+| Cache strategy | `entity_or_reference_persistent` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read one iteration.: `kaiten --json iterations get --space-uid <space_uuid> --iteration-id <iteration_uuid>`
+
+**Notes**
+
+- Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+
+### `iterations.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iterations list` |
+| MCP alias | `kaiten_list_iterations` |
+| Description | List iterations in a space with bounded pagination and optional cards data. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_uid}/iterations` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `status` | `string` | no | — | Comma-separated statuses: planned, active, closed. |
+| `with_data` | `string` | no | `cards` | Include related cards. |
+| `limit` | `integer` | no | — | Maximum iterations to return (server cap 100). |
+| `offset` | `integer` | no | — | Pagination offset. |
+| `order` | `string` | no | `asc`, `desc` | Result order. |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List current iterations and their cards.: `kaiten --json iterations list --space-uid <space_uuid> --status planned,active --with-data cards --fields id,title,status,start_date,finish_date`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+
+### `iterations.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten iterations update` |
+| MCP alias | `kaiten_update_iteration` |
+| Description | Update iteration metadata, dates, status, or card transfer target. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_uid}/iterations/{iteration_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | Iteration UUID. |
+| `title` | `string` | no | — | New title. |
+| `goal` | `string` | no | — | New goal. |
+| `status` | `string` | no | `planned`, `active`, `closed` | Next iteration status. |
+| `start_date` | `string` | no | — | ISO 8601 start date. |
+| `finish_date` | `string` | no | — | ISO 8601 finish date. |
+| `actual_finish_date` | `string` | no | — | ISO 8601 actual finish date when closing. |
+| `new_iteration_id` | `string` | no | — | Target planned/active iteration for remaining cards. |
+
+**Examples**
+
+- Activate a dated planned iteration.: `kaiten --json iterations update --space-uid <space_uuid> --iteration-id <iteration_uuid> --status active`
+- Close an iteration and transfer remaining cards.: `kaiten --json iterations update --space-uid <space_uuid> --iteration-id <iteration_uuid> --status closed --new-iteration-id <target_uuid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Iterations are beta and require a Kaiten tariff with the Iterations feature enabled.
+- Statuses move forward only: planned -> active -> closed; activation requires start/finish dates and invalid transitions are rejected by Kaiten.
 
 <a id="module-webhooks"></a>
 ## Вебхуки (`webhooks`) — 9 commands
@@ -9444,7 +10839,7 @@ _No tool-specific arguments._
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
 <a id="module-roles-and-groups"></a>
-## Роли и группы (`roles_and_groups`) — 30 commands
+## Роли и группы (`roles_and_groups`) — 31 commands
 
 Roles, groups and permission-related operations.
 
@@ -9459,6 +10854,7 @@ company-groups
   update
 company-users
   list
+  list-all
   remove-virtual
   update
 group-admins
@@ -9729,6 +11125,56 @@ user-roles
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Use this command for paginated administrative member exports. `users.list` is a generic users endpoint and may not be reliable for full member paging.
+
+### `company-users.list-all`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company-users list-all` |
+| MCP alias | `kaiten_list_all_company_users` |
+| Description | List all administrative company users with bounded pagination and no silent truncation. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `aggregated` |
+| Cache policy | `persistent_heavy` |
+| Cache strategy | `heavy_persistent` |
+| Path template | `/company/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `for_members_section` | `boolean` | no | — | Use the administrative Members response shape (default true). |
+| `query` | `string` | no | — | Search by email or full name. |
+| `page_size` | `integer` | no | — | Users per request (1..100, default 100). |
+| `max_pages` | `integer` | no | — | Safety cap for requests; a full final page causes an error instead of truncation (default 100). |
+| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | Filter by Kaiten access type. |
+| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | Filter by Service Desk access. |
+| `take_licence` | `string` | no | `any`, `yes`, `no` | Filter by paid-license usage. |
+| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | Filter by temporary deactivation status. |
+| `group_ids` | `array` | no | — | JSON array of group IDs. |
+| `permissions` | `array` | no | — | JSON array of company permission criteria. |
+| `compact` | `boolean` | no | — | Return compact output without heavy fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return per user. |
+
+**Examples**
+
+- Read every company user within an explicit safety cap.: `kaiten --json company-users list-all --page-size 100 --max-pages 100 --fields id,uid,email,full_name --compact`
+
+**Notes**
+
+- Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Uses at most 100 users per request for forward compatibility.
+- If max_pages is reached on a full page, the command fails instead of returning a partial list.
 
 ### `company-users.remove-virtual`
 

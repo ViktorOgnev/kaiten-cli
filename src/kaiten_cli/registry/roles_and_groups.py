@@ -5,6 +5,12 @@ from __future__ import annotations
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
+from kaiten_cli.runtime.support.company_users import (
+    COMPANY_USERS_DEFAULT_MAX_PAGES,
+    COMPANY_USERS_MAX_PAGE_SIZE,
+    execute_company_users_list_all,
+    validate_company_users_list_all,
+)
 
 
 COMPANY_USERS_DEFAULT_LIMIT = 100
@@ -254,6 +260,106 @@ TOOLS = (
         usage_notes=(
             "Use this command for paginated administrative member exports. "
             "`users.list` is a generic users endpoint and may not be reliable for full member paging.",
+        ),
+    ),
+    make_tool(
+        canonical_name="company-users.list-all",
+        mcp_alias="kaiten_list_all_company_users",
+        description=(
+            "List all administrative company users with bounded pagination and no silent truncation."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "for_members_section": {
+                    "type": "boolean",
+                    "description": "Use the administrative Members response shape (default true).",
+                },
+                "query": {"type": "string", "description": "Search by email or full name."},
+                "page_size": {
+                    "type": "integer",
+                    "description": "Users per request (1..100, default 100).",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "description": (
+                        "Safety cap for requests; a full final page causes an error instead of truncation "
+                        f"(default {COMPANY_USERS_DEFAULT_MAX_PAGES})."
+                    ),
+                },
+                "access_type_permissions": {
+                    "type": "string",
+                    "enum": ["member", "guest", "denied"],
+                    "description": "Filter by Kaiten access type.",
+                },
+                "sd_access_type": {
+                    "type": "string",
+                    "enum": ["any", "has_access", "has_no_access"],
+                    "description": "Filter by Service Desk access.",
+                },
+                "take_licence": {
+                    "type": "string",
+                    "enum": ["any", "yes", "no"],
+                    "description": "Filter by paid-license usage.",
+                },
+                "temporarily_inactive_status": {
+                    "type": "string",
+                    "enum": [
+                        "all_users",
+                        "only_temporarily_inactive_users",
+                        "only_active_users",
+                    ],
+                    "description": "Filter by temporary deactivation status.",
+                },
+                "group_ids": {"type": "array", "description": "JSON array of group IDs."},
+                "permissions": {
+                    "type": "array",
+                    "description": "JSON array of company permission criteria.",
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact output without heavy fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return per user.",
+                },
+            },
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/company/users",
+            query_fields=(
+                "for_members_section",
+                "query",
+                "access_type_permissions",
+                "sd_access_type",
+                "take_licence",
+                "temporarily_inactive_status",
+                "group_ids",
+                "permissions",
+            ),
+        ),
+        response_policy=ResponsePolicy(
+            compact_supported=True,
+            fields_supported=True,
+            heavy=True,
+            result_kind="list",
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_company_users_list_all,
+            payload_validator=validate_company_users_list_all,
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json company-users list-all --page-size 100 --max-pages 100 --fields id,uid,email,full_name --compact",
+                description="Read every company user within an explicit safety cap.",
+            ),
+        ),
+        usage_notes=(
+            f"Uses at most {COMPANY_USERS_MAX_PAGE_SIZE} users per request for forward compatibility.",
+            "If max_pages is reached on a full page, the command fails instead of returning a partial list.",
         ),
     ),
     make_tool(
