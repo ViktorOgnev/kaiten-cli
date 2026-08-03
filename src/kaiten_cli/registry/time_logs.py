@@ -54,7 +54,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten timesheet list --limit 50 --json",
+                command="kaiten --json timesheet list --limit 50",
                 description="List company time logs.",
             ),
         ),
@@ -94,7 +94,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten time-logs list --card-id 10 --json",
+                command="kaiten --json time-logs list --card-id 10",
                 description="List time logs on a card.",
             ),
         ),
@@ -148,11 +148,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten time-logs batch-list --card-ids '[1,2,3]' --json",
+                command="kaiten --json time-logs batch-list --card-ids '[1,2,3]'",
                 description="Fetch time logs for several cards in one CLI call.",
             ),
             ExampleSpec(
-                command="kaiten time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date --json",
+                command="kaiten --json time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date",
                 description="Fetch narrowed time-log payloads with bounded concurrency.",
             ),
         ),
@@ -194,7 +194,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=default_role_time_log_request),
         examples=(
             ExampleSpec(
-                command='kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json',
+                command='kaiten --json time-logs create --card-id 10 --time-spent 15 --comment "Analysis"',
                 description="Create a time log entry.",
             ),
         ),
@@ -223,7 +223,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten time-logs update --card-id 10 --time-log-id 20 --time-spent 20 --json",
+                command="kaiten --json time-logs update --card-id 10 --time-log-id 20 --time-spent 20",
                 description="Update a time log.",
             ),
         ),
@@ -247,7 +247,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten time-logs delete --card-id 10 --time-log-id 20 --json",
+                command="kaiten --json time-logs delete --card-id 10 --time-log-id 20",
                 description="Delete a time log.",
             ),
         ),

@@ -76,11 +76,11 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties list --types select --json",
+                command="kaiten --json custom-properties list --types select",
                 description="List custom properties.",
             ),
             ExampleSpec(
-                command="kaiten custom-properties list --types catalog --json",
+                command="kaiten --json custom-properties list --types catalog",
                 description="List card fields of type Catalog/Справочник.",
             ),
         ),
@@ -104,7 +104,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties get --property-id 5 --json",
+                command="kaiten --json custom-properties get --property-id 5",
                 description="Get a custom property.",
             ),
         ),
@@ -184,11 +184,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties create --name Status --type select --json",
+                command="kaiten --json custom-properties create --name Status --type select",
                 description="Create a custom property.",
             ),
             ExampleSpec(
-                command='kaiten custom-properties create --name "Client" --type catalog --json',
+                command='kaiten --json custom-properties create --name "Client" --type catalog',
                 description="Create a card field of type Catalog/Справочник.",
             ),
         ),
@@ -249,7 +249,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties update --property-id 5 --name Priority --json",
+                command="kaiten --json custom-properties update --property-id 5 --name Priority",
                 description="Update a custom property.",
             ),
         ),
@@ -273,7 +273,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties delete --property-id 5 --json",
+                command="kaiten --json custom-properties delete --property-id 5",
                 description="Delete a custom property.",
             ),
         ),
@@ -309,7 +309,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties select-values list --property-id 3 --json",
+                command="kaiten --json custom-properties select-values list --property-id 3",
                 description="List select values.",
             ),
         ),
@@ -333,7 +333,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties select-values get --property-id 3 --value-id 10 --json",
+                command="kaiten --json custom-properties select-values get --property-id 3 --value-id 10",
                 description="Get a select value.",
             ),
         ),
@@ -360,7 +360,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties select-values create --property-id 3 --value High --json",
+                command="kaiten --json custom-properties select-values create --property-id 3 --value High",
                 description="Create a select value.",
             ),
         ),
@@ -393,7 +393,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties select-values update --property-id 3 --value-id 10 --value Critical --json",
+                command="kaiten --json custom-properties select-values update --property-id 3 --value-id 10 --value Critical",
                 description="Update a select value.",
             ),
         ),
@@ -418,7 +418,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=select_value_soft_delete_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties select-values delete --property-id 3 --value-id 10 --json",
+                command="kaiten --json custom-properties select-values delete --property-id 3 --value-id 10",
                 description="Soft-delete a select value.",
             ),
         ),
@@ -440,7 +440,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties tree-entities list --property-id 5 --json",
+                command="kaiten --json custom-properties tree-entities list --property-id 5",
                 description="List custom property tree entities.",
             ),
         ),
@@ -470,7 +470,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties tree-entities add --property-id 5 --tree-entity-uid entity-uuid --json",
+                command="kaiten --json custom-properties tree-entities add --property-id 5 --tree-entity-uid entity-uuid",
                 description="Attach a tree entity to a custom property.",
             ),
         ),
@@ -494,7 +494,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties tree-entities remove --property-id 5 --tree-entity-uid entity-uuid --json",
+                command="kaiten --json custom-properties tree-entities remove --property-id 5 --tree-entity-uid entity-uuid",
                 description="Remove a tree entity from a custom property.",
             ),
         ),
@@ -526,7 +526,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties catalog-values list --property-id 5 --json",
+                command="kaiten --json custom-properties catalog-values list --property-id 5",
                 description="List catalog property values.",
             ),
         ),
@@ -551,7 +551,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json",
+                command="kaiten --json custom-properties catalog-values get --property-id 5 --value-id 10",
                 description="Get a catalog property value.",
             ),
         ),
@@ -586,7 +586,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-properties catalog-values create --property-id 5 --value \'{"field-uuid":"Alice"}\' --json',
+                command='kaiten --json custom-properties catalog-values create --property-id 5 --value \'{"field-uuid":"Alice"}\'',
                 description="Create a catalog property value.",
             ),
         ),
@@ -627,7 +627,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json',
+                command='kaiten --json custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice"',
                 description="Update a catalog property value.",
             ),
         ),
@@ -652,7 +652,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json",
+                command="kaiten --json custom-properties catalog-values delete --property-id 5 --value-id 10",
                 description="Delete a catalog property value.",
             ),
         ),
@@ -678,7 +678,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-score-values list --card-id 10 --property-id 5 --json",
+                command="kaiten --json custom-properties collective-score-values list --card-id 10 --property-id 5",
                 description="List collective score values.",
             ),
         ),
@@ -709,7 +709,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-score-values create --card-id 10 --property-id 5 --value 8 --json",
+                command="kaiten --json custom-properties collective-score-values create --card-id 10 --property-id 5 --value 8",
                 description="Create a collective score value.",
             ),
         ),
@@ -741,7 +741,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-score-values update --card-id 10 --property-id 5 --value-id 1 --value 9 --json",
+                command="kaiten --json custom-properties collective-score-values update --card-id 10 --property-id 5 --value-id 1 --value 9",
                 description="Update a collective score value.",
             ),
         ),
@@ -766,7 +766,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-vote-values list --card-id 10 --property-id 5 --json",
+                command="kaiten --json custom-properties collective-vote-values list --card-id 10 --property-id 5",
                 description="List collective vote values.",
             ),
         ),
@@ -797,7 +797,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1 --json",
+                command="kaiten --json custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1",
                 description="Create a collective vote value.",
             ),
         ),
@@ -829,7 +829,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-vote-values update --card-id 10 --property-id 5 --value-id 1 --value 2 --json",
+                command="kaiten --json custom-properties collective-vote-values update --card-id 10 --property-id 5 --value-id 1 --value 2",
                 description="Update a collective vote value.",
             ),
         ),
@@ -854,7 +854,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten custom-properties collective-vote-values delete --card-id 10 --property-id 5 --value-id 1 --json",
+                command="kaiten --json custom-properties collective-vote-values delete --card-id 10 --property-id 5 --value-id 1",
                 description="Delete a collective vote value.",
             ),
         ),

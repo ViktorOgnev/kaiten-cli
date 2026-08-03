@@ -53,11 +53,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten query cards --snapshot team-basic --filter \'{"board_ids":[10],"has_children":true}\' --fields id,title,has_children --json',
+                command='kaiten --json query cards --snapshot team-basic --filter \'{"board_ids":[10],"has_children":true}\' --fields id,title,has_children',
                 description="Filter cards locally by board and derived flags in summary view.",
             ),
             ExampleSpec(
-                command='kaiten query cards --snapshot team-basic --view evidence --filter \'{"comment_text_query":"blocked"}\' --compact --fields id,title,comment_text --json',
+                command='kaiten --json query cards --snapshot team-basic --view evidence --filter \'{"comment_text_query":"blocked"}\' --compact --fields id,title,comment_text',
                 description="Search local evidence text without extra API calls.",
             ),
         ),
@@ -113,11 +113,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten query metrics --snapshot team-q1 --metric throughput --group-by board_id --json",
+                command="kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by board_id",
                 description="Compute throughput locally over the snapshot window.",
             ),
             ExampleSpec(
-                command='kaiten query metrics --snapshot team-basic --metric aging --filter \'{"board_ids":[10],"has_comments":true}\' --group-by column_id --json',
+                command='kaiten --json query metrics --snapshot team-basic --metric aging --filter \'{"board_ids":[10],"has_comments":true}\' --group-by column_id',
                 description="Compute local WIP aging for a reduced candidate set.",
             ),
         ),

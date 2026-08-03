@@ -60,11 +60,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten snapshot build --name team-basic --space-id 10 --preset basic --json",
+                command="kaiten --json snapshot build --name team-basic --space-id 10 --preset basic",
                 description="Build a reusable local snapshot with topology and cards.",
             ),
             ExampleSpec(
-                command="kaiten snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z --json",
+                command="kaiten --json snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z",
                 description="Build an analytics snapshot with bounded activity and history data.",
             ),
         ),
@@ -98,7 +98,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten snapshot refresh --name team-q1 --json",
+                command="kaiten --json snapshot refresh --name team-q1",
                 description="Refresh a previously built snapshot.",
             ),
         ),
@@ -122,7 +122,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten snapshot list --json", description="Show available local snapshots."
+                command="kaiten --json snapshot list", description="Show available local snapshots."
             ),
         ),
     ),
@@ -149,7 +149,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten snapshot show --name team-q1 --json",
+                command="kaiten --json snapshot show --name team-q1",
                 description="Inspect snapshot metadata and dataset counts.",
             ),
         ),
@@ -179,7 +179,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten snapshot delete --name team-q1 --json",
+                command="kaiten --json snapshot delete --name team-q1",
                 description="Delete a local snapshot.",
             ),
         ),

@@ -157,7 +157,14 @@ def _render_usage_notes(tool: ToolSpec) -> str:
         lines.append(f"- Bulk alternative: `{tool.bulk_alternative}`")
     cache_guidance = cache_guidance_for(tool)
     lines.append(f"- Cache guidance: {cache_guidance['guidance']}")
+    lines.append(
+        "- Cache modes: "
+        + ", ".join(f"`{mode}`" for mode in cache_guidance["available_modes"])
+        + f"; default/recommended: `{cache_guidance['default_mode']}`."
+    )
     lines.append(f"- Refresh hint: {cache_guidance['refresh_hint']}")
+    lines.append(f"- Off hint: {cache_guidance['off_hint']}")
+    lines.append(f"- Readwrite hint: {cache_guidance['readwrite_hint']}")
     for note in tool.usage_notes:
         lines.append(f"- {note}")
     if has_special_live_contract(tool.canonical_name):
@@ -210,6 +217,7 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         "- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.",
         "- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.",
         "- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.",
+        "- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.",
         "- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.",
         "",
         "## Module Index",

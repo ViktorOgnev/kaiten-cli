@@ -37,7 +37,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten comments list --card-id 10 --compact --json",
+                command="kaiten --json comments list --card-id 10 --compact",
                 description="List comments on a card.",
             ),
         ),
@@ -83,11 +83,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten comments batch-list --card-ids '[1,2,3]' --json",
+                command="kaiten --json comments batch-list --card-ids '[1,2,3]'",
                 description="Fetch comments for several cards in one CLI call.",
             ),
             ExampleSpec(
-                command="kaiten comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text --json",
+                command="kaiten --json comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text",
                 description="Fetch narrowed comment payloads with bounded concurrency.",
             ),
         ),
@@ -129,7 +129,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
             ExampleSpec(
-                command='kaiten comments create --card-id 10 --text "Looks good" --json',
+                command='kaiten --json comments create --card-id 10 --text "Looks good"',
                 description="Create a markdown comment.",
             ),
         ),
@@ -164,7 +164,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=comment_format_request),
         examples=(
             ExampleSpec(
-                command='kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json',
+                command='kaiten --json comments update --card-id 10 --comment-id 20 --text "Updated"',
                 description="Update a comment.",
             ),
         ),
@@ -188,7 +188,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten comments delete --card-id 10 --comment-id 20 --json",
+                command="kaiten --json comments delete --card-id 10 --comment-id 20",
                 description="Delete a comment.",
             ),
         ),

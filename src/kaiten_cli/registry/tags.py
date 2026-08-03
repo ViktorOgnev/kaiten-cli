@@ -36,7 +36,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command='kaiten tags list --query "backend" --json',
+                command='kaiten --json tags list --query "backend"',
                 description="Search tags by name.",
             ),
         ),
@@ -58,7 +58,7 @@ TOOLS = (
         operation=OperationSpec(method="POST", path_template="/tags", body_fields=("name",)),
         examples=(
             ExampleSpec(
-                command='kaiten tags create --name "backend" --json',
+                command='kaiten --json tags create --name "backend"',
                 description="Create a company tag.",
             ),
         ),
@@ -84,7 +84,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten tags update --tag-id 10 --name "backend" --json',
+                command='kaiten --json tags update --tag-id 10 --name "backend"',
                 description="Update a company tag.",
             ),
         ),
@@ -105,7 +105,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten tags delete --tag-id 10 --json", description="Delete a company tag."
+                command="kaiten --json tags delete --tag-id 10", description="Delete a company tag."
             ),
         ),
     ),
@@ -129,7 +129,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten card-tags add --card-id 10 --name "backend" --json',
+                command='kaiten --json card-tags add --card-id 10 --name "backend"',
                 description="Add a tag to a card.",
             ),
         ),
@@ -149,7 +149,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-tags list --card-id 10 --json",
+                command="kaiten --json card-tags list --card-id 10",
                 description="List tags on a card.",
             ),
         ),
@@ -173,7 +173,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-tags remove --card-id 10 --tag-id 20 --json",
+                command="kaiten --json card-tags remove --card-id 10 --tag-id 20",
                 description="Remove a tag from a card.",
             ),
         ),

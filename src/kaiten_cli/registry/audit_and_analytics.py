@@ -37,7 +37,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list", heavy=True),
         examples=(
             ExampleSpec(
-                command="kaiten audit-logs list --limit 10 --json", description="List audit logs."
+                command="kaiten --json audit-logs list --limit 10", description="List audit logs."
             ),
         ),
     ),
@@ -63,7 +63,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-activity get --card-id 1 --json",
+                command="kaiten --json card-activity get --card-id 1",
                 description="Get card activity.",
             ),
         ),
@@ -114,7 +114,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-activity get --space-id 1 --limit 10 --json",
+                command="kaiten --json space-activity get --space-id 1 --limit 10",
                 description="Get space activity.",
             ),
         ),
@@ -172,7 +172,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten company-activity get --limit 10 --json",
+                command="kaiten --json company-activity get --limit 10",
                 description="Get company activity.",
             ),
         ),
@@ -194,7 +194,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-location-history get --card-id 1 --json",
+                command="kaiten --json card-location-history get --card-id 1",
                 description="Get card location history.",
             ),
         ),
@@ -236,11 +236,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-location-history batch-get --card-ids '[1,2,3]' --json",
+                command="kaiten --json card-location-history batch-get --card-ids '[1,2,3]'",
                 description="Fetch history for several cards in one CLI call.",
             ),
             ExampleSpec(
-                command="kaiten card-location-history batch-get --card-ids '[1,2,3]' --workers 2 --fields changed,column_id,subcolumn_id --json",
+                command="kaiten --json card-location-history batch-get --card-ids '[1,2,3]' --workers 2 --fields changed,column_id,subcolumn_id",
                 description="Fetch projected history rows with bounded concurrency.",
             ),
         ),
@@ -293,7 +293,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-activity-all get --space-id 1 --page-size 20 --max-pages 2 --json",
+                command="kaiten --json space-activity-all get --space-id 1 --page-size 20 --max-pages 2",
                 description="Fetch all space activity with bounded pagination.",
             ),
         ),
@@ -318,7 +318,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten saved-filters list --json", description="List saved filters."
+                command="kaiten --json saved-filters list", description="List saved filters."
             ),
         ),
     ),
@@ -344,7 +344,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=saved_filter_title_request),
         examples=(
             ExampleSpec(
-                command="kaiten saved-filters create --name MyFilter --filter '{}' --json",
+                command="kaiten --json saved-filters create --name MyFilter --filter '{}'",
                 description="Create a saved filter.",
             ),
         ),
@@ -363,7 +363,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten saved-filters get --filter-id 1 --json",
+                command="kaiten --json saved-filters get --filter-id 1",
                 description="Get a saved filter.",
             ),
         ),
@@ -394,7 +394,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=saved_filter_title_request),
         examples=(
             ExampleSpec(
-                command="kaiten saved-filters update --filter-id 1 --name Renamed --json",
+                command="kaiten --json saved-filters update --filter-id 1 --name Renamed",
                 description="Update a saved filter.",
             ),
         ),
@@ -413,7 +413,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten saved-filters delete --filter-id 1 --json",
+                command="kaiten --json saved-filters delete --filter-id 1",
                 description="Delete a saved filter.",
             ),
         ),

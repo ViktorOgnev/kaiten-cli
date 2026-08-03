@@ -23,7 +23,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten external-links list --card-id 10 --json",
+                command="kaiten --json external-links list --card-id 10",
                 description="List external links on a card.",
             ),
         ),
@@ -52,7 +52,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten external-links create --card-id 10 --url "https://example.com" --json',
+                command='kaiten --json external-links create --card-id 10 --url "https://example.com"',
                 description="Attach an external link to a card.",
             ),
         ),
@@ -82,7 +82,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json',
+                command='kaiten --json external-links update --card-id 10 --link-id 20 --description "Spec"',
                 description="Update a card external link.",
             ),
         ),
@@ -106,7 +106,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten external-links delete --card-id 10 --link-id 20 --json",
+                command="kaiten --json external-links delete --card-id 10 --link-id 20",
                 description="Delete a card external link.",
             ),
         ),

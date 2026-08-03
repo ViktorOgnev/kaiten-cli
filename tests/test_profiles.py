@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 import stat
 
+import httpx
 import pytest
+import respx
+from httpx import Response
 
+from kaiten_cli.app import main
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.profiles import (
     add_profile,
@@ -306,3 +310,88 @@ def test_resolve_profile_unknown_profile_guides_listing(config_env, monkeypatch)
     assert "Unknown profile: prod" in message
     assert "kaiten profile list" in message
     assert "kaiten profile use <name>" in message
+
+
+@respx.mock
+def test_profile_probe_is_fresh_read_only_and_anonymized(config_env, capsys):
+    add_profile(
+        "main",
+        domain="private-tenant",
+        token="secret-token",
+        cache_mode="readwrite",
+        cache_ttl_seconds=120,
+        set_active=True,
+    )
+    route = respx.get("https://private-tenant.kaiten.ru/api/latest/users/current").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": 42,
+                "full_name": "Private User",
+                "email": "private@example.com",
+            },
+        )
+    )
+
+    assert main(["--json", "--profile", "main", "--read-only", "profile", "probe"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert route.call_count == 1
+    assert payload["data"] == {
+        "profile": {
+            "name": "main",
+            "source": "explicit_profile",
+            "domain_configured": True,
+            "cache_mode": "readwrite",
+            "cache_ttl_seconds": 120,
+        },
+        "authentication": {
+            "ok": True,
+            "probe_cache_mode": "off",
+        },
+        "capability_scope": "authentication_only",
+        "write_permissions": "not_checked",
+    }
+    assert payload["stats"]["cache"] == {
+        "mode": "off",
+        "policy": "request_scope",
+        "ttl_seconds": None,
+    }
+    rendered = json.dumps(payload)
+    assert "private-tenant" not in rendered
+    assert "Private User" not in rendered
+    assert "private@example.com" not in rendered
+    assert "secret-token" not in rendered
+    assert '"user_id"' not in rendered
+
+
+@pytest.mark.parametrize("status_code", [401, 403, 503])
+@respx.mock
+def test_profile_probe_preserves_http_failure_class(
+    status_code, config_env, capsys
+):
+    add_profile("main", domain="sandbox", token="secret-token", set_active=True)
+    respx.get("https://sandbox.kaiten.ru/api/latest/users/current").mock(
+        return_value=Response(status_code, json={"message": "probe failed"})
+    )
+
+    assert main(["--json", "--profile", "main", "profile", "probe"]) == 4
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["command"] == "profile.probe"
+    assert payload["error"]["type"] == "api_error"
+    assert payload["error"]["status_code"] == status_code
+
+
+@respx.mock
+def test_profile_probe_preserves_transport_failure(config_env, capsys):
+    add_profile("main", domain="sandbox", token="secret-token", set_active=True)
+    respx.get("https://sandbox.kaiten.ru/api/latest/users/current").mock(
+        side_effect=httpx.ConnectError("offline")
+    )
+
+    assert main(["--json", "--profile", "main", "profile", "probe"]) == 5
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["command"] == "profile.probe"
+    assert payload["error"]["type"] == "transport_error"

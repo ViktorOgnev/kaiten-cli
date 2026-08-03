@@ -32,7 +32,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten checklist-cards list --checklist-id 20 --only-shared-cards --json",
+                command="kaiten --json checklist-cards list --checklist-id 20 --only-shared-cards",
                 description="List cards with a checklist.",
             ),
         ),
@@ -58,7 +58,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten checklists list --card-id 10 --json",
+                command="kaiten --json checklists list --card-id 10",
                 description="List checklists on a card.",
             ),
         ),
@@ -88,7 +88,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten checklists create --card-id 10 --name "Ready for QA" --json',
+                command='kaiten --json checklists create --card-id 10 --name "Ready for QA"',
                 description="Create a checklist.",
             ),
         ),
@@ -115,7 +115,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten checklists update --card-id 10 --checklist-id 20 --name "Ready for QA" --json',
+                command='kaiten --json checklists update --card-id 10 --checklist-id 20 --name "Ready for QA"',
                 description="Update a checklist.",
             ),
         ),
@@ -139,7 +139,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten checklists delete --card-id 10 --checklist-id 20 --json",
+                command="kaiten --json checklists delete --card-id 10 --checklist-id 20",
                 description="Delete a checklist.",
             ),
         ),
@@ -168,7 +168,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten checklist-items list --card-id 10 --checklist-id 20 --json",
+                command="kaiten --json checklist-items list --card-id 10 --checklist-id 20",
                 description="List checklist items.",
             ),
         ),
@@ -202,7 +202,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten checklist-items create --card-id 10 --checklist-id 20 --text "Ship it" --json',
+                command='kaiten --json checklist-items create --card-id 10 --checklist-id 20 --text "Ship it"',
                 description="Create a checklist item.",
             ),
         ),
@@ -233,7 +233,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked --json",
+                command="kaiten --json checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked",
                 description="Update a checklist item.",
             ),
         ),
@@ -258,7 +258,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten checklist-items delete --card-id 10 --checklist-id 20 --item-id 30 --json",
+                command="kaiten --json checklist-items delete --card-id 10 --checklist-id 20 --item-id 30",
                 description="Delete a checklist item.",
             ),
         ),
@@ -280,7 +280,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten space-template-checklists list --space-uid space-uuid --json",
+                command="kaiten --json space-template-checklists list --space-uid space-uuid",
                 description="List space template checklists.",
             ),
         ),
@@ -306,7 +306,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten space-template-checklists create --space-uid space-uuid --name "Definition of Done" --json',
+                command='kaiten --json space-template-checklists create --space-uid space-uuid --name "Definition of Done"',
                 description="Create a space template checklist.",
             ),
         ),
@@ -336,7 +336,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready" --json',
+                command='kaiten --json space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready"',
                 description="Update a space template checklist.",
             ),
         ),
@@ -363,7 +363,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-template-checklists delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --json",
+                command="kaiten --json space-template-checklists delete --space-uid space-uuid --template-checklist-uid tmpl-uuid",
                 description="Delete a space template checklist.",
             ),
         ),
@@ -393,7 +393,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten space-template-checklist-items create --space-uid space-uuid --template-checklist-uid tmpl-uuid --text "Reviewed" --json',
+                command='kaiten --json space-template-checklist-items create --space-uid space-uuid --template-checklist-uid tmpl-uuid --text "Reviewed"',
                 description="Create a space template checklist item.",
             ),
         ),
@@ -424,7 +424,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten space-template-checklist-items update --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --text "Reviewed" --json',
+                command='kaiten --json space-template-checklist-items update --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --text "Reviewed"',
                 description="Update a space template checklist item.",
             ),
         ),
@@ -452,7 +452,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-template-checklist-items delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --json",
+                command="kaiten --json space-template-checklist-items delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid",
                 description="Delete a space template checklist item.",
             ),
         ),

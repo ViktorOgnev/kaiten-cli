@@ -361,7 +361,19 @@ class ExecutionContext:
         persistent = None
         if profile.cache_mode in {CACHE_MODE_AUTO, CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}:
             persistent = PersistentCache(persistent_cache_path(), reporter=reporter)
-        return cls(profile=profile, reporter=reporter, persistent_cache=persistent)
+        return cls(
+            profile=profile,
+            reporter=reporter,
+            persistent_cache=persistent,
+            stats=ExecutionStats(
+                cache_mode=profile.cache_mode,
+                cache_ttl_seconds=(
+                    profile.cache_ttl_seconds
+                    if profile.cache_mode in {CACHE_MODE_READWRITE, CACHE_MODE_REFRESH}
+                    else None
+                ),
+            ),
+        )
 
     @property
     def scope(self) -> str:

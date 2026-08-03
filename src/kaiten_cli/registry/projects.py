@@ -17,7 +17,7 @@ TOOLS = (
         operation=OperationSpec(method="GET", path_template="/projects"),
         examples=(
             ExampleSpec(
-                command="kaiten projects list --json", description="List company projects."
+                command="kaiten --json projects list", description="List company projects."
             ),
         ),
     ),
@@ -50,7 +50,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
             ExampleSpec(
-                command='kaiten projects create --title "Platform" --json',
+                command='kaiten --json projects create --title "Platform"',
                 description="Create a project.",
             ),
         ),
@@ -78,7 +78,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten projects get --project-id p1 --json",
+                command="kaiten --json projects get --project-id p1",
                 description="Get a project by ID.",
             ),
         ),
@@ -126,7 +126,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=project_title_to_name_request),
         examples=(
             ExampleSpec(
-                command='kaiten projects update --project-id p1 --title "Platform" --json',
+                command='kaiten --json projects update --project-id p1 --title "Platform"',
                 description="Update a project.",
             ),
         ),
@@ -147,7 +147,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten projects delete --project-id p1 --json",
+                command="kaiten --json projects delete --project-id p1",
                 description="Delete a project.",
             ),
         ),
@@ -177,7 +177,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten projects cards list --project-id p1 --compact --json",
+                command="kaiten --json projects cards list --project-id p1 --compact",
                 description="List project cards.",
             ),
         ),
@@ -202,7 +202,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten projects cards add --project-id p1 --card-id 10 --json",
+                command="kaiten --json projects cards add --project-id p1 --card-id 10",
                 description="Add a card to a project.",
             ),
         ),
@@ -226,7 +226,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten projects cards remove --project-id p1 --card-id 10 --json",
+                command="kaiten --json projects cards remove --project-id p1 --card-id 10",
                 description="Remove a card from a project.",
             ),
         ),
@@ -247,7 +247,7 @@ TOOLS = (
             method="GET", path_template="/sprints", query_fields=("active", "limit", "offset")
         ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list"),
-        examples=(ExampleSpec(command="kaiten sprints list --json", description="List sprints."),),
+        examples=(ExampleSpec(command="kaiten --json sprints list", description="List sprints."),),
     ),
     make_tool(
         canonical_name="sprints.create",
@@ -271,7 +271,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten sprints create --title "Sprint 1" --board-id 10 --json',
+                command='kaiten --json sprints create --title "Sprint 1" --board-id 10',
                 description="Create a sprint.",
             ),
         ),
@@ -299,7 +299,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten sprints get --sprint-id 1 --json", description="Get a sprint."
+                command="kaiten --json sprints get --sprint-id 1", description="Get a sprint."
             ),
         ),
     ),
@@ -341,7 +341,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten sprints update --sprint-id 1 --active false --json",
+                command="kaiten --json sprints update --sprint-id 1 --active false",
                 description="Update a sprint.",
             ),
         ),
@@ -362,7 +362,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten sprints delete --sprint-id 1 --json", description="Delete a sprint."
+                command="kaiten --json sprints delete --sprint-id 1", description="Delete a sprint."
             ),
         ),
     ),

@@ -14,6 +14,7 @@
 - `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.
 - Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
 - Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.
+- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.
 - For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
 
 ## Module Index
@@ -110,12 +111,15 @@ cards
 
 **Examples**
 
-- List card allowed users.: `kaiten card-allowed-users list --card-id 123 --compact --json`
+- List card allowed users.: `kaiten --json card-allowed-users list --card-id 123 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-baselines.list`
 
@@ -144,12 +148,15 @@ cards
 
 **Examples**
 
-- List baselines for a card.: `kaiten card-baselines list --card-id 123 --json`
+- List baselines for a card.: `kaiten --json card-baselines list --card-id 123`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-service-desk-external-recipients.add`
 
@@ -181,12 +188,15 @@ cards
 
 **Examples**
 
-- Add a Service Desk external recipient.: `kaiten card-service-desk-external-recipients add --card-id 123 --email user@example.com --json`
+- Add a Service Desk external recipient.: `kaiten --json card-service-desk-external-recipients add --card-id 123 --email user@example.com`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-service-desk-external-recipients.remove`
 
@@ -216,12 +226,15 @@ cards
 
 **Examples**
 
-- Remove a Service Desk external recipient.: `kaiten card-service-desk-external-recipients remove --card-id 123 --email user@example.com --json`
+- Remove a Service Desk external recipient.: `kaiten --json card-service-desk-external-recipients remove --card-id 123 --email user@example.com`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.archive`
 
@@ -257,7 +270,10 @@ cards
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.batch-get`
 
@@ -289,13 +305,16 @@ cards
 
 **Examples**
 
-- Fetch several cards in one CLI call.: `kaiten cards batch-get --card-ids '[1,2,3]' --json`
-- Fetch narrowed card detail payloads with bounded concurrency.: `kaiten cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description --json`
+- Fetch several cards in one CLI call.: `kaiten --json cards batch-get --card-ids '[1,2,3]'`
+- Fetch narrowed card detail payloads with bounded concurrency.: `kaiten --json cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for detail enrichment after local candidate reduction or before building evidence-heavy snapshots.
 
@@ -333,12 +352,15 @@ cards
 
 **Examples**
 
-- Batch update matching cards.: `kaiten cards batch-update --board-id 10 --attributes '{"owner_id":7}' --json`
+- Batch update matching cards.: `kaiten --json cards batch-update --board-id 10 --attributes '{"owner_id":7}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This endpoint updates all cards matching the criteria and returns a background job ID.
 - Use narrow criteria first; this is intentionally separate from per-card cards.update.
 
@@ -396,13 +418,16 @@ cards
 
 **Examples**
 
-- Create a card.: `kaiten cards create --title "Smoke task" --board-id 10 --json`
-- Create a card with a narrow response.: `kaiten cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state --json`
+- Create a card.: `kaiten --json cards create --title "Smoke task" --board-id 10`
+- Create a card with a narrow response.: `kaiten --json cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.delete`
 
@@ -438,7 +463,10 @@ cards
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.get`
 
@@ -473,14 +501,17 @@ cards
 **Examples**
 
 - Get a card by numeric ID.: `kaiten cards get --card-id 123`
-- Get a narrow card response.: `kaiten cards get --card-id 123 --compact --fields id,title,state --json`
-- Save a card as Markdown.: `kaiten cards get --card-id 123 --markdown --output ./card.md --json`
+- Get a narrow card response.: `kaiten --json cards get --card-id 123 --compact --fields id,title,state`
+- Save a card as Markdown.: `kaiten --json cards get --card-id 123 --markdown --output ./card.md`
 
 **Notes**
 
 - Bulk alternative: `cards.batch-get`
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This is a per-card entity read and becomes expensive when repeated over large card populations.
 - For detail enrichment after candidate reduction, prefer cards.batch-get over one-card-at-a-time loops.
 - `--markdown` does the same card GET, renders the result locally, and saves a Markdown file instead of returning the card JSON.
@@ -568,13 +599,16 @@ cards
 
 **Examples**
 
-- List cards on a board.: `kaiten cards list --board-id 10 --limit 5 --compact --json`
+- List cards on a board.: `kaiten --json cards list --board-id 10 --limit 5 --compact`
 - Search cards by query.: `kaiten cards list --query "bug" --fields id,title,state`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.list-all`
 
@@ -659,13 +693,16 @@ cards
 
 **Examples**
 
-- Fetch all matching cards with bounded pagination.: `kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json`
-- Fetch only active cards via normalized bulk selection.: `kaiten cards list-all --board-id 10 --selection active_only --fields id,title --json`
+- Fetch all matching cards with bounded pagination.: `kaiten --json cards list-all --board-id 10 --page-size 20 --max-pages 2`
+- Fetch only active cards via normalized bulk selection.: `kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.
 - active_only is computed as all_cards minus the archived subset to match the documented bulk CLI behavior.
 
@@ -702,12 +739,15 @@ cards
 
 **Examples**
 
-- Move a card.: `kaiten cards move --card-id 123 --column-id 10 --json`
+- Move a card.: `kaiten --json cards move --card-id 123 --column-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `cards.move-by-url`
 
@@ -743,13 +783,16 @@ cards
 
 **Examples**
 
-- Move a card by resolving card and target UI URLs.: `kaiten cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --lane-id 20 --json`
-- Preview the resolved move target without changing the card.: `kaiten cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --dry-run --json`
+- Move a card by resolving card and target UI URLs.: `kaiten --json cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --lane-id 20`
+- Preview the resolved move target without changing the card.: `kaiten --json cards move-by-url --card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" --target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" --dry-run`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command does discovery inside the target space, then calls cards.move semantics.
 - URL hosts must match the resolved profile domain; profiles are not auto-selected.
 - When the target board has multiple lanes, pass --lane-id explicitly.
@@ -811,12 +854,15 @@ cards
 **Examples**
 
 - Update a card.: `kaiten cards update --card-id 123 --title "Renamed"`
-- Update a card with a narrow response.: `kaiten cards update --card-id 123 --title "Renamed" --compact --fields id,title,state --json`
+- Update a card with a narrow response.: `kaiten --json cards update --card-id 123 --title "Renamed" --compact --fields id,title,state`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-comments"></a>
 ## Комментарии (`comments`) — 5 commands
@@ -864,13 +910,16 @@ comments
 
 **Examples**
 
-- Fetch comments for several cards in one CLI call.: `kaiten comments batch-list --card-ids '[1,2,3]' --json`
-- Fetch narrowed comment payloads with bounded concurrency.: `kaiten comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text --json`
+- Fetch comments for several cards in one CLI call.: `kaiten --json comments batch-list --card-ids '[1,2,3]'`
+- Fetch narrowed comment payloads with bounded concurrency.: `kaiten --json comments batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,text`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path when you need comment evidence across many cards.
 
@@ -904,12 +953,15 @@ comments
 
 **Examples**
 
-- Create a markdown comment.: `kaiten comments create --card-id 10 --text "Looks good" --json`
+- Create a markdown comment.: `kaiten --json comments create --card-id 10 --text "Looks good"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `comments.delete`
 
@@ -939,12 +991,15 @@ comments
 
 **Examples**
 
-- Delete a comment.: `kaiten comments delete --card-id 10 --comment-id 20 --json`
+- Delete a comment.: `kaiten --json comments delete --card-id 10 --comment-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `comments.list`
 
@@ -974,13 +1029,16 @@ comments
 
 **Examples**
 
-- List comments on a card.: `kaiten comments list --card-id 10 --compact --json`
+- List comments on a card.: `kaiten --json comments list --card-id 10 --compact`
 
 **Notes**
 
 - Bulk alternative: `comments.batch-list`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For report and investigation workflows, prefer comments.batch-list over one-card-at-a-time loops.
 
@@ -1014,12 +1072,15 @@ comments
 
 **Examples**
 
-- Update a comment.: `kaiten comments update --card-id 10 --comment-id 20 --text "Updated" --json`
+- Update a comment.: `kaiten --json comments update --card-id 10 --comment-id 20 --text "Updated"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-members"></a>
 ## Участники и пользователи (`members`) — 7 commands
@@ -1068,12 +1129,15 @@ users
 
 **Examples**
 
-- Add a member to a card.: `kaiten card-members add --card-id 10 --user-id 7 --json`
+- Add a member to a card.: `kaiten --json card-members add --card-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-members.list`
 
@@ -1103,12 +1167,15 @@ users
 
 **Examples**
 
-- List members on a card.: `kaiten card-members list --card-id 10 --compact --json`
+- List members on a card.: `kaiten --json card-members list --card-id 10 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-members.remove`
 
@@ -1138,12 +1205,15 @@ users
 
 **Examples**
 
-- Remove a member from a card.: `kaiten card-members remove --card-id 10 --user-id 7 --json`
+- Remove a member from a card.: `kaiten --json card-members remove --card-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-members.update`
 
@@ -1175,12 +1245,15 @@ users
 
 **Examples**
 
-- Update a card member role.: `kaiten card-members update --card-id 10 --member-id 7 --role-id role-uuid --json`
+- Update a card member role.: `kaiten --json card-members update --card-id 10 --member-id 7 --role-id role-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `users.current`
 
@@ -1207,12 +1280,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get the current user.: `kaiten users current --json`
+- Get the current user.: `kaiten --json users current`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `users.list`
 
@@ -1250,12 +1326,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Search users by name.: `kaiten users list --query "alice" --compact --json`
+- Search users by name.: `kaiten --json users list --query "alice" --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This command maps to `/users`. Use `company-users.list` for the paginated administrative Members section (`/company/users?for_members_section=true`).
 
 ### `users.update`
@@ -1288,12 +1367,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a user.: `kaiten users update --user-id 7 --full-name "Alice Smith" --json`
+- Update a user.: `kaiten --json users update --user-id 7 --full-name "Alice Smith"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-time-logs"></a>
 ## Логи времени (`time_logs`) — 6 commands
@@ -1345,13 +1427,16 @@ timesheet
 
 **Examples**
 
-- Fetch time logs for several cards in one CLI call.: `kaiten time-logs batch-list --card-ids '[1,2,3]' --json`
-- Fetch narrowed time-log payloads with bounded concurrency.: `kaiten time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date --json`
+- Fetch time logs for several cards in one CLI call.: `kaiten --json time-logs batch-list --card-ids '[1,2,3]'`
+- Fetch narrowed time-log payloads with bounded concurrency.: `kaiten --json time-logs batch-list --card-ids '[1,2,3]' --workers 2 --fields id,time_spent,for_date`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for work-log analytics and snapshot builds instead of repeating time-logs.list for every card.
 
@@ -1386,12 +1471,15 @@ timesheet
 
 **Examples**
 
-- Create a time log entry.: `kaiten time-logs create --card-id 10 --time-spent 15 --comment "Analysis" --json`
+- Create a time log entry.: `kaiten --json time-logs create --card-id 10 --time-spent 15 --comment "Analysis"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `time-logs.delete`
 
@@ -1421,12 +1509,15 @@ timesheet
 
 **Examples**
 
-- Delete a time log.: `kaiten time-logs delete --card-id 10 --time-log-id 20 --json`
+- Delete a time log.: `kaiten --json time-logs delete --card-id 10 --time-log-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `time-logs.list`
 
@@ -1459,13 +1550,16 @@ timesheet
 
 **Examples**
 
-- List time logs on a card.: `kaiten time-logs list --card-id 10 --json`
+- List time logs on a card.: `kaiten --json time-logs list --card-id 10`
 
 **Notes**
 
 - Bulk alternative: `time-logs.batch-list`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For analytics snapshots and work-log investigations, prefer time-logs.batch-list over one-card-at-a-time loops.
 
@@ -1501,12 +1595,15 @@ timesheet
 
 **Examples**
 
-- Update a time log.: `kaiten time-logs update --card-id 10 --time-log-id 20 --time-spent 20 --json`
+- Update a time log.: `kaiten --json time-logs update --card-id 10 --time-log-id 20 --time-spent 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `timesheet.list`
 
@@ -1543,12 +1640,15 @@ timesheet
 
 **Examples**
 
-- List company time logs.: `kaiten timesheet list --limit 50 --json`
+- List company time logs.: `kaiten --json timesheet list --limit 50`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-tags"></a>
 ## Теги (`tags`) — 7 commands
@@ -1597,12 +1697,15 @@ tags
 
 **Examples**
 
-- Add a tag to a card.: `kaiten card-tags add --card-id 10 --name "backend" --json`
+- Add a tag to a card.: `kaiten --json card-tags add --card-id 10 --name "backend"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-tags.list`
 
@@ -1631,12 +1734,15 @@ tags
 
 **Examples**
 
-- List tags on a card.: `kaiten card-tags list --card-id 10 --json`
+- List tags on a card.: `kaiten --json card-tags list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-tags.remove`
 
@@ -1666,12 +1772,15 @@ tags
 
 **Examples**
 
-- Remove a tag from a card.: `kaiten card-tags remove --card-id 10 --tag-id 20 --json`
+- Remove a tag from a card.: `kaiten --json card-tags remove --card-id 10 --tag-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `tags.create`
 
@@ -1700,12 +1809,15 @@ tags
 
 **Examples**
 
-- Create a company tag.: `kaiten tags create --name "backend" --json`
+- Create a company tag.: `kaiten --json tags create --name "backend"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `tags.delete`
 
@@ -1734,12 +1846,15 @@ tags
 
 **Examples**
 
-- Delete a company tag.: `kaiten tags delete --tag-id 10 --json`
+- Delete a company tag.: `kaiten --json tags delete --tag-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `tags.list`
 
@@ -1772,12 +1887,15 @@ tags
 
 **Examples**
 
-- Search tags by name.: `kaiten tags list --query "backend" --json`
+- Search tags by name.: `kaiten --json tags list --query "backend"`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `tags.update`
 
@@ -1808,12 +1926,15 @@ tags
 
 **Examples**
 
-- Update a company tag.: `kaiten tags update --tag-id 10 --name "backend" --json`
+- Update a company tag.: `kaiten --json tags update --tag-id 10 --name "backend"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-checklists"></a>
 ## Чеклисты (`checklists`) — 16 commands
@@ -1874,12 +1995,15 @@ space-template-checklists
 
 **Examples**
 
-- List cards with a checklist.: `kaiten checklist-cards list --checklist-id 20 --only-shared-cards --json`
+- List cards with a checklist.: `kaiten --json checklist-cards list --checklist-id 20 --only-shared-cards`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklist-items.create`
 
@@ -1914,12 +2038,15 @@ space-template-checklists
 
 **Examples**
 
-- Create a checklist item.: `kaiten checklist-items create --card-id 10 --checklist-id 20 --text "Ship it" --json`
+- Create a checklist item.: `kaiten --json checklist-items create --card-id 10 --checklist-id 20 --text "Ship it"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklist-items.delete`
 
@@ -1950,12 +2077,15 @@ space-template-checklists
 
 **Examples**
 
-- Delete a checklist item.: `kaiten checklist-items delete --card-id 10 --checklist-id 20 --item-id 30 --json`
+- Delete a checklist item.: `kaiten --json checklist-items delete --card-id 10 --checklist-id 20 --item-id 30`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklist-items.list`
 
@@ -1985,12 +2115,15 @@ space-template-checklists
 
 **Examples**
 
-- List checklist items.: `kaiten checklist-items list --card-id 10 --checklist-id 20 --json`
+- List checklist items.: `kaiten --json checklist-items list --card-id 10 --checklist-id 20`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Direct checklist item listing is unsupported on sandbox; this command reads the card and extracts items from the matching embedded checklist.
 - Live contract: `synthetic_read`; expected statuses: `405`
 - Live note: Direct checklist item listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklist items.
@@ -2029,12 +2162,15 @@ space-template-checklists
 
 **Examples**
 
-- Update a checklist item.: `kaiten checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked --json`
+- Update a checklist item.: `kaiten --json checklist-items update --card-id 10 --checklist-id 20 --item-id 30 --checked`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklists.create`
 
@@ -2065,12 +2201,15 @@ space-template-checklists
 
 **Examples**
 
-- Create a checklist.: `kaiten checklists create --card-id 10 --name "Ready for QA" --json`
+- Create a checklist.: `kaiten --json checklists create --card-id 10 --name "Ready for QA"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklists.delete`
 
@@ -2100,12 +2239,15 @@ space-template-checklists
 
 **Examples**
 
-- Delete a checklist.: `kaiten checklists delete --card-id 10 --checklist-id 20 --json`
+- Delete a checklist.: `kaiten --json checklists delete --card-id 10 --checklist-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `checklists.list`
 
@@ -2134,12 +2276,15 @@ space-template-checklists
 
 **Examples**
 
-- List checklists on a card.: `kaiten checklists list --card-id 10 --json`
+- List checklists on a card.: `kaiten --json checklists list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Direct checklist listing is unsupported on sandbox; this command reads the card and extracts embedded checklists.
 - Live contract: `synthetic_read`; expected statuses: `405`
 - Live note: Direct checklist listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklists.
@@ -2174,12 +2319,15 @@ space-template-checklists
 
 **Examples**
 
-- Update a checklist.: `kaiten checklists update --card-id 10 --checklist-id 20 --name "Ready for QA" --json`
+- Update a checklist.: `kaiten --json checklists update --card-id 10 --checklist-id 20 --name "Ready for QA"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklist-items.create`
 
@@ -2211,12 +2359,15 @@ space-template-checklists
 
 **Examples**
 
-- Create a space template checklist item.: `kaiten space-template-checklist-items create --space-uid space-uuid --template-checklist-uid tmpl-uuid --text "Reviewed" --json`
+- Create a space template checklist item.: `kaiten --json space-template-checklist-items create --space-uid space-uuid --template-checklist-uid tmpl-uuid --text "Reviewed"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklist-items.delete`
 
@@ -2247,12 +2398,15 @@ space-template-checklists
 
 **Examples**
 
-- Delete a space template checklist item.: `kaiten space-template-checklist-items delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --json`
+- Delete a space template checklist item.: `kaiten --json space-template-checklist-items delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklist-items.update`
 
@@ -2285,12 +2439,15 @@ space-template-checklists
 
 **Examples**
 
-- Update a space template checklist item.: `kaiten space-template-checklist-items update --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --text "Reviewed" --json`
+- Update a space template checklist item.: `kaiten --json space-template-checklist-items update --space-uid space-uuid --template-checklist-uid tmpl-uuid --item-uid item-uuid --text "Reviewed"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklists.create`
 
@@ -2321,12 +2478,15 @@ space-template-checklists
 
 **Examples**
 
-- Create a space template checklist.: `kaiten space-template-checklists create --space-uid space-uuid --name "Definition of Done" --json`
+- Create a space template checklist.: `kaiten --json space-template-checklists create --space-uid space-uuid --name "Definition of Done"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklists.delete`
 
@@ -2356,12 +2516,15 @@ space-template-checklists
 
 **Examples**
 
-- Delete a space template checklist.: `kaiten space-template-checklists delete --space-uid space-uuid --template-checklist-uid tmpl-uuid --json`
+- Delete a space template checklist.: `kaiten --json space-template-checklists delete --space-uid space-uuid --template-checklist-uid tmpl-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklists.list`
 
@@ -2390,12 +2553,15 @@ space-template-checklists
 
 **Examples**
 
-- List space template checklists.: `kaiten space-template-checklists list --space-uid space-uuid --json`
+- List space template checklists.: `kaiten --json space-template-checklists list --space-uid space-uuid`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-template-checklists.update`
 
@@ -2427,12 +2593,15 @@ space-template-checklists
 
 **Examples**
 
-- Update a space template checklist.: `kaiten space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready" --json`
+- Update a space template checklist.: `kaiten --json space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-blockers"></a>
 ## Блокировки (`blockers`) — 12 commands
@@ -2488,12 +2657,15 @@ current-user-blockers
 
 **Examples**
 
-- Add a blocker category.: `kaiten blocker-categories add --blocker-id 20 --category-uuid cat-uuid --json`
+- Add a blocker category.: `kaiten --json blocker-categories add --blocker-id 20 --category-uuid cat-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blocker-categories.list`
 
@@ -2520,12 +2692,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List blocker categories.: `kaiten blocker-categories list --json`
+- List blocker categories.: `kaiten --json blocker-categories list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blocker-categories.remove`
 
@@ -2555,12 +2730,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Remove a blocker category.: `kaiten blocker-categories remove --blocker-id 20 --category-uuid cat-uuid --json`
+- Remove a blocker category.: `kaiten --json blocker-categories remove --blocker-id 20 --category-uuid cat-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blocker-users.add`
 
@@ -2590,12 +2768,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Add a blocker user.: `kaiten blocker-users add --blocker-id 20 --user-id 7 --json`
+- Add a blocker user.: `kaiten --json blocker-users add --blocker-id 20 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blocker-users.list`
 
@@ -2624,12 +2805,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List blocker users.: `kaiten blocker-users list --blocker-id 20 --compact --json`
+- List blocker users.: `kaiten --json blocker-users list --blocker-id 20 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blocker-users.remove`
 
@@ -2659,12 +2843,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Remove a blocker user.: `kaiten blocker-users remove --blocker-id 20 --user-id 7 --json`
+- Remove a blocker user.: `kaiten --json blocker-users remove --blocker-id 20 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blockers.create`
 
@@ -2695,12 +2882,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create a blocker on a card.: `kaiten blockers create --card-id 10 --reason "Waiting for review" --json`
+- Create a blocker on a card.: `kaiten --json blockers create --card-id 10 --reason "Waiting for review"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blockers.delete`
 
@@ -2730,12 +2920,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete a blocker.: `kaiten blockers delete --card-id 10 --blocker-id 20 --json`
+- Delete a blocker.: `kaiten --json blockers delete --card-id 10 --blocker-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blockers.get`
 
@@ -2765,12 +2958,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a blocker by filtering the blocker list.: `kaiten blockers get --card-id 10 --blocker-id 20 --json`
+- Get a blocker by filtering the blocker list.: `kaiten --json blockers get --card-id 10 --blocker-id 20`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blockers.list`
 
@@ -2799,12 +2995,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List blockers on a card.: `kaiten blockers list --card-id 10 --json`
+- List blockers on a card.: `kaiten --json blockers list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `blockers.update`
 
@@ -2835,12 +3034,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a blocker.: `kaiten blockers update --card-id 10 --blocker-id 20 --reason "Waiting for review" --json`
+- Update a blocker.: `kaiten --json blockers update --card-id 10 --blocker-id 20 --reason "Waiting for review"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `current-user-blockers.list`
 
@@ -2867,12 +3069,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List current user blockers.: `kaiten current-user-blockers list --json`
+- List current user blockers.: `kaiten --json current-user-blockers list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-card-relations"></a>
 ## Связи карточек (`card_relations`) — 10 commands
@@ -2925,12 +3130,15 @@ planned-relations
 
 **Examples**
 
-- Add a child card relation.: `kaiten card-children add --card-id 10 --child-card-id 11 --json`
+- Add a child card relation.: `kaiten --json card-children add --card-id 10 --child-card-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-children.batch-list`
 
@@ -2962,13 +3170,16 @@ planned-relations
 
 **Examples**
 
-- Fetch child-card relations for several parent cards.: `kaiten card-children batch-list --card-ids '[1,2,3]' --json`
-- Fetch narrowed child-card payloads with bounded concurrency.: `kaiten card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title --json`
+- Fetch child-card relations for several parent cards.: `kaiten --json card-children batch-list --card-ids '[1,2,3]'`
+- Fetch narrowed child-card payloads with bounded concurrency.: `kaiten --json card-children batch-list --card-ids '[1,2,3]' --workers 2 --compact --fields id,title`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use this bulk path for relation-heavy investigations instead of per-parent card-children.list loops.
 
@@ -2999,13 +3210,16 @@ planned-relations
 
 **Examples**
 
-- List child cards.: `kaiten card-children list --card-id 10 --json`
+- List child cards.: `kaiten --json card-children list --card-id 10`
 
 **Notes**
 
 - Bulk alternative: `card-children.batch-list`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This is a per-card read and becomes expensive when repeated across many parent cards.
 - For investigation and reporting workflows, prefer card-children.batch-list over one-card-at-a-time loops.
 
@@ -3037,12 +3251,15 @@ planned-relations
 
 **Examples**
 
-- Remove a child card relation.: `kaiten card-children remove --card-id 10 --child-id 11 --json`
+- Remove a child card relation.: `kaiten --json card-children remove --card-id 10 --child-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-parents.add`
 
@@ -3072,12 +3289,15 @@ planned-relations
 
 **Examples**
 
-- Add a parent card relation.: `kaiten card-parents add --card-id 10 --parent-card-id 11 --json`
+- Add a parent card relation.: `kaiten --json card-parents add --card-id 10 --parent-card-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-parents.list`
 
@@ -3106,12 +3326,15 @@ planned-relations
 
 **Examples**
 
-- List parent cards.: `kaiten card-parents list --card-id 10 --json`
+- List parent cards.: `kaiten --json card-parents list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-parents.remove`
 
@@ -3141,12 +3364,15 @@ planned-relations
 
 **Examples**
 
-- Remove a parent card relation.: `kaiten card-parents remove --card-id 10 --parent-id 11 --json`
+- Remove a parent card relation.: `kaiten --json card-parents remove --card-id 10 --parent-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `planned-relations.add`
 
@@ -3177,12 +3403,15 @@ planned-relations
 
 **Examples**
 
-- Create a finish-to-start planned relation.: `kaiten planned-relations add --card-id 10 --target-card-id 11 --json`
+- Create a finish-to-start planned relation.: `kaiten --json planned-relations add --card-id 10 --target-card-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `planned-relations.remove`
 
@@ -3212,12 +3441,15 @@ planned-relations
 
 **Examples**
 
-- Remove a planned relation.: `kaiten planned-relations remove --card-id 10 --target-card-id 11 --json`
+- Remove a planned relation.: `kaiten --json planned-relations remove --card-id 10 --target-card-id 11`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `planned-relations.update`
 
@@ -3249,12 +3481,15 @@ planned-relations
 
 **Examples**
 
-- Set a 2-day lag for a planned relation.: `kaiten planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days --json`
+- Set a 2-day lag for a planned relation.: `kaiten --json planned-relations update --card-id 10 --target-card-id 11 --gap 2 --gap-type days`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-external-links"></a>
 ## Внешние ссылки (`external_links`) — 4 commands
@@ -3300,12 +3535,15 @@ external-links
 
 **Examples**
 
-- Attach an external link to a card.: `kaiten external-links create --card-id 10 --url "https://example.com" --json`
+- Attach an external link to a card.: `kaiten --json external-links create --card-id 10 --url "https://example.com"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `external-links.delete`
 
@@ -3335,12 +3573,15 @@ external-links
 
 **Examples**
 
-- Delete a card external link.: `kaiten external-links delete --card-id 10 --link-id 20 --json`
+- Delete a card external link.: `kaiten --json external-links delete --card-id 10 --link-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `external-links.list`
 
@@ -3369,12 +3610,15 @@ external-links
 
 **Examples**
 
-- List external links on a card.: `kaiten external-links list --card-id 10 --json`
+- List external links on a card.: `kaiten --json external-links list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `external-links.update`
 
@@ -3406,12 +3650,15 @@ external-links
 
 **Examples**
 
-- Update a card external link.: `kaiten external-links update --card-id 10 --link-id 20 --description "Spec" --json`
+- Update a card external link.: `kaiten --json external-links update --card-id 10 --link-id 20 --description "Spec"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-files"></a>
 ## Файлы карточек (`files`) — 6 commands
@@ -3464,12 +3711,15 @@ files
 
 **Examples**
 
-- Attach a URL-backed file to a card.: `kaiten files create --card-id 10 --url "https://example.com/a.png" --name "a.png" --json`
+- Attach a URL-backed file to a card.: `kaiten --json files create --card-id 10 --url "https://example.com/a.png" --name "a.png"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `files.delete`
 
@@ -3499,12 +3749,15 @@ files
 
 **Examples**
 
-- Delete a card file.: `kaiten files delete --card-id 10 --file-id 20 --json`
+- Delete a card file.: `kaiten --json files delete --card-id 10 --file-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `files.download`
 
@@ -3547,14 +3800,17 @@ files
 
 **Examples**
 
-- Download a document attachment into the current directory.: `kaiten files download --entity-type document --document-uid <document_uid> --file-id <file_uid> --json`
-- Download a card attachment into a directory.: `kaiten files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/ --json`
-- Download from a Kaiten report/browser file URL.: `kaiten files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./file.bin --overwrite --json`
+- Download a document attachment into the current directory.: `kaiten --json files download --entity-type document --document-uid <document_uid> --file-id <file_uid>`
+- Download a card attachment into a directory.: `kaiten --json files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/`
+- Download from a Kaiten report/browser file URL.: `kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./file.bin --overwrite`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - By default the command writes to the current working directory.
 - Downloads stream to <target>.part first and are renamed into place only after completion.
 - Existing .part files are resumed with HTTP Range by default, similar to wget --continue.
@@ -3587,12 +3843,15 @@ files
 
 **Examples**
 
-- List card files.: `kaiten files list --card-id 10 --json`
+- List card files.: `kaiten --json files list --card-id 10`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `files.update`
 
@@ -3629,12 +3888,15 @@ files
 
 **Examples**
 
-- Update a card file attachment.: `kaiten files update --card-id 10 --file-id 20 --name "a-v2.png" --json`
+- Update a card file attachment.: `kaiten --json files update --card-id 10 --file-id 20 --name "a-v2.png"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `files.upload`
 
@@ -3664,12 +3926,15 @@ files
 
 **Examples**
 
-- Upload a local file to a card.: `kaiten files upload --card-id 123 --file ./report.json --json`
+- Upload a local file to a card.: `kaiten --json files upload --card-id 123 --file ./report.json`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Uploads the local file as multipart/form-data field `file`.
 - The uploaded filename is the local file basename.
 - This command uses the public card file endpoint; the beta private file endpoint is not used.
@@ -3720,12 +3985,15 @@ column-subscribers
 
 **Examples**
 
-- Add a card subscriber.: `kaiten card-subscribers add --card-id 10 --user-id 7 --json`
+- Add a card subscriber.: `kaiten --json card-subscribers add --card-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-subscribers.list`
 
@@ -3755,12 +4023,15 @@ column-subscribers
 
 **Examples**
 
-- List card subscribers.: `kaiten card-subscribers list --card-id 10 --compact --json`
+- List card subscribers.: `kaiten --json card-subscribers list --card-id 10 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for card subscriber listing; the live suite validates the expected error path.
 
@@ -3792,12 +4063,15 @@ column-subscribers
 
 **Examples**
 
-- Remove a card subscriber.: `kaiten card-subscribers remove --card-id 10 --user-id 7 --json`
+- Remove a card subscriber.: `kaiten --json card-subscribers remove --card-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `column-subscribers.add`
 
@@ -3828,12 +4102,15 @@ column-subscribers
 
 **Examples**
 
-- Add a column subscriber.: `kaiten column-subscribers add --column-id 10 --user-id 7 --json`
+- Add a column subscriber.: `kaiten --json column-subscribers add --column-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `column-subscribers.list`
 
@@ -3863,12 +4140,15 @@ column-subscribers
 
 **Examples**
 
-- List column subscribers.: `kaiten column-subscribers list --column-id 10 --compact --json`
+- List column subscribers.: `kaiten --json column-subscribers list --column-id 10 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for column subscriber listing; the live suite validates the expected error path.
 
@@ -3900,12 +4180,15 @@ column-subscribers
 
 **Examples**
 
-- Remove a column subscriber.: `kaiten column-subscribers remove --column-id 10 --user-id 7 --json`
+- Remove a column subscriber.: `kaiten --json column-subscribers remove --column-id 10 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-spaces"></a>
 ## Пространства (`spaces`) — 6 commands
@@ -3952,12 +4235,15 @@ spaces
 
 **Examples**
 
-- Fetch board topology for a space.: `kaiten space-topology get --space-id 123 --json`
+- Fetch board topology for a space.: `kaiten --json space-topology get --space-id 123`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Use this for report scaffolding instead of separate boards.list, columns.list, and lanes.list loops.
 
 ### `spaces.create`
@@ -3997,7 +4283,10 @@ spaces
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `spaces.delete`
 
@@ -4031,7 +4320,10 @@ spaces
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `spaces.get`
 
@@ -4065,7 +4357,10 @@ spaces
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `spaces.list`
 
@@ -4096,13 +4391,16 @@ spaces
 
 **Examples**
 
-- List spaces as machine-readable JSON.: `kaiten spaces list --json`
-- List spaces with a narrow response surface.: `kaiten spaces list --compact --fields id,title --json`
+- List spaces as machine-readable JSON.: `kaiten --json spaces list`
+- List spaces with a narrow response surface.: `kaiten --json spaces list --compact --fields id,title`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `spaces.update`
 
@@ -4142,7 +4440,10 @@ spaces
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-boards"></a>
 ## Доски (`boards`) — 6 commands
@@ -4200,7 +4501,10 @@ boards
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `boards.delete`
 
@@ -4236,7 +4540,10 @@ boards
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_with_runtime_fix`; expected statuses: —
 - Live note: Sandbox requires the force flag for board deletion; the CLI injects the live-safe request shape.
 
@@ -4272,7 +4579,10 @@ boards
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `boards.list`
 
@@ -4304,12 +4614,15 @@ boards
 **Examples**
 
 - List boards in a space.: `kaiten boards list --space-id 1 --compact`
-- List boards with narrow fields.: `kaiten boards list --space-id 1 --fields id,title --json`
+- List boards with narrow fields.: `kaiten --json boards list --space-id 1 --fields id,title`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `boards.place-existing`
 
@@ -4342,13 +4655,16 @@ boards
 
 **Examples**
 
-- Show an existing board in another space without moving it.: `kaiten boards place-existing --space-id 2 --board-id 10 --json`
-- Place an existing board at an explicit position.: `kaiten boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2 --json`
+- Show an existing board in another space without moving it.: `kaiten --json boards place-existing --space-id 2 --board-id 10`
+- Place an existing board at an explicit position.: `kaiten --json boards place-existing --space-id 2 --board-id 10 --top 0 --left 560 --sort-order 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This uses Kaiten's place-existing-board behavior and does not send move_from_space_id.
 - This command is intentionally separate from Kaiten's move_from_space_id board-move behavior.
 
@@ -4392,7 +4708,10 @@ boards
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-columns"></a>
 ## Колонки и подколонки (`columns`) — 8 commands
@@ -4447,12 +4766,15 @@ subcolumns
 
 **Examples**
 
-- Create a board column.: `kaiten columns create --board-id 10 --title "Doing" --type 2 --json`
+- Create a board column.: `kaiten --json columns create --board-id 10 --title "Doing" --type 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `columns.delete`
 
@@ -4482,12 +4804,15 @@ subcolumns
 
 **Examples**
 
-- Delete a board column.: `kaiten columns delete --board-id 10 --column-id 20 --json`
+- Delete a board column.: `kaiten --json columns delete --board-id 10 --column-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `columns.list`
 
@@ -4516,12 +4841,15 @@ subcolumns
 
 **Examples**
 
-- List columns on a board.: `kaiten columns list --board-id 10 --json`
+- List columns on a board.: `kaiten --json columns list --board-id 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `columns.update`
 
@@ -4557,12 +4885,15 @@ subcolumns
 
 **Examples**
 
-- Rename a board column.: `kaiten columns update --board-id 10 --column-id 20 --title "Review" --json`
+- Rename a board column.: `kaiten --json columns update --board-id 10 --column-id 20 --title "Review"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `subcolumns.create`
 
@@ -4595,12 +4926,15 @@ subcolumns
 
 **Examples**
 
-- Create a subcolumn.: `kaiten subcolumns create --column-id 20 --title "Blocked" --json`
+- Create a subcolumn.: `kaiten --json subcolumns create --column-id 20 --title "Blocked"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `subcolumns.delete`
 
@@ -4630,12 +4964,15 @@ subcolumns
 
 **Examples**
 
-- Delete a subcolumn.: `kaiten subcolumns delete --column-id 20 --subcolumn-id 30 --json`
+- Delete a subcolumn.: `kaiten --json subcolumns delete --column-id 20 --subcolumn-id 30`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `subcolumns.list`
 
@@ -4664,12 +5001,15 @@ subcolumns
 
 **Examples**
 
-- List subcolumns for a column.: `kaiten subcolumns list --column-id 20 --json`
+- List subcolumns for a column.: `kaiten --json subcolumns list --column-id 20`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `subcolumns.update`
 
@@ -4703,12 +5043,15 @@ subcolumns
 
 **Examples**
 
-- Update a subcolumn.: `kaiten subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked" --json`
+- Update a subcolumn.: `kaiten --json subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-lanes"></a>
 ## Дорожки (`lanes`) — 4 commands
@@ -4758,12 +5101,15 @@ lanes
 
 **Examples**
 
-- Create a board lane.: `kaiten lanes create --board-id 10 --title "Backend" --json`
+- Create a board lane.: `kaiten --json lanes create --board-id 10 --title "Backend"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `lanes.delete`
 
@@ -4793,12 +5139,15 @@ lanes
 
 **Examples**
 
-- Delete a lane.: `kaiten lanes delete --board-id 10 --lane-id 20 --json`
+- Delete a lane.: `kaiten --json lanes delete --board-id 10 --lane-id 20`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `lanes.list`
 
@@ -4827,12 +5176,15 @@ lanes
 
 **Examples**
 
-- List lanes on a board.: `kaiten lanes list --board-id 10 --json`
+- List lanes on a board.: `kaiten --json lanes list --board-id 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `lanes.update`
 
@@ -4869,12 +5221,15 @@ lanes
 
 **Examples**
 
-- Update a lane.: `kaiten lanes update --board-id 10 --lane-id 20 --title "Backend" --json`
+- Update a lane.: `kaiten --json lanes update --board-id 10 --lane-id 20 --title "Backend"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-card-types"></a>
 ## Типы карточек (`card_types`) — 8 commands
@@ -4926,12 +5281,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Create a card type.: `kaiten card-types create --name "Feature" --letter F --color 3 --json`
+- Create a card type.: `kaiten --json card-types create --name "Feature" --letter F --color 3`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.delete`
 
@@ -4964,12 +5322,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Delete a card type with replacement.: `kaiten card-types delete --type-id 42 --replace-type-id 1 --json`
+- Delete a card type with replacement.: `kaiten --json card-types delete --type-id 42 --replace-type-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.get`
 
@@ -4998,12 +5359,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Get a card type.: `kaiten card-types get --type-id 42 --json`
+- Get a card type.: `kaiten --json card-types get --type-id 42`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.list`
 
@@ -5034,12 +5398,15 @@ card-types.tree-entities
 
 **Examples**
 
-- List card types.: `kaiten card-types list --query "bug" --json`
+- List card types.: `kaiten --json card-types list --query "bug"`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.tree-entities.add`
 
@@ -5070,12 +5437,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Attach a tree entity to a card type.: `kaiten card-types tree-entities add --type-id 42 --tree-entity-uid entity-uuid --json`
+- Attach a tree entity to a card type.: `kaiten --json card-types tree-entities add --type-id 42 --tree-entity-uid entity-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.tree-entities.list`
 
@@ -5104,12 +5474,15 @@ card-types.tree-entities
 
 **Examples**
 
-- List card type tree entities.: `kaiten card-types tree-entities list --type-id 42 --json`
+- List card type tree entities.: `kaiten --json card-types tree-entities list --type-id 42`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.tree-entities.remove`
 
@@ -5139,12 +5512,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Remove a tree entity from a card type.: `kaiten card-types tree-entities remove --type-id 42 --tree-entity-uid entity-uuid --json`
+- Remove a tree entity from a card type.: `kaiten --json card-types tree-entities remove --type-id 42 --tree-entity-uid entity-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-types.update`
 
@@ -5177,12 +5553,15 @@ card-types.tree-entities
 
 **Examples**
 
-- Update a card type.: `kaiten card-types update --type-id 42 --name "Bug" --json`
+- Update a card type.: `kaiten --json card-types update --type-id 42 --name "Bug"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-custom-directories"></a>
 ## Каталоги / Custom directories (`custom_directories`) — 16 commands
@@ -5245,12 +5624,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Create a Catalog.: `kaiten custom-directories create --name "Contacts" --settings '{"multi_select":false,"allow_editing":true}' --json`
+- Create a Catalog.: `kaiten --json custom-directories create --name "Contacts" --settings '{"multi_select":false,"allow_editing":true}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5287,12 +5669,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Delete a Catalog.: `kaiten custom-directories delete --directory-id dir-uuid --json`
+- Delete a Catalog.: `kaiten --json custom-directories delete --directory-id dir-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5332,12 +5717,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Get a Catalog.: `kaiten custom-directories get --directory-id dir-uuid --json`
+- Get a Catalog.: `kaiten --json custom-directories get --directory-id dir-uuid`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5380,12 +5768,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- List Catalogs with field metadata and record counts.: `kaiten custom-directories list --include-fields --include-records-count --json`
+- List Catalogs with field metadata and record counts.: `kaiten --json custom-directories list --include-fields --include-records-count`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5427,12 +5818,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Update a Catalog.: `kaiten custom-directories update --directory-id dir-uuid --name "Clients" --json`
+- Update a Catalog.: `kaiten --json custom-directories update --directory-id dir-uuid --name "Clients"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5476,12 +5870,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Create a Catalog field.: `kaiten custom-directory-fields create --directory-id dir-uuid --name Email --type email --json`
+- Create a Catalog field.: `kaiten --json custom-directory-fields create --directory-id dir-uuid --name Email --type email`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5519,12 +5916,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Delete a Catalog field.: `kaiten custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid --json`
+- Delete a Catalog field.: `kaiten --json custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5562,12 +5962,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Get a Catalog field.: `kaiten custom-directory-fields get --directory-id dir-uuid --field-id field-uuid --json`
+- Get a Catalog field.: `kaiten --json custom-directory-fields get --directory-id dir-uuid --field-id field-uuid`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5606,12 +6009,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- List Catalog fields.: `kaiten custom-directory-fields list --directory-id dir-uuid --json`
+- List Catalog fields.: `kaiten --json custom-directory-fields list --directory-id dir-uuid`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5656,12 +6062,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Update a Catalog field.: `kaiten custom-directory-fields update --directory-id dir-uuid --field-id field-uuid --required --json`
+- Update a Catalog field.: `kaiten --json custom-directory-fields update --directory-id dir-uuid --field-id field-uuid --required`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5702,12 +6111,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- List cards linked to a Catalog record.: `kaiten custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid --json`
+- List cards linked to a Catalog record.: `kaiten --json custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5746,12 +6158,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Create a Catalog record.: `kaiten custom-directory-records create --directory-id dir-uuid --values '{"field-uuid":"Alice"}' --json`
+- Create a Catalog record.: `kaiten --json custom-directory-records create --directory-id dir-uuid --values '{"field-uuid":"Alice"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5789,12 +6204,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Delete a Catalog record.: `kaiten custom-directory-records delete --directory-id dir-uuid --record-id record-uuid --json`
+- Delete a Catalog record.: `kaiten --json custom-directory-records delete --directory-id dir-uuid --record-id record-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5833,12 +6251,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Get a Catalog record.: `kaiten custom-directory-records get --directory-id dir-uuid --record-id record-uuid --json`
+- Get a Catalog record.: `kaiten --json custom-directory-records get --directory-id dir-uuid --record-id record-uuid`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5884,12 +6305,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- List Catalog records.: `kaiten custom-directory-records list --directory-id dir-uuid --profile summary --json`
+- List Catalog records.: `kaiten --json custom-directory-records list --directory-id dir-uuid --profile summary`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -5930,12 +6354,15 @@ custom-directory-records.cards
 
 **Examples**
 
-- Update a Catalog record.: `kaiten custom-directory-records update --directory-id dir-uuid --record-id record-uuid --values '{"field-uuid":"Bob"}' --json`
+- Update a Catalog record.: `kaiten --json custom-directory-records update --directory-id dir-uuid --record-id record-uuid --values '{"field-uuid":"Bob"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.
 - For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.
 - Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.
@@ -6016,12 +6443,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a catalog property value.: `kaiten custom-properties catalog-values create --property-id 5 --value '{"field-uuid":"Alice"}' --json`
+- Create a catalog property value.: `kaiten --json custom-properties catalog-values create --property-id 5 --value '{"field-uuid":"Alice"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
 - Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
 - Use these commands for values/options of a card field of type `Справочник` / `справочник`.
@@ -6057,12 +6487,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Delete a catalog property value.: `kaiten custom-properties catalog-values delete --property-id 5 --value-id 10 --json`
+- Delete a catalog property value.: `kaiten --json custom-properties catalog-values delete --property-id 5 --value-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
 - Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
 - Use these commands for values/options of a card field of type `Справочник` / `справочник`.
@@ -6098,12 +6531,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Get a catalog property value.: `kaiten custom-properties catalog-values get --property-id 5 --value-id 10 --json`
+- Get a catalog property value.: `kaiten --json custom-properties catalog-values get --property-id 5 --value-id 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
 - Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
 - Use these commands for values/options of a card field of type `Справочник` / `справочник`.
@@ -6142,12 +6578,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List catalog property values.: `kaiten custom-properties catalog-values list --property-id 5 --json`
+- List catalog property values.: `kaiten --json custom-properties catalog-values list --property-id 5`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
 - Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
 - Use these commands for values/options of a card field of type `Справочник` / `справочник`.
@@ -6187,12 +6626,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a catalog property value.: `kaiten custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice" --json`
+- Update a catalog property value.: `kaiten --json custom-properties catalog-values update --property-id 5 --value-id 10 --name "Alice"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.
 - Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.
 - Use these commands for values/options of a card field of type `Справочник` / `справочник`.
@@ -6230,12 +6672,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a collective score value.: `kaiten custom-properties collective-score-values create --card-id 10 --property-id 5 --value 8 --json`
+- Create a collective score value.: `kaiten --json custom-properties collective-score-values create --card-id 10 --property-id 5 --value 8`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-score-values.list`
 
@@ -6265,12 +6710,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List collective score values.: `kaiten custom-properties collective-score-values list --card-id 10 --property-id 5 --json`
+- List collective score values.: `kaiten --json custom-properties collective-score-values list --card-id 10 --property-id 5`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-score-values.update`
 
@@ -6303,12 +6751,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a collective score value.: `kaiten custom-properties collective-score-values update --card-id 10 --property-id 5 --value-id 1 --value 9 --json`
+- Update a collective score value.: `kaiten --json custom-properties collective-score-values update --card-id 10 --property-id 5 --value-id 1 --value 9`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-vote-values.create`
 
@@ -6340,12 +6791,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a collective vote value.: `kaiten custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1 --json`
+- Create a collective vote value.: `kaiten --json custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-vote-values.delete`
 
@@ -6376,12 +6830,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Delete a collective vote value.: `kaiten custom-properties collective-vote-values delete --card-id 10 --property-id 5 --value-id 1 --json`
+- Delete a collective vote value.: `kaiten --json custom-properties collective-vote-values delete --card-id 10 --property-id 5 --value-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-vote-values.list`
 
@@ -6411,12 +6868,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List collective vote values.: `kaiten custom-properties collective-vote-values list --card-id 10 --property-id 5 --json`
+- List collective vote values.: `kaiten --json custom-properties collective-vote-values list --card-id 10 --property-id 5`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.collective-vote-values.update`
 
@@ -6449,12 +6909,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a collective vote value.: `kaiten custom-properties collective-vote-values update --card-id 10 --property-id 5 --value-id 1 --value 2 --json`
+- Update a collective vote value.: `kaiten --json custom-properties collective-vote-values update --card-id 10 --property-id 5 --value-id 1 --value 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.create`
 
@@ -6493,13 +6956,16 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a custom property.: `kaiten custom-properties create --name Status --type select --json`
-- Create a card field of type Catalog/Справочник.: `kaiten custom-properties create --name "Client" --type catalog --json`
+- Create a custom property.: `kaiten --json custom-properties create --name Status --type select`
+- Create a card field of type Catalog/Справочник.: `kaiten --json custom-properties create --name "Client" --type catalog`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
 - Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
@@ -6533,12 +6999,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Delete a custom property.: `kaiten custom-properties delete --property-id 5 --json`
+- Delete a custom property.: `kaiten --json custom-properties delete --property-id 5`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
 - Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
@@ -6572,12 +7041,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Get a custom property.: `kaiten custom-properties get --property-id 5 --json`
+- Get a custom property.: `kaiten --json custom-properties get --property-id 5`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
 - Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
@@ -6620,13 +7092,16 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List custom properties.: `kaiten custom-properties list --types select --json`
-- List card fields of type Catalog/Справочник.: `kaiten custom-properties list --types catalog --json`
+- List custom properties.: `kaiten --json custom-properties list --types select`
+- List card fields of type Catalog/Справочник.: `kaiten --json custom-properties list --types catalog`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
 - Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
@@ -6663,12 +7138,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Create a select value.: `kaiten custom-properties select-values create --property-id 3 --value High --json`
+- Create a select value.: `kaiten --json custom-properties select-values create --property-id 3 --value High`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.select-values.delete`
 
@@ -6698,12 +7176,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Soft-delete a select value.: `kaiten custom-properties select-values delete --property-id 3 --value-id 10 --json`
+- Soft-delete a select value.: `kaiten --json custom-properties select-values delete --property-id 3 --value-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.select-values.get`
 
@@ -6733,12 +7214,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Get a select value.: `kaiten custom-properties select-values get --property-id 3 --value-id 10 --json`
+- Get a select value.: `kaiten --json custom-properties select-values get --property-id 3 --value-id 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.select-values.list`
 
@@ -6773,12 +7257,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List select values.: `kaiten custom-properties select-values list --property-id 3 --json`
+- List select values.: `kaiten --json custom-properties select-values list --property-id 3`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.select-values.update`
 
@@ -6812,12 +7299,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a select value.: `kaiten custom-properties select-values update --property-id 3 --value-id 10 --value Critical --json`
+- Update a select value.: `kaiten --json custom-properties select-values update --property-id 3 --value-id 10 --value Critical`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.tree-entities.add`
 
@@ -6848,12 +7338,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Attach a tree entity to a custom property.: `kaiten custom-properties tree-entities add --property-id 5 --tree-entity-uid entity-uuid --json`
+- Attach a tree entity to a custom property.: `kaiten --json custom-properties tree-entities add --property-id 5 --tree-entity-uid entity-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.tree-entities.list`
 
@@ -6882,12 +7375,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- List custom property tree entities.: `kaiten custom-properties tree-entities list --property-id 5 --json`
+- List custom property tree entities.: `kaiten --json custom-properties tree-entities list --property-id 5`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.tree-entities.remove`
 
@@ -6917,12 +7413,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Remove a tree entity from a custom property.: `kaiten custom-properties tree-entities remove --property-id 5 --tree-entity-uid entity-uuid --json`
+- Remove a tree entity from a custom property.: `kaiten --json custom-properties tree-entities remove --property-id 5 --tree-entity-uid entity-uuid`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `custom-properties.update`
 
@@ -6962,12 +7461,15 @@ custom-properties.tree-entities
 
 **Examples**
 
-- Update a custom property.: `kaiten custom-properties update --property-id 5 --name Priority --json`
+- Update a custom property.: `kaiten --json custom-properties update --property-id 5 --name Priority`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.
 - Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
@@ -7029,12 +7531,15 @@ documents
 
 **Examples**
 
-- Resolve a private document file URL for download.: `kaiten document-files get-url --document-uid doc-1 --file-id file-1 --json`
+- Resolve a private document file URL for download.: `kaiten --json document-files get-url --document-uid doc-1 --file-id file-1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Uses `prevent_redirect=true`, so the response is JSON with a short-lived signed storage URL instead of an HTTP redirect.
 
 ### `document-files.upload`
@@ -7065,12 +7570,15 @@ documents
 
 **Examples**
 
-- Upload a local file to a document.: `kaiten document-files upload --document-uid doc-1 --file ./screenshot.png --json`
+- Upload a local file to a document.: `kaiten --json document-files upload --document-uid doc-1 --file ./screenshot.png`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Uploads the local file as multipart/form-data field `file`.
 - The returned `id` can be used as a ProseMirror image node `attrs.fileId`.
 
@@ -7103,12 +7611,15 @@ documents
 
 **Examples**
 
-- Create a document group.: `kaiten document-groups create --title "Engineering" --json`
+- Create a document group.: `kaiten --json document-groups create --title "Engineering"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Document groups are document folders/containers in the sidebar tree.
 - Use `document-groups.*` when a request says document catalog, folder, or container.
 - They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
@@ -7141,12 +7652,15 @@ documents
 
 **Examples**
 
-- Delete a document group.: `kaiten document-groups delete --group-uid grp-1 --json`
+- Delete a document group.: `kaiten --json document-groups delete --group-uid grp-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Document groups are document folders/containers in the sidebar tree.
 - Use `document-groups.*` when a request says document catalog, folder, or container.
 - They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
@@ -7179,12 +7693,15 @@ documents
 
 **Examples**
 
-- Get a document group.: `kaiten document-groups get --group-uid grp-1 --json`
+- Get a document group.: `kaiten --json document-groups get --group-uid grp-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Document groups are document folders/containers in the sidebar tree.
 - Use `document-groups.*` when a request says document catalog, folder, or container.
 - They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
@@ -7219,12 +7736,15 @@ documents
 
 **Examples**
 
-- List document groups.: `kaiten document-groups list --query "Engineering" --json`
+- List document groups.: `kaiten --json document-groups list --query "Engineering"`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Document groups are document folders/containers in the sidebar tree.
 - Use `document-groups.*` when a request says document catalog, folder, or container.
 - They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
@@ -7258,12 +7778,15 @@ documents
 
 **Examples**
 
-- Update a document group.: `kaiten document-groups update --group-uid grp-1 --title "Docs" --json`
+- Update a document group.: `kaiten --json document-groups update --group-uid grp-1 --title "Docs"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Document groups are document folders/containers in the sidebar tree.
 - Use `document-groups.*` when a request says document catalog, folder, or container.
 - They do not manage UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
@@ -7296,12 +7819,15 @@ documents
 
 **Examples**
 
-- Get a document data schema.: `kaiten document-schemas get --schema-id 1 --json`
+- Get a document data schema.: `kaiten --json document-schemas get --schema-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `documents.create`
 
@@ -7335,12 +7861,15 @@ documents
 
 **Examples**
 
-- Create a document from markdown.: `kaiten documents create --title "Spec" --text "# Header" --json`
+- Create a document from markdown.: `kaiten --json documents create --title "Spec" --text "# Header"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - `parent_entity_uid` places the document under a document group/container in the sidebar tree.
 - Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
 
@@ -7371,12 +7900,15 @@ documents
 
 **Examples**
 
-- Delete a document.: `kaiten documents delete --document-uid doc-1 --json`
+- Delete a document.: `kaiten --json documents delete --document-uid doc-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `documents.get`
 
@@ -7408,13 +7940,16 @@ documents
 
 **Examples**
 
-- Get a document.: `kaiten documents get --document-uid doc-1 --json`
-- Save a document as Markdown.: `kaiten documents get --document-uid doc-1 --markdown --output ./doc.md --json`
+- Get a document.: `kaiten --json documents get --document-uid doc-1`
+- Save a document as Markdown.: `kaiten --json documents get --document-uid doc-1 --markdown --output ./doc.md`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - `--markdown` does the same document GET, renders the result locally, and saves a Markdown file instead of returning the document JSON.
 - `--markdown` keeps document file links as Kaiten `/api/documents/<uid>/files/<file_id>` URLs.
 - Use `--output` for the target file/directory and `--overwrite` to replace an existing Markdown file.
@@ -7456,13 +7991,16 @@ documents
 
 **Examples**
 
-- List documents.: `kaiten documents list --query "Design" --json`
-- List documents with a narrow response surface.: `kaiten documents list --compact --fields uid,title --json`
+- List documents.: `kaiten --json documents list --query "Design"`
+- List documents with a narrow response surface.: `kaiten --json documents list --compact --fields uid,title`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `documents.update`
 
@@ -7497,12 +8035,15 @@ documents
 
 **Examples**
 
-- Update a document body.: `kaiten documents update --document-uid doc-1 --text "**bold**" --json`
+- Update a document body.: `kaiten --json documents update --document-uid doc-1 --text "**bold**"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - `parent_entity_uid` places the document under a document group/container in the sidebar tree.
 - Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
 
@@ -7561,12 +8102,15 @@ webhooks
 
 **Examples**
 
-- Create an incoming webhook.: `kaiten incoming-webhooks create --space-id 1 --board-id 2 --column-id 3 --lane-id 4 --owner-id 5 --json`
+- Create an incoming webhook.: `kaiten --json incoming-webhooks create --space-id 1 --board-id 2 --column-id 3 --lane-id 4 --owner-id 5`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `incoming-webhooks.delete`
 
@@ -7596,12 +8140,15 @@ webhooks
 
 **Examples**
 
-- Delete an incoming webhook.: `kaiten incoming-webhooks delete --space-id 1 --webhook-id hook-1 --json`
+- Delete an incoming webhook.: `kaiten --json incoming-webhooks delete --space-id 1 --webhook-id hook-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `incoming-webhooks.list`
 
@@ -7630,12 +8177,15 @@ webhooks
 
 **Examples**
 
-- List incoming webhooks.: `kaiten incoming-webhooks list --space-id 1 --json`
+- List incoming webhooks.: `kaiten --json incoming-webhooks list --space-id 1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `incoming-webhooks.update`
 
@@ -7672,12 +8222,15 @@ webhooks
 
 **Examples**
 
-- Update an incoming webhook.: `kaiten incoming-webhooks update --space-id 1 --webhook-id hook-1 --position 1 --json`
+- Update an incoming webhook.: `kaiten --json incoming-webhooks update --space-id 1 --webhook-id hook-1 --position 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `webhooks.create`
 
@@ -7707,12 +8260,15 @@ webhooks
 
 **Examples**
 
-- Create an external webhook.: `kaiten webhooks create --space-id 1 --url "https://example.test" --json`
+- Create an external webhook.: `kaiten --json webhooks create --space-id 1 --url "https://example.test"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `webhooks.delete`
 
@@ -7742,12 +8298,15 @@ webhooks
 
 **Examples**
 
-- Delete an external webhook.: `kaiten webhooks delete --space-id 1 --webhook-id 2 --json`
+- Delete an external webhook.: `kaiten --json webhooks delete --space-id 1 --webhook-id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `404`, `405`
 - Live note: Webhook DELETE may return 404/405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -7779,12 +8338,15 @@ webhooks
 
 **Examples**
 
-- Get an external webhook.: `kaiten webhooks get --space-id 1 --webhook-id 2 --json`
+- Get an external webhook.: `kaiten --json webhooks get --space-id 1 --webhook-id 2`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `404`, `405`
 - Live note: Webhook GET may return 404/405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -7815,12 +8377,15 @@ webhooks
 
 **Examples**
 
-- List external webhooks.: `kaiten webhooks list --space-id 1 --json`
+- List external webhooks.: `kaiten --json webhooks list --space-id 1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `webhooks.update`
 
@@ -7852,12 +8417,15 @@ webhooks
 
 **Examples**
 
-- Update an external webhook.: `kaiten webhooks update --space-id 1 --webhook-id 2 --enabled --json`
+- Update an external webhook.: `kaiten --json webhooks update --space-id 1 --webhook-id 2 --enabled`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-automations"></a>
 ## Автоматизации и воркфлоу (`automations`) — 11 commands
@@ -7911,12 +8479,15 @@ workflows
 
 **Examples**
 
-- Copy an automation.: `kaiten automations copy --space-id 1 --automation-id auto-1 --target-space-id 2 --json`
+- Copy an automation.: `kaiten --json automations copy --space-id 1 --automation-id auto-1 --target-space-id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Automation copy remains sandbox-dependent even with a live-valid source automation; the live suite accepts success or a documented 400/403/404/405 contract.
 
@@ -7954,12 +8525,15 @@ workflows
 
 **Examples**
 
-- Create an automation using the known live-valid add_assignee payload shape.: `kaiten automations create --space-id 1 --name Auto --type on_action --trigger '{"type":"card_created"}' --actions '[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]' --json`
+- Create an automation using the known live-valid add_assignee payload shape.: `kaiten --json automations create --space-id 1 --name Auto --type on_action --trigger '{"type":"card_created"}' --actions '[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation creation passes on sandbox when the payload matches the known live-valid add_assignee shape derived from kaiten-mcp e2e.
 
@@ -7991,12 +8565,15 @@ workflows
 
 **Examples**
 
-- Delete an automation.: `kaiten automations delete --space-id 1 --automation-id auto-1 --json`
+- Delete an automation.: `kaiten --json automations delete --space-id 1 --automation-id auto-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation delete passes on sandbox for automations created during live validation; cleanup is verified.
 
@@ -8028,12 +8605,15 @@ workflows
 
 **Examples**
 
-- Get an automation.: `kaiten automations get --space-id 1 --automation-id auto-1 --json`
+- Get an automation.: `kaiten --json automations get --space-id 1 --automation-id auto-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Automation GET-single may return 405 even after successful creation; the live suite validates that contract explicitly.
 
@@ -8064,12 +8644,15 @@ workflows
 
 **Examples**
 
-- List space automations.: `kaiten automations list --space-id 1 --json`
+- List space automations.: `kaiten --json automations list --space-id 1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `automations.update`
 
@@ -8105,12 +8688,15 @@ workflows
 
 **Examples**
 
-- Disable an automation.: `kaiten automations update --space-id 1 --automation-id auto-1 --status disabled --json`
+- Disable an automation.: `kaiten --json automations update --space-id 1 --automation-id auto-1 --status disabled`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation update passes on sandbox for automations created with the known live-valid add_assignee payload shape.
 
@@ -8143,12 +8729,15 @@ workflows
 
 **Examples**
 
-- Create a workflow.: `kaiten workflows create --name Flow --stages '[{"id":"1","name":"Todo","type":"queue"}]' --transitions '[{"id":"t1"}]' --json`
+- Create a workflow.: `kaiten --json workflows create --name Flow --stages '[{"id":"1","name":"Todo","type":"queue"}]' --transitions '[{"id":"t1"}]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Workflow creation is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -8179,12 +8768,15 @@ workflows
 
 **Examples**
 
-- Delete a workflow.: `kaiten workflows delete --workflow-id wf-1 --json`
+- Delete a workflow.: `kaiten --json workflows delete --workflow-id wf-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -8215,12 +8807,15 @@ workflows
 
 **Examples**
 
-- Get a workflow.: `kaiten workflows get --workflow-id wf-1 --json`
+- Get a workflow.: `kaiten --json workflows get --workflow-id wf-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -8252,12 +8847,15 @@ workflows
 
 **Examples**
 
-- List workflows.: `kaiten workflows list --json`
+- List workflows.: `kaiten --json workflows list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `workflows.update`
 
@@ -8289,12 +8887,15 @@ workflows
 
 **Examples**
 
-- Update a workflow.: `kaiten workflows update --workflow-id wf-1 --name Flow2 --json`
+- Update a workflow.: `kaiten --json workflows update --workflow-id wf-1 --name Flow2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
@@ -8352,12 +8953,15 @@ sprints
 
 **Examples**
 
-- Add a card to a project.: `kaiten projects cards add --project-id p1 --card-id 10 --json`
+- Add a card to a project.: `kaiten --json projects cards add --project-id p1 --card-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.cards.list`
 
@@ -8387,12 +8991,15 @@ sprints
 
 **Examples**
 
-- List project cards.: `kaiten projects cards list --project-id p1 --compact --json`
+- List project cards.: `kaiten --json projects cards list --project-id p1 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `synthetic_read`; expected statuses: `405`
 - Live note: If GET /projects/{project_id}/cards returns 405, the CLI falls back to GET /projects/{project_id}?with_cards_data=true and extracts the embedded cards list.
 
@@ -8424,12 +9031,15 @@ sprints
 
 **Examples**
 
-- Remove a card from a project.: `kaiten projects cards remove --project-id p1 --card-id 10 --json`
+- Remove a card from a project.: `kaiten --json projects cards remove --project-id p1 --card-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.create`
 
@@ -8462,12 +9072,15 @@ sprints
 
 **Examples**
 
-- Create a project.: `kaiten projects create --title "Platform" --json`
+- Create a project.: `kaiten --json projects create --title "Platform"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.delete`
 
@@ -8496,12 +9109,15 @@ sprints
 
 **Examples**
 
-- Delete a project.: `kaiten projects delete --project-id p1 --json`
+- Delete a project.: `kaiten --json projects delete --project-id p1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.get`
 
@@ -8531,12 +9147,15 @@ sprints
 
 **Examples**
 
-- Get a project by ID.: `kaiten projects get --project-id p1 --json`
+- Get a project by ID.: `kaiten --json projects get --project-id p1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.list`
 
@@ -8563,12 +9182,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List company projects.: `kaiten projects list --json`
+- List company projects.: `kaiten --json projects list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `projects.update`
 
@@ -8603,12 +9225,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a project.: `kaiten projects update --project-id p1 --title "Platform" --json`
+- Update a project.: `kaiten --json projects update --project-id p1 --title "Platform"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `sprints.create`
 
@@ -8641,12 +9266,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create a sprint.: `kaiten sprints create --title "Sprint 1" --board-id 10 --json`
+- Create a sprint.: `kaiten --json sprints create --title "Sprint 1" --board-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Sprint creation is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -8677,12 +9305,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete a sprint.: `kaiten sprints delete --sprint-id 1 --json`
+- Delete a sprint.: `kaiten --json sprints delete --sprint-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: Sprint deletion is often unavailable on sandbox; the live suite accepts the documented 403/404/405 contract.
 
@@ -8714,12 +9345,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a sprint.: `kaiten sprints get --sprint-id 1 --json`
+- Get a sprint.: `kaiten --json sprints get --sprint-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When sprint creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel sprint id.
 
@@ -8752,12 +9386,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List sprints.: `kaiten sprints list --json`
+- List sprints.: `kaiten --json sprints list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: Sprint listing is permission-dependent on sandbox; the live suite accepts either success or a documented 403/405 error.
 
@@ -8794,12 +9431,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a sprint.: `kaiten sprints update --sprint-id 1 --active false --json`
+- Update a sprint.: `kaiten --json sprints update --sprint-id 1 --active false`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`, `500`
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
@@ -8878,12 +9518,15 @@ user-roles
 
 **Examples**
 
-- Create a company group.: `kaiten company-groups create --name "Engineering" --json`
+- Create a company group.: `kaiten --json company-groups create --name "Engineering"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-groups.delete`
 
@@ -8912,12 +9555,15 @@ user-roles
 
 **Examples**
 
-- Delete a company group.: `kaiten company-groups delete --group-uid grp-1 --json`
+- Delete a company group.: `kaiten --json company-groups delete --group-uid grp-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-groups.get`
 
@@ -8946,12 +9592,15 @@ user-roles
 
 **Examples**
 
-- Get a company group.: `kaiten company-groups get --group-uid grp-1 --json`
+- Get a company group.: `kaiten --json company-groups get --group-uid grp-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-groups.list`
 
@@ -8982,12 +9631,15 @@ user-roles
 
 **Examples**
 
-- List company groups.: `kaiten company-groups list --query "Engineering" --json`
+- List company groups.: `kaiten --json company-groups list --query "Engineering"`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-groups.update`
 
@@ -9017,12 +9669,15 @@ user-roles
 
 **Examples**
 
-- Update a company group.: `kaiten company-groups update --group-uid grp-1 --name "Docs" --json`
+- Update a company group.: `kaiten --json company-groups update --group-uid grp-1 --name "Docs"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-users.list`
 
@@ -9063,13 +9718,16 @@ user-roles
 
 **Examples**
 
-- List administrative company members.: `kaiten company-users list --limit 100 --offset 0 --compact --json`
-- Count company members including temporarily inactive users.: `kaiten company-users list --only-records-count --temporarily-inactive-status all_users --json`
+- List administrative company members.: `kaiten --json company-users list --limit 100 --offset 0 --compact`
+- Count company members including temporarily inactive users.: `kaiten --json company-users list --only-records-count --temporarily-inactive-status all_users`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Use this command for paginated administrative member exports. `users.list` is a generic users endpoint and may not be reliable for full member paging.
 
 ### `company-users.remove-virtual`
@@ -9099,12 +9757,15 @@ user-roles
 
 **Examples**
 
-- Remove a virtual company user.: `kaiten company-users remove-virtual --user-id 7 --json`
+- Remove a virtual company user.: `kaiten --json company-users remove-virtual --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company-users.update`
 
@@ -9136,12 +9797,15 @@ user-roles
 
 **Examples**
 
-- Update a company user.: `kaiten company-users update --user-id 7 --full-name "Alice Smith" --json`
+- Update a company user.: `kaiten --json company-users update --user-id 7 --full-name "Alice Smith"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-admins.add`
 
@@ -9171,12 +9835,15 @@ user-roles
 
 **Examples**
 
-- Add a group admin.: `kaiten group-admins add --group-uid grp-1 --user-id 7 --json`
+- Add a group admin.: `kaiten --json group-admins add --group-uid grp-1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-admins.list`
 
@@ -9206,12 +9873,15 @@ user-roles
 
 **Examples**
 
-- List group admins.: `kaiten group-admins list --group-uid grp-1 --compact --json`
+- List group admins.: `kaiten --json group-admins list --group-uid grp-1 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-admins.remove`
 
@@ -9241,12 +9911,15 @@ user-roles
 
 **Examples**
 
-- Remove a group admin.: `kaiten group-admins remove --group-uid grp-1 --user-id 7 --json`
+- Remove a group admin.: `kaiten --json group-admins remove --group-uid grp-1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-entities.add`
 
@@ -9278,12 +9951,15 @@ user-roles
 
 **Examples**
 
-- Attach a group entity.: `kaiten group-entities add --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]' --json`
+- Attach a group entity.: `kaiten --json group-entities add --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-entities.list`
 
@@ -9312,12 +9988,15 @@ user-roles
 
 **Examples**
 
-- List group entities.: `kaiten group-entities list --group-uid grp-1 --json`
+- List group entities.: `kaiten --json group-entities list --group-uid grp-1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-entities.remove`
 
@@ -9347,12 +10026,15 @@ user-roles
 
 **Examples**
 
-- Remove a group entity.: `kaiten group-entities remove --group-uid grp-1 --entity-uid entity-1 --json`
+- Remove a group entity.: `kaiten --json group-entities remove --group-uid grp-1 --entity-uid entity-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-entities.update`
 
@@ -9384,12 +10066,15 @@ user-roles
 
 **Examples**
 
-- Update a group entity.: `kaiten group-entities update --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]' --json`
+- Update a group entity.: `kaiten --json group-entities update --group-uid grp-1 --entity-uid entity-1 --role-ids '["role-1"]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-users.add`
 
@@ -9419,12 +10104,15 @@ user-roles
 
 **Examples**
 
-- Add a user to a group.: `kaiten group-users add --group-uid grp-1 --user-id 7 --json`
+- Add a user to a group.: `kaiten --json group-users add --group-uid grp-1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-users.list`
 
@@ -9454,12 +10142,15 @@ user-roles
 
 **Examples**
 
-- List group users.: `kaiten group-users list --group-uid grp-1 --compact --json`
+- List group users.: `kaiten --json group-users list --group-uid grp-1 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `group-users.remove`
 
@@ -9489,12 +10180,15 @@ user-roles
 
 **Examples**
 
-- Remove a user from a group.: `kaiten group-users remove --group-uid grp-1 --user-id 7 --json`
+- Remove a user from a group.: `kaiten --json group-users remove --group-uid grp-1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `roles.get`
 
@@ -9523,12 +10217,15 @@ user-roles
 
 **Examples**
 
-- Get a role.: `kaiten roles get --role-id role-1 --json`
+- Get a role.: `kaiten --json roles get --role-id role-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `roles.list`
 
@@ -9559,12 +10256,15 @@ user-roles
 
 **Examples**
 
-- List roles.: `kaiten roles list --query "admin" --json`
+- List roles.: `kaiten --json roles list --query "admin"`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-users.add`
 
@@ -9595,12 +10295,15 @@ user-roles
 
 **Examples**
 
-- Add a user to a space.: `kaiten space-users add --space-id 1 --user-id 7 --json`
+- Add a user to a space.: `kaiten --json space-users add --space-id 1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-users.get`
 
@@ -9631,12 +10334,15 @@ user-roles
 
 **Examples**
 
-- Get a space user.: `kaiten space-users get --space-id 1 --user-id 7 --compact --json`
+- Get a space user.: `kaiten --json space-users get --space-id 1 --user-id 7 --compact`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-users.list`
 
@@ -9666,12 +10372,15 @@ user-roles
 
 **Examples**
 
-- List space users.: `kaiten space-users list --space-id 1 --compact --json`
+- List space users.: `kaiten --json space-users list --space-id 1 --compact`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-users.remove`
 
@@ -9701,12 +10410,15 @@ user-roles
 
 **Examples**
 
-- Remove a user from a space.: `kaiten space-users remove --space-id 1 --user-id 7 --json`
+- Remove a user from a space.: `kaiten --json space-users remove --space-id 1 --user-id 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-users.update`
 
@@ -9737,12 +10449,15 @@ user-roles
 
 **Examples**
 
-- Update a space user role.: `kaiten space-users update --space-id 1 --user-id 7 --role-id 9 --json`
+- Update a space user role.: `kaiten --json space-users update --space-id 1 --user-id 7 --role-id 9`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `user-roles.create`
 
@@ -9773,12 +10488,15 @@ user-roles
 
 **Examples**
 
-- Create a user role.: `kaiten user-roles create --name "Manager" --json`
+- Create a user role.: `kaiten --json user-roles create --name "Manager"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `user-roles.delete`
 
@@ -9807,12 +10525,15 @@ user-roles
 
 **Examples**
 
-- Delete a user role.: `kaiten user-roles delete --role-id 1 --json`
+- Delete a user role.: `kaiten --json user-roles delete --role-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `user-roles.get`
 
@@ -9841,12 +10562,15 @@ user-roles
 
 **Examples**
 
-- Get a user role.: `kaiten user-roles get --role-id 1 --json`
+- Get a user role.: `kaiten --json user-roles get --role-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `user-roles.list`
 
@@ -9877,12 +10601,15 @@ user-roles
 
 **Examples**
 
-- List user roles.: `kaiten user-roles list --json`
+- List user roles.: `kaiten --json user-roles list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `user-roles.update`
 
@@ -9914,12 +10641,15 @@ user-roles
 
 **Examples**
 
-- Update a user role.: `kaiten user-roles update --role-id 1 --name "Manager" --json`
+- Update a user role.: `kaiten --json user-roles update --role-id 1 --name "Manager"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-scim"></a>
 ## SCIM (`scim`) — 8 commands
@@ -9968,12 +10698,15 @@ scim.users
 
 **Examples**
 
-- Create a SCIM group.: `kaiten scim groups create --payload '{"displayName":"Engineering"}' --json`
+- Create a SCIM group.: `kaiten --json scim groups create --payload '{"displayName":"Engineering"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.groups.get`
 
@@ -10002,12 +10735,15 @@ scim.users
 
 **Examples**
 
-- Get a SCIM group.: `kaiten scim groups get --group-id group-id --json`
+- Get a SCIM group.: `kaiten --json scim groups get --group-id group-id`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.groups.list`
 
@@ -10038,12 +10774,15 @@ scim.users
 
 **Examples**
 
-- List SCIM groups.: `kaiten scim groups list --json`
+- List SCIM groups.: `kaiten --json scim groups list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.groups.update`
 
@@ -10073,12 +10812,15 @@ scim.users
 
 **Examples**
 
-- Update a SCIM group.: `kaiten scim groups update --group-id group-id --payload '{"displayName":"Ops"}' --json`
+- Update a SCIM group.: `kaiten --json scim groups update --group-id group-id --payload '{"displayName":"Ops"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.users.create`
 
@@ -10107,12 +10849,15 @@ scim.users
 
 **Examples**
 
-- Create a SCIM user.: `kaiten scim users create --payload '{"userName":"alice@example.com"}' --json`
+- Create a SCIM user.: `kaiten --json scim users create --payload '{"userName":"alice@example.com"}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.users.get`
 
@@ -10141,12 +10886,15 @@ scim.users
 
 **Examples**
 
-- Get a SCIM user.: `kaiten scim users get --user-id user-id --json`
+- Get a SCIM user.: `kaiten --json scim users get --user-id user-id`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.users.list`
 
@@ -10177,12 +10925,15 @@ scim.users
 
 **Examples**
 
-- List SCIM users.: `kaiten scim users list --json`
+- List SCIM users.: `kaiten --json scim users list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `scim.users.update`
 
@@ -10212,12 +10963,15 @@ scim.users
 
 **Examples**
 
-- Update a SCIM user.: `kaiten scim users update --user-id user-id --payload '{"active":false}' --json`
+- Update a SCIM user.: `kaiten --json scim users update --user-id user-id --payload '{"active":false}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-audit-and-analytics"></a>
 ## Аудит и аналитика (`audit_and_analytics`) — 12 commands
@@ -10280,12 +11034,15 @@ space-activity-all
 
 **Examples**
 
-- List audit logs.: `kaiten audit-logs list --limit 10 --json`
+- List audit logs.: `kaiten --json audit-logs list --limit 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-activity.get`
 
@@ -10316,12 +11073,15 @@ space-activity-all
 
 **Examples**
 
-- Get card activity.: `kaiten card-activity get --card-id 1 --json`
+- Get card activity.: `kaiten --json card-activity get --card-id 1`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-location-history.batch-get`
 
@@ -10352,13 +11112,16 @@ space-activity-all
 
 **Examples**
 
-- Fetch history for several cards in one CLI call.: `kaiten card-location-history batch-get --card-ids '[1,2,3]' --json`
-- Fetch projected history rows with bounded concurrency.: `kaiten card-location-history batch-get --card-ids '[1,2,3]' --workers 2 --fields changed,column_id,subcolumn_id --json`
+- Fetch history for several cards in one CLI call.: `kaiten --json card-location-history batch-get --card-ids '[1,2,3]'`
+- Fetch projected history rows with bounded concurrency.: `kaiten --json card-location-history batch-get --card-ids '[1,2,3]' --workers 2 --fields changed,column_id,subcolumn_id`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
 - Use conservative workers to avoid shifting the bottleneck from process startup to API rate limiting.
 
@@ -10389,13 +11152,16 @@ space-activity-all
 
 **Examples**
 
-- Get card location history.: `kaiten card-location-history get --card-id 1 --json`
+- Get card location history.: `kaiten --json card-location-history get --card-id 1`
 
 **Notes**
 
 - Bulk alternative: `card-location-history.batch-get`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This is a per-card read and becomes expensive when repeated hundreds of times.
 - For high-cardinality reads, use card-location-history.batch-get instead of spawning one CLI process per card.
 
@@ -10435,12 +11201,15 @@ space-activity-all
 
 **Examples**
 
-- Get company activity.: `kaiten company-activity get --limit 10 --json`
+- Get company activity.: `kaiten --json company-activity get --limit 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `saved-filters.create`
 
@@ -10471,12 +11240,15 @@ space-activity-all
 
 **Examples**
 
-- Create a saved filter.: `kaiten saved-filters create --name MyFilter --filter '{}' --json`
+- Create a saved filter.: `kaiten --json saved-filters create --name MyFilter --filter '{}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `saved-filters.delete`
 
@@ -10505,12 +11277,15 @@ space-activity-all
 
 **Examples**
 
-- Delete a saved filter.: `kaiten saved-filters delete --filter-id 1 --json`
+- Delete a saved filter.: `kaiten --json saved-filters delete --filter-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `saved-filters.get`
 
@@ -10539,12 +11314,15 @@ space-activity-all
 
 **Examples**
 
-- Get a saved filter.: `kaiten saved-filters get --filter-id 1 --json`
+- Get a saved filter.: `kaiten --json saved-filters get --filter-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `saved-filters.list`
 
@@ -10574,12 +11352,15 @@ space-activity-all
 
 **Examples**
 
-- List saved filters.: `kaiten saved-filters list --json`
+- List saved filters.: `kaiten --json saved-filters list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `saved-filters.update`
 
@@ -10611,12 +11392,15 @@ space-activity-all
 
 **Examples**
 
-- Update a saved filter.: `kaiten saved-filters update --filter-id 1 --name Renamed --json`
+- Update a saved filter.: `kaiten --json saved-filters update --filter-id 1 --name Renamed`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-activity-all.get`
 
@@ -10653,12 +11437,15 @@ space-activity-all
 
 **Examples**
 
-- Fetch all space activity with bounded pagination.: `kaiten space-activity-all get --space-id 1 --page-size 20 --max-pages 2 --json`
+- Fetch all space activity with bounded pagination.: `kaiten --json space-activity-all get --space-id 1 --page-size 20 --max-pages 2`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Use this aggregated path for report windows instead of building manual offset loops around space-activity.get.
 
 ### `space-activity.get`
@@ -10696,13 +11483,16 @@ space-activity-all
 
 **Examples**
 
-- Get space activity.: `kaiten space-activity get --space-id 1 --limit 10 --json`
+- Get space activity.: `kaiten --json space-activity get --space-id 1 --limit 10`
 
 **Notes**
 
 - Bulk alternative: `space-activity-all.get`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This low-level endpoint is useful for targeted page reads, but report workflows usually want the bounded bulk path.
 - Prefer space-activity-all.get over manual offset loops when collecting a full investigation window.
 
@@ -10804,12 +11594,15 @@ space-sla-measurements
 
 **Examples**
 
-- Get card SLA measurements.: `kaiten card-sla-measurements get --card-id 1 --json`
+- Get card SLA measurements.: `kaiten --json card-sla-measurements get --card-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-slas.attach`
 
@@ -10839,12 +11632,15 @@ space-sla-measurements
 
 **Examples**
 
-- Attach an SLA to a card.: `kaiten card-slas attach --card-id 1 --sla-id sla-1 --json`
+- Attach an SLA to a card.: `kaiten --json card-slas attach --card-id 1 --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `card-slas.detach`
 
@@ -10874,12 +11670,15 @@ space-sla-measurements
 
 **Examples**
 
-- Detach an SLA from a card.: `kaiten card-slas detach --card-id 1 --sla-id sla-1 --json`
+- Detach an SLA from a card.: `kaiten --json card-slas detach --card-id 1 --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organization-users.add`
 
@@ -10910,12 +11709,15 @@ space-sla-measurements
 
 **Examples**
 
-- Add an organization user.: `kaiten service-desk organization-users add --organization-id 1 --user-id 2 --json`
+- Add an organization user.: `kaiten --json service-desk organization-users add --organization-id 1 --user-id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organization-users.batch-add`
 
@@ -10945,12 +11747,15 @@ space-sla-measurements
 
 **Examples**
 
-- Batch-add organization users.: `kaiten service-desk organization-users batch-add --organization-id 1 --user-ids '[1,2]' --json`
+- Batch-add organization users.: `kaiten --json service-desk organization-users batch-add --organization-id 1 --user-ids '[1,2]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organization-users.batch-remove`
 
@@ -10980,12 +11785,15 @@ space-sla-measurements
 
 **Examples**
 
-- Batch-remove organization users.: `kaiten service-desk organization-users batch-remove --organization-id 1 --user-ids '[1,2]' --json`
+- Batch-remove organization users.: `kaiten --json service-desk organization-users batch-remove --organization-id 1 --user-ids '[1,2]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organization-users.remove`
 
@@ -11015,12 +11823,15 @@ space-sla-measurements
 
 **Examples**
 
-- Remove an organization user.: `kaiten service-desk organization-users remove --organization-id 1 --user-id 2 --json`
+- Remove an organization user.: `kaiten --json service-desk organization-users remove --organization-id 1 --user-id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organization-users.update`
 
@@ -11051,12 +11862,15 @@ space-sla-measurements
 
 **Examples**
 
-- Update organization-user permissions.: `kaiten service-desk organization-users update --organization-id 1 --user-id 2 --permissions 7 --json`
+- Update organization-user permissions.: `kaiten --json service-desk organization-users update --organization-id 1 --user-id 2 --permissions 7`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Updating Service Desk organization-user permissions remains sandbox-dependent; the live suite accepts success or a documented 400/403/404/405 contract.
 
@@ -11088,12 +11902,15 @@ space-sla-measurements
 
 **Examples**
 
-- Create an organization.: `kaiten service-desk organizations create --name Org --json`
+- Create an organization.: `kaiten --json service-desk organizations create --name Org`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organizations.delete`
 
@@ -11122,12 +11939,15 @@ space-sla-measurements
 
 **Examples**
 
-- Delete an organization.: `kaiten service-desk organizations delete --organization-id 1 --json`
+- Delete an organization.: `kaiten --json service-desk organizations delete --organization-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organizations.get`
 
@@ -11156,12 +11976,15 @@ space-sla-measurements
 
 **Examples**
 
-- Get an organization.: `kaiten service-desk organizations get --organization-id 1 --json`
+- Get an organization.: `kaiten --json service-desk organizations get --organization-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organizations.list`
 
@@ -11193,12 +12016,15 @@ space-sla-measurements
 
 **Examples**
 
-- List organizations.: `kaiten service-desk organizations list --json`
+- List organizations.: `kaiten --json service-desk organizations list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.organizations.update`
 
@@ -11229,12 +12055,15 @@ space-sla-measurements
 
 **Examples**
 
-- Update an organization.: `kaiten service-desk organizations update --organization-id 1 --name Org2 --json`
+- Update an organization.: `kaiten --json service-desk organizations update --organization-id 1 --name Org2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.requests.create`
 
@@ -11266,12 +12095,15 @@ space-sla-measurements
 
 **Examples**
 
-- Create a request.: `kaiten service-desk requests create --title "Help" --service-id 1 --json`
+- Create a request.: `kaiten --json service-desk requests create --title "Help" --service-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: Service Desk request creation is permission-dependent; the live suite accepts either success or a documented 400/403/404/405 contract.
 
@@ -11302,12 +12134,15 @@ space-sla-measurements
 
 **Examples**
 
-- Delete a request.: `kaiten service-desk requests delete --request-id 1 --json`
+- Delete a request.: `kaiten --json service-desk requests delete --request-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -11338,12 +12173,15 @@ space-sla-measurements
 
 **Examples**
 
-- Get a request.: `kaiten service-desk requests get --request-id 1 --json`
+- Get a request.: `kaiten --json service-desk requests get --request-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -11376,12 +12214,15 @@ space-sla-measurements
 
 **Examples**
 
-- List Service Desk requests.: `kaiten service-desk requests list --json`
+- List Service Desk requests.: `kaiten --json service-desk requests list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.requests.update`
 
@@ -11413,12 +12254,15 @@ space-sla-measurements
 
 **Examples**
 
-- Update a request.: `kaiten service-desk requests update --request-id 1 --priority high --json`
+- Update a request.: `kaiten --json service-desk requests update --request-id 1 --priority high`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When request creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel request id.
 
@@ -11464,12 +12308,15 @@ space-sla-measurements
 
 **Examples**
 
-- Create a service.: `kaiten service-desk services create --name Support --board-id 1 --position 1 --lng en --json`
+- Create a service.: `kaiten --json service-desk services create --name Support --board-id 1 --position 1 --lng en`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.services.delete`
 
@@ -11498,12 +12345,15 @@ space-sla-measurements
 
 **Examples**
 
-- Archive a service.: `kaiten service-desk services delete --service-id 1 --json`
+- Archive a service.: `kaiten --json service-desk services delete --service-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.services.get`
 
@@ -11532,12 +12382,15 @@ space-sla-measurements
 
 **Examples**
 
-- Get a service.: `kaiten service-desk services get --service-id 1 --json`
+- Get a service.: `kaiten --json service-desk services get --service-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.services.list`
 
@@ -11569,12 +12422,15 @@ space-sla-measurements
 
 **Examples**
 
-- List services.: `kaiten service-desk services list --json`
+- List services.: `kaiten --json service-desk services list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.services.update`
 
@@ -11619,12 +12475,15 @@ space-sla-measurements
 
 **Examples**
 
-- Update a service.: `kaiten service-desk services update --service-id 1 --archived --json`
+- Update a service.: `kaiten --json service-desk services update --service-id 1 --archived`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.settings.get`
 
@@ -11651,12 +12510,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get Service Desk settings.: `kaiten service-desk settings get --json`
+- Get Service Desk settings.: `kaiten --json service-desk settings get`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.settings.update`
 
@@ -11685,12 +12547,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update Service Desk settings.: `kaiten service-desk settings update --service-desk-settings '{}' --json`
+- Update Service Desk settings.: `kaiten --json service-desk settings update --service-desk-settings '{}'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla-rules.create`
 
@@ -11725,12 +12590,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create an SLA rule.: `kaiten service-desk sla-rules create --sla-id sla-1 --type response --json`
+- Create an SLA rule.: `kaiten --json service-desk sla-rules create --sla-id sla-1 --type response`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: SLA rule creation is permission- and schema-dependent; the live suite accepts either success or a documented 400/403/404/405 contract.
 
@@ -11762,12 +12630,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete an SLA rule.: `kaiten service-desk sla-rules delete --sla-id sla-1 --rule-id rule-1 --json`
+- Delete an SLA rule.: `kaiten --json service-desk sla-rules delete --sla-id sla-1 --rule-id rule-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: When SLA-rule creation is unavailable, the live suite validates the documented 400/403/404/405 error contract on a sentinel rule id.
 
@@ -11805,12 +12676,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update an SLA rule.: `kaiten service-desk sla-rules update --sla-id sla-1 --rule-id rule-1 --estimated-time 60 --json`
+- Update an SLA rule.: `kaiten --json service-desk sla-rules update --sla-id sla-1 --rule-id rule-1 --estimated-time 60`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: When SLA-rule creation is unavailable, the live suite validates the documented 400/403/404/405 error contract on a sentinel rule id.
 
@@ -11844,12 +12718,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create an SLA policy.: `kaiten service-desk sla create --name SLA --rules '[]' --json`
+- Create an SLA policy.: `kaiten --json service-desk sla create --name SLA --rules '[]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.delete`
 
@@ -11878,12 +12755,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete an SLA policy.: `kaiten service-desk sla delete --sla-id sla-1 --json`
+- Delete an SLA policy.: `kaiten --json service-desk sla delete --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.get`
 
@@ -11912,12 +12792,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get an SLA policy.: `kaiten service-desk sla get --sla-id sla-1 --json`
+- Get an SLA policy.: `kaiten --json service-desk sla get --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.list`
 
@@ -11947,12 +12830,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List SLA policies.: `kaiten service-desk sla list --json`
+- List SLA policies.: `kaiten --json service-desk sla list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.recalculate`
 
@@ -11981,12 +12867,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Recalculate SLA measurements.: `kaiten service-desk sla recalculate --sla-id sla-1 --json`
+- Recalculate SLA measurements.: `kaiten --json service-desk sla recalculate --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.stats`
 
@@ -12021,12 +12910,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get Service Desk SLA statistics.: `kaiten service-desk sla stats --sla-id sla-1 --json`
+- Get Service Desk SLA statistics.: `kaiten --json service-desk sla stats --sla-id sla-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.sla.update`
 
@@ -12059,12 +12951,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update an SLA policy.: `kaiten service-desk sla update --sla-id sla-1 --status inactive --json`
+- Update an SLA policy.: `kaiten --json service-desk sla update --sla-id sla-1 --status inactive`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.stats.get`
 
@@ -12096,12 +12991,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get Service Desk statistics.: `kaiten service-desk stats get --date-from 2026-01-01 --json`
+- Get Service Desk statistics.: `kaiten --json service-desk stats get --date-from 2026-01-01`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.template-answers.create`
 
@@ -12131,12 +13029,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create a template answer.: `kaiten service-desk template-answers create --name Hello --text "Hi" --json`
+- Create a template answer.: `kaiten --json service-desk template-answers create --name Hello --text "Hi"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.template-answers.delete`
 
@@ -12165,12 +13066,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete a template answer.: `kaiten service-desk template-answers delete --template-answer-id ta-1 --json`
+- Delete a template answer.: `kaiten --json service-desk template-answers delete --template-answer-id ta-1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.template-answers.get`
 
@@ -12199,12 +13103,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a template answer.: `kaiten service-desk template-answers get --template-answer-id ta-1 --json`
+- Get a template answer.: `kaiten --json service-desk template-answers get --template-answer-id ta-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.template-answers.list`
 
@@ -12231,12 +13138,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List template answers.: `kaiten service-desk template-answers list --json`
+- List template answers.: `kaiten --json service-desk template-answers list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.template-answers.update`
 
@@ -12267,12 +13177,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a template answer.: `kaiten service-desk template-answers update --template-answer-id ta-1 --text "Hello" --json`
+- Update a template answer.: `kaiten --json service-desk template-answers update --template-answer-id ta-1 --text "Hello"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.users.list`
 
@@ -12305,12 +13218,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List Service Desk users.: `kaiten service-desk users list --json`
+- List Service Desk users.: `kaiten --json service-desk users list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.users.set-temp-password`
 
@@ -12339,12 +13255,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Generate a temporary password.: `kaiten service-desk users set-temp-password --user-id 1 --json`
+- Generate a temporary password.: `kaiten --json service-desk users set-temp-password --user-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: Temporary password generation may succeed or return a documented 403/404/405 sandbox error; the live suite accepts both outcomes.
 
@@ -12377,12 +13296,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update a Service Desk user.: `kaiten service-desk users update --user-id 1 --full-name "Alice" --json`
+- Update a Service Desk user.: `kaiten --json service-desk users update --user-id 1 --full-name "Alice"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `404`, `405`
 - Live note: The current live account is not a Service Desk user, so update may return 400 'Should be service desk user'; the live suite validates that documented contract.
 
@@ -12414,12 +13336,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Add a vote property.: `kaiten service-desk vote-properties add --service-id 1 --id 2 --json`
+- Add a vote property.: `kaiten --json service-desk vote-properties add --service-id 1 --id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `service-desk.vote-properties.remove`
 
@@ -12449,12 +13374,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Remove a vote property.: `kaiten service-desk vote-properties remove --service-id 1 --property-id 2 --json`
+- Remove a vote property.: `kaiten --json service-desk vote-properties remove --service-id 1 --property-id 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `space-sla-measurements.get`
 
@@ -12483,12 +13411,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get space SLA measurements.: `kaiten space-sla-measurements get --space-id 1 --json`
+- Get space SLA measurements.: `kaiten --json space-sla-measurements get --space-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-charts"></a>
 ## Графики и аналитика (`charts`) — 15 commands
@@ -12557,12 +13488,15 @@ compute-jobs
 
 **Examples**
 
-- Get blocker resolution data.: `kaiten charts block-resolution get --space-id 1 --json`
+- Get blocker resolution data.: `kaiten --json charts block-resolution get --space-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
@@ -12594,12 +13528,15 @@ compute-jobs
 
 **Examples**
 
-- Get chart board structure.: `kaiten charts boards get --space-id 1 --json`
+- Get chart board structure.: `kaiten --json charts boards get --space-id 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `charts.cfd.create`
 
@@ -12636,12 +13573,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Cumulative Flow Diagram (CFD) for a space.: `kaiten charts cfd create --json`
+- Build a Cumulative Flow Diagram (CFD) for a space.: `kaiten --json charts cfd create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12683,12 +13623,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Control Chart for a space.: `kaiten charts control create --json`
+- Build a Control Chart for a space.: `kaiten --json charts control create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12728,12 +13671,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Cycle Time Chart for a space.: `kaiten charts cycle-time create --json`
+- Build a Cycle Time Chart for a space.: `kaiten --json charts cycle-time create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12776,12 +13722,15 @@ compute-jobs
 
 **Examples**
 
-- Get due-date analysis.: `kaiten charts due-dates get --space-id 1 --card-date-from 2026-01-01 --card-date-to 2026-01-31 --checklist-item-date-from 2026-01-01 --checklist-item-date-to 2026-01-31 --json`
+- Get due-date analysis.: `kaiten --json charts due-dates get --space-id 1 --card-date-from 2026-01-01 --card-date-to 2026-01-31 --checklist-item-date-from 2026-01-01 --checklist-item-date-to 2026-01-31`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
@@ -12823,12 +13772,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Lead Time Chart for a space.: `kaiten charts lead-time create --json`
+- Build a Lead Time Chart for a space.: `kaiten --json charts lead-time create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12867,12 +13819,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Sales Funnel Chart for a space.: `kaiten charts sales-funnel create --json`
+- Build a Sales Funnel Chart for a space.: `kaiten --json charts sales-funnel create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12914,12 +13869,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Spectral Chart for a space.: `kaiten charts spectral create --json`
+- Build a Spectral Chart for a space.: `kaiten --json charts spectral create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -12954,12 +13912,15 @@ compute-jobs
 
 **Examples**
 
-- Get a done-card summary.: `kaiten charts summary get --space-id 1 --date-from 2026-01-01 --date-to 2026-01-31 --done-columns '[10,11]' --json`
+- Get a done-card summary.: `kaiten --json charts summary get --space-id 1 --date-from 2026-01-01 --date-to 2026-01-31 --done-columns '[10,11]'`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This is a read-only analytics request even though the Kaiten API uses POST to submit filters.
@@ -12996,12 +13957,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Task Distribution Chart for a space.: `kaiten charts task-distribution create --json`
+- Build a Task Distribution Chart for a space.: `kaiten --json charts task-distribution create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -13040,12 +14004,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Throughput Capacity Chart for a space.: `kaiten charts throughput-capacity create --json`
+- Build a Throughput Capacity Chart for a space.: `kaiten --json charts throughput-capacity create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -13084,12 +14051,15 @@ compute-jobs
 
 **Examples**
 
-- Build a Throughput Demand Chart for a space.: `kaiten charts throughput-demand create --json`
+- Build a Throughput Demand Chart for a space.: `kaiten --json charts throughput-demand create`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Some tenants return 404 or feature-unavailable responses for chart endpoints even when the CLI surface is present.
 - If chart endpoints are unavailable, fall back to cards.list-all, space-activity-all.get, or card-location-history.batch-get instead of probing more chart variants.
 - This request can create a transient compute job, so global read-only mode blocks it.
@@ -13121,12 +14091,15 @@ compute-jobs
 
 **Examples**
 
-- Cancel a compute job.: `kaiten compute-jobs cancel --job-id 1 --json`
+- Cancel a compute job.: `kaiten --json compute-jobs cancel --job-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `404`, `409`
 - Live note: Canceling a compute job can legitimately return 400/404/409 depending on backend state; the live suite accepts that contract.
 
@@ -13157,12 +14130,15 @@ compute-jobs
 
 **Examples**
 
-- Get compute job status.: `kaiten compute-jobs get --job-id 1 --json`
+- Get compute job status.: `kaiten --json compute-jobs get --job-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-tree"></a>
 ## Дерево сущностей (`tree`) — 9 commands
@@ -13216,12 +14192,15 @@ tree.children
 
 **Examples**
 
-- List tree entities.: `kaiten tree-entities list --json`
+- List tree entities.: `kaiten --json tree-entities list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `tree-entities.share.batch-enable`
 
@@ -13252,12 +14231,15 @@ tree.children
 
 **Examples**
 
-- Publish several entities and return every public link.: `kaiten tree-entities share batch-enable --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]' --workers 2 --json`
+- Publish several entities and return every public link.: `kaiten --json tree-entities share batch-enable --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]' --workers 2`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13293,12 +14275,15 @@ tree.children
 
 **Examples**
 
-- Get public links for several entities with bounded concurrency.: `kaiten tree-entities share batch-get --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]' --json`
+- Get public links for several entities with bounded concurrency.: `kaiten --json tree-entities share batch-get --entity-uids '["11111111-1111-4111-8111-111111111111","22222222-2222-4222-8222-222222222222"]'`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13332,12 +14317,15 @@ tree.children
 
 **Examples**
 
-- Disable a public link without failing when it is already disabled.: `kaiten tree-entities share disable --entity-uid 11111111-1111-4111-8111-111111111111 --json`
+- Disable a public link without failing when it is already disabled.: `kaiten --json tree-entities share disable --entity-uid 11111111-1111-4111-8111-111111111111`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13371,14 +14359,17 @@ tree.children
 
 **Examples**
 
-- Enable sharing and return the public link.: `kaiten tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111 --json`
-- Enable sharing with an expiration timestamp.: `kaiten tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z" --json`
+- Enable sharing and return the public link.: `kaiten --json tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111`
+- Enable sharing with an expiration timestamp.: `kaiten --json tree-entities share enable --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z"`
 
 **Notes**
 
 - Bulk alternative: `tree-entities.share.batch-enable`
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13412,13 +14403,16 @@ tree.children
 
 **Examples**
 
-- Get an existing public link without changing sharing state.: `kaiten tree-entities share get --entity-uid 11111111-1111-4111-8111-111111111111 --json`
+- Get an existing public link without changing sharing state.: `kaiten --json tree-entities share get --entity-uid 11111111-1111-4111-8111-111111111111`
 
 **Notes**
 
 - Bulk alternative: `tree-entities.share.batch-get`
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13452,13 +14446,16 @@ tree.children
 
 **Examples**
 
-- Set a public-link expiration timestamp.: `kaiten tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z" --json`
-- Remove the public-link expiration timestamp.: `kaiten tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at null --json`
+- Set a public-link expiration timestamp.: `kaiten --json tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at "2099-01-01T00:00:00Z"`
+- Remove the public-link expiration timestamp.: `kaiten --json tree-entities share update --entity-uid 11111111-1111-4111-8111-111111111111 --expired-at null`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The share UID returned by Kaiten is converted into a ready-to-use public link at `<profile-origin>/p/<share-uid>`.
 - GET works for already published entities and requires read access; enable, update, and disable require the entity share permission.
 - Supported tree entity types are spaces, documents, document groups, and story maps.
@@ -13491,12 +14488,15 @@ tree.children
 
 **Examples**
 
-- List direct tree children.: `kaiten tree children list --parent-entity-uid root-1 --json`
+- List direct tree children.: `kaiten --json tree children list --parent-entity-uid root-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
@@ -13533,12 +14533,15 @@ tree.children
 
 **Examples**
 
-- Build a bounded entity tree.: `kaiten tree get --depth 1 --json`
+- Build a bounded entity tree.: `kaiten --json tree get --depth 1`
 
 **Notes**
 
 - Cache guidance: Default auto mode stores this expensive read path in persistent cache with a long adaptive TTL, especially for closed historical windows and repeated analytics.
-- Refresh hint: Use --cache-mode refresh when the same heavy window must be rebuilt from Kaiten API.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once when the same heavy window must be rebuilt from Kaiten API; do not put refresh inside a loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
@@ -13605,12 +14608,15 @@ user-timers
 
 **Examples**
 
-- Create an API key.: `kaiten api-keys create --name "local-dev" --json`
+- Create an API key.: `kaiten --json api-keys create --name "local-dev"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `policy_excluded`; expected statuses: —
 - Live note: Creating API keys is excluded from live validation because teardown would require testing key deletion.
 
@@ -13641,12 +14647,15 @@ user-timers
 
 **Examples**
 
-- Delete an API key.: `kaiten api-keys delete --key-id 1 --json`
+- Delete an API key.: `kaiten --json api-keys delete --key-id 1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `policy_excluded`; expected statuses: —
 - Live note: Deleting API keys is explicitly excluded from live validation by user instruction.
 
@@ -13675,12 +14684,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List API keys.: `kaiten api-keys list --json`
+- List API keys.: `kaiten --json api-keys list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `calendars.get`
 
@@ -13709,12 +14721,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a calendar by ID.: `kaiten calendars get --calendar-id cal-1 --json`
+- Get a calendar by ID.: `kaiten --json calendars get --calendar-id cal-1`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `calendars.list`
 
@@ -13744,12 +14759,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List calendars.: `kaiten calendars list --limit 5 --json`
+- List calendars.: `kaiten --json calendars list --limit 5`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company.current`
 
@@ -13776,12 +14794,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get current company information.: `kaiten company current --json`
+- Get current company information.: `kaiten --json company current`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company.socket-token`
 
@@ -13808,12 +14829,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a websocket JWT.: `kaiten company socket-token --json`
+- Get a websocket JWT.: `kaiten --json company socket-token`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `company.update`
 
@@ -13842,12 +14866,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Update current company information.: `kaiten company update --name "Acme" --json`
+- Update current company information.: `kaiten --json company update --name "Acme"`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `removed-boards.list`
 
@@ -13877,12 +14904,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List removed boards.: `kaiten removed-boards list --json`
+- List removed boards.: `kaiten --json removed-boards list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for recycle-bin board listing; the live suite validates that contract explicitly.
 
@@ -13914,12 +14944,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List removed cards.: `kaiten removed-cards list --json`
+- List removed cards.: `kaiten --json removed-cards list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `405`
 - Live note: Sandbox returns 405 for recycle-bin card listing; the live suite validates that contract explicitly.
 
@@ -13950,12 +14983,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Create a user timer.: `kaiten user-timers create --card-id 10 --json`
+- Create a user timer.: `kaiten --json user-timers create --card-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `400`, `403`, `405`, `409`
 - Live note: User-timer creation remains sandbox-dependent; the live suite accepts either success or a documented 400/403/405/409 contract.
 
@@ -13986,12 +15022,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Delete a user timer.: `kaiten user-timers delete --timer-id 10 --json`
+- Delete a user timer.: `kaiten --json user-timers delete --timer-id 10`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -14022,12 +15061,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Get a user timer.: `kaiten user-timers get --timer-id 10 --json`
+- Get a user timer.: `kaiten --json user-timers get --timer-id 10`
 
 **Notes**
 
 - Cache guidance: Default auto mode reuses persistent cache for repeated safe entity/reference reads and extends dense same-family loops.
-- Refresh hint: Use --cache-mode refresh to force a fresh API read and rewrite the cache.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -14056,12 +15098,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- List user timers.: `kaiten user-timers list --json`
+- List user timers.: `kaiten --json user-timers list`
 
 **Notes**
 
 - Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `405`
 - Live note: User-timer listing remains sandbox-dependent; the live suite accepts either success or a documented 403/405 error path.
 
@@ -14093,12 +15138,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Pause a user timer.: `kaiten user-timers update --timer-id 10 --paused --json`
+- Pause a user timer.: `kaiten --json user-timers update --timer-id 10 --paused`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.
 
@@ -14150,13 +15198,16 @@ snapshot
 
 **Examples**
 
-- Build a reusable local snapshot with topology and cards.: `kaiten snapshot build --name team-basic --space-id 10 --preset basic --json`
-- Build an analytics snapshot with bounded activity and history data.: `kaiten snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z --json`
+- Build a reusable local snapshot with topology and cards.: `kaiten --json snapshot build --name team-basic --space-id 10 --preset basic`
+- Build an analytics snapshot with bounded activity and history data.: `kaiten --json snapshot build --name team-q1 --space-id 10 --preset analytics --window-start 2026-01-01T00:00:00Z --window-end 2026-03-31T23:59:59Z`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Build one snapshot, then run repeated local query cards/query metrics commands without extra Kaiten API calls.
 - analytics and full presets require window_start/window_end because throughput and history are window-bound datasets.
 
@@ -14187,12 +15238,15 @@ snapshot
 
 **Examples**
 
-- Delete a local snapshot.: `kaiten snapshot delete --name team-q1 --json`
+- Delete a local snapshot.: `kaiten --json snapshot delete --name team-q1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `snapshot.list`
 
@@ -14219,12 +15273,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Show available local snapshots.: `kaiten snapshot list --json`
+- Show available local snapshots.: `kaiten --json snapshot list`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 ### `snapshot.refresh`
 
@@ -14253,12 +15310,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Refresh a previously built snapshot.: `kaiten snapshot refresh --name team-q1 --json`
+- Refresh a previously built snapshot.: `kaiten --json snapshot refresh --name team-q1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - refresh reuses the stored snapshot spec and rebuilds datasets in place; v1 is rebuild-oriented, not incremental.
 - refresh clears the current profile/domain HTTP cache first so the rebuilt snapshot comes from fresh Kaiten API reads.
 
@@ -14289,12 +15349,15 @@ _No tool-specific arguments._
 
 **Examples**
 
-- Inspect snapshot metadata and dataset counts.: `kaiten snapshot show --name team-q1 --json`
+- Inspect snapshot metadata and dataset counts.: `kaiten --json snapshot show --name team-q1`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-query"></a>
 ## Локальные запросы (`query`) — 2 commands
@@ -14342,13 +15405,16 @@ query
 
 **Examples**
 
-- Filter cards locally by board and derived flags in summary view.: `kaiten query cards --snapshot team-basic --filter '{"board_ids":[10],"has_children":true}' --fields id,title,has_children --json`
-- Search local evidence text without extra API calls.: `kaiten query cards --snapshot team-basic --view evidence --filter '{"comment_text_query":"blocked"}' --compact --fields id,title,comment_text --json`
+- Filter cards locally by board and derived flags in summary view.: `kaiten --json query cards --snapshot team-basic --filter '{"board_ids":[10],"has_children":true}' --fields id,title,has_children`
+- Search local evidence text without extra API calls.: `kaiten --json query cards --snapshot team-basic --view evidence --filter '{"comment_text_query":"blocked"}' --compact --fields id,title,comment_text`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - query cards never calls the Kaiten API; build or refresh the snapshot first.
 - summary is the default view and keeps local card payloads narrow for LLM and report workflows.
 - Use text_query, child_text_query, and comment_text_query to reduce candidate sets locally before involving an LLM.
@@ -14383,12 +15449,15 @@ query
 
 **Examples**
 
-- Compute throughput locally over the snapshot window.: `kaiten query metrics --snapshot team-q1 --metric throughput --group-by board_id --json`
-- Compute local WIP aging for a reduced candidate set.: `kaiten query metrics --snapshot team-basic --metric aging --filter '{"board_ids":[10],"has_comments":true}' --group-by column_id --json`
+- Compute throughput locally over the snapshot window.: `kaiten --json query metrics --snapshot team-q1 --metric throughput --group-by board_id`
+- Compute local WIP aging for a reduced candidate set.: `kaiten --json query metrics --snapshot team-basic --metric aging --filter '{"board_ids":[10],"has_comments":true}' --group-by column_id`
 
 **Notes**
 
 - Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
 - Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - throughput, lead_time, and cycle_time use the snapshot window when it exists; basic snapshots fall back to all locally known done transitions.
 - For repeated report generation, query metrics after snapshot build instead of re-fetching topology, cards, and history on every run.

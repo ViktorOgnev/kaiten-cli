@@ -223,7 +223,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten cards list --board-id 10 --limit 5 --compact --json",
+                command="kaiten --json cards list --board-id 10 --limit 5 --compact",
                 description="List cards on a board.",
             ),
             ExampleSpec(
@@ -284,11 +284,11 @@ TOOLS = (
                 command="kaiten cards get --card-id 123", description="Get a card by numeric ID."
             ),
             ExampleSpec(
-                command="kaiten cards get --card-id 123 --compact --fields id,title,state --json",
+                command="kaiten --json cards get --card-id 123 --compact --fields id,title,state",
                 description="Get a narrow card response.",
             ),
             ExampleSpec(
-                command="kaiten cards get --card-id 123 --markdown --output ./card.md --json",
+                command="kaiten --json cards get --card-id 123 --markdown --output ./card.md",
                 description="Save a card as Markdown.",
             ),
         ),
@@ -338,11 +338,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten cards batch-get --card-ids '[1,2,3]' --json",
+                command="kaiten --json cards batch-get --card-ids '[1,2,3]'",
                 description="Fetch several cards in one CLI call.",
             ),
             ExampleSpec(
-                command="kaiten cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description --json",
+                command="kaiten --json cards batch-get --card-ids '[1,2,3]' --workers 2 --compact --fields id,title,state,description",
                 description="Fetch narrowed card detail payloads with bounded concurrency.",
             ),
         ),
@@ -468,11 +468,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten cards create --title "Smoke task" --board-id 10 --json',
+                command='kaiten --json cards create --title "Smoke task" --board-id 10',
                 description="Create a card.",
             ),
             ExampleSpec(
-                command='kaiten cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state --json',
+                command='kaiten --json cards create --title "Smoke task" --board-id 10 --compact --fields id,title,state',
                 description="Create a card with a narrow response.",
             ),
         ),
@@ -608,7 +608,7 @@ TOOLS = (
                 description="Update a card.",
             ),
             ExampleSpec(
-                command='kaiten cards update --card-id 123 --title "Renamed" --compact --fields id,title,state --json',
+                command='kaiten --json cards update --card-id 123 --title "Renamed" --compact --fields id,title,state',
                 description="Update a card with a narrow response.",
             ),
         ),
@@ -658,7 +658,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten cards batch-update --board-id 10 --attributes '{\"owner_id\":7}' --json",
+                command="kaiten --json cards batch-update --board-id 10 --attributes '{\"owner_id\":7}'",
                 description="Batch update matching cards.",
             ),
         ),
@@ -768,7 +768,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten cards move --card-id 123 --column-id 10 --json",
+                command="kaiten --json cards move --card-id 123 --column-id 10",
                 description="Move a card.",
             ),
         ),
@@ -827,19 +827,19 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command=(
-                    "kaiten cards move-by-url "
+                    "kaiten --json cards move-by-url "
                     '--card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" '
                     '--target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" '
-                    "--lane-id 20 --json"
+                    "--lane-id 20"
                 ),
                 description="Move a card by resolving card and target UI URLs.",
             ),
             ExampleSpec(
                 command=(
-                    "kaiten cards move-by-url "
+                    "kaiten --json cards move-by-url "
                     '--card-url "https://hq.kaiten.ru/space/1/boards/card/STORY-1" '
                     '--target-url "https://hq.kaiten.ru/space/2/boards?focus=column&focusId=10" '
-                    "--dry-run --json"
+                    "--dry-run"
                 ),
                 description="Preview the resolved move target without changing the card.",
             ),
@@ -868,7 +868,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-baselines list --card-id 123 --json",
+                command="kaiten --json card-baselines list --card-id 123",
                 description="List baselines for a card.",
             ),
         ),
@@ -890,7 +890,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-allowed-users list --card-id 123 --compact --json",
+                command="kaiten --json card-allowed-users list --card-id 123 --compact",
                 description="List card allowed users.",
             ),
         ),
@@ -921,7 +921,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten card-service-desk-external-recipients add --card-id 123 --email user@example.com --json",
+                command="kaiten --json card-service-desk-external-recipients add --card-id 123 --email user@example.com",
                 description="Add a Service Desk external recipient.",
             ),
         ),
@@ -945,7 +945,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-service-desk-external-recipients remove --card-id 123 --email user@example.com --json",
+                command="kaiten --json card-service-desk-external-recipients remove --card-id 123 --email user@example.com",
                 description="Remove a Service Desk external recipient.",
             ),
         ),
@@ -1006,11 +1006,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten cards list-all --board-id 10 --page-size 20 --max-pages 2 --json",
+                command="kaiten --json cards list-all --board-id 10 --page-size 20 --max-pages 2",
                 description="Fetch all matching cards with bounded pagination.",
             ),
             ExampleSpec(
-                command="kaiten cards list-all --board-id 10 --selection active_only --fields id,title --json",
+                command="kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title",
                 description="Fetch only active cards via normalized bulk selection.",
             ),
         ),

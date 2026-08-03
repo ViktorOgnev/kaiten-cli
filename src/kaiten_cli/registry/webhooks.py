@@ -25,7 +25,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten webhooks list --space-id 1 --json",
+                command="kaiten --json webhooks list --space-id 1",
                 description="List external webhooks.",
             ),
         ),
@@ -50,7 +50,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten webhooks create --space-id 1 --url "https://example.test" --json',
+                command='kaiten --json webhooks create --space-id 1 --url "https://example.test"',
                 description="Create an external webhook.",
             ),
         ),
@@ -74,7 +74,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten webhooks get --space-id 1 --webhook-id 2 --json",
+                command="kaiten --json webhooks get --space-id 1 --webhook-id 2",
                 description="Get an external webhook.",
             ),
         ),
@@ -101,7 +101,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten webhooks update --space-id 1 --webhook-id 2 --enabled --json",
+                command="kaiten --json webhooks update --space-id 1 --webhook-id 2 --enabled",
                 description="Update an external webhook.",
             ),
         ),
@@ -125,7 +125,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten webhooks delete --space-id 1 --webhook-id 2 --json",
+                command="kaiten --json webhooks delete --space-id 1 --webhook-id 2",
                 description="Delete an external webhook.",
             ),
         ),
@@ -146,7 +146,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten incoming-webhooks list --space-id 1 --json",
+                command="kaiten --json incoming-webhooks list --space-id 1",
                 description="List incoming webhooks.",
             ),
         ),
@@ -189,7 +189,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten incoming-webhooks create --space-id 1 --board-id 2 --column-id 3 --lane-id 4 --owner-id 5 --json",
+                command="kaiten --json incoming-webhooks create --space-id 1 --board-id 2 --column-id 3 --lane-id 4 --owner-id 5",
                 description="Create an incoming webhook.",
             ),
         ),
@@ -233,7 +233,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten incoming-webhooks update --space-id 1 --webhook-id hook-1 --position 1 --json",
+                command="kaiten --json incoming-webhooks update --space-id 1 --webhook-id hook-1 --position 1",
                 description="Update an incoming webhook.",
             ),
         ),
@@ -257,7 +257,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten incoming-webhooks delete --space-id 1 --webhook-id hook-1 --json",
+                command="kaiten --json incoming-webhooks delete --space-id 1 --webhook-id hook-1",
                 description="Delete an incoming webhook.",
             ),
         ),

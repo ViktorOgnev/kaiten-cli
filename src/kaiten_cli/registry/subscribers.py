@@ -29,7 +29,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten card-subscribers list --card-id 10 --compact --json",
+                command="kaiten --json card-subscribers list --card-id 10 --compact",
                 description="List card subscribers.",
             ),
         ),
@@ -54,7 +54,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-subscribers add --card-id 10 --user-id 7 --json",
+                command="kaiten --json card-subscribers add --card-id 10 --user-id 7",
                 description="Add a card subscriber.",
             ),
         ),
@@ -78,7 +78,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten card-subscribers remove --card-id 10 --user-id 7 --json",
+                command="kaiten --json card-subscribers remove --card-id 10 --user-id 7",
                 description="Remove a card subscriber.",
             ),
         ),
@@ -106,7 +106,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten column-subscribers list --column-id 10 --compact --json",
+                command="kaiten --json column-subscribers list --column-id 10 --compact",
                 description="List column subscribers.",
             ),
         ),
@@ -136,7 +136,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=column_subscriber_default_type_request),
         examples=(
             ExampleSpec(
-                command="kaiten column-subscribers add --column-id 10 --user-id 7 --json",
+                command="kaiten --json column-subscribers add --column-id 10 --user-id 7",
                 description="Add a column subscriber.",
             ),
         ),
@@ -160,7 +160,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten column-subscribers remove --column-id 10 --user-id 7 --json",
+                command="kaiten --json column-subscribers remove --column-id 10 --user-id 7",
                 description="Remove a column subscriber.",
             ),
         ),

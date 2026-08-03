@@ -90,7 +90,7 @@ def _chart_create(
             response_policy=_HEAVY,
             examples=(
                 ExampleSpec(
-                    command=f"kaiten {' '.join(canonical_name.split('.'))} --json",
+                    command=f"kaiten --json {' '.join(canonical_name.split('.'))}",
                     description=description,
                 ),
             ),
@@ -114,7 +114,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten charts boards get --space-id 1 --json",
+                command="kaiten --json charts boards get --space-id 1",
                 description="Get chart board structure.",
             ),
         ),
@@ -146,7 +146,7 @@ TOOLS = (
         runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
             ExampleSpec(
-                command="kaiten charts summary get --space-id 1 --date-from 2026-01-01 --date-to 2026-01-31 --done-columns '[10,11]' --json",
+                command="kaiten --json charts summary get --space-id 1 --date-from 2026-01-01 --date-to 2026-01-31 --done-columns '[10,11]'",
                 description="Get a done-card summary.",
             ),
         ),
@@ -177,7 +177,7 @@ TOOLS = (
         runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
             ExampleSpec(
-                command="kaiten charts block-resolution get --space-id 1 --json",
+                command="kaiten --json charts block-resolution get --space-id 1",
                 description="Get blocker resolution data.",
             ),
         ),
@@ -258,7 +258,7 @@ TOOLS = (
         runtime_behavior=_READ_ONLY_ANALYTICS,
         examples=(
             ExampleSpec(
-                command="kaiten charts due-dates get --space-id 1 --card-date-from 2026-01-01 --card-date-to 2026-01-31 --checklist-item-date-from 2026-01-01 --checklist-item-date-to 2026-01-31 --json",
+                command="kaiten --json charts due-dates get --space-id 1 --card-date-from 2026-01-01 --card-date-to 2026-01-31 --checklist-item-date-from 2026-01-01 --checklist-item-date-to 2026-01-31",
                 description="Get due-date analysis.",
             ),
         ),
@@ -510,7 +510,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(cache_policy="none"),
         examples=(
             ExampleSpec(
-                command="kaiten compute-jobs get --job-id 1 --json",
+                command="kaiten --json compute-jobs get --job-id 1",
                 description="Get compute job status.",
             ),
         ),
@@ -531,7 +531,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten compute-jobs cancel --job-id 1 --json",
+                command="kaiten --json compute-jobs cancel --job-id 1",
                 description="Cancel a compute job.",
             ),
         ),

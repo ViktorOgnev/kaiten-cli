@@ -37,11 +37,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten spaces list --json",
+                command="kaiten --json spaces list",
                 description="List spaces as machine-readable JSON.",
             ),
             ExampleSpec(
-                command="kaiten spaces list --compact --fields id,title --json",
+                command="kaiten --json spaces list --compact --fields id,title",
                 description="List spaces with a narrow response surface.",
             ),
         ),
@@ -83,7 +83,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-topology get --space-id 123 --json",
+                command="kaiten --json space-topology get --space-id 123",
                 description="Fetch board topology for a space.",
             ),
         ),

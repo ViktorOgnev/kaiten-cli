@@ -32,7 +32,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten space-users list --space-id 1 --compact --json",
+                command="kaiten --json space-users list --space-id 1 --compact",
                 description="List space users.",
             ),
         ),
@@ -61,7 +61,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="entity"),
         examples=(
             ExampleSpec(
-                command="kaiten space-users get --space-id 1 --user-id 7 --compact --json",
+                command="kaiten --json space-users get --space-id 1 --user-id 7 --compact",
                 description="Get a space user.",
             ),
         ),
@@ -87,7 +87,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-users add --space-id 1 --user-id 7 --json",
+                command="kaiten --json space-users add --space-id 1 --user-id 7",
                 description="Add a user to a space.",
             ),
         ),
@@ -113,7 +113,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-users update --space-id 1 --user-id 7 --role-id 9 --json",
+                command="kaiten --json space-users update --space-id 1 --user-id 7 --role-id 9",
                 description="Update a space user role.",
             ),
         ),
@@ -137,7 +137,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten space-users remove --space-id 1 --user-id 7 --json",
+                command="kaiten --json space-users remove --space-id 1 --user-id 7",
                 description="Remove a user from a space.",
             ),
         ),
@@ -240,13 +240,13 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=company_members_section_request),
         examples=(
             ExampleSpec(
-                command="kaiten company-users list --limit 100 --offset 0 --compact --json",
+                command="kaiten --json company-users list --limit 100 --offset 0 --compact",
                 description="List administrative company members.",
             ),
             ExampleSpec(
                 command=(
-                    "kaiten company-users list --only-records-count "
-                    "--temporarily-inactive-status all_users --json"
+                    "kaiten --json company-users list --only-records-count "
+                    "--temporarily-inactive-status all_users"
                 ),
                 description="Count company members including temporarily inactive users.",
             ),
@@ -282,7 +282,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten company-users update --user-id 7 --full-name "Alice Smith" --json',
+                command='kaiten --json company-users update --user-id 7 --full-name "Alice Smith"',
                 description="Update a company user.",
             ),
         ),
@@ -301,7 +301,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten company-users remove-virtual --user-id 7 --json",
+                command="kaiten --json company-users remove-virtual --user-id 7",
                 description="Remove a virtual company user.",
             ),
         ),
@@ -323,7 +323,7 @@ TOOLS = (
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
-            ExampleSpec(command="kaiten user-roles list --json", description="List user roles."),
+            ExampleSpec(command="kaiten --json user-roles list", description="List user roles."),
         ),
     ),
     make_tool(
@@ -340,7 +340,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-roles get --role-id 1 --json", description="Get a user role."
+                command="kaiten --json user-roles get --role-id 1", description="Get a user role."
             ),
         ),
     ),
@@ -368,7 +368,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten user-roles create --name "Manager" --json',
+                command='kaiten --json user-roles create --name "Manager"',
                 description="Create a user role.",
             ),
         ),
@@ -399,7 +399,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command='kaiten user-roles update --role-id 1 --name "Manager" --json',
+                command='kaiten --json user-roles update --role-id 1 --name "Manager"',
                 description="Update a user role.",
             ),
         ),
@@ -418,7 +418,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten user-roles delete --role-id 1 --json",
+                command="kaiten --json user-roles delete --role-id 1",
                 description="Delete a user role.",
             ),
         ),
@@ -441,7 +441,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command='kaiten company-groups list --query "Engineering" --json',
+                command='kaiten --json company-groups list --query "Engineering"',
                 description="List company groups.",
             ),
         ),
@@ -462,7 +462,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten company-groups create --name "Engineering" --json',
+                command='kaiten --json company-groups create --name "Engineering"',
                 description="Create a company group.",
             ),
         ),
@@ -483,7 +483,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten company-groups get --group-uid grp-1 --json",
+                command="kaiten --json company-groups get --group-uid grp-1",
                 description="Get a company group.",
             ),
         ),
@@ -508,7 +508,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command='kaiten company-groups update --group-uid grp-1 --name "Docs" --json',
+                command='kaiten --json company-groups update --group-uid grp-1 --name "Docs"',
                 description="Update a company group.",
             ),
         ),
@@ -529,7 +529,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten company-groups delete --group-uid grp-1 --json",
+                command="kaiten --json company-groups delete --group-uid grp-1",
                 description="Delete a company group.",
             ),
         ),
@@ -555,7 +555,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten group-users list --group-uid grp-1 --compact --json",
+                command="kaiten --json group-users list --group-uid grp-1 --compact",
                 description="List group users.",
             ),
         ),
@@ -580,7 +580,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten group-users add --group-uid grp-1 --user-id 7 --json",
+                command="kaiten --json group-users add --group-uid grp-1 --user-id 7",
                 description="Add a user to a group.",
             ),
         ),
@@ -604,7 +604,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten group-users remove --group-uid grp-1 --user-id 7 --json",
+                command="kaiten --json group-users remove --group-uid grp-1 --user-id 7",
                 description="Remove a user from a group.",
             ),
         ),
@@ -630,7 +630,7 @@ TOOLS = (
         response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten group-admins list --group-uid grp-1 --compact --json",
+                command="kaiten --json group-admins list --group-uid grp-1 --compact",
                 description="List group admins.",
             ),
         ),
@@ -655,7 +655,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten group-admins add --group-uid grp-1 --user-id 7 --json",
+                command="kaiten --json group-admins add --group-uid grp-1 --user-id 7",
                 description="Add a group admin.",
             ),
         ),
@@ -679,7 +679,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten group-admins remove --group-uid grp-1 --user-id 7 --json",
+                command="kaiten --json group-admins remove --group-uid grp-1 --user-id 7",
                 description="Remove a group admin.",
             ),
         ),
@@ -701,7 +701,7 @@ TOOLS = (
         response_policy=ResponsePolicy(result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten group-entities list --group-uid grp-1 --json",
+                command="kaiten --json group-entities list --group-uid grp-1",
                 description="List group entities.",
             ),
         ),
@@ -732,7 +732,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten group-entities add --group-uid grp-1 --entity-uid entity-1 --role-ids '[\"role-1\"]' --json",
+                command="kaiten --json group-entities add --group-uid grp-1 --entity-uid entity-1 --role-ids '[\"role-1\"]'",
                 description="Attach a group entity.",
             ),
         ),
@@ -763,7 +763,7 @@ TOOLS = (
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
             ExampleSpec(
-                command="kaiten group-entities update --group-uid grp-1 --entity-uid entity-1 --role-ids '[\"role-1\"]' --json",
+                command="kaiten --json group-entities update --group-uid grp-1 --entity-uid entity-1 --role-ids '[\"role-1\"]'",
                 description="Update a group entity.",
             ),
         ),
@@ -787,7 +787,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten group-entities remove --group-uid grp-1 --entity-uid entity-1 --json",
+                command="kaiten --json group-entities remove --group-uid grp-1 --entity-uid entity-1",
                 description="Remove a group entity.",
             ),
         ),
@@ -812,7 +812,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command='kaiten roles list --query "admin" --json', description="List roles."
+                command='kaiten --json roles list --query "admin"', description="List roles."
             ),
         ),
     ),
@@ -832,7 +832,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten roles get --role-id role-1 --json", description="Get a role."
+                command="kaiten --json roles get --role-id role-1", description="Get a role."
             ),
         ),
     ),

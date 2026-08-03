@@ -84,7 +84,7 @@ TOOLS = (
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
-                command="kaiten tree-entities list --json", description="List tree entities."
+                command="kaiten --json tree-entities list", description="List tree entities."
             ),
         ),
     ),
@@ -110,7 +110,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f"kaiten tree-entities share get --entity-uid {EXAMPLE_ENTITY_UID} --json",
+                command=f"kaiten --json tree-entities share get --entity-uid {EXAMPLE_ENTITY_UID}",
                 description="Get an existing public link without changing sharing state.",
             ),
         ),
@@ -142,11 +142,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f"kaiten tree-entities share enable --entity-uid {EXAMPLE_ENTITY_UID} --json",
+                command=f"kaiten --json tree-entities share enable --entity-uid {EXAMPLE_ENTITY_UID}",
                 description="Enable sharing and return the public link.",
             ),
             ExampleSpec(
-                command=f'kaiten tree-entities share enable --entity-uid {EXAMPLE_ENTITY_UID} --expired-at "{EXAMPLE_EXPIRED_AT}" --json',
+                command=f'kaiten --json tree-entities share enable --entity-uid {EXAMPLE_ENTITY_UID} --expired-at "{EXAMPLE_EXPIRED_AT}"',
                 description="Enable sharing with an expiration timestamp.",
             ),
         ),
@@ -181,11 +181,11 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f'kaiten tree-entities share update --entity-uid {EXAMPLE_ENTITY_UID} --expired-at "{EXAMPLE_EXPIRED_AT}" --json',
+                command=f'kaiten --json tree-entities share update --entity-uid {EXAMPLE_ENTITY_UID} --expired-at "{EXAMPLE_EXPIRED_AT}"',
                 description="Set a public-link expiration timestamp.",
             ),
             ExampleSpec(
-                command=f"kaiten tree-entities share update --entity-uid {EXAMPLE_ENTITY_UID} --expired-at null --json",
+                command=f"kaiten --json tree-entities share update --entity-uid {EXAMPLE_ENTITY_UID} --expired-at null",
                 description="Remove the public-link expiration timestamp.",
             ),
         ),
@@ -212,7 +212,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f"kaiten tree-entities share disable --entity-uid {EXAMPLE_ENTITY_UID} --json",
+                command=f"kaiten --json tree-entities share disable --entity-uid {EXAMPLE_ENTITY_UID}",
                 description="Disable a public link without failing when it is already disabled.",
             ),
         ),
@@ -240,7 +240,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f'kaiten tree-entities share batch-get --entity-uids \'["{EXAMPLE_ENTITY_UID}","{EXAMPLE_SECOND_ENTITY_UID}"]\' --json',
+                command=f'kaiten --json tree-entities share batch-get --entity-uids \'["{EXAMPLE_ENTITY_UID}","{EXAMPLE_SECOND_ENTITY_UID}"]\'',
                 description="Get public links for several entities with bounded concurrency.",
             ),
         ),
@@ -271,7 +271,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command=f'kaiten tree-entities share batch-enable --entity-uids \'["{EXAMPLE_ENTITY_UID}","{EXAMPLE_SECOND_ENTITY_UID}"]\' --workers 2 --json',
+                command=f'kaiten --json tree-entities share batch-enable --entity-uids \'["{EXAMPLE_ENTITY_UID}","{EXAMPLE_SECOND_ENTITY_UID}"]\' --workers 2',
                 description="Publish several entities and return every public link.",
             ),
         ),
@@ -301,7 +301,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten tree children list --parent-entity-uid root-1 --json",
+                command="kaiten --json tree children list --parent-entity-uid root-1",
                 description="List direct tree children.",
             ),
         ),
@@ -331,7 +331,7 @@ TOOLS = (
         ),
         examples=(
             ExampleSpec(
-                command="kaiten tree get --depth 1 --json",
+                command="kaiten --json tree get --depth 1",
                 description="Build a bounded entity tree.",
             ),
         ),

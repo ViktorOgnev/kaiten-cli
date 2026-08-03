@@ -33,15 +33,21 @@ from kaiten_cli.profiles import (
     add_profile,
     list_profiles,
     remove_profile,
+    resolve_profile,
     show_profile,
     use_profile,
 )
-from kaiten_cli.registry import iter_module_tools, iter_tools
+from kaiten_cli.registry import iter_module_tools, iter_tools, resolve_tool
 from kaiten_cli.registry.module_docs import MODULE_SPECS_BY_KEY
 from kaiten_cli.runtime.executor import execute_tool_sync_with_diagnostics, read_only_enabled
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.output import render_error, render_success
-from kaiten_cli.runtime.trace import ExecutionStats, TraceRecorder, bulk_trace_meta
+from kaiten_cli.runtime.trace import (
+    ExecutionStats,
+    TraceRecorder,
+    bulk_trace_meta,
+    summarize_trace,
+)
 from kaiten_cli.update_check import maybe_offer_update
 
 
@@ -54,6 +60,7 @@ ARCHITECTURE_URL = f"{REPOSITORY_URL}/blob/master/ARCHITECTURE.md"
 AGENTS_URL = f"{REPOSITORY_URL}/blob/master/AGENTS.md"
 HEAVY_DATA_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-heavy-data/SKILL.md"
 METRICS_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-metrics/SKILL.md"
+MUTATIONS_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-mutations/SKILL.md"
 CLI_HELP = """Kaiten API CLI optimized for humans and agents.
 
 \b
@@ -65,18 +72,24 @@ Quick start:
   kaiten query cards --snapshot team-basic --view summary --fields id,title,state
   kaiten --json spaces list --compact --fields id,title
   kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active
+  kaiten --json --profile main --read-only profile probe
+  kaiten --json trace summarize --file ./kaiten-trace.jsonl
 
 \b
 Principles:
   - use --json for automation and LLM workflows
-  - cache mode defaults to auto: repeated safe GETs may use persistent disk cache
-  - prefer search-tools -> describe -> examples before heavy commands
+  - omit --cache-mode for normal workflows: auto reuses cacheable safe reads
+  - use refresh once at a freshness boundary, off for diagnostics/privacy/polling,
+    and readwrite only with an explicit fixed TTL
+  - run search-tools -> describe -> examples once per unfamiliar family, mutation,
+    or heavy command
   - for repeated analytics/report reads, prefer snapshot build -> query cards/query metrics
   - keep local queries summary-first; escalate to detail/evidence only after candidate reduction
-  - prefer bulk tools over per-entity loops
+  - use a bulk alternative for two or more IDs; never put refresh in an entity loop
   - use --compact and --fields to shrink payloads
   - live validation runs only when KAITEN_LIVE=1|true
-  - use --trace-file for long investigations and report runs
+  - use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests,
+    or an unavoidable loop
 
 \b
 More guided onboarding:
@@ -92,6 +105,7 @@ Documentation:
   Skills:
     heavy-data: {HEAVY_DATA_SKILL_URL}
     metrics: {METRICS_SKILL_URL}
+    mutations: {MUTATIONS_SKILL_URL}
 """
 
 
@@ -339,6 +353,14 @@ def _render_describe_text(description: dict[str, Any]) -> str:
             f"Cache: {description.get('cache_policy', '')} "
             f"({description.get('cache_guidance', {}).get('strategy', 'unknown')})"
         ),
+        (
+            "Cache modes: "
+            + ", ".join(description.get("cache_guidance", {}).get("available_modes", []))
+            + " | default="
+            + str(description.get("cache_guidance", {}).get("default_mode", "auto"))
+            + " | recommended="
+            + str(description.get("cache_guidance", {}).get("recommended_mode", "auto"))
+        ),
     ]
 
     response_policy = description.get("response_policy", {})
@@ -383,6 +405,8 @@ def _render_describe_text(description: dict[str, Any]) -> str:
     rendered_notes = [
         cache_guidance.get("guidance"),
         cache_guidance.get("refresh_hint"),
+        cache_guidance.get("off_hint"),
+        cache_guidance.get("readwrite_hint"),
         *notes,
     ]
     rendered_notes = [note for note in rendered_notes if note]
@@ -416,17 +440,22 @@ def _agent_help_payload() -> dict[str, Any]:
     return {
         "summary": "Kaiten API CLI optimized for humans and agents.",
         "llm_bootstrap": [
-            'Discover first: kaiten search-tools "wip cards"',
+            'Discover once per unfamiliar family: kaiten search-tools "wip cards"',
             "Inspect one tool: kaiten describe cards.list-all",
             "Check examples: kaiten examples cards.list-all",
             "For repeated analytics or report runs, build a local snapshot first.",
             "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates.",
             "Use --json for automation and LLM workflows.",
             "Read top-level JSON stats to understand API calls, wait time, cache hits, and grouped path families.",
-            "Default cache mode is auto: repeated safe reads and heavy analytics reuse persistent disk cache when the request shape is cacheable.",
-            "Prefer bulk tools over per-entity loops.",
+            "Omit --cache-mode for normal workflows: auto reuses cacheable safe reads and heavy analytics.",
+            "Use refresh once at a freshness boundary; never put refresh in an entity loop.",
+            "Use off only for cache diagnostics, privacy requirements, or high-frequency polling.",
+            "Use readwrite only with a meaningful --cache-ttl-seconds.",
+            "Use a bulk_alternative for two or more IDs.",
             "Shrink payloads with --compact and --fields.",
-            "Use --trace-file for long investigations.",
+            "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
+            "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>.",
+            "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill.",
         ],
         "quickstart": [
             'Discover commands: kaiten search-tools "wip cards"',
@@ -436,19 +465,26 @@ def _agent_help_payload() -> dict[str, Any]:
             "Query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
             "Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title",
             "Configure credentials: kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active",
+            "Probe authentication safely: kaiten --json --profile main --read-only profile probe",
+            "Summarize a trace locally: kaiten --json trace summarize --file <trace.jsonl>",
         ],
         "principles": [
             "Use --json for automation and LLM workflows.",
             "Read top-level JSON stats before repeating or widening expensive workflows.",
-            "Default cache mode is auto; use --cache-mode refresh for freshness-critical reads and --cache-mode off to bypass disk cache.",
-            "Prefer search-tools -> describe -> examples before heavy commands.",
-            "For repeated report or analytics workflows, snapshot once and query locally before touching the API again.",
-            "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get over per-entity loops.",
+            "Omit --cache-mode for normal workflows: auto is the recommended default.",
+            "Use refresh once before a freshness-critical result or use snapshot refresh; never put refresh in a loop.",
+            "Use off only for cache diagnostics, privacy requirements, or high-frequency polling.",
+            "Use readwrite only with a meaningful fixed --cache-ttl-seconds.",
+            "Run search-tools -> describe -> examples once per unfamiliar command family, mutation, or heavy command.",
+            "For a population used more than once, snapshot once and query locally before touching the API again.",
+            "For two or more IDs, use bulk_alternative when available instead of a per-entity loop.",
+            "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get.",
             "Keep query cards summary-first; use detail/evidence only after local candidate reduction.",
             "Live validation runs only when KAITEN_LIVE=1|true for the current process.",
             "Use --compact and --fields to reduce payload and token cost.",
-            "Use the default --cache-mode auto for most LLM/script workflows; use readwrite with --cache-ttl-seconds only when you need a fixed TTL.",
-            "Use --trace-file for long investigations when you need real HTTP cost visibility.",
+            "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
+            "Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>.",
+            "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.",
         ],
         "docs": {
             "repository": REPOSITORY_URL,
@@ -459,6 +495,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "skills": {
                 "heavy_data": HEAVY_DATA_SKILL_URL,
                 "metrics": METRICS_SKILL_URL,
+                "mutations": MUTATIONS_SKILL_URL,
             },
         },
     }
@@ -475,13 +512,18 @@ def _agent_help_text() -> str:
             "3. examples: kaiten examples cards.list-all",
             "4. use --json for automation and LLM workflows",
             "5. inspect JSON stats for API count, wait time, cache hits, and grouped path families",
-            "6. leave --cache-mode at auto unless you need refresh/off/fixed TTL",
-            "7. snapshot once for repeated analytics: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
-            "8. query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
-            "9. only escalate to --view detail or --view evidence after local narrowing",
-            "10. shrink payloads with --compact and --fields",
-            "11. live validation only runs when KAITEN_LIVE=1|true",
-            "12. use --trace-file for long investigations",
+            "6. omit --cache-mode for normal workflows: auto is the recommended default",
+            "7. use refresh once at a freshness boundary, off for diagnostics/privacy/polling, and readwrite only with --cache-ttl-seconds",
+            "8. use a bulk alternative for 2+ IDs; never put refresh in an entity loop",
+            "9. snapshot a population before its second use",
+            "10. snapshot once: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
+            "11. query locally: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
+            "12. only escalate to --view detail or --view evidence after local narrowing",
+            "13. shrink payloads with --compact and --fields",
+            "14. trace wrappers with 3+ CLI commands, >10 expected HTTP requests, or a loop",
+            "15. summarize: kaiten --json trace summarize --file <trace.jsonl>",
+            "16. before mutations: kaiten --json --profile <name> --read-only profile probe",
+            "17. live validation only runs when KAITEN_LIVE=1|true",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -501,6 +543,7 @@ def _agent_help_text() -> str:
             f"  agents: {AGENTS_URL}",
             f"  skills heavy-data: {HEAVY_DATA_SKILL_URL}",
             f"  skills metrics: {METRICS_SKILL_URL}",
+            f"  skills mutations: {MUTATIONS_SKILL_URL}",
         ]
     )
 
@@ -869,6 +912,39 @@ def agent_help_command(ctx: click.Context) -> None:
 
 
 @cli.group(
+    "trace",
+    no_args_is_help=True,
+    help="Inspect compact local execution traces without calling Kaiten.",
+    short_help="Inspect local execution traces.",
+    context_settings=CLICK_CONTEXT_SETTINGS,
+)
+def trace_group() -> None:
+    """Inspect local traces."""
+
+
+@trace_group.command(
+    "summarize",
+    help="Stream a JSONL trace and report aggregate cost and workflow recommendations.",
+    short_help="Summarize a local JSONL trace.",
+)
+@click.option(
+    "--file",
+    "trace_path",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=str),
+    help="Trace JSONL file created with --trace-file.",
+)
+@click.pass_context
+def trace_summarize_command(ctx: click.Context, trace_path: str) -> None:
+    try:
+        _echo_result(ctx, "trace.summarize", summarize_trace(trace_path))
+    except CliError as error:
+        _fail(ctx, "trace.summarize", error)
+    except Exception as exc:  # pragma: no cover - safety net
+        _emit_internal(ctx, "trace.summarize", exc)
+
+
+@cli.group(
     "completion",
     no_args_is_help=True,
     help="Install, inspect, generate or remove shell completion for Kaiten CLI.",
@@ -1147,6 +1223,60 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
 
 
 @profile_group.command(
+    "probe",
+    help=(
+        "Verify the selected profile with a fresh read-only GET /users/current. "
+        "This checks authentication, not arbitrary write permissions."
+    ),
+    short_help="Probe profile authentication safely.",
+)
+@click.pass_context
+def profile_probe_command(ctx: click.Context) -> None:
+    options = _ctx_options(ctx)
+    try:
+        def probe():
+            resolved = resolve_profile(
+                options.profile_name,
+                cache_mode_override=options.cache_mode,
+                cache_ttl_seconds_override=options.cache_ttl_seconds,
+            )
+            tool = resolve_tool("users.current")
+            _, stats = execute_tool_sync_with_diagnostics(
+                tool,
+                {},
+                profile_name=options.profile_name,
+                cache_mode="off",
+                reporter=_make_debug_reporter(ctx),
+                read_only=True,
+            )
+            return (
+                {
+                    "profile": {
+                        "name": resolved.name,
+                        "source": resolved.source,
+                        "domain_configured": bool(resolved.domain),
+                        "cache_mode": resolved.cache_mode,
+                        "cache_ttl_seconds": resolved.cache_ttl_seconds,
+                    },
+                    "authentication": {
+                        "ok": True,
+                        "probe_cache_mode": "off",
+                    },
+                    "capability_scope": "authentication_only",
+                    "write_permissions": "not_checked",
+                },
+                stats,
+            )
+
+        result = _run_traced(ctx, "profile.probe", "direct_http", probe)
+        _echo_result(ctx, "profile.probe", result)
+    except CliError as error:
+        _fail(ctx, "profile.probe", error)
+    except Exception as exc:  # pragma: no cover
+        _emit_internal(ctx, "profile.probe", exc)
+
+
+@profile_group.command(
     "remove",
     help="Remove a saved profile by name.",
     short_help="Remove a profile.",
@@ -1169,7 +1299,123 @@ def profile_remove_command(ctx: click.Context, name: str) -> None:
 for tool in iter_tools():
     group = _ensure_group(cli, tool.namespace_segments)
     group.add_command(_make_command(tool))
+    cli.add_command(_make_command(tool, hidden=True), name=tool.canonical_name)
     cli.add_command(_make_command(tool, hidden=True), name=tool.mcp_alias)
+
+
+_ROOT_OPTION_USAGE = {
+    "--json": "--json",
+    "--profile": "--profile <name>",
+    "--from-file": "--from-file <path>",
+    "--stdin-json": "--stdin-json",
+    "--verbose": "--verbose",
+    "--cache-mode": "--cache-mode <auto|off|readwrite|refresh>",
+    "--cache-ttl-seconds": "--cache-ttl-seconds <seconds>",
+    "--trace-file": "--trace-file <path>",
+    "--read-only": "--read-only",
+    "--no-update-check": "--no-update-check",
+    "--no-color": "--no-color",
+}
+_SHAPING_OPTIONS = {"--compact", "--fields"}
+
+
+def _usage_error_command(error: click.UsageError) -> tuple[str | None, ToolSpec | None]:
+    context = error.ctx
+    if context is None:
+        return None, None
+    path = context.command_path.split()
+    if path and path[0] == "kaiten":
+        path = path[1:]
+    if not path:
+        return None, None
+    canonical_name = path[0] if len(path) == 1 and "." in path[0] else ".".join(path)
+    try:
+        return canonical_name, next(
+            tool for tool in iter_tools() if tool.canonical_name == canonical_name
+        )
+    except StopIteration:
+        return canonical_name, None
+
+
+def _supported_context_options(error: click.UsageError) -> list[str]:
+    context = error.ctx
+    if context is None:
+        return []
+    return sorted(
+        {
+            option
+            for parameter in context.command.params
+            if isinstance(parameter, click.Option)
+            for option in parameter.opts
+            if option.startswith("--")
+        }
+    )
+
+
+def _suggested_root_options(
+    *, offending_option: str, supported_options: list[str]
+) -> list[str]:
+    suggested: list[str] = []
+    seen: set[str] = set()
+    for token in _CURRENT_ARGV or []:
+        option = token.split("=", 1)[0]
+        if option not in _ROOT_OPTION_USAGE or option in seen:
+            continue
+        if option in supported_options and option != offending_option:
+            continue
+        seen.add(option)
+        suggested.append(_ROOT_OPTION_USAGE[option])
+    if not suggested:
+        suggested.append(_ROOT_OPTION_USAGE[offending_option])
+    return suggested
+
+
+def _validation_details(error: click.UsageError) -> dict[str, Any] | None:
+    if not isinstance(error, click.NoSuchOption):
+        return None
+    option = error.option_name
+    canonical_name, tool = _usage_error_command(error)
+    supported_options = _supported_context_options(error)
+    command = (
+        " ".join(tool.command_segments)
+        if tool is not None
+        else (canonical_name or "<command>").replace(".", " ")
+    )
+    if option in _ROOT_OPTION_USAGE:
+        root_options = " ".join(
+            _suggested_root_options(
+                offending_option=option,
+                supported_options=supported_options,
+            )
+        )
+        details: dict[str, Any] = {
+            "code": "global_option_position",
+            "option": option,
+            "canonical_name": canonical_name,
+            "suggested_usage": (
+                f"kaiten {root_options} {command} [command options]"
+            ),
+            "supported_options": supported_options,
+        }
+    else:
+        details = {
+            "code": (
+                "unsupported_shaping_option"
+                if option in _SHAPING_OPTIONS
+                else "unsupported_tool_option"
+            ),
+            "option": option,
+            "canonical_name": canonical_name,
+            "suggested_usage": f"kaiten {command} [supported options]",
+            "supported_options": supported_options,
+        }
+    if tool is not None:
+        details["next"] = f"kaiten describe {tool.canonical_name}"
+        if tool.bulk_alternative:
+            details["bulk_alternative"] = tool.bulk_alternative
+    elif canonical_name:
+        details["next"] = f"kaiten {command} --help"
+    return details
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1185,7 +1431,10 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(error.format_message() + "\n")
         return 0
     except click.UsageError as error:
-        cli_error = ValidationError(error.format_message())
+        cli_error = ValidationError(
+            error.format_message(),
+            details=_validation_details(error),
+        )
         stream = sys.stdout if json_mode else sys.stderr
         stream.write(render_error(None, cli_error, json_mode) + "\n")
         return cli_error.exit_code
