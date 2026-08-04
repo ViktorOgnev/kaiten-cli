@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import payload_body_request, select_value_soft_delete_request
+from kaiten_cli.runtime.behaviors import payload_body_request
 
 
 CARD_CATALOG_PROPERTY_USAGE_NOTES = (
@@ -401,7 +401,7 @@ TOOLS = (
     make_tool(
         canonical_name="custom-properties.select-values.delete",
         mcp_alias="kaiten_delete_select_value",
-        description="Delete (soft) a select value by marking it as deleted.",
+        description="Delete (soft) a select value through the official DELETE route.",
         input_schema={
             "type": "object",
             "properties": {
@@ -411,11 +411,10 @@ TOOLS = (
             "required": ["property_id", "value_id"],
         },
         operation=OperationSpec(
-            method="PATCH",
+            method="DELETE",
             path_template="/company/custom-properties/{property_id}/select-values/{value_id}",
             path_fields=("property_id", "value_id"),
         ),
-        runtime_behavior=RuntimeBehavior(request_shaper=select_value_soft_delete_request),
         examples=(
             ExampleSpec(
                 command="kaiten --json custom-properties select-values delete --property-id 3 --value-id 10",

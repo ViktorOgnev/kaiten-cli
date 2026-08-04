@@ -48,6 +48,14 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Custom properties, select values, catalog-values and collective values.",
     ),
     ModuleDocSpec("documents", "Документы", "Documents and document groups."),
+    ModuleDocSpec(
+        "dashboards",
+        "Дашборды",
+        "Experimental dashboards, collaborators, widgets and compute jobs.",
+    ),
+    ModuleDocSpec(
+        "iterations", "Итерации", "Beta iterations, iteration cards and card history."
+    ),
     ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
     ModuleDocSpec(
         "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."

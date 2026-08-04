@@ -7,6 +7,7 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli
+from kaiten_cli.errors import ValidationError
 from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.registry import resolve_tool
@@ -27,6 +28,10 @@ def test_help_shows_roles_groups_and_subscribers(runner):
 def test_resolve_roles_groups_and_subscribers_aliases():
     assert resolve_tool("kaiten_list_space_users").canonical_name == "space-users.list"
     assert resolve_tool("kaiten_list_company_users").canonical_name == "company-users.list"
+    assert (
+        resolve_tool("kaiten_list_all_company_users").canonical_name
+        == "company-users.list-all"
+    )
     assert resolve_tool("kaiten_create_company_group").canonical_name == "company-groups.create"
     assert resolve_tool("kaiten_get_role").canonical_name == "roles.get"
     assert resolve_tool("kaiten_add_column_subscriber").canonical_name == "column-subscribers.add"
@@ -96,6 +101,73 @@ async def test_execute_list_company_groups_injects_default_limit(monkeypatch):
 
     assert route.called
     assert result == [{"uid": "grp-1", "name": "Engineering"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_company_users_list_all_paginates_to_short_page_and_shapes(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/users").mock(
+        side_effect=[
+            Response(
+                200,
+                json=[
+                    {"id": 1, "full_name": "One", "avatar": "data:image/png;base64,a"},
+                    {"id": 2, "full_name": "Two", "avatar": "data:image/png;base64,b"},
+                ],
+            ),
+            Response(
+                200,
+                json=[{"id": 3, "full_name": "Three", "avatar": "data:image/png;base64,c"}],
+            ),
+        ]
+    )
+    tool = resolve_tool("company-users.list-all")
+    payload = merge_inputs(
+        tool,
+        {
+            "page_size": 2,
+            "max_pages": 3,
+            "compact": True,
+            "fields": "id,full_name",
+        },
+    )
+
+    result = await execute_tool(tool, payload)
+
+    assert result == [
+        {"id": 1, "full_name": "One"},
+        {"id": 2, "full_name": "Two"},
+        {"id": 3, "full_name": "Three"},
+    ]
+    assert route.call_count == 2
+    assert dict(route.calls[0].request.url.params) == {
+        "for_members_section": "true",
+        "limit": "2",
+        "offset": "0",
+    }
+    assert dict(route.calls[1].request.url.params)["offset"] == "2"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_company_users_list_all_fails_instead_of_truncating_on_cap(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/users").mock(
+        side_effect=[
+            Response(200, json=[{"id": 1}, {"id": 2}]),
+            Response(200, json=[{"id": 3}, {"id": 4}]),
+        ]
+    )
+    tool = resolve_tool("company-users.list-all")
+    payload = merge_inputs(tool, {"page_size": 2, "max_pages": 2})
+
+    with pytest.raises(ValidationError, match="silently truncated"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 2
 
 
 @pytest.mark.asyncio

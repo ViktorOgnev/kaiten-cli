@@ -28,8 +28,10 @@ from kaiten_cli.registry.comments import TOOLS as COMMENT_TOOLS
 from kaiten_cli.registry.custom_directories import TOOLS as CUSTOM_DIRECTORY_TOOLS
 from kaiten_cli.registry.custom_properties import TOOLS as CUSTOM_PROPERTY_TOOLS
 from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
+from kaiten_cli.registry.dashboards import TOOLS as DASHBOARD_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
 from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
+from kaiten_cli.registry.iterations import TOOLS as ITERATION_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
 from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
@@ -63,8 +65,10 @@ REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("custom_directories", CUSTOM_DIRECTORY_TOOLS),
     ("custom_properties", CUSTOM_PROPERTY_TOOLS),
     ("documents", DOCUMENT_TOOLS),
+    ("dashboards", DASHBOARD_TOOLS),
     ("external_links", EXTERNAL_LINK_TOOLS),
     ("files", FILE_TOOLS),
+    ("iterations", ITERATION_TOOLS),
     ("tags", TAG_TOOLS),
     ("members", MEMBER_TOOLS),
     ("projects", PROJECT_TOOLS),

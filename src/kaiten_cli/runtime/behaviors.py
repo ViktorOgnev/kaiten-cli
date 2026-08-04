@@ -100,10 +100,17 @@ def prevent_redirect_request(
     return path, shaped_query, body
 
 
-def select_value_soft_delete_request(
+def checklist_item_compat_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:
-    return path, query, {"deleted": True}
+    card_id = payload.get("card_id")
+    if card_id is None:
+        return path, query, body
+    checklist_id = payload["checklist_id"]
+    compatibility_path = f"/cards/{card_id}/checklists/{checklist_id}/items"
+    if "item_id" in payload:
+        compatibility_path += f"/{payload['item_id']}"
+    return compatibility_path, query, body
 
 
 def column_subscriber_default_type_request(

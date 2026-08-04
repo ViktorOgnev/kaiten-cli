@@ -179,7 +179,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.27"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.28"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -257,6 +257,41 @@ python -m kaiten_cli --help
 - автоматическая проверка набора псевдонимов по сохранённому эталону;
 - полная проверка на реальном API с явным включением и обязательной очисткой тестовых данных.
 
+## Дашборды, итерации и private files
+
+Дашборды доступны как experimental-контракт: старые инсталляции Kaiten могут
+вернуть `404` или `405`. CLI поддерживает CRUD, копирование, роли
+`viewer`/`editor`, виджеты и compute jobs. Список виджетов читается через
+`dashboards get --include widgets`, а polling compute job всегда обходит кэш.
+
+```bash
+kaiten --json dashboards list --fields id,title,is_public,role --compact
+kaiten --json dashboards get --dashboard-id <dashboard_uuid> --include widgets
+kaiten --json dashboard-widgets list --dashboard-id <dashboard_uuid> --fields id,title,source,visualization
+kaiten --json dashboard-compute-jobs get --dashboard-id <dashboard_uuid> --job-id <job_id>
+```
+
+Iterations API и private files помечены как beta. Итерации требуют поддержки в
+тарифе. Private files используют UUID сущностей и multipart `POST`; классическая
+команда `files upload` по-прежнему использует прежний публичный `PUT`-контракт.
+
+```bash
+kaiten --json iterations list --space-uid <space_uuid> --status planned,active --with-data cards --compact
+kaiten --json iteration-cards list --space-uid <space_uuid> --iteration-id <iteration_uuid>
+kaiten --json card-iterations-history list --card-uid <card_uuid>
+kaiten --json private-card-files upload --card-uid <card_uuid> --file ./report.pdf
+kaiten --json files download --entity-type card --card-uid <card_uuid> --file-id <private_file_uuid>
+```
+
+Для полного экспорта пользователей компании используется bounded pagination:
+
+```bash
+kaiten --json company-users list-all --page-size 100 --max-pages 100 --fields id,uid,email,full_name --compact
+```
+
+Если последняя разрешённая страница заполнена полностью, команда завершится
+ошибкой вместо возврата незаметно обрезанного списка.
+
 ## Экспорт в Markdown и работа с файлами
 
 Экспорт в Markdown не требует отдельного метода API или отдельной команды. По умолчанию `cards get` и `documents get` возвращают JSON. Флаг `--markdown` преобразует тот же ответ в Markdown и сохраняет его в локальный файл `.md`.
@@ -320,7 +355,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **356** основных инструментов. Количество модулей реестра: **31**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **389** основных инструментов. Количество модулей реестра: **33**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -329,11 +364,11 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Участники и пользователи | `members` | 7 | [Раздел](COMMAND_REFERENCE.md#module-members) |
 | Логи времени | `time_logs` | 6 | [Раздел](COMMAND_REFERENCE.md#module-time-logs) |
 | Теги | `tags` | 7 | [Раздел](COMMAND_REFERENCE.md#module-tags) |
-| Чеклисты | `checklists` | 16 | [Раздел](COMMAND_REFERENCE.md#module-checklists) |
+| Чеклисты | `checklists` | 17 | [Раздел](COMMAND_REFERENCE.md#module-checklists) |
 | Блокировки | `blockers` | 12 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
-| Файлы карточек | `files` | 6 | [Раздел](COMMAND_REFERENCE.md#module-files) |
+| Файлы карточек | `files` | 12 | [Раздел](COMMAND_REFERENCE.md#module-files) |
 | Подписчики | `subscribers` | 6 | [Раздел](COMMAND_REFERENCE.md#module-subscribers) |
 | Пространства | `spaces` | 6 | [Раздел](COMMAND_REFERENCE.md#module-spaces) |
 | Доски | `boards` | 6 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
@@ -343,10 +378,12 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Каталоги | `custom_directories` | 16 | [Раздел](COMMAND_REFERENCE.md#module-custom-directories) |
 | Пользовательские свойства | `custom_properties` | 25 | [Раздел](COMMAND_REFERENCE.md#module-custom-properties) |
 | Документы | `documents` | 13 | [Раздел](COMMAND_REFERENCE.md#module-documents) |
+| Дашборды | `dashboards` | 16 | [Раздел](COMMAND_REFERENCE.md#module-dashboards) |
+| Итерации | `iterations` | 9 | [Раздел](COMMAND_REFERENCE.md#module-iterations) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и рабочие процессы | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
-| Роли и группы | `roles_and_groups` | 30 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
+| Роли и группы | `roles_and_groups` | 31 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Раздел](COMMAND_REFERENCE.md#module-scim) |
 | Аудит и аналитика | `audit_and_analytics` | 12 | [Раздел](COMMAND_REFERENCE.md#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Раздел](COMMAND_REFERENCE.md#module-service-desk) |
@@ -355,7 +392,7 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **31** | **356** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **33** | **389** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

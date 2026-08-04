@@ -493,3 +493,31 @@ async def execute_file_upload(
             )
     except OSError as exc:
         raise ValidationError(f"Cannot read upload file {file_path}: {exc}") from exc
+
+
+async def execute_private_file_upload(
+    client: Any,
+    tool: ToolSpec,
+    payload: dict[str, Any],
+    path: str,
+    query: dict[str, Any] | None,
+    body: dict[str, Any] | None,
+    timeout: float,
+    reporter: DebugReporter | None,
+) -> dict[str, Any]:
+    del tool, query, body
+    if client is None:
+        raise ConfigError("This command requires a Kaiten profile.")
+
+    file_path = _upload_file_path(payload)
+    content_type = _upload_content_type(file_path)
+    _emit_debug(reporter, f"upload: sending {file_path} to private multipart endpoint")
+    try:
+        with file_path.open("rb") as file_obj:
+            return await client.post(
+                path,
+                files={"file": (file_path.name, file_obj, content_type)},
+                timeout=timeout,
+            )
+    except OSError as exc:
+        raise ValidationError(f"Cannot read upload file {file_path}: {exc}") from exc
