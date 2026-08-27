@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import board_delete_force_request, board_place_existing_request
+from kaiten_cli.runtime.behaviors import (
+    board_delete_force_request,
+    board_get_scoped_request,
+    board_place_existing_request,
+)
 
 
 TOOLS = (
@@ -48,17 +52,38 @@ TOOLS = (
     make_tool(
         canonical_name="boards.get",
         mcp_alias="kaiten_get_board",
-        description="Get a Kaiten board by ID. Returns board with columns and lanes.",
+        description=(
+            "Get a Kaiten board by ID, optionally through its space-scoped Public API route. "
+            "Returns board placement data, columns and lanes."
+        ),
         input_schema={
             "type": "object",
-            "properties": {"board_id": {"type": "integer", "description": "Board ID"}},
+            "properties": {
+                "board_id": {"type": "integer", "description": "Board ID"},
+                "space_id": {
+                    "type": "integer",
+                    "description": (
+                        "Optional space ID. When provided, use the documented "
+                        "/spaces/{space_id}/boards/{board_id} route."
+                    ),
+                },
+            },
             "required": ["board_id"],
         },
         operation=OperationSpec(
             method="GET", path_template="/boards/{board_id}", path_fields=("board_id",)
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=board_get_scoped_request),
         examples=(
             ExampleSpec(command="kaiten boards get --board-id 10", description="Get a board."),
+            ExampleSpec(
+                command="kaiten --json boards get --space-id 1 --board-id 10",
+                description="Get a board through the space-scoped Public API route.",
+            ),
+        ),
+        usage_notes=(
+            "Without --space-id the command preserves the existing GET /boards/{board_id} behavior.",
+            "With --space-id it uses GET /spaces/{space_id}/boards/{board_id} from the current Public API documentation.",
         ),
     ),
     make_tool(

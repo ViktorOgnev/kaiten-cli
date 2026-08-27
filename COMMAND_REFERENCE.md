@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **411** canonical commands across **35** registry modules.
+`kaiten-cli` currently exposes **417** canonical commands across **35** registry modules.
 
 ## Conventions
 
@@ -30,7 +30,7 @@
 | Блокировки | `blockers` | 12 | [Open](#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Open](#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Open](#module-external-links) |
-| Файлы карточек | `files` | 12 | [Open](#module-files) |
+| Файлы карточек | `files` | 18 | [Open](#module-files) |
 | Подписчики | `subscribers` | 6 | [Open](#module-subscribers) |
 | Пространства | `spaces` | 6 | [Open](#module-spaces) |
 | Доски | `boards` | 6 | [Open](#module-boards) |
@@ -3710,9 +3710,9 @@ external-links
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
 <a id="module-files"></a>
-## Файлы карточек (`files`) — 12 commands
+## Файлы карточек (`files`) — 18 commands
 
-Файлы и вложения карточек.
+Файлы, вложения и beta Restricted Access Files карточек.
 
 **Namespace tree**
 
@@ -3726,12 +3726,18 @@ files
   upload
 private-card-files
   delete
+  get
+  update
   upload
 private-comment-files
   delete
+  get
+  update
   upload
 private-custom-property-files
   delete
+  get
+  update
   upload
 ```
 
@@ -3860,9 +3866,9 @@ private-custom-property-files
 
 - Download a document attachment into the current directory.: `kaiten --json files download --entity-type document --document-uid <document_uid> --file-id <file_uid>`
 - Download a card attachment into a directory.: `kaiten --json files download --entity-type card --card-id 123 --file-id <file_uid> --output ./downloads/`
-- Download a beta private card file with streaming and resume.: `kaiten --json files download --entity-type card --card-uid <card_uid> --file-id <private_file_uid> --output ./downloads/`
-- Download a beta private comment file.: `kaiten --json files download --entity-type comment --card-uid <card_uid> --comment-uid <comment_uid> --file-id <private_file_uid>`
-- Download a beta private custom-property file.: `kaiten --json files download --entity-type custom_property --card-uid <card_uid> --custom-property-uid <property_uid> --file-id <private_file_uid>`
+- Download a Restricted Access card file with streaming and resume.: `kaiten --json files download --entity-type card --card-uid <card_uid> --file-id <private_file_uid> --output ./downloads/`
+- Download a Restricted Access comment file.: `kaiten --json files download --entity-type comment --card-uid <card_uid> --comment-uid <comment_uid> --file-id <private_file_uid>`
+- Download a Restricted Access custom-property file.: `kaiten --json files download --entity-type custom_property --card-uid <card_uid> --custom-property-uid <property_uid> --file-id <private_file_uid>`
 - Download from a Kaiten report/browser file URL.: `kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./file.bin --overwrite`
 
 **Notes**
@@ -3876,7 +3882,8 @@ private-custom-property-files
 - Downloads stream to <target>.part first and are renamed into place only after completion.
 - Existing .part files are resumed with HTTP Range by default, similar to wget --continue.
 - For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.
-- Private card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.
+- Restricted Access card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.
+- The signed storage URL is neither returned nor sent the Kaiten bearer token.
 
 ### `files.list`
 
@@ -3999,7 +4006,8 @@ private-custom-property-files
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Uploads the local file as multipart/form-data field `file`.
 - The uploaded filename is the local file basename.
-- This command uses the public card file endpoint; the beta private file endpoint is not used.
+- This command uses the legacy card-file upload contract, not Restricted Access Files.
+- When the company forbids legacy Public API uploads, Kaiten returns HTTP 403 with code PUBLIC_API_LEGACY_FILE_UPLOAD_DISABLED; use private-card-files upload with a card UUID.
 
 ### `private-card-files.delete`
 
@@ -4007,7 +4015,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-card-files delete` |
 | MCP alias | `kaiten_delete_private_card_file` |
-| Description | Delete a beta private card file. |
+| Description | Delete a beta Restricted Access card file. |
 | Method | `DELETE` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4025,11 +4033,11 @@ private-custom-property-files
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
 | `card_uid` | `string` | yes | — | Card UUID. |
-| `file_id` | `string` | yes | — | Private file UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
 
 **Examples**
 
-- Delete a private card file.: `kaiten --json private-card-files delete --card-uid <card_uid> --file-id <file_uid>`
+- Delete a Restricted Access card file.: `kaiten --json private-card-files delete --card-uid <card_uid> --file-id <file_uid>`
 
 **Notes**
 
@@ -4038,7 +4046,88 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta private-files endpoint.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+
+### `private-card-files.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-card-files get` |
+| MCP alias | `kaiten_get_private_card_file` |
+| Description | Get Restricted Access card-file metadata and a short-lived signed URL. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+
+**Examples**
+
+- Read Restricted Access card-file metadata.: `kaiten --json private-card-files get --card-uid <card_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+- The metadata response contains a short-lived signed URL. Do not store or cache it; request fresh metadata immediately before downloading.
+
+### `private-card-files.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-card-files update` |
+| MCP alias | `kaiten_update_private_card_file` |
+| Description | Update a Restricted Access card file name or card-cover flag. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | New file name. |
+| `card_cover` | `boolean` | no | — | Use this image as the card cover. |
+
+**Examples**
+
+- Rename a Restricted Access card file.: `kaiten --json private-card-files update --card-uid <card_uid> --file-id <file_uid> --name "report-final.pdf"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
 
 ### `private-card-files.upload`
 
@@ -4046,7 +4135,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-card-files upload` |
 | MCP alias | `kaiten_upload_private_card_file` |
-| Description | Upload a beta private file to a card using multipart POST. |
+| Description | Upload a beta Restricted Access file to a card using multipart POST. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4068,7 +4157,7 @@ private-custom-property-files
 
 **Examples**
 
-- Upload a private card file.: `kaiten --json private-card-files upload --card-uid <card_uid> --file ./report.pdf`
+- Upload a Restricted Access card file.: `kaiten --json private-card-files upload --card-uid <card_uid> --file ./report.pdf`
 
 **Notes**
 
@@ -4077,7 +4166,8 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta endpoint; availability depends on private-files feature flags in the Kaiten installation.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+- Beta endpoint; availability depends on Restricted Access Files settings in the Kaiten installation.
 - Uses multipart/form-data field `file` with POST; classic files.upload remains PUT.
 
 ### `private-comment-files.delete`
@@ -4086,7 +4176,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-comment-files delete` |
 | MCP alias | `kaiten_delete_private_comment_file` |
-| Description | Delete a beta private comment file. |
+| Description | Delete a beta Restricted Access comment file. |
 | Method | `DELETE` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4105,11 +4195,11 @@ private-custom-property-files
 |---|---|---|---|---|
 | `card_uid` | `string` | yes | — | Card UUID. |
 | `comment_uid` | `string` | yes | — | Comment UUID. |
-| `file_id` | `string` | yes | — | Private file UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
 
 **Examples**
 
-- Delete a private comment file.: `kaiten --json private-comment-files delete --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>`
+- Delete a Restricted Access comment file.: `kaiten --json private-comment-files delete --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>`
 
 **Notes**
 
@@ -4118,7 +4208,90 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta private-files endpoint.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+
+### `private-comment-files.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-comment-files get` |
+| MCP alias | `kaiten_get_private_comment_file` |
+| Description | Get Restricted Access comment-file metadata and a short-lived signed URL. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/comments/{comment_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | Comment UUID, or `new` before the comment is created. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+
+**Examples**
+
+- Read Restricted Access comment-file metadata.: `kaiten --json private-comment-files get --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+- The metadata response contains a short-lived signed URL. Do not store or cache it; request fresh metadata immediately before downloading.
+
+### `private-comment-files.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-comment-files update` |
+| MCP alias | `kaiten_update_private_comment_file` |
+| Description | Update a Restricted Access comment file name or card-cover flag. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/comments/{comment_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | Comment UUID, or `new` before the comment is created. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | New file name. |
+| `card_cover` | `boolean` | no | — | Use this image as the card cover; requires card update permission. |
+
+**Examples**
+
+- Rename a Restricted Access comment file.: `kaiten --json private-comment-files update --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid> --name "evidence-final.png"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
 
 ### `private-comment-files.upload`
 
@@ -4126,7 +4299,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-comment-files upload` |
 | MCP alias | `kaiten_upload_private_comment_file` |
-| Description | Upload a beta private file to a card comment using multipart POST. |
+| Description | Upload a beta Restricted Access file to a card comment using multipart POST. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4149,7 +4322,7 @@ private-custom-property-files
 
 **Examples**
 
-- Upload a private comment file.: `kaiten --json private-comment-files upload --card-uid <card_uid> --comment-uid <comment_uid> --file ./evidence.png`
+- Upload a Restricted Access comment file.: `kaiten --json private-comment-files upload --card-uid <card_uid> --comment-uid <comment_uid> --file ./evidence.png`
 
 **Notes**
 
@@ -4158,7 +4331,7 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta private-files endpoint.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
 
 ### `private-custom-property-files.delete`
 
@@ -4166,7 +4339,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-custom-property-files delete` |
 | MCP alias | `kaiten_delete_private_custom_property_file` |
-| Description | Delete a beta private custom-property file. |
+| Description | Delete a beta Restricted Access custom-property file. |
 | Method | `DELETE` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4185,11 +4358,11 @@ private-custom-property-files
 |---|---|---|---|---|
 | `card_uid` | `string` | yes | — | Card UUID. |
 | `property_uid` | `string` | yes | — | Custom property UUID. |
-| `file_id` | `string` | yes | — | Private file UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
 
 **Examples**
 
-- Delete a private custom-property file.: `kaiten --json private-custom-property-files delete --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>`
+- Delete a Restricted Access custom-property file.: `kaiten --json private-custom-property-files delete --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>`
 
 **Notes**
 
@@ -4198,7 +4371,90 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta private-files endpoint.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+
+### `private-custom-property-files.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-custom-property-files get` |
+| MCP alias | `kaiten_get_private_custom_property_file` |
+| Description | Get Restricted Access custom-property file metadata and a short-lived signed URL. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `property_uid` | `string` | yes | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+
+**Examples**
+
+- Read Restricted Access custom-property file metadata.: `kaiten --json private-custom-property-files get --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
+- The metadata response contains a short-lived signed URL. Do not store or cache it; request fresh metadata immediately before downloading.
+
+### `private-custom-property-files.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten private-custom-property-files update` |
+| MCP alias | `kaiten_update_private_custom_property_file` |
+| Description | Update a Restricted Access custom-property file name or card-cover flag. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | Card UUID. |
+| `property_uid` | `string` | yes | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | New file name. |
+| `card_cover` | `boolean` | no | — | Use this image as the card cover. |
+
+**Examples**
+
+- Rename a Restricted Access custom-property file.: `kaiten --json private-custom-property-files update --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid> --name "contract-final.pdf"`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
 
 ### `private-custom-property-files.upload`
 
@@ -4206,7 +4462,7 @@ private-custom-property-files
 |---|---|
 | CLI command | `kaiten private-custom-property-files upload` |
 | MCP alias | `kaiten_upload_private_custom_property_file` |
-| Description | Upload a beta private file to a card custom property using multipart POST. |
+| Description | Upload a beta Restricted Access file to a card custom property using multipart POST. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -4229,7 +4485,7 @@ private-custom-property-files
 
 **Examples**
 
-- Upload a private custom-property file.: `kaiten --json private-custom-property-files upload --card-uid <card_uid> --property-uid <property_uid> --file ./contract.pdf`
+- Upload a Restricted Access custom-property file.: `kaiten --json private-custom-property-files upload --card-uid <card_uid> --property-uid <property_uid> --file ./contract.pdf`
 
 **Notes**
 
@@ -4238,7 +4494,7 @@ private-custom-property-files
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Beta private-files endpoint.
+- Kaiten documents this beta family as Restricted Access Files; the historical `private-*` command namespace is preserved for compatibility.
 
 <a id="module-subscribers"></a>
 ## Подписчики (`subscribers`) — 6 commands
@@ -4854,7 +5110,7 @@ boards
 |---|---|
 | CLI command | `kaiten boards get` |
 | MCP alias | `kaiten_get_board` |
-| Description | Get a Kaiten board by ID. Returns board with columns and lanes. |
+| Description | Get a Kaiten board by ID, optionally through its space-scoped Public API route. Returns board placement data, columns and lanes. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -4872,10 +5128,12 @@ boards
 | Argument | Type | Required | Enum | Description |
 |---|---|---|---|---|
 | `board_id` | `integer` | yes | — | Board ID |
+| `space_id` | `integer` | no | — | Optional space ID. When provided, use the documented /spaces/{space_id}/boards/{board_id} route. |
 
 **Examples**
 
 - Get a board.: `kaiten boards get --board-id 10`
+- Get a board through the space-scoped Public API route.: `kaiten --json boards get --space-id 1 --board-id 10`
 
 **Notes**
 
@@ -4884,6 +5142,8 @@ boards
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Without --space-id the command preserves the existing GET /boards/{board_id} behavior.
+- With --space-id it uses GET /spaces/{space_id}/boards/{board_id} from the current Public API documentation.
 
 ### `boards.list`
 

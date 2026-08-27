@@ -146,6 +146,15 @@ def board_delete_force_request(
     return path, shaped_query, {"force": payload["force"]}
 
 
+def board_get_scoped_request(
+    tool, payload: dict[str, Any], path: str, query: Query, body: Body
+) -> tuple[str, Query, Body]:
+    space_id = payload.get("space_id")
+    if space_id is None:
+        return path, query, body
+    return f"/spaces/{space_id}/boards/{payload['board_id']}", query, body
+
+
 def board_place_existing_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:

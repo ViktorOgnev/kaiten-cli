@@ -5,6 +5,7 @@ import respx
 from httpx import Response
 
 from kaiten_cli.errors import MutationBlockedError
+from kaiten_cli.models import CACHE_POLICY_NONE
 from kaiten_cli.registry import resolve_tool
 from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
@@ -92,6 +93,97 @@ def test_private_delete_routes(name, payload, path):
     ("name", "payload", "path"),
     [
         (
+            "private-card-files.get",
+            {"card_uid": "card-1", "file_id": "file-1"},
+            "/cards/card-1/files/file-1",
+        ),
+        (
+            "private-comment-files.get",
+            {"card_uid": "card-1", "comment_uid": "new", "file_id": "file-1"},
+            "/cards/card-1/comments/new/files/file-1",
+        ),
+        (
+            "private-custom-property-files.get",
+            {"card_uid": "card-1", "property_uid": "property-1", "file_id": "file-1"},
+            "/cards/card-1/custom-properties/property-1/files/file-1",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+@respx.mock
+async def test_restricted_access_metadata_gets_are_uncached_read_only_reads(
+    monkeypatch, name, payload, path
+):
+    _env(monkeypatch)
+    signed_url = "https://storage.example.test/signed-file"
+    route = respx.get(f"https://sandbox.kaiten.ru/api/latest{path}").mock(
+        return_value=Response(200, json={"id": "file-1", "url": signed_url})
+    )
+    tool = resolve_tool(name)
+
+    result = await execute_tool(tool, merge_inputs(tool, payload), read_only=True)
+
+    assert route.called
+    assert tool.operation.method == "GET"
+    assert tool.cache_policy == CACHE_POLICY_NONE
+    assert tool.read_only_allowed is True
+    assert result == {"id": "file-1", "url": signed_url}
+
+
+@pytest.mark.parametrize(
+    ("name", "payload", "path"),
+    [
+        (
+            "private-card-files.update",
+            {
+                "card_uid": "card-1",
+                "file_id": "file-1",
+                "name": "report-final.pdf",
+                "card_cover": True,
+            },
+            "/cards/card-1/files/file-1",
+        ),
+        (
+            "private-comment-files.update",
+            {
+                "card_uid": "card-1",
+                "comment_uid": "new",
+                "file_id": "file-1",
+                "name": "evidence-final.png",
+                "card_cover": False,
+            },
+            "/cards/card-1/comments/new/files/file-1",
+        ),
+        (
+            "private-custom-property-files.update",
+            {
+                "card_uid": "card-1",
+                "property_uid": "property-1",
+                "file_id": "file-1",
+                "name": "contract-final.pdf",
+                "card_cover": True,
+            },
+            "/cards/card-1/custom-properties/property-1/files/file-1",
+        ),
+    ],
+)
+def test_restricted_access_update_contracts(name, payload, path):
+    tool = resolve_tool(name)
+
+    request = build_request(tool, merge_inputs(tool, payload))
+
+    assert tool.operation.method == "PATCH"
+    assert request == (
+        path,
+        None,
+        {"name": payload["name"], "card_cover": payload["card_cover"]},
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "payload", "path"),
+    [
+        (
             "private-card-files.delete",
             {"card_uid": "card-1", "file_id": "file-1"},
             "/cards/card-1/files/file-1",
@@ -136,6 +228,41 @@ async def test_private_upload_is_blocked_in_read_only_mode(monkeypatch, tmp_path
         await execute_tool(tool, payload, read_only=True)
 
 
+@pytest.mark.parametrize(
+    ("name", "payload"),
+    [
+        (
+            "private-card-files.update",
+            {"card_uid": "card-1", "file_id": "file-1", "name": "new.txt"},
+        ),
+        (
+            "private-comment-files.update",
+            {
+                "card_uid": "card-1",
+                "comment_uid": "comment-1",
+                "file_id": "file-1",
+                "name": "new.txt",
+            },
+        ),
+        (
+            "private-custom-property-files.update",
+            {
+                "card_uid": "card-1",
+                "property_uid": "property-1",
+                "file_id": "file-1",
+                "name": "new.txt",
+            },
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_restricted_access_updates_are_blocked_in_read_only_mode(name, payload):
+    tool = resolve_tool(name)
+
+    with pytest.raises(MutationBlockedError):
+        await execute_tool(tool, merge_inputs(tool, payload), read_only=True)
+
+
 def test_private_download_resolution_for_all_three_families():
     card = resolve_download_source(
         {"entity_type": "card", "card_uid": "card-1", "file_id": "file-1"}
@@ -176,4 +303,25 @@ def test_private_file_aliases_resolve():
     assert (
         resolve_tool("kaiten_upload_private_custom_property_file").canonical_name
         == "private-custom-property-files.upload"
+    )
+    assert resolve_tool("kaiten_get_private_card_file").canonical_name == "private-card-files.get"
+    assert (
+        resolve_tool("kaiten_update_private_card_file").canonical_name
+        == "private-card-files.update"
+    )
+    assert (
+        resolve_tool("kaiten_get_private_comment_file").canonical_name
+        == "private-comment-files.get"
+    )
+    assert (
+        resolve_tool("kaiten_update_private_comment_file").canonical_name
+        == "private-comment-files.update"
+    )
+    assert (
+        resolve_tool("kaiten_get_private_custom_property_file").canonical_name
+        == "private-custom-property-files.get"
+    )
+    assert (
+        resolve_tool("kaiten_update_private_custom_property_file").canonical_name
+        == "private-custom-property-files.update"
     )

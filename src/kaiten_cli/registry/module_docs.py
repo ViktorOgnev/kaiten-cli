@@ -28,7 +28,11 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "card_relations", "Связи карточек", "Parent/child/planned relations between cards."
     ),
     ModuleDocSpec("external_links", "Внешние ссылки", "External links attached to cards."),
-    ModuleDocSpec("files", "Файлы карточек", "Файлы и вложения карточек."),
+    ModuleDocSpec(
+        "files",
+        "Файлы карточек",
+        "Файлы, вложения и beta Restricted Access Files карточек.",
+    ),
     ModuleDocSpec("subscribers", "Подписчики", "Подписки на карточки и колонки."),
     ModuleDocSpec("spaces", "Пространства", "Spaces and top-level workspace reads."),
     ModuleDocSpec("boards", "Доски", "Boards and board-level operations."),

@@ -11,6 +11,20 @@ from kaiten_cli.runtime.support.files import (
 )
 
 
+RESTRICTED_ACCESS_FILE_NOTE = (
+    "Kaiten documents this beta family as Restricted Access Files; the historical "
+    "`private-*` command namespace is preserved for compatibility."
+)
+RESTRICTED_ACCESS_SIGNED_URL_NOTE = (
+    "The metadata response contains a short-lived signed URL. Do not store or cache it; "
+    "request fresh metadata immediately before downloading."
+)
+LEGACY_UPLOAD_DISABLED_NOTE = (
+    "When the company forbids legacy Public API uploads, Kaiten returns HTTP 403 with "
+    "code PUBLIC_API_LEGACY_FILE_UPLOAD_DISABLED; use private-card-files upload with a card UUID."
+)
+
+
 TOOLS = (
     make_tool(
         canonical_name="files.download",
@@ -114,14 +128,14 @@ TOOLS = (
                     "kaiten --json files download --entity-type card --card-uid <card_uid> "
                     "--file-id <private_file_uid> --output ./downloads/"
                 ),
-                description="Download a beta private card file with streaming and resume.",
+                description="Download a Restricted Access card file with streaming and resume.",
             ),
             ExampleSpec(
                 command=(
                     "kaiten --json files download --entity-type comment --card-uid <card_uid> "
                     "--comment-uid <comment_uid> --file-id <private_file_uid>"
                 ),
-                description="Download a beta private comment file.",
+                description="Download a Restricted Access comment file.",
             ),
             ExampleSpec(
                 command=(
@@ -129,7 +143,7 @@ TOOLS = (
                     "--card-uid <card_uid> --custom-property-uid <property_uid> "
                     "--file-id <private_file_uid>"
                 ),
-                description="Download a beta private custom-property file.",
+                description="Download a Restricted Access custom-property file.",
             ),
             ExampleSpec(
                 command=(
@@ -145,7 +159,8 @@ TOOLS = (
             "Downloads stream to <target>.part first and are renamed into place only after completion.",
             "Existing .part files are resumed with HTTP Range by default, similar to wget --continue.",
             "For Kaiten file endpoints the command resolves a short-lived storage URL internally and does not print it.",
-            "Private card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.",
+            "Restricted Access card/comment/custom-property downloads use the same streaming, resume, and signed-URL refresh flow.",
+            "The signed storage URL is neither returned nor sent the Kaiten bearer token.",
         ),
     ),
     make_tool(
@@ -249,7 +264,8 @@ TOOLS = (
         usage_notes=(
             "Uploads the local file as multipart/form-data field `file`.",
             "The uploaded filename is the local file basename.",
-            "This command uses the public card file endpoint; the beta private file endpoint is not used.",
+            "This command uses the legacy card-file upload contract, not Restricted Access Files.",
+            LEGACY_UPLOAD_DISABLED_NOTE,
         ),
     ),
     make_tool(
@@ -332,7 +348,7 @@ TOOLS = (
     make_tool(
         canonical_name="private-card-files.upload",
         mcp_alias="kaiten_upload_private_card_file",
-        description="Upload a beta private file to a card using multipart POST.",
+        description="Upload a beta Restricted Access file to a card using multipart POST.",
         input_schema={
             "type": "object",
             "properties": {
@@ -354,23 +370,81 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json private-card-files upload --card-uid <card_uid> --file ./report.pdf",
-                description="Upload a private card file.",
+                description="Upload a Restricted Access card file.",
             ),
         ),
         usage_notes=(
-            "Beta endpoint; availability depends on private-files feature flags in the Kaiten installation.",
+            RESTRICTED_ACCESS_FILE_NOTE,
+            "Beta endpoint; availability depends on Restricted Access Files settings in the Kaiten installation.",
             "Uses multipart/form-data field `file` with POST; classic files.upload remains PUT.",
         ),
     ),
     make_tool(
-        canonical_name="private-card-files.delete",
-        mcp_alias="kaiten_delete_private_card_file",
-        description="Delete a beta private card file.",
+        canonical_name="private-card-files.get",
+        mcp_alias="kaiten_get_private_card_file",
+        description="Get Restricted Access card-file metadata and a short-lived signed URL.",
         input_schema={
             "type": "object",
             "properties": {
                 "card_uid": {"type": "string", "description": "Card UUID."},
-                "file_id": {"type": "string", "description": "Private file UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+            },
+            "required": ["card_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_uid}/files/{file_id}",
+            path_fields=("card_uid", "file_id"),
+        ),
+        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-card-files get --card-uid <card_uid> --file-id <file_uid>",
+                description="Read Restricted Access card-file metadata.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE, RESTRICTED_ACCESS_SIGNED_URL_NOTE),
+    ),
+    make_tool(
+        canonical_name="private-card-files.update",
+        mcp_alias="kaiten_update_private_card_file",
+        description="Update a Restricted Access card file name or card-cover flag.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "name": {"type": "string", "description": "New file name."},
+                "card_cover": {
+                    "type": "boolean",
+                    "description": "Use this image as the card cover.",
+                },
+            },
+            "required": ["card_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/cards/{card_uid}/files/{file_id}",
+            path_fields=("card_uid", "file_id"),
+            body_fields=("name", "card_cover"),
+        ),
+        examples=(
+            ExampleSpec(
+                command='kaiten --json private-card-files update --card-uid <card_uid> --file-id <file_uid> --name "report-final.pdf"',
+                description="Rename a Restricted Access card file.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
+    ),
+    make_tool(
+        canonical_name="private-card-files.delete",
+        mcp_alias="kaiten_delete_private_card_file",
+        description="Delete a beta Restricted Access card file.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
             },
             "required": ["card_uid", "file_id"],
         },
@@ -382,15 +456,15 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json private-card-files delete --card-uid <card_uid> --file-id <file_uid>",
-                description="Delete a private card file.",
+                description="Delete a Restricted Access card file.",
             ),
         ),
-        usage_notes=("Beta private-files endpoint.",),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
     ),
     make_tool(
         canonical_name="private-comment-files.upload",
         mcp_alias="kaiten_upload_private_comment_file",
-        description="Upload a beta private file to a card comment using multipart POST.",
+        description="Upload a beta Restricted Access file to a card comment using multipart POST.",
         input_schema={
             "type": "object",
             "properties": {
@@ -413,21 +487,86 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json private-comment-files upload --card-uid <card_uid> --comment-uid <comment_uid> --file ./evidence.png",
-                description="Upload a private comment file.",
+                description="Upload a Restricted Access comment file.",
             ),
         ),
-        usage_notes=("Beta private-files endpoint.",),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
+    ),
+    make_tool(
+        canonical_name="private-comment-files.get",
+        mcp_alias="kaiten_get_private_comment_file",
+        description="Get Restricted Access comment-file metadata and a short-lived signed URL.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "comment_uid": {
+                    "type": "string",
+                    "description": "Comment UUID, or `new` before the comment is created.",
+                },
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+            },
+            "required": ["card_uid", "comment_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/cards/{card_uid}/comments/{comment_uid}/files/{file_id}",
+            path_fields=("card_uid", "comment_uid", "file_id"),
+        ),
+        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-comment-files get --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>",
+                description="Read Restricted Access comment-file metadata.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE, RESTRICTED_ACCESS_SIGNED_URL_NOTE),
+    ),
+    make_tool(
+        canonical_name="private-comment-files.update",
+        mcp_alias="kaiten_update_private_comment_file",
+        description="Update a Restricted Access comment file name or card-cover flag.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "comment_uid": {
+                    "type": "string",
+                    "description": "Comment UUID, or `new` before the comment is created.",
+                },
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "name": {"type": "string", "description": "New file name."},
+                "card_cover": {
+                    "type": "boolean",
+                    "description": "Use this image as the card cover; requires card update permission.",
+                },
+            },
+            "required": ["card_uid", "comment_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template="/cards/{card_uid}/comments/{comment_uid}/files/{file_id}",
+            path_fields=("card_uid", "comment_uid", "file_id"),
+            body_fields=("name", "card_cover"),
+        ),
+        examples=(
+            ExampleSpec(
+                command='kaiten --json private-comment-files update --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid> --name "evidence-final.png"',
+                description="Rename a Restricted Access comment file.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
     ),
     make_tool(
         canonical_name="private-comment-files.delete",
         mcp_alias="kaiten_delete_private_comment_file",
-        description="Delete a beta private comment file.",
+        description="Delete a beta Restricted Access comment file.",
         input_schema={
             "type": "object",
             "properties": {
                 "card_uid": {"type": "string", "description": "Card UUID."},
                 "comment_uid": {"type": "string", "description": "Comment UUID."},
-                "file_id": {"type": "string", "description": "Private file UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
             },
             "required": ["card_uid", "comment_uid", "file_id"],
         },
@@ -439,15 +578,17 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json private-comment-files delete --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>",
-                description="Delete a private comment file.",
+                description="Delete a Restricted Access comment file.",
             ),
         ),
-        usage_notes=("Beta private-files endpoint.",),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
     ),
     make_tool(
         canonical_name="private-custom-property-files.upload",
         mcp_alias="kaiten_upload_private_custom_property_file",
-        description="Upload a beta private file to a card custom property using multipart POST.",
+        description=(
+            "Upload a beta Restricted Access file to a card custom property using multipart POST."
+        ),
         input_schema={
             "type": "object",
             "properties": {
@@ -470,37 +611,96 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json private-custom-property-files upload --card-uid <card_uid> --property-uid <property_uid> --file ./contract.pdf",
-                description="Upload a private custom-property file.",
+                description="Upload a Restricted Access custom-property file.",
             ),
         ),
-        usage_notes=("Beta private-files endpoint.",),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
     ),
     make_tool(
-        canonical_name="private-custom-property-files.delete",
-        mcp_alias="kaiten_delete_private_custom_property_file",
-        description="Delete a beta private custom-property file.",
+        canonical_name="private-custom-property-files.get",
+        mcp_alias="kaiten_get_private_custom_property_file",
+        description=(
+            "Get Restricted Access custom-property file metadata and a short-lived signed URL."
+        ),
         input_schema={
             "type": "object",
             "properties": {
                 "card_uid": {"type": "string", "description": "Card UUID."},
                 "property_uid": {"type": "string", "description": "Custom property UUID."},
-                "file_id": {"type": "string", "description": "Private file UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+            },
+            "required": ["card_uid", "property_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template=("/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"),
+            path_fields=("card_uid", "property_uid", "file_id"),
+        ),
+        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json private-custom-property-files get --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>",
+                description="Read Restricted Access custom-property file metadata.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE, RESTRICTED_ACCESS_SIGNED_URL_NOTE),
+    ),
+    make_tool(
+        canonical_name="private-custom-property-files.update",
+        mcp_alias="kaiten_update_private_custom_property_file",
+        description="Update a Restricted Access custom-property file name or card-cover flag.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "property_uid": {"type": "string", "description": "Custom property UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "name": {"type": "string", "description": "New file name."},
+                "card_cover": {
+                    "type": "boolean",
+                    "description": "Use this image as the card cover.",
+                },
+            },
+            "required": ["card_uid", "property_uid", "file_id"],
+        },
+        operation=OperationSpec(
+            method="PATCH",
+            path_template=("/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"),
+            path_fields=("card_uid", "property_uid", "file_id"),
+            body_fields=("name", "card_cover"),
+        ),
+        examples=(
+            ExampleSpec(
+                command='kaiten --json private-custom-property-files update --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid> --name "contract-final.pdf"',
+                description="Rename a Restricted Access custom-property file.",
+            ),
+        ),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
+    ),
+    make_tool(
+        canonical_name="private-custom-property-files.delete",
+        mcp_alias="kaiten_delete_private_custom_property_file",
+        description="Delete a beta Restricted Access custom-property file.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "card_uid": {"type": "string", "description": "Card UUID."},
+                "property_uid": {"type": "string", "description": "Custom property UUID."},
+                "file_id": {"type": "string", "description": "Restricted Access file UUID."},
             },
             "required": ["card_uid", "property_uid", "file_id"],
         },
         operation=OperationSpec(
             method="DELETE",
-            path_template=(
-                "/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"
-            ),
+            path_template=("/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"),
             path_fields=("card_uid", "property_uid", "file_id"),
         ),
         examples=(
             ExampleSpec(
                 command="kaiten --json private-custom-property-files delete --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>",
-                description="Delete a private custom-property file.",
+                description="Delete a Restricted Access custom-property file.",
             ),
         ),
-        usage_notes=("Beta private-files endpoint.",),
+        usage_notes=(RESTRICTED_ACCESS_FILE_NOTE,),
     ),
 )

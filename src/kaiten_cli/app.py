@@ -456,7 +456,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill.",
-            "Treat dashboards as experimental and iterations/private files as beta; run discovery first and expect feature/version gates.",
+            "Treat dashboards as experimental and iterations/Restricted Access Files as beta; run discovery first and expect feature/version gates.",
         ],
         "quickstart": [
             'Discover commands: kaiten search-tools "wip cards"',
@@ -488,7 +488,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.",
-            "Dashboards are experimental; iterations and private files are beta and may be unavailable on older installations or tariffs.",
+            "Dashboards are experimental; iterations and Restricted Access Files are beta and may be unavailable on older installations or tariffs.",
         ],
         "docs": {
             "repository": REPOSITORY_URL,
@@ -528,7 +528,7 @@ def _agent_help_text() -> str:
             "15. summarize: kaiten --json trace summarize --file <trace.jsonl>",
             "16. before mutations: kaiten --json --profile <name> --read-only profile probe",
             "17. live validation only runs when KAITEN_LIVE=1|true",
-            "18. dashboards are experimental; iterations/private files are beta, so discover and probe before use",
+            "18. dashboards are experimental; iterations/Restricted Access Files are beta, so discover and probe before use",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",

@@ -137,7 +137,7 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert any("trace summarize" in line for line in payload["data"]["llm_bootstrap"])
     assert any("dashboards" in line for line in payload["data"]["quickstart"])
     assert any("iterations" in line for line in payload["data"]["quickstart"])
-    assert any("private files" in line for line in payload["data"]["principles"])
+    assert any("Restricted Access Files" in line for line in payload["data"]["principles"])
 
 
 def test_agent_help_human_output_is_bootstrap_focused(runner):
@@ -221,8 +221,8 @@ def test_discovery_commands_json_output_stays_machine_readable(runner):
 def test_registry_examples_keep_root_json_before_the_command(runner):
     examples = [example.command for tool in iter_tools() for example in tool.examples]
 
-    assert len(examples) == 446
-    assert sum("--json" in shlex.split(command) for command in examples) == 432
+    assert len(examples) == 453
+    assert sum("--json" in shlex.split(command) for command in examples) == 439
     for command in examples:
         tokens = shlex.split(command)
         if "--json" in tokens:
@@ -308,7 +308,7 @@ def test_validation_details_for_unsupported_shaping(capsys):
         "option": "--fields",
         "canonical_name": "boards.get",
         "suggested_usage": "kaiten boards get [supported options]",
-        "supported_options": ["--board-id"],
+        "supported_options": ["--board-id", "--space-id"],
         "next": "kaiten describe boards.get",
     }
 
