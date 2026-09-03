@@ -78,6 +78,23 @@
 | `user-timers.create` | `live_passed_as_expected_error` | `400`, `403`, `405`, `409` | Timer creation зависит от sandbox semantics. |
 | `user-timers.get`, `user-timers.update`, `user-timers.delete` | `live_passed_as_expected_error` | `403`, `404`, `405` | При недоступном create live suite валидирует sentinel error contract. |
 
+## Not yet live-validated
+
+Эти команды добавлены после последней полной live campaign. Сценарии для них уже есть в
+`tests/live/`, но прогона, подтверждающего контракт, не было, поэтому default rule
+`live_passed` на них не распространяется.
+
+| Command family | Verb / Path | Status | Notes |
+|----------------|-------------|--------|-------|
+| `addons.list` | `GET /addons` | `live_not_validated` | Каталог опубликованных аддонов; live suite принимает success или `403/405`. |
+| `addons.uid` | локальная команда | `live_not_validated` | UUID v5 считается локально, обращения к API нет; проверяется совпадение с эталонным UID `/github`. |
+| `space-addons.list` | `GET /spaces/{space_id}/addons` | `live_not_validated` | Требует права `space.addons.read`. |
+| `space-addons.install`, `space-addons.uninstall` | `PATCH` / `DELETE /spaces/{space_id}/addons/{addon_uid}` | `live_not_validated` | В live suite проверяются только на sentinel UID, чтобы не менять набор аддонов реального пространства. |
+| `card-addon-data.get`, `user-addon-data.get` | `GET .../addons-data/{addon_uid}` | `live_not_validated` | Чтение; для неустановленного аддона возможен пустой ответ или `403/404/405`. |
+| `card-addon-data.set`, `user-addon-data.set` | `PATCH .../addons-data/{addon_uid}` | `live_not_validated` | Запись проверяется только на sentinel UID: реальная запись требует установленного аддона и `card.update`. |
+| `github-addon.*.list` | `GET /cards/{card_id}/addons-data/{addon_uid}` | `live_not_validated` | Чтение shared-ключей `attachedPulls`, `attachedBranches`, `attachedCommits`, `attachedIssues`. |
+| `github-addon.*.attach`, `github-addon.*.detach` | `PATCH /cards/{card_id}/addons-data/{addon_uid}` | `live_not_validated` | Live suite покрывает только `--dry-run`: реальная запись изменила бы данные аддона на живой карточке. |
+
 ## Policy exclusions
 
 | Command | Status | Notes |

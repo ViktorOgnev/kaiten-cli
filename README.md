@@ -352,10 +352,51 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Значения поля карточки типа «Справочник» с типом API `catalog` | `custom-properties catalog-values` |
 | Папка/контейнер документов в дереве | `document-groups`, `tree` для чтения структуры |
 
+## Аддоны и GitHub-аддон
+
+Аддон хранит своё состояние карточки не во внешних ссылках, а в данных аддона:
+одна общая строка на карточку плюс приватная строка на пользователя. Доступ к
+этому хранилищу дают команды `card-addon-data` и `user-addon-data`, список
+установленных аддонов – `addons list` и `space-addons list`.
+
+Адресация идёт по UUID аддона, а не по имени. На self-hosted UUID детерминированно
+выводится из пути монтирования, поэтому его можно получить локально, без запроса
+к Kaiten:
+
+```bash
+kaiten --json addons uid --url-path /github          # /github -> 0ce23a01-560f-51e0-9982-1e3445dc5990
+kaiten --json addons list --fields id,name
+kaiten --json space-addons list --space-id <space_id> --fields id,name
+```
+
+GitHub-аддон показывает на карточке pull request'ы, ветки, коммиты и issues.
+Отдельные команды `github-addon` читают и пишут именно его хранилище, сохраняя
+формат виджета и дедуплицируя записи, поэтому запись из CLI неотличима от
+добавленной через интерфейс аддона:
+
+```bash
+kaiten --json github-addon pulls list --card-id <card_id> --fields number,htmlUrl,state
+gh api repos/OWNER/REPO/pulls/NUMBER > pull.json
+kaiten --json github-addon pulls attach --card-id <card_id> --pull-json @pull.json --dry-run
+kaiten --json github-addon pulls attach --card-id <card_id> --pull-json @pull.json
+kaiten --json github-addon pulls detach --card-id <card_id> --number NUMBER --owner OWNER --repo REPO
+```
+
+Сам CLI в GitHub не ходит: объект PR, ветки, коммита или issue передаётся снаружи
+(`gh api` или любой другой источник) и отображается в формат аддона. Для веток,
+коммитов и issues дополнительно нужны `--owner` и `--repo`: в ответе GitHub этих
+полей нет, а аддон хранит их как часть идентичности записи.
+
+Запись требует права `card.update` в пространстве карточки и установленного там
+GitHub-аддона. `--dry-run` выполняет чтение и показывает результат, ничего не
+записывая; так как команда считается изменяющей, в режиме `--read-only` она
+заблокирована. PR у карточки могут лежать и во внешних ссылках, поэтому при
+полном поиске стоит смотреть и `external-links list`.
+
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **389** основных инструментов. Количество модулей реестра: **33**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **410** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -392,7 +433,9 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **33** | **389** | [Полный справочник](COMMAND_REFERENCE.md) |
+| Аддоны | `addons` | 9 | [Раздел](COMMAND_REFERENCE.md#module-addons) |
+| GitHub-аддон | `github_addon` | 12 | [Раздел](COMMAND_REFERENCE.md#module-github-addon) |
+| **Итого** | **35** | **410** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

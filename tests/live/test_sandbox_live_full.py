@@ -1082,6 +1082,189 @@ def _exercise_integrations(h) -> None:
             "workflows.delete", {403, 404, 405}, workflow_id="00000000-0000-0000-0000-000000000000"
         )
 
+    _exercise_addons(h)
+
+
+# Deterministic UID of the GitHub addon mounted at /github on self-hosted Kaiten.
+GITHUB_ADDON_UID = "0ce23a01-560f-51e0-9982-1e3445dc5990"
+SENTINEL_ADDON_UID = "00000000-0000-0000-0000-000000000000"
+
+
+def _live_github_payloads() -> dict[str, dict]:
+    """Minimal GitHub REST shapes used only by dry-run attaches (nothing is written)."""
+
+    author = {
+        "login": "octocat",
+        "html_url": "https://github.com/octocat",
+        "avatar_url": "https://github.com/octocat.png",
+    }
+    return {
+        "pull": {
+            "id": 1,
+            "number": 1,
+            "html_url": "https://github.com/kaiten-live/example/pull/1",
+            "state": "open",
+            "title": "kaiten-cli live probe",
+            "body": None,
+            "created_at": "2026-01-01T00:00:00Z",
+            "user": author,
+            "base": {
+                "ref": "master",
+                "repo": {"name": "example", "owner": {"login": "kaiten-live"}},
+            },
+            "head": {"ref": "feature"},
+        },
+        "branch": {
+            "name": "master",
+            "commit": {"url": "https://api.github.com/repos/kaiten-live/example/commits/abc"},
+        },
+        "commit": {
+            "sha": "0000000000000000000000000000000000000000",
+            "html_url": "https://github.com/kaiten-live/example/commit/0000000",
+            "commit": {
+                "message": "live probe",
+                "author": {"name": "octocat", "date": "2026-01-01T00:00:00Z"},
+            },
+            "author": author,
+        },
+        "issue": {
+            "id": 2,
+            "number": 2,
+            "title": "kaiten-cli live probe",
+            "state": "open",
+            "created_at": "2026-01-01T00:00:00Z",
+            "html_url": "https://github.com/kaiten-live/example/issues/2",
+            "user": author,
+        },
+    }
+
+
+def _exercise_addons(h) -> None:
+    card_id = h.state["parent_card_id"]
+    space_id = h.state["space_id"]
+
+    derived = h.run_tool("addons.uid", url_path="/github")
+    assert derived["addon_uid"] == GITHUB_ADDON_UID, derived
+
+    h.run_tool_maybe("addons.list", expected_error_statuses={403, 405})
+    h.run_tool_maybe(
+        "space-addons.list", expected_error_statuses={403, 404, 405}, space_id=space_id
+    )
+    # A sentinel UID is neither published nor installed, so both space-addon
+    # mutations are validated on their documented rejection path instead of
+    # changing the addon set of a real space.
+    h.run_tool_expect_api_error(
+        "space-addons.install",
+        {400, 403, 404, 405},
+        space_id=space_id,
+        addon_uid=SENTINEL_ADDON_UID,
+    )
+    h.run_tool_expect_api_error(
+        "space-addons.uninstall",
+        {400, 403, 404, 405},
+        space_id=space_id,
+        addon_uid=SENTINEL_ADDON_UID,
+    )
+
+    h.run_tool_maybe(
+        "card-addon-data.get",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
+    )
+    h.run_tool_expect_api_error(
+        "card-addon-data.set",
+        {400, 403, 404, 405},
+        card_id=card_id,
+        addon_uid=SENTINEL_ADDON_UID,
+        type="shared",
+        data={"kaitenCliLiveProbe": None},
+    )
+    h.run_tool_maybe(
+        "user-addon-data.get",
+        expected_error_statuses={403, 404, 405},
+        addon_uid=GITHUB_ADDON_UID,
+    )
+    h.run_tool_expect_api_error(
+        "user-addon-data.set",
+        {400, 403, 404, 405},
+        addon_uid=SENTINEL_ADDON_UID,
+        data={"kaitenCliLiveProbe": None},
+    )
+
+    for entity in ("pulls", "branches", "commits", "issues"):
+        h.run_tool_maybe(
+            f"github-addon.{entity}.list",
+            expected_error_statuses={403, 404, 405},
+            card_id=card_id,
+        )
+
+    # Attach/detach are covered as dry runs: they exercise the real read and the
+    # real decision, and stop before the shared write, so the live tenant keeps
+    # whatever the addon already stores on the card.
+    payloads = _live_github_payloads()
+    repo = {"owner": "kaiten-live", "repo": "example"}
+    h.run_tool_maybe(
+        "github-addon.pulls.attach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        pull_json=payloads["pull"],
+        dry_run=True,
+    )
+    h.run_tool_maybe(
+        "github-addon.branches.attach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        branch_json=payloads["branch"],
+        dry_run=True,
+        **repo,
+    )
+    h.run_tool_maybe(
+        "github-addon.commits.attach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        commit_json=payloads["commit"],
+        dry_run=True,
+        **repo,
+    )
+    h.run_tool_maybe(
+        "github-addon.issues.attach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        issue_json=payloads["issue"],
+        dry_run=True,
+        **repo,
+    )
+
+    h.run_tool_maybe(
+        "github-addon.pulls.detach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        number=999999,
+        dry_run=True,
+    )
+    h.run_tool_maybe(
+        "github-addon.branches.detach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        branch_name="kaiten-cli-live-probe",
+        dry_run=True,
+    )
+    h.run_tool_maybe(
+        "github-addon.commits.detach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        sha="0000000000000000000000000000000000000000",
+        dry_run=True,
+    )
+    h.run_tool_maybe(
+        "github-addon.issues.detach",
+        expected_error_statuses={403, 404, 405},
+        card_id=card_id,
+        number=999999,
+        dry_run=True,
+    )
+
 
 def _exercise_service_desk(h) -> None:
     h.run_tool("service-desk.settings.get")

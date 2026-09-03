@@ -221,8 +221,8 @@ def test_discovery_commands_json_output_stays_machine_readable(runner):
 def test_registry_examples_keep_root_json_before_the_command(runner):
     examples = [example.command for tool in iter_tools() for example in tool.examples]
 
-    assert len(examples) == 422
-    assert sum("--json" in shlex.split(command) for command in examples) == 408
+    assert len(examples) == 445
+    assert sum("--json" in shlex.split(command) for command in examples) == 431
     for command in examples:
         tokens = shlex.split(command)
         if "--json" in tokens:

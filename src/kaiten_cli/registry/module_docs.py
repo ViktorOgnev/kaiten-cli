@@ -88,6 +88,16 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
     ModuleDocSpec(
         "query", "Локальные запросы", "Local-only query and metrics commands over snapshots."
     ),
+    ModuleDocSpec(
+        "addons",
+        "Аддоны",
+        "Addon catalog, space installation and per-card / per-user addon data.",
+    ),
+    ModuleDocSpec(
+        "github_addon",
+        "GitHub-аддон",
+        "Pull requests, branches, commits and issues attached to cards by the GitHub addon.",
+    ),
 )
 
 MODULE_SPECS_BY_KEY: dict[str, ModuleDocSpec] = {spec.key: spec for spec in MODULE_SPECS}

@@ -81,4 +81,7 @@ kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> 
 - When two or more entity IDs are known and `describe` reports `bulk_alternative`, use the bulk command.
 - When the same population is needed a second time, build a snapshot and continue with local `query cards` / `query metrics`.
 - Before a live mutation, use `kaiten --json --profile <name> --read-only profile probe`, then follow the mutation skill: discovery, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.
+- Addon state lives outside the normal card fields: use `card-addon-data` / `user-addon-data` for raw addon storage, and the `github-addon` commands for PRs, branches, commits and issues shown on a card.
+- Attaching a PR to a card usually means the GitHub addon, not `external-links create`; check both sources when looking for every PR a card references.
+- The GitHub addon UUID is derived from its mount path, so `addons uid --url-path /github` resolves it locally without an API call.
 - Live validation is opt-in and documented in [LIVE_VALIDATION.md](LIVE_VALIDATION.md).
