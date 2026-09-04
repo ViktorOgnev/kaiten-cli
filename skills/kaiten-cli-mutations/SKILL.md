@@ -60,6 +60,29 @@ Use JSONL with one operation per line:
 - Do not mark a source checklist item complete or add comments/status changes
   unless those effects were explicitly authorized.
 
+## Addon data writes
+
+Addon state is not part of the card entity. A card's GitHub attachments, and any
+other addon's per-card state, live in a separate row reached through
+`card-addon-data` / `github-addon`, and never show up in `cards get`. Treat them
+as their own mutation family:
+
+- Prefer `github-addon <pulls|branches|commits|issues> attach|detach` over raw
+  `card-addon-data set`. The typed commands read the current list, dedup by the
+  addon's own identity, and rewrite only the key they touch.
+- Raw `card-addon-data set` merges by top-level key, so a partial value for a key
+  replaces that whole key. Sending one attachment overwrites the rest. Read the
+  current value first and send the full replacement list.
+- Preview with the command's own `--dry-run`. It performs the read and reports the
+  outcome without writing, but it is still classified as a mutation, so it does
+  not run under `--read-only`. Do investigation with `github-addon ... list`
+  (a plain read), then drop `--read-only` for the dry run, then authorize.
+- `detach` refuses a selector that matches more than one attachment. Narrow it
+  with `--owner`/`--repo` rather than reaching for `--all`.
+- In the manifest, the stable target key is card id plus addon key plus the
+  attachment identity (PR/issue id, `owner/repo/branch`, commit sha), not the
+  card id alone.
+
 ## Readback
 
 Readback must be field-scoped and target-scoped:
@@ -69,6 +92,15 @@ kaiten --json --profile <name> cards batch-get \
   --card-ids '[101,102]' \
   --fields id,title,state \
   --compact
+```
+
+For an addon write, read back the addon store instead: a card read shows nothing,
+because the change never lands in a card field.
+
+```bash
+kaiten --json --profile <name> github-addon pulls list \
+  --card-id 101 \
+  --fields number,htmlUrl,state
 ```
 
 Compare the returned fields with the manifest, mark matching operations

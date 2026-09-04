@@ -34,6 +34,8 @@ def test_repo_contains_expected_skill_files():
     assert "--cache-mode refresh" in heavy_text
     assert "--cache-mode off" in heavy_text
     assert "--cache-mode readwrite" in heavy_text
+    assert "### Addon attachments across many cards" in heavy_text
+    assert "no bulk read for addon data" in heavy_text
 
     assert "name: kaiten-cli-metrics" in metrics_text
     assert "cards list-all" in metrics_text
@@ -49,6 +51,9 @@ def test_repo_contains_expected_skill_files():
     assert "--cache-mode readwrite" in metrics_text
 
     assert "name: kaiten-cli-mutations" in mutations_text
+    assert "## Addon data writes" in mutations_text
+    assert "github-addon pulls list" in mutations_text
+    assert "card-addon-data set" in mutations_text
     assert "profile probe" in mutations_text
     assert "resumable manifest" in mutations_text
     assert "field-scoped readback" in mutations_text
@@ -89,3 +94,5 @@ def test_repo_contains_expected_skill_files():
     assert "snapshot build" in agents
     assert "cards.batch-get" in agents
     assert "generic local metrics layer" in agents
+    assert "card-addon-data" in agents
+    assert "github-addon" in agents

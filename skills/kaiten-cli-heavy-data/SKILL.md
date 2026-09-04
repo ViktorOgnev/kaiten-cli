@@ -103,6 +103,27 @@ Notes:
 - Prefer these over per-card `card-children list` and `comments list`.
 - Both batch paths keep partial per-card failures in-band.
 
+### Addon attachments across many cards
+
+There is no bulk read for addon data: `card-addon-data get` and
+`github-addon ... list` are per-card, one HTTP request each, and `describe`
+reports no `bulk_alternative` for them. Narrow the population first, then read
+attachments only for the cards that survived:
+
+```bash
+kaiten --json query cards --snapshot team-basic --view summary --fields id,title
+kaiten --json --trace-file ./kaiten-trace.jsonl github-addon pulls list --card-id 101 --fields number,htmlUrl,state
+```
+
+Notes:
+
+- A per-card loop is unavoidable here, so it is exactly the case the tracing rule
+  below is written for: record a trace and check the real request count.
+- Addon attachments are not part of the card entity and are not stored in a
+  snapshot; `cards list-all` and `query cards` never return them.
+- A card can also reference a PR through `external-links list`. Read both when the
+  question is "every PR this card references".
+
 ### Space topology
 
 Use:
@@ -203,6 +224,7 @@ kaiten --json trace summarize --file ./kaiten-trace.jsonl
 - Need many comment reads: `comments batch-list`
 - Need one space topology snapshot: `space-topology get`
 - Need many card histories: `card-location-history batch-get`
+- Need addon attachments for many cards: no bulk path exists; narrow the card set first, then loop with a trace
 - Need many follow-up questions on one working set: `snapshot build` -> `query cards` / `query metrics`
 - Need one entity many times across multiple CLI calls: keep default `--cache-mode auto`; use `--cache-mode readwrite` only for a fixed TTL
 - Need to understand the path first: `describe <tool>`
