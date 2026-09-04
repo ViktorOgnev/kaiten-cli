@@ -90,6 +90,9 @@ as their own mutation family:
   cloud tenant stores a random UUID. The commands re-resolve it from the card's
   space when a derived UUID finds nothing, but for repeated writes read it once
   from `space-addons list` and pass `--addon-uid` explicitly.
+- A `github-addon ... list` that cannot confirm which addon it read fails
+  instead of returning an empty list. Treat that error as "resolve the UUID
+  first", not as "the card has nothing attached".
 
 ## Readback
 

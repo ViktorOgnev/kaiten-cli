@@ -28,7 +28,6 @@ KAITEN_ADDONS_NAMESPACE = uuid.UUID("d202834b-4740-4d9b-9ee0-cb1eb833124d")
 GITHUB_ADDON_URL_PATH = "/github"
 
 SHARED_SCOPE = "shared"
-PRIVATE_SCOPE = "private"
 
 # Addon SDK keys the GitHub addon stores its attachments under (shared scope).
 # Must match `setData('card', 'shared', <key>, ...)` in kaiten-addons/addons/github.
@@ -44,20 +43,31 @@ FALLBACK_AUTHOR_URL = "https://github.com"
 FALLBACK_AVATAR_URL = "https://avatars.githubusercontent.com/u/583231?v=4"
 NO_DATA = "no data"
 
-# Addon UIDs are canonical UUIDs (the API routes only accept that shape). Checking
-# the format locally keeps a stray value out of the request path, where it would
-# otherwise silently redirect the call to a different endpoint.
-_UUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$")
+# Mirrors uuidIdRule from kaiten/shared/idRules.js: version 4 or 5, RFC-4122
+# variant. A value the route regex rejects can never address anything, and a
+# stray string in the path would silently redirect the call to another endpoint.
+_UUID_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[45][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+)
 
 
 def validate_addon_uid_value(value: Any, field: str = "addon_uid") -> str:
-    if not isinstance(value, str) or not _UUID_PATTERN.match(value.strip()):
+    """Validate an addon UUID and normalize its case.
+
+    Kaiten stores addon ids in a Postgres uuid column and returns them
+    lowercase, while `checkAccessForUpdate` compares them to the path segment
+    with `===`. An uppercase UUID therefore reads fine and then fails every
+    write with 403, so the case is normalized here rather than passed through.
+    """
+
+    text = value.strip().lower() if isinstance(value, str) else ""
+    if not _UUID_PATTERN.match(text):
         raise ValidationError(
             f"Field {field} must be an addon UUID such as "
-            "0ce23a01-560f-51e0-9982-1e3445dc5990; take it from addons.list, "
-            "space-addons.list or addons.uid."
+            "0ce23a01-560f-51e0-9982-1e3445dc5990; take it from space-addons.list, "
+            "company-addons.list or addons.uid."
         )
-    return value.strip()
+    return text
 
 
 def validate_addon_uid_payload(tool, payload: dict[str, Any]) -> None:
@@ -91,19 +101,6 @@ def addon_url_path(payload: dict[str, Any]) -> str:
     return payload.get("addon_url_path") or GITHUB_ADDON_URL_PATH
 
 
-def resolve_github_addon_uid(payload: dict[str, Any]) -> str:
-    """Explicit `--addon-uid` wins; otherwise derive it from the addon mount path.
-
-    Derivation only reproduces the real UID on an on-premises installation whose
-    addon iframe path equals the mount path: `companyAddonsController` stamps the
-    derived UID solely under `config.onPremises`, and Kaiten otherwise stores a
-    random UUID. Callers must therefore treat a derived UID as a guess and fall
-    back to `registered_addon_uid` when it finds no data.
-    """
-
-    return explicit_addon_uid(payload) or generate_addon_uid(addon_url_path(payload))
-
-
 def _iframe_url_path(url: Any) -> str | None:
     """Normalized path of an addon's iframe URL, the input of the UID derivation."""
 
@@ -117,12 +114,14 @@ def _iframe_url_path(url: Any) -> str | None:
 
 async def registered_addon_uid(
     client, card_id: Any, url_path: str, timeout: float, reporter
-) -> str | None:
-    """UID Kaiten actually registered for the addon mounted at `url_path`.
+) -> tuple[bool, str | None]:
+    """Ask the card's space which UID Kaiten registered for `url_path`.
 
-    Asks the card's space which addons it has and matches them by iframe path.
-    Best effort: a caller without `space.addons.read`, or a card the lookup
-    cannot resolve, keeps the derived UID instead of failing the command.
+    Returns `(lookup_succeeded, uid)`. A successful lookup that finds no such
+    addon returns `(True, None)` - the addon is simply not installed there.
+    `(False, None)` means the question could not be answered at all, for example
+    without `space.addons.read`, and the caller must not treat the derived UID
+    as confirmed.
     """
 
     normalized = normalize_addon_url_path(url_path)
@@ -130,23 +129,23 @@ async def registered_addon_uid(
         card = await client.get(f"/cards/{card_id}", timeout=timeout)
         space_id = card.get("space_id") if isinstance(card, dict) else None
         if space_id is None:
-            return None
+            return False, None
         addons = await client.get(f"/spaces/{space_id}/addons", timeout=timeout)
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: space addons unavailable ({error})")
-        return None
+        return False, None
 
     if not isinstance(addons, list):
-        return None
+        return False, None
     for addon in addons:
         if not isinstance(addon, dict):
             continue
         if _iframe_url_path(addon.get("iframe_initial_url")) == normalized:
             uid = addon.get("id")
-            if isinstance(uid, str) and _UUID_PATTERN.match(uid):
-                return uid
-    return None
+            if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
+                return True, uid.lower()
+    return True, None
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -327,17 +326,27 @@ def map_rest_issue(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _fold(value: Any) -> Any:
+    """Case-fold a GitHub identifier. Owners, repositories and shas are
+    case-insensitive on GitHub; branch names are not and stay untouched."""
+
+    return value.casefold() if isinstance(value, str) else value
+
+
 # Attach dedup keys, one per store, matching what the addon UI compares on.
 def _pull_identity(item: dict[str, Any]) -> Any:
     return item.get("id")
 
 
 def _branch_identity(item: dict[str, Any]) -> Any:
+    owner, repo = item.get("owner"), item.get("repo")
+    if isinstance(owner, str) and isinstance(repo, str):
+        return (_fold(owner), _fold(repo), item.get("branchName"))
     return item.get("pseudoId")
 
 
 def _commit_identity(item: dict[str, Any]) -> Any:
-    return item.get("sha")
+    return _fold(item.get("sha"))
 
 
 def _issue_identity(item: dict[str, Any]) -> Any:
@@ -350,7 +359,7 @@ def _repo_matches(
     """Optional owner/repo narrowing shared by every detach selector."""
 
     for expected, field in ((payload.get("owner"), owner_key), (payload.get("repo"), repo_key)):
-        if expected is not None and item.get(field) != expected:
+        if expected is not None and _fold(item.get(field)) != _fold(expected):
             return False
     return True
 
@@ -388,7 +397,7 @@ def _branch_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
 
 
 def _commit_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
-    if payload.get("sha") is not None and item.get("sha") != payload["sha"]:
+    if payload.get("sha") is not None and _fold(item.get("sha")) != _fold(payload["sha"]):
         return False
     return _repo_matches(item, payload, "owner", "repo")
 
@@ -478,6 +487,10 @@ class AttachedState:
 
     addon_uid: str
     row_found: bool
+    # True when the UID is known to be the right one: it was given explicitly,
+    # or the card's space confirmed which addon is installed. False means an
+    # empty read cannot be told apart from a read of the wrong addon.
+    uid_confirmed: bool
     items: list[dict[str, Any]]
 
 
@@ -501,9 +514,10 @@ async def _read_attached(
     url_path = addon_url_path(payload)
     addon_uid = explicit or generate_addon_uid(url_path)
     rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
+    confirmed = explicit is not None
 
     if shared_row(rows) is None and explicit is None:
-        registered = await registered_addon_uid(
+        confirmed, registered = await registered_addon_uid(
             client, payload["card_id"], url_path, timeout, reporter
         )
         if registered is not None and registered != addon_uid:
@@ -517,6 +531,7 @@ async def _read_attached(
     return AttachedState(
         addon_uid=addon_uid,
         row_found=shared_row(rows) is not None,
+        uid_confirmed=confirmed,
         items=attached_items(rows, entity.key),
     )
 
@@ -544,6 +559,7 @@ def _envelope(
         # covers "the addon is not installed here" - useful when an empty list
         # would otherwise read as "nothing is attached".
         "addon_data_row_found": state.row_found,
+        "addon_uid_confirmed": state.uid_confirmed,
         "key": entity.key,
         "entity": entity.name,
     }
@@ -554,6 +570,16 @@ def _make_list_executor(entity: GithubEntity):
         if reporter:
             reporter(f"execution: read shared addon key {entity.key}")
         state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        if not state.row_found and not state.uid_confirmed:
+            # An empty list here would be indistinguishable from "we read the
+            # wrong addon", and a read cannot be verified by the server the way
+            # a write is. Refuse to answer instead of answering "nothing".
+            raise ValidationError(
+                f"Cannot confirm that {state.addon_uid} is this card's GitHub addon: the "
+                "UUID was derived from --addon-url-path, it holds no data, and the card's "
+                "space could not be asked which addon is installed. Pass --addon-uid "
+                "(see space-addons.list or company-addons.list) and retry."
+            )
         if reporter and not state.row_found:
             reporter(
                 f"addon data: no shared row under {state.addon_uid}; "
@@ -669,6 +695,15 @@ async def execute_addon_uid(client, tool, payload, path, query, body, timeout, r
     """Local-only: derive an addon UID without calling Kaiten."""
 
     url_path = payload["url_path"]
+    if not normalize_addon_url_path(url_path):
+        # companyAddonsController derives a UID only for a non-empty path and
+        # leaves a random one otherwise, so a UUID for "/" would be a value the
+        # platform never assigns.
+        raise ValidationError(
+            "Field url_path must contain a path segment: Kaiten does not derive a UUID for an "
+            "addon mounted at the root, it keeps the random one. Read the real value from "
+            "space-addons.list or company-addons.list."
+        )
     if reporter:
         reporter("execution: local UUID v5 derivation, no API call")
     return {

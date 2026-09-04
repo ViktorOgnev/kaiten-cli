@@ -13,7 +13,7 @@ object rather than a trimmed one.
 from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
-from kaiten_cli.registry.base import PLAIN_ENTITY_POLICY, make_tool
+from kaiten_cli.registry.base import PLAIN_ENTITY_POLICY, make_tool, shaping_properties
 from kaiten_cli.runtime.support.addons import (
     execute_github_branches_attach,
     execute_github_branches_detach,
@@ -40,7 +40,12 @@ UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
     "stores a random one. When a derived UUID finds no data row the command asks the card's "
     "space which addons it has and retries with the registered UUID, so an empty answer is not "
-    "silently an answer about the wrong addon. Pass --addon-uid to skip both steps."
+    "silently an answer about the wrong addon."
+)
+UID_FALLBACK_COST_NOTE = (
+    "That fallback costs two extra reads (the card and its space addons) for every card that "
+    "has no data row, so in a loop resolve the UUID once with space-addons.list and pass "
+    "--addon-uid explicitly."
 )
 RACE_NOTE = (
     "The shared row has no version or ETag: a simultaneous change from the addon UI or another "
@@ -80,7 +85,9 @@ DRY_RUN_NOTE = (
 )
 
 # Attachments are GitHub-shaped JSON, so the generic --compact rules have nothing
-# to strip here; only field selection is offered.
+# to strip here; only field selection is offered. Unlike card-addon-data.get this
+# read keeps the common transforms: it is not the input of a write, because attach
+# takes a GitHub REST object and re-reads the stored list itself.
 LIST_POLICY = ResponsePolicy(fields_supported=True, result_kind="list")
 
 
@@ -99,12 +106,7 @@ def _card_addon_properties() -> dict[str, dict]:
 
 
 def _fields_property() -> dict[str, dict]:
-    return {
-        "fields": {
-            "type": "string",
-            "description": "Comma-separated field names to return.",
-        },
-    }
+    return {"fields": shaping_properties()["fields"]}
 
 
 # The same two options play three different roles: stored identity (branches,
@@ -177,6 +179,12 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
+            (
+                "When the UUID was derived, holds no data and the space cannot be asked, the "
+                "command fails instead of returning an empty list that could mean either "
+                "\"nothing attached\" or \"wrong addon\"."
+            ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
                 "attachments both yield an empty list."
@@ -220,6 +228,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             REPO_IDENTITY_NOTE,
             (
@@ -261,6 +270,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pull-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."
@@ -290,7 +300,7 @@ TOOLS = (
                 description="Read the branches attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE, UID_FALLBACK_COST_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.branches.attach",
@@ -318,6 +328,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
                 "A REST branch object carries no repository, so --owner and --repo are required and "
@@ -361,6 +372,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the "
                 "same branch name exists in several repositories."
@@ -389,7 +401,7 @@ TOOLS = (
                 description="Read the commits attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE, UID_FALLBACK_COST_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.commits.attach",
@@ -417,6 +429,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
                 "The stored author prefers the linked GitHub account and falls back to the git "
@@ -455,6 +468,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             "--sha is required and matched in full; short shas do not match stored entries.",
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
@@ -480,7 +494,7 @@ TOOLS = (
                 description="Read the issues attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE, UID_FALLBACK_COST_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.issues.attach",
@@ -508,6 +522,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
                 "GitHub returns pull requests from the issues endpoint too; a payload with a "
@@ -547,6 +562,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            UID_FALLBACK_COST_NOTE,
             (
                 "Provide --issue-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."

@@ -125,7 +125,8 @@ Notes:
   question is "every PR this card references".
 - Resolve the addon UUID once with `space-addons list` and pass `--addon-uid` in
   the loop: without it every empty card costs two extra lookups while the command
-  checks whether the derived UUID was the right one.
+  checks whether the derived UUID was the right one, and a card whose space
+  cannot be read fails the whole call rather than reporting an empty list.
 
 ### Space topology
 

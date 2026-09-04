@@ -53,7 +53,9 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Дашборды",
         "Experimental dashboards, collaborators, widgets and compute jobs.",
     ),
-    ModuleDocSpec("iterations", "Итерации", "Beta iterations, iteration cards and card history."),
+    ModuleDocSpec(
+        "iterations", "Итерации", "Beta iterations, iteration cards and card history."
+    ),
     ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
     ModuleDocSpec(
         "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."

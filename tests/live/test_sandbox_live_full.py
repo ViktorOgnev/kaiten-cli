@@ -1196,11 +1196,15 @@ def _exercise_addons(h) -> None:
         data={"kaitenCliLiveProbe": None},
     )
 
+    # The UID is passed explicitly so the probes stay deterministic: without it a
+    # card with no data row triggers the space lookup, and a read that cannot be
+    # confirmed fails by design rather than returning an empty list.
     for entity in ("pulls", "branches", "commits", "issues"):
         h.run_tool_maybe(
             f"github-addon.{entity}.list",
             expected_error_statuses={403, 404, 405},
             card_id=card_id,
+            addon_uid=GITHUB_ADDON_UID,
         )
 
     # Attach/detach are covered as dry runs: they exercise the real read and the
@@ -1212,6 +1216,7 @@ def _exercise_addons(h) -> None:
         "github-addon.pulls.attach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         pull_json=payloads["pull"],
         dry_run=True,
     )
@@ -1219,6 +1224,7 @@ def _exercise_addons(h) -> None:
         "github-addon.branches.attach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         branch_json=payloads["branch"],
         dry_run=True,
         **repo,
@@ -1227,6 +1233,7 @@ def _exercise_addons(h) -> None:
         "github-addon.commits.attach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         commit_json=payloads["commit"],
         dry_run=True,
         **repo,
@@ -1235,6 +1242,7 @@ def _exercise_addons(h) -> None:
         "github-addon.issues.attach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         issue_json=payloads["issue"],
         dry_run=True,
         **repo,
@@ -1244,6 +1252,7 @@ def _exercise_addons(h) -> None:
         "github-addon.pulls.detach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         number=999999,
         dry_run=True,
     )
@@ -1251,6 +1260,7 @@ def _exercise_addons(h) -> None:
         "github-addon.branches.detach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         branch_name="kaiten-cli-live-probe",
         dry_run=True,
     )
@@ -1258,6 +1268,7 @@ def _exercise_addons(h) -> None:
         "github-addon.commits.detach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         sha="0000000000000000000000000000000000000000",
         dry_run=True,
     )
@@ -1265,6 +1276,7 @@ def _exercise_addons(h) -> None:
         "github-addon.issues.detach",
         expected_error_statuses={403, 404, 405},
         card_id=card_id,
+        addon_uid=GITHUB_ADDON_UID,
         number=999999,
         dry_run=True,
     )

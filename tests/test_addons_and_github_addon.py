@@ -13,12 +13,13 @@ from kaiten_cli.runtime.executor import build_request, execute_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.support.addons import (
     attached_items,
+    explicit_addon_uid,
     generate_addon_uid,
     map_rest_branch,
     map_rest_commit,
     map_rest_issue,
     map_rest_pull,
-    resolve_github_addon_uid,
+    validate_addon_uid_value,
 )
 
 API = "https://sandbox.kaiten.ru/api/latest"
@@ -125,13 +126,27 @@ def test_derived_addon_uid_matches_the_platform_derivation():
     assert generate_addon_uid("/sipuni") != GITHUB_ADDON_UID
 
 
-def test_github_addon_uid_resolution_prefers_the_explicit_value():
-    assert resolve_github_addon_uid({}) == GITHUB_ADDON_UID
-    assert resolve_github_addon_uid({"addon_url_path": "/gh-mirror"}) == generate_addon_uid(
-        "/gh-mirror"
-    )
-    explicit = "11111111-2222-4333-8444-555555555555"
-    assert resolve_github_addon_uid({"addon_uid": explicit}) == explicit
+def test_explicit_addon_uid_is_validated_and_lowercased():
+    assert explicit_addon_uid({}) is None
+    assert explicit_addon_uid({"addon_url_path": "/gh-mirror"}) is None
+    # Kaiten compares the path segment to a lowercase Postgres uuid with ===,
+    # so an uppercase UUID reads fine and then fails every write with 403.
+    assert explicit_addon_uid({"addon_uid": GITHUB_ADDON_UID.upper()}) == GITHUB_ADDON_UID
+
+
+def test_addon_uid_validation_matches_the_server_route_rule():
+    assert validate_addon_uid_value("0CE23A01-560F-51E0-9982-1E3445DC5990") == GITHUB_ADDON_UID
+
+    # uuidIdRule requires version 4 or 5 and the RFC-4122 variant; anything the
+    # route rejects can never address an addon.
+    for rejected in (
+        "00000000-0000-0000-0000-000000000000",
+        "0ce23a01-560f-11e0-9982-1e3445dc5990",
+        "0ce23a01-560f-51e0-0982-1e3445dc5990",
+        "not-a-uuid",
+    ):
+        with pytest.raises(ValidationError):
+            validate_addon_uid_value(rejected)
 
 
 def test_attached_items_only_reads_the_shared_row():
@@ -714,7 +729,7 @@ async def test_explicit_addon_uid_skips_the_space_lookup(monkeypatch):
 
 
 @respx.mock
-async def test_addon_lookup_failure_keeps_the_derived_uid(monkeypatch):
+async def test_unverifiable_empty_read_fails_instead_of_answering_nothing(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
@@ -722,8 +737,42 @@ async def test_addon_lookup_failure_keeps_the_derived_uid(monkeypatch):
 
     tool = resolve_tool("github-addon.pulls.list")
 
-    # A caller without space access still gets the plain answer, not a failure.
+    # [] here could equally mean "nothing attached" or "wrong addon entirely".
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_confirmed_empty_read_is_an_answer(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    # The space answered, so "no addon installed here" is a real empty answer.
     assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+
+
+@respx.mock
+async def test_writes_keep_going_when_the_space_lookup_fails(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(return_value=Response(403, json={"message": "no access"}))
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    # A write is verified by the server: a wrong UUID is rejected with 403, so
+    # there is no silently wrong outcome to protect against.
+    assert result["status"] == "attached"
+    assert result["addon_uid_confirmed"] is False
+    assert patch_route.called
 
 
 @respx.mock
