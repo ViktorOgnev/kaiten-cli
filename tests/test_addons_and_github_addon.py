@@ -14,11 +14,16 @@ from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.support.addons import (
     attached_items,
     generate_addon_uid,
+    map_rest_branch,
+    map_rest_commit,
+    map_rest_issue,
     map_rest_pull,
     resolve_github_addon_uid,
 )
 
 API = "https://sandbox.kaiten.ru/api/latest"
+CARD_URL = f"{API}/cards/10"
+SPACE_ADDONS_URL = f"{API}/spaces/5/addons"
 # Same UID the platform derives for an addon mounted at /github.
 GITHUB_ADDON_UID = "0ce23a01-560f-51e0-9982-1e3445dc5990"
 CARD_ADDON_DATA_URL = f"{API}/cards/10/addons-data/{GITHUB_ADDON_UID}"
@@ -63,6 +68,13 @@ def _addon_pull(pull_id: int = 111, number: int = 42) -> dict:
         "repoName": "web",
         "repoOwner": "acme",
     }
+
+
+def _mock_addon_lookup(addons: list[dict] | None = None) -> None:
+    """Mock the space lookup an empty addons-data read falls back to."""
+
+    respx.get(CARD_URL).mock(return_value=Response(200, json={"id": 10, "space_id": 5}))
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=addons or []))
 
 
 def _rows(data: dict | None, *, private: dict | None = None) -> list[dict]:
@@ -149,7 +161,12 @@ def test_map_rest_pull_matches_the_addon_dto():
 
 
 def test_map_rest_pull_uses_addon_placeholders_for_cosmetic_fields():
-    minimal = {"id": 1, "number": 2, "base": {"repo": {"name": "web", "owner": {"login": "acme"}}}}
+    minimal = {
+        "id": 1,
+        "number": 2,
+        "html_url": "https://github.com/acme/web/pull/2",
+        "base": {"repo": {"name": "web", "owner": {"login": "acme"}}},
+    }
 
     mapped = map_rest_pull(minimal, {})
 
@@ -176,7 +193,7 @@ def test_map_rest_pull_rejects_a_payload_without_a_repository():
 
 
 def test_map_rest_pull_accepts_an_explicit_repository_fallback():
-    trimmed = {"id": 1, "number": 2}
+    trimmed = {"id": 1, "number": 2, "html_url": "https://github.com/acme/web/pull/2"}
 
     mapped = map_rest_pull(trimmed, {"owner": "acme", "repo": "web"})
 
@@ -296,6 +313,7 @@ async def test_pulls_attach_dry_run_does_not_write(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
     patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
 
     tool = resolve_tool("github-addon.pulls.attach")
@@ -396,6 +414,7 @@ async def test_branch_attach_builds_the_addon_identity(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
     patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
 
     tool = resolve_tool("github-addon.branches.attach")
@@ -432,6 +451,7 @@ async def test_commit_attach_falls_back_to_the_git_author(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
     respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
 
     tool = resolve_tool("github-addon.commits.attach")
@@ -508,6 +528,7 @@ def test_cli_pulls_attach_accepts_a_custom_addon_mount_path(runner):
     mirror_uid = generate_addon_uid("/gh-mirror")
     url = f"{API}/cards/10/addons-data/{mirror_uid}"
     respx.get(url).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
     respx.patch(url).mock(return_value=Response(200, json={}))
 
     result = runner.invoke(
@@ -652,3 +673,378 @@ async def test_github_addon_uid_override_must_be_a_uuid(monkeypatch):
         await execute_tool(
             tool, merge_inputs(tool, {"card_id": 10, "addon_uid": "../../cards/999"})
         )
+
+
+@respx.mock
+async def test_pulls_list_retries_with_the_registered_addon_uid(monkeypatch):
+    """A derived UID is a guess outside on-prem; an empty read must not end the story."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup(
+        [{"id": registered_uid, "iframe_initial_url": "https://addons.example/github"}]
+    )
+    registered_route = respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert [item["number"] for item in result] == [42]
+    assert registered_route.called
+
+
+@respx.mock
+async def test_explicit_addon_uid_skips_the_space_lookup(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    card_route = respx.get(CARD_URL).mock(return_value=Response(200, json={"space_id": 5}))
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "addon_uid": GITHUB_ADDON_UID})
+    )
+
+    assert result == []
+    assert not card_route.called
+
+
+@respx.mock
+async def test_addon_lookup_failure_keeps_the_derived_uid(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(return_value=Response(403, json={"message": "no access"}))
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    # A caller without space access still gets the plain answer, not a failure.
+    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+
+
+@respx.mock
+async def test_attach_envelope_reports_a_missing_addon_row(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
+    respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()})
+    )
+
+    assert result["addon_data_row_found"] is False
+    assert result["addon_uid"] == GITHUB_ADDON_UID
+
+
+@respx.mock
+async def test_raw_card_addon_data_read_is_not_transformed(monkeypatch):
+    """The blob is opaque third-party JSON and feeds a read-modify-write cycle."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    blob = {
+        "description": "addon description",
+        "icon": "data:image/png;base64,AAAA",
+        "attachedPulls": [_addon_pull()],
+    }
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=_rows(blob)))
+
+    tool = resolve_tool("card-addon-data.get")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "addon_uid": GITHUB_ADDON_UID})
+    )
+
+    assert result[0]["data"] == blob
+
+
+@respx.mock
+async def test_branches_detach_matches_owner_repo_and_name(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    target = {
+        "branchName": "feature/login",
+        "owner": "acme",
+        "repo": "web",
+        "pseudoId": "acme/web/feature/login",
+    }
+    other = {
+        "branchName": "feature/login",
+        "owner": "other",
+        "repo": "api",
+        "pseudoId": "other/api/feature/login",
+    }
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedBranches": [target, other]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.branches.detach")
+    result = await execute_tool(
+        tool,
+        merge_inputs(
+            tool,
+            {"card_id": 10, "branch_name": "feature/login", "owner": "acme", "repo": "web"},
+        ),
+    )
+
+    assert result["removed"] == [target]
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert sent["data"]["attachedBranches"] == [other]
+
+
+@respx.mock
+async def test_branches_detach_by_pseudo_id_is_unambiguous(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    target = {
+        "branchName": "feature/login",
+        "owner": "acme",
+        "repo": "web",
+        "pseudoId": "acme/web/feature/login",
+    }
+    other = {
+        "branchName": "feature/login",
+        "owner": "other",
+        "repo": "api",
+        "pseudoId": "other/api/feature/login",
+    }
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedBranches": [target, other]}))
+    )
+    respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.branches.detach")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "pseudo_id": "other/api/feature/login"})
+    )
+
+    assert result["removed"] == [other]
+
+
+@respx.mock
+async def test_branches_detach_rejects_an_ambiguous_branch_name(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    target = {"branchName": "main", "owner": "acme", "repo": "web", "pseudoId": "acme/web/main"}
+    other = {"branchName": "main", "owner": "other", "repo": "api", "pseudoId": "other/api/main"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedBranches": [target, other]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.branches.detach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "branch_name": "main"}))
+
+    assert "acme/web/main" in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_commits_detach_matches_sha_and_repository(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    sha = "0" * 40
+    target = {"sha": sha, "owner": "acme", "repo": "web"}
+    other = {"sha": sha, "owner": "other", "repo": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedCommits": [target, other]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.commits.detach")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "sha": sha, "owner": "acme", "repo": "web"})
+    )
+
+    assert result["removed"] == [target]
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert sent["data"]["attachedCommits"] == [other]
+
+
+@respx.mock
+async def test_commits_detach_ignores_a_short_sha(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    stored = {"sha": "0" * 40, "owner": "acme", "repo": "web"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedCommits": [stored]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.commits.detach")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "sha": "0000000"}))
+
+    assert result["status"] == "not_found"
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_issues_detach_by_number_and_repository(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    target = {"id": 7, "number": 3, "repoOwner": "acme", "repoName": "web"}
+    other = {"id": 8, "number": 3, "repoOwner": "other", "repoName": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedIssues": [target, other]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.issues.detach")
+    result = await execute_tool(
+        tool,
+        merge_inputs(tool, {"card_id": 10, "number": 3, "owner": "acme", "repo": "web"}),
+    )
+
+    assert result["removed"] == [target]
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert sent["data"]["attachedIssues"] == [other]
+
+
+@respx.mock
+async def test_issues_detach_by_id_is_unambiguous(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    target = {"id": 7, "number": 3, "repoOwner": "acme", "repoName": "web"}
+    other = {"id": 8, "number": 3, "repoOwner": "other", "repoName": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedIssues": [target, other]}))
+    )
+    respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.issues.detach")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "issue_id": 8}))
+
+    assert result["removed"] == [other]
+
+
+@respx.mock
+async def test_detach_dry_run_reports_without_writing(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.detach")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "number": 42, "dry_run": True})
+    )
+
+    assert result["status"] == "would_detach"
+    assert result["attached_count"] == 0
+    assert [item["id"] for item in result["removed"]] == [111]
+    assert not patch_route.called
+
+
+def test_issue_mapping_requires_a_repository():
+    issue = {"id": 1, "number": 2, "html_url": "https://github.com/acme/web/issues/2"}
+
+    with pytest.raises(ValidationError):
+        map_rest_issue(issue, {})
+
+    assert map_rest_issue(issue, {"owner": "acme", "repo": "web"})["repoOwner"] == "acme"
+
+
+def test_attach_mapping_requires_the_link_the_addon_always_stores():
+    with pytest.raises(ValidationError):
+        map_rest_pull(
+            {"id": 1, "number": 2, "base": {"repo": {"name": "web", "owner": {"login": "acme"}}}},
+            {},
+        )
+
+    with pytest.raises(ValidationError):
+        map_rest_commit({"sha": "abc"}, {"owner": "acme", "repo": "web"})
+
+
+def test_blank_repository_options_are_rejected_on_attach():
+    pull = {"id": 1, "number": 2, "html_url": "https://github.com/acme/web/pull/2"}
+
+    with pytest.raises(ValidationError):
+        map_rest_pull(pull, {"owner": "  ", "repo": "  "})
+
+    branch = map_rest_branch({"name": "feat"}, {"owner": " acme ", "repo": " web "})
+    assert branch["pseudoId"] == "acme/web/feat"
+
+
+@respx.mock
+async def test_issues_attach_is_idempotent_by_github_id(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    stored = {"id": 5, "number": 3, "repoOwner": "acme", "repoName": "web"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedIssues": [stored]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.issues.attach")
+    result = await execute_tool(
+        tool,
+        merge_inputs(
+            tool,
+            {
+                "card_id": 10,
+                "owner": "acme",
+                "repo": "web",
+                "issue_json": {
+                    "id": 5,
+                    "number": 3,
+                    "html_url": "https://github.com/acme/web/issues/3",
+                },
+            },
+        ),
+    )
+
+    assert result["status"] == "already_attached"
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_commits_detach_ambiguity_names_the_repositories(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    sha = "0" * 40
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(
+            200,
+            json=_rows(
+                {
+                    "attachedCommits": [
+                        {"sha": sha, "owner": "acme", "repo": "web"},
+                        {"sha": sha, "owner": "other", "repo": "api"},
+                    ]
+                }
+            ),
+        )
+    )
+
+    tool = resolve_tool("github-addon.commits.detach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "sha": sha}))
+
+    assert f"acme/web@{sha}" in str(error.value)
+
+
+@respx.mock
+def test_verbose_reports_a_missing_addon_data_row(runner):
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_addon_lookup()
+
+    result = runner.invoke(
+        cli,
+        ["--json", "--verbose", "github-addon", "pulls", "list", "--card-id", "10"],
+        env=ENV,
+    )
+
+    assert result.exit_code == 0
+    assert "no shared row" in result.stderr

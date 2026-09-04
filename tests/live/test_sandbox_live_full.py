@@ -1150,6 +1150,7 @@ def _exercise_addons(h) -> None:
     assert derived["addon_uid"] == GITHUB_ADDON_UID, derived
 
     h.run_tool_maybe("addons.list", expected_error_statuses={403, 405})
+    h.run_tool_maybe("company-addons.list", expected_error_statuses={403, 405})
     h.run_tool_maybe(
         "space-addons.list", expected_error_statuses={403, 404, 405}, space_id=space_id
     )

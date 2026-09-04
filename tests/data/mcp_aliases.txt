@@ -255,6 +255,7 @@ kaiten_list_collective_vote_values
 kaiten_list_column_subscribers
 kaiten_list_columns
 kaiten_list_comments
+kaiten_list_company_addons
 kaiten_list_company_groups
 kaiten_list_company_users
 kaiten_list_current_user_blockers

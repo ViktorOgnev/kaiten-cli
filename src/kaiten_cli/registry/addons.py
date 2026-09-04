@@ -5,6 +5,7 @@ from __future__ import annotations
 from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import (
     PLAIN_ENTITY_POLICY,
+    PLAIN_LIST_POLICY,
     SHAPED_LIST_POLICY,
     make_tool,
     shaping_properties,
@@ -12,9 +13,14 @@ from kaiten_cli.registry.base import (
 from kaiten_cli.runtime.support.addons import execute_addon_uid, validate_addon_uid_payload
 
 ADDON_UID_NOTE = (
-    "addon_uid is the addon's UUID, not its name. Take it from addons.list / "
-    "space-addons.list, or derive it locally with addons.uid when the addon is "
-    "mounted at a known URL path on a self-hosted installation."
+    "addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the "
+    "space you are working in, or from company-addons.list; addons.list only shows the "
+    "published catalog and omits an addon registered privately by a company."
+)
+UID_DERIVATION_NOTE = (
+    "Deriving the UUID from a mount path is a guess: Kaiten stamps a derived UUID only on "
+    "on-premises installations whose addon iframe path is non-empty, and stores a random "
+    "UUID otherwise. Verify it against space-addons.list before relying on it."
 )
 SHARED_SCOPE_NOTE = (
     "Shared data is one row per card visible to everyone (writing it needs card.update); "
@@ -30,13 +36,21 @@ ADDON_INSTALL_NOTE = (
 )
 
 ADDON_UID_VALIDATION = RuntimeBehavior(payload_validator=validate_addon_uid_payload)
+# An addon's data blob is opaque third-party JSON. The generic transforms walk
+# into it - compact drops `description`, base64 stripping rewrites `data:` values -
+# and this read is the documented input of a read-modify-write cycle, so a shaped
+# answer would be written back as real data loss.
+RAW_ADDON_DATA_READ = RuntimeBehavior(
+    payload_validator=validate_addon_uid_payload,
+    apply_common_transforms=False,
+)
 
 
 TOOLS = (
     make_tool(
         canonical_name="addons.list",
         mcp_alias="kaiten_list_addons",
-        description="List published Kaiten addons available to the current company.",
+        description="List the published Kaiten addon catalog.",
         input_schema={
             "type": "object",
             "properties": {**shaping_properties()},
@@ -46,10 +60,16 @@ TOOLS = (
         examples=(
             ExampleSpec(
                 command="kaiten --json addons list --fields id,name",
-                description="Find the UUID of an addon by its name.",
+                description="Find the UUID of a published addon by its name.",
             ),
         ),
-        usage_notes=(ADDON_UID_NOTE,),
+        usage_notes=(
+            (
+                "The endpoint returns every non-archived addon with status published, without a "
+                "company filter; an addon a company registered privately is not in this list."
+            ),
+            ADDON_UID_NOTE,
+        ),
     ),
     make_tool(
         canonical_name="addons.uid",
@@ -82,12 +102,38 @@ TOOLS = (
         usage_notes=(
             (
                 "Local computation only: UUID v5 of the normalized path under the fixed Kaiten "
-                "addons namespace, the same derivation self-hosted Kaiten uses."
+                "addons namespace, the same derivation the platform uses."
             ),
+            UID_DERIVATION_NOTE,
             (
-                "Deployments that registered an addon with an explicit UUID instead of deriving it "
-                "from the mount path must read the real value from addons.list."
+                "The platform derives from the path of the addon's iframe_initial_url, so pass "
+                "that path: an addon served from https://host/github/index.html derives from "
+                "/github/index.html, not /github."
             ),
+        ),
+    ),
+    make_tool(
+        canonical_name="company-addons.list",
+        mcp_alias="kaiten_list_company_addons",
+        description="List the addons registered by the current company, published or not.",
+        input_schema={
+            "type": "object",
+            "properties": {**shaping_properties()},
+        },
+        operation=OperationSpec(method="GET", path_template="/company/addons"),
+        response_policy=SHAPED_LIST_POLICY,
+        examples=(
+            ExampleSpec(
+                command="kaiten --json company-addons list --fields id,name,status,iframe_initial_url",
+                description="Find the UUID of an addon the company registered itself.",
+            ),
+        ),
+        usage_notes=(
+            (
+                "This is where a privately registered addon lives; addons.list only covers the "
+                "published catalog."
+            ),
+            ADDON_UID_NOTE,
         ),
     ),
     make_tool(
@@ -195,7 +241,6 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "addon_uid": {"type": "string", "description": "Addon UUID"},
-                **shaping_properties(),
             },
             "required": ["card_id", "addon_uid"],
         },
@@ -204,8 +249,8 @@ TOOLS = (
             path_template="/cards/{card_id}/addons-data/{addon_uid}",
             path_fields=("card_id", "addon_uid"),
         ),
-        response_policy=SHAPED_LIST_POLICY,
-        runtime_behavior=ADDON_UID_VALIDATION,
+        response_policy=PLAIN_LIST_POLICY,
+        runtime_behavior=RAW_ADDON_DATA_READ,
         examples=(
             ExampleSpec(
                 command="kaiten --json card-addon-data get --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",
@@ -266,6 +311,11 @@ TOOLS = (
             SHARED_SCOPE_NOTE,
             ADDON_INSTALL_NOTE,
             (
+                "The shared row has no version or ETag, so a read-modify-write races with the "
+                "addon UI and with another CLI run; keep the read and the write close together "
+                "and re-read before retrying."
+            ),
+            (
                 "For the GitHub addon prefer the github-addon commands: they keep the exact widget "
                 "payload shape and dedup attachments instead of overwriting the whole key."
             ),
@@ -279,7 +329,6 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "addon_uid": {"type": "string", "description": "Addon UUID"},
-                **shaping_properties(),
             },
             "required": ["addon_uid"],
         },
@@ -288,8 +337,8 @@ TOOLS = (
             path_template="/company/users/current/addons-data/{addon_uid}",
             path_fields=("addon_uid",),
         ),
-        response_policy=SHAPED_LIST_POLICY,
-        runtime_behavior=ADDON_UID_VALIDATION,
+        response_policy=PLAIN_LIST_POLICY,
+        runtime_behavior=RAW_ADDON_DATA_READ,
         examples=(
             ExampleSpec(
                 command="kaiten --json user-addon-data get --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",

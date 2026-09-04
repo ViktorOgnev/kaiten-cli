@@ -242,6 +242,10 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
         status=LIVE_STATUS_NOT_VALIDATED,
         note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
     ),
+    "company-addons.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
     "space-addons.list": LiveContract(
         status=LIVE_STATUS_NOT_VALIDATED,
         note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",

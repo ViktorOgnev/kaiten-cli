@@ -26,6 +26,8 @@ SHAPED_LIST_POLICY = ResponsePolicy(
 )
 # A single small envelope: no shaping options, so none are advertised.
 PLAIN_ENTITY_POLICY = ResponsePolicy(result_kind="entity")
+# A list whose items are opaque to the generic transforms, so none are offered.
+PLAIN_LIST_POLICY = ResponsePolicy(result_kind="list")
 
 
 def make_tool(

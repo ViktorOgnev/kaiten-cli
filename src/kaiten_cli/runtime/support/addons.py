@@ -14,8 +14,9 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse
 
-from kaiten_cli.errors import ValidationError
+from kaiten_cli.errors import ApiError, TransportError, ValidationError
 
 # Fixed namespace from kaiten-lib/src/shared/addons/generateAddonUid.js. On
 # self-hosted Kaiten an addon UID is the UUID v5 of its normalized URL path, so
@@ -77,13 +78,75 @@ def normalize_addon_url_path(url_path: str) -> str:
     return url_path.strip("/").lower()
 
 
-def resolve_github_addon_uid(payload: dict[str, Any]) -> str:
-    """Explicit `--addon-uid` wins; otherwise derive it from the addon mount path."""
+def explicit_addon_uid(payload: dict[str, Any]) -> str | None:
+    """The validated `--addon-uid` when the caller gave one."""
 
     explicit = payload.get("addon_uid")
     if isinstance(explicit, str) and explicit.strip():
         return validate_addon_uid_value(explicit)
-    return generate_addon_uid(payload.get("addon_url_path") or GITHUB_ADDON_URL_PATH)
+    return None
+
+
+def addon_url_path(payload: dict[str, Any]) -> str:
+    return payload.get("addon_url_path") or GITHUB_ADDON_URL_PATH
+
+
+def resolve_github_addon_uid(payload: dict[str, Any]) -> str:
+    """Explicit `--addon-uid` wins; otherwise derive it from the addon mount path.
+
+    Derivation only reproduces the real UID on an on-premises installation whose
+    addon iframe path equals the mount path: `companyAddonsController` stamps the
+    derived UID solely under `config.onPremises`, and Kaiten otherwise stores a
+    random UUID. Callers must therefore treat a derived UID as a guess and fall
+    back to `registered_addon_uid` when it finds no data.
+    """
+
+    return explicit_addon_uid(payload) or generate_addon_uid(addon_url_path(payload))
+
+
+def _iframe_url_path(url: Any) -> str | None:
+    """Normalized path of an addon's iframe URL, the input of the UID derivation."""
+
+    if not isinstance(url, str) or not url:
+        return None
+    try:
+        return normalize_addon_url_path(urlparse(url).path)
+    except ValueError:  # pragma: no cover - urlparse only raises on malformed IPv6
+        return None
+
+
+async def registered_addon_uid(
+    client, card_id: Any, url_path: str, timeout: float, reporter
+) -> str | None:
+    """UID Kaiten actually registered for the addon mounted at `url_path`.
+
+    Asks the card's space which addons it has and matches them by iframe path.
+    Best effort: a caller without `space.addons.read`, or a card the lookup
+    cannot resolve, keeps the derived UID instead of failing the command.
+    """
+
+    normalized = normalize_addon_url_path(url_path)
+    try:
+        card = await client.get(f"/cards/{card_id}", timeout=timeout)
+        space_id = card.get("space_id") if isinstance(card, dict) else None
+        if space_id is None:
+            return None
+        addons = await client.get(f"/spaces/{space_id}/addons", timeout=timeout)
+    except (ApiError, TransportError) as error:
+        if reporter:
+            reporter(f"addon lookup: space addons unavailable ({error})")
+        return None
+
+    if not isinstance(addons, list):
+        return None
+    for addon in addons:
+        if not isinstance(addon, dict):
+            continue
+        if _iframe_url_path(addon.get("iframe_initial_url")) == normalized:
+            uid = addon.get("id")
+            if isinstance(uid, str) and _UUID_PATTERN.match(uid):
+                return uid
+    return None
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -121,9 +184,17 @@ def _require_int(value: Any, field: str) -> int:
 
 
 def _require_text(value: Any, field: str) -> str:
-    if not isinstance(value, str) or not value:
+    text = value.strip() if isinstance(value, str) else ""
+    if not text:
         raise ValidationError(f"Field {field} must be a non-empty string.")
-    return value
+    return text
+
+
+def _optional_text(value: Any) -> str | None:
+    """A blank option (an unset shell variable) is absence, not a value."""
+
+    text = value.strip() if isinstance(value, str) else ""
+    return text or None
 
 
 def _author(user: Any) -> dict[str, Any]:
@@ -152,8 +223,8 @@ def map_rest_pull(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     # so the repository is identity, not decoration: a placeholder here would
     # store an entry that can never resolve on GitHub again. A trimmed payload
     # (gh pr view --json ...) may omit base.repo, hence the explicit fallback.
-    owner = _nested(pull, "base", "repo", "owner", "login") or payload.get("owner")
-    repo = _nested(pull, "base", "repo", "name") or payload.get("repo")
+    owner = _nested(pull, "base", "repo", "owner", "login") or _optional_text(payload.get("owner"))
+    repo = _nested(pull, "base", "repo", "name") or _optional_text(payload.get("repo"))
     if not owner or not repo:
         raise ValidationError(
             "Field pull_json has no base.repo.owner.login / base.repo.name; pass the full "
@@ -163,7 +234,10 @@ def map_rest_pull(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": _require_int(pull.get("id"), "pull_json.id"),
         "number": _require_int(pull.get("number"), "pull_json.number"),
-        "htmlUrl": pull.get("html_url"),
+        # The addon always stores a real link: its own DTO reads html_url from a
+        # full REST response, and the widget falls back to the stored link when
+        # GitHub is unreachable.
+        "htmlUrl": _require_text(pull.get("html_url"), "pull_json.html_url"),
         "state": pull.get("state"),
         "title": pull.get("title"),
         "body": pull.get("body"),
@@ -204,11 +278,18 @@ def map_rest_commit(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     # account and falls back to the git name.
     account = commit.get("author") if isinstance(commit.get("author"), dict) else {}
     git_author = _nested(commit, "commit", "author") or {}
+    # The addon's own DTO reads commit.commit.message and commit.commit.author.date
+    # without guards, so an entry without them is one the addon could not produce.
     return {
         "sha": _require_text(commit.get("sha"), "commit_json.sha"),
-        "htmlUrl": commit.get("html_url"),
-        "message": _nested(commit, "commit", "message"),
-        "date": git_author.get("date") if isinstance(git_author, dict) else None,
+        "htmlUrl": _require_text(commit.get("html_url"), "commit_json.html_url"),
+        "message": _require_text(
+            _nested(commit, "commit", "message"), "commit_json.commit.message"
+        ),
+        "date": _require_text(
+            git_author.get("date") if isinstance(git_author, dict) else None,
+            "commit_json.commit.author.date",
+        ),
         "author": {
             "login": account.get("login")
             or (git_author.get("name") if isinstance(git_author, dict) else None)
@@ -237,7 +318,7 @@ def map_rest_issue(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
         "title": issue.get("title"),
         "state": issue.get("state"),
         "createdAt": issue.get("created_at"),
-        "htmlUrl": issue.get("html_url"),
+        "htmlUrl": _require_text(issue.get("html_url"), "issue_json.html_url"),
         # Issues store the author under `user`, pulls under `author`; both shapes
         # come straight from the addon's own DTO creators.
         "user": _author(issue.get("user")),
@@ -391,9 +472,53 @@ def _addon_data_path(path: str, addon_uid: str) -> str:
     return f"{path.rstrip('/')}/{addon_uid}"
 
 
-async def _read_attached(client, path: str, addon_uid: str, key: str, timeout: float) -> list:
+@dataclass(frozen=True, slots=True)
+class AttachedState:
+    """What one addons-data read found, and under which UID."""
+
+    addon_uid: str
+    row_found: bool
+    items: list[dict[str, Any]]
+
+
+async def _read_attached(
+    client,
+    payload: dict[str, Any],
+    path: str,
+    entity: GithubEntity,
+    timeout: float,
+    reporter,
+) -> AttachedState:
+    """Read the shared attachments, re-resolving the addon UID if a guess missed.
+
+    Without an explicit `--addon-uid` the UID is derived from the mount path,
+    which only matches on-premises installations. An empty read is therefore
+    ambiguous: no attachments, or the wrong addon entirely. Ask the card's space
+    for the registered UID before believing the empty answer.
+    """
+
+    explicit = explicit_addon_uid(payload)
+    url_path = addon_url_path(payload)
+    addon_uid = explicit or generate_addon_uid(url_path)
     rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
-    return attached_items(rows, key)
+
+    if shared_row(rows) is None and explicit is None:
+        registered = await registered_addon_uid(
+            client, payload["card_id"], url_path, timeout, reporter
+        )
+        if registered is not None and registered != addon_uid:
+            if reporter:
+                reporter(
+                    f"addon uid: derived {addon_uid} has no data, using registered {registered}"
+                )
+            addon_uid = registered
+            rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
+
+    return AttachedState(
+        addon_uid=addon_uid,
+        row_found=shared_row(rows) is not None,
+        items=attached_items(rows, entity.key),
+    )
 
 
 async def _write_attached(
@@ -409,10 +534,16 @@ async def _write_attached(
     )
 
 
-def _envelope(payload: dict[str, Any], addon_uid: str, entity: GithubEntity) -> dict[str, Any]:
+def _envelope(
+    payload: dict[str, Any], state: AttachedState, entity: GithubEntity
+) -> dict[str, Any]:
     return {
         "card_id": payload["card_id"],
-        "addon_uid": addon_uid,
+        "addon_uid": state.addon_uid,
+        # False means the card has no data row for this addon at all, which also
+        # covers "the addon is not installed here" - useful when an empty list
+        # would otherwise read as "nothing is attached".
+        "addon_data_row_found": state.row_found,
         "key": entity.key,
         "entity": entity.name,
     }
@@ -420,10 +551,15 @@ def _envelope(payload: dict[str, Any], addon_uid: str, entity: GithubEntity) -> 
 
 def _make_list_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
-        addon_uid = resolve_github_addon_uid(payload)
         if reporter:
-            reporter(f"execution: read shared addon key {entity.key} for addon {addon_uid}")
-        return await _read_attached(client, path, addon_uid, entity.key, timeout)
+            reporter(f"execution: read shared addon key {entity.key}")
+        state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        if reporter and not state.row_found:
+            reporter(
+                f"addon data: no shared row under {state.addon_uid}; "
+                "the card has no attachments or the addon is not installed here"
+            )
+        return state.items
 
     execute.__name__ = f"execute_github_addon_{entity.name}_list"
     return execute
@@ -431,12 +567,12 @@ def _make_list_executor(entity: GithubEntity):
 
 def _make_attach_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
-        addon_uid = resolve_github_addon_uid(payload)
         item = entity.mapper(payload.get(entity.payload_field), payload)
         if reporter:
             reporter(f"execution: read-modify-write of shared addon key {entity.key}")
-        existing = await _read_attached(client, path, addon_uid, entity.key, timeout)
-        result = _envelope(payload, addon_uid, entity)
+        state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        addon_uid, existing = state.addon_uid, state.items
+        result = _envelope(payload, state, entity)
         result["action"] = "attach"
         result["item"] = item
 
@@ -466,15 +602,15 @@ def _make_attach_executor(entity: GithubEntity):
 def _make_detach_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
         _require_any_selector(payload, entity.selectors)
-        addon_uid = resolve_github_addon_uid(payload)
         if reporter:
             reporter(f"execution: read-modify-write of shared addon key {entity.key}")
-        existing = await _read_attached(client, path, addon_uid, entity.key, timeout)
+        state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        addon_uid, existing = state.addon_uid, state.items
         selected = [entity.matches(item, payload) for item in existing]
         removed = [item for item, hit in zip(existing, selected) if hit]
         kept = [item for item, hit in zip(existing, selected) if not hit]
 
-        result = _envelope(payload, addon_uid, entity)
+        result = _envelope(payload, state, entity)
         result["action"] = "detach"
         result["removed"] = removed
 

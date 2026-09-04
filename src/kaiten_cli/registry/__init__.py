@@ -54,6 +54,8 @@ from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("spaces", SPACE_TOOLS),
     ("automations", AUTOMATION_TOOLS),
+    ("addons", ADDON_TOOLS),
+    ("github_addon", GITHUB_ADDON_TOOLS),
     ("boards", BOARD_TOOLS),
     ("cards", CARD_TOOLS),
     ("card_types", CARD_TYPE_TOOLS),
@@ -85,8 +87,6 @@ REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("tree", TREE_TOOLS),
     ("utilities", UTILITY_TOOLS),
     ("webhooks", WEBHOOK_TOOLS),
-    ("addons", ADDON_TOOLS),
-    ("github_addon", GITHUB_ADDON_TOOLS),
 )
 TOOL_SET: tuple[ToolSpec, ...] = tuple(
     tool for _, module_tools in REGISTRY_MODULES for tool in module_tools

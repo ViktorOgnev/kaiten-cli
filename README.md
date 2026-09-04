@@ -359,20 +359,29 @@ kaiten --json custom-directory-records cards list --directory-id <directory_uuid
 этому хранилищу дают команды `card-addon-data` и `user-addon-data`, список
 установленных аддонов – `addons list` и `space-addons list`.
 
-Адресация идёт по UUID аддона, а не по имени. На self-hosted UUID детерминированно
-выводится из пути монтирования, поэтому его можно получить локально, без запроса
-к Kaiten:
+Адресация идёт по UUID аддона, а не по имени. Надёжный источник – список аддонов
+пространства или компании:
+
+```bash
+kaiten --json space-addons list --space-id <space_id> --fields id,name
+kaiten --json company-addons list --fields id,name,status,iframe_initial_url
+kaiten --json addons list --fields id,name      # только опубликованный каталог
+```
+
+`addons uid` выводит UUID локально, из пути iframe аддона. Это работает не везде:
+детерминированный UUID Kaiten проставляет только на on-premises и только при
+непустом пути, в остальных случаях UUID случайный. Поэтому выведенное значение –
+гипотеза, которую стоит сверить со `space-addons list`:
 
 ```bash
 kaiten --json addons uid --url-path /github          # /github -> 0ce23a01-560f-51e0-9982-1e3445dc5990
-kaiten --json addons list --fields id,name
-kaiten --json space-addons list --space-id <space_id> --fields id,name
 ```
 
 GitHub-аддон показывает на карточке pull request'ы, ветки, коммиты и issues.
-Отдельные команды `github-addon` читают и пишут именно его хранилище, сохраняя
-формат виджета и дедуплицируя записи, поэтому запись из CLI неотличима от
-добавленной через интерфейс аддона:
+Отдельные команды `github-addon` читают и пишут именно его хранилище: тот же формат
+записи, та же дедупликация и тот же порядок вставки, что у виджета. Поля-описания
+(заголовок, статус, автор) заполняются ровно настолько, насколько полон переданный
+объект, поэтому передавайте полный REST-ответ, а не урезанный:
 
 ```bash
 kaiten --json github-addon pulls list --card-id <card_id> --fields number,htmlUrl,state
@@ -382,8 +391,15 @@ kaiten --json github-addon pulls attach --card-id <card_id> --pull-json @pull.js
 kaiten --json github-addon pulls detach --card-id <card_id> --number NUMBER --owner OWNER --repo REPO
 ```
 
-Сам CLI в GitHub не ходит: объект PR, ветки, коммита или issue передаётся снаружи
-(`gh api` или любой другой источник) и отображается в формат аддона.
+Сам CLI в GitHub не ходит: объект PR, ветки, коммита или issue передаётся снаружи и
+отображается в формат аддона. Нужен именно REST-объект (`gh api repos/OWNER/REPO/...`);
+вывод `gh pr view --json` – другая схема (строковый GraphQL-id, camelCase) и не подходит.
+
+Если `--addon-uid` не задан, команды берут выведенный из пути UUID, а когда по нему
+не нашлось строки данных – переспрашивают у пространства карточки, какой UUID
+зарегистрирован на самом деле, и повторяют чтение. Так пустой ответ не оказывается
+ответом про другой аддон. В цикле по многим карточкам лучше один раз получить UUID
+через `space-addons list` и передавать его явно.
 
 Репозиторий – часть идентичности записи: виджет обновляет каждое вложение запросом
 в GitHub по владельцу, репозиторию и номеру (имени, sha). Поэтому для веток,
@@ -406,7 +422,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **410** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **411** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -433,6 +449,8 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Итерации | `iterations` | 9 | [Раздел](COMMAND_REFERENCE.md#module-iterations) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и рабочие процессы | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
+| Аддоны | `addons` | 10 | [Раздел](COMMAND_REFERENCE.md#module-addons) |
+| GitHub-аддон | `github_addon` | 12 | [Раздел](COMMAND_REFERENCE.md#module-github-addon) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
 | Роли и группы | `roles_and_groups` | 31 | [Раздел](COMMAND_REFERENCE.md#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Раздел](COMMAND_REFERENCE.md#module-scim) |
@@ -443,9 +461,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| Аддоны | `addons` | 9 | [Раздел](COMMAND_REFERENCE.md#module-addons) |
-| GitHub-аддон | `github_addon` | 12 | [Раздел](COMMAND_REFERENCE.md#module-github-addon) |
-| **Итого** | **35** | **410** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **35** | **411** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория

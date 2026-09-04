@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **410** canonical commands across **35** registry modules.
+`kaiten-cli` currently exposes **411** canonical commands across **35** registry modules.
 
 ## Conventions
 
@@ -44,6 +44,8 @@
 | Итерации | `iterations` | 9 | [Open](#module-iterations) |
 | Вебхуки | `webhooks` | 9 | [Open](#module-webhooks) |
 | Автоматизации и воркфлоу | `automations` | 11 | [Open](#module-automations) |
+| Аддоны | `addons` | 10 | [Open](#module-addons) |
+| GitHub-аддон | `github_addon` | 12 | [Open](#module-github-addon) |
 | Проекты и спринты | `projects` | 13 | [Open](#module-projects) |
 | Роли и группы | `roles_and_groups` | 31 | [Open](#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Open](#module-scim) |
@@ -54,8 +56,6 @@
 | Утилиты | `utilities` | 15 | [Open](#module-utilities) |
 | Локальные snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Open](#module-query) |
-| Аддоны | `addons` | 9 | [Open](#module-addons) |
-| GitHub-аддон | `github_addon` | 12 | [Open](#module-github-addon) |
 
 ## Full Reference
 
@@ -10296,6 +10296,1093 @@ workflows
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
 
+<a id="module-addons"></a>
+## Аддоны (`addons`) — 10 commands
+
+Addon catalog, space installation and per-card / per-user addon data.
+
+**Namespace tree**
+
+```text
+addons
+  list
+  uid
+card-addon-data
+  get
+  set
+company-addons
+  list
+space-addons
+  install
+  list
+  uninstall
+user-addon-data
+  get
+  set
+```
+
+### `addons.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten addons list` |
+| MCP alias | `kaiten_list_addons` |
+| Description | List the published Kaiten addon catalog. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/addons` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Find the UUID of a published addon by its name.: `kaiten --json addons list --fields id,name`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The endpoint returns every non-archived addon with status published, without a company filter; an addon a company registered privately is not in this list.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `addons.uid`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten addons uid` |
+| MCP alias | `kaiten_derive_addon_uid` |
+| Description | Derive an addon UUID locally from its mount path, without calling Kaiten. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/local/addons/uid` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `url_path` | `string` | yes | — | Addon mount path, for example /github. |
+
+**Examples**
+
+- Derive the GitHub addon UUID used by the addons-data endpoints.: `kaiten --json addons uid --url-path /github`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Local computation only: UUID v5 of the normalized path under the fixed Kaiten addons namespace, the same derivation the platform uses.
+- Deriving the UUID from a mount path is a guess: Kaiten stamps a derived UUID only on on-premises installations whose addon iframe path is non-empty, and stores a random UUID otherwise. Verify it against space-addons.list before relying on it.
+- The platform derives from the path of the addon's iframe_initial_url, so pass that path: an addon served from https://host/github/index.html derives from /github/index.html, not /github.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `card-addon-data.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-addon-data get` |
+| MCP alias | `kaiten_get_card_addon_data` |
+| Description | Read the addon data rows stored on a card for one addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/addons-data/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | yes | — | Addon UUID |
+
+**Examples**
+
+- Read the GitHub addon state stored on a card.: `kaiten --json card-addon-data get --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- Returns every row the current user may see: the shared row (user_uid is null) plus their own private row, if either exists.
+- Shared data is one row per card visible to everyone (writing it needs card.update); private data is a per-user row that only its owner reads and writes (card.read is enough).
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `card-addon-data.set`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten card-addon-data set` |
+| MCP alias | `kaiten_set_card_addon_data` |
+| Description | Write addon data on a card in the shared or private scope. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | yes | — | Addon UUID |
+| `type` | `string` | yes | `shared`, `private` | Data scope: shared for the whole card, private for the current user. |
+| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
+
+**Examples**
+
+- Replace one addon key on a card.: `kaiten --json card-addon-data set --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --type shared --data '{"attachedPulls": []}'`
+- Write an addon data object from a file.: `kaiten --json card-addon-data set --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --type shared --data @payload.json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- The server shallow-merges data over the stored row by top-level key, so send the full replacement value for every key you set and omit keys you want to keep untouched.
+- Shared data is one row per card visible to everyone (writing it needs card.update); private data is a per-user row that only its owner reads and writes (card.read is enough).
+- The addon must be installed in the card's space before its per-card data can be written; otherwise the shared write is rejected with a permission error.
+- The shared row has no version or ETag, so a read-modify-write races with the addon UI and with another CLI run; keep the read and the write close together and re-read before retrying.
+- For the GitHub addon prefer the github-addon commands: they keep the exact widget payload shape and dedup attachments instead of overwriting the whole key.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `company-addons.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten company-addons list` |
+| MCP alias | `kaiten_list_company_addons` |
+| Description | List the addons registered by the current company, published or not. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/addons` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Find the UUID of an addon the company registered itself.: `kaiten --json company-addons list --fields id,name,status,iframe_initial_url`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This is where a privately registered addon lives; addons.list only covers the published catalog.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `space-addons.install`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-addons install` |
+| MCP alias | `kaiten_install_space_addon` |
+| Description | Install an addon into a Kaiten space or update its space settings. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/addons/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | Space ID |
+| `addon_uid` | `string` | yes | — | Addon UUID |
+| `settings` | `object` | no | — | Space-level addon settings object; omit to only install. |
+
+**Examples**
+
+- Install the GitHub addon into a space.: `kaiten --json space-addons install --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- Installing an already installed addon without settings is rejected as a no-op; pass settings when you only need to update configuration.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `space-addons.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-addons list` |
+| MCP alias | `kaiten_list_space_addons` |
+| Description | List addons installed in a Kaiten space. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_id}/addons` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | Space ID |
+| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Check which addons a space has installed.: `kaiten --json space-addons list --space-id 1 --fields id,name`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `space-addons.uninstall`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-addons uninstall` |
+| MCP alias | `kaiten_uninstall_space_addon` |
+| Description | Remove an addon from a Kaiten space. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/addons/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | Space ID |
+| `addon_uid` | `string` | yes | — | Addon UUID |
+
+**Examples**
+
+- Detach an addon from a space.: `kaiten --json space-addons uninstall --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Uninstalling hides the addon in that space; per-card data rows written earlier are not deleted by this call.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `user-addon-data.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-addon-data get` |
+| MCP alias | `kaiten_get_user_addon_data` |
+| Description | Read the current user's company-level addon data for one addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/users/current/addons-data/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `addon_uid` | `string` | yes | — | Addon UUID |
+
+**Examples**
+
+- Read the current user's addon-level settings.: `kaiten --json user-addon-data get --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- This store is per user and per company; it holds addon-level user state, not per-card state.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+### `user-addon-data.set`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten user-addon-data set` |
+| MCP alias | `kaiten_set_user_addon_data` |
+| Description | Write the current user's company-level addon data for one addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/company/users/current/addons-data/{addon_uid}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `addon_uid` | `string` | yes | — | Addon UUID |
+| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
+
+**Examples**
+
+- Reset one key of the current user's addon state.: `kaiten --json user-addon-data set --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --data '{"selectedRepo": null}'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- addon_uid is the addon's UUID, not its name. Take it from space-addons.list for the space you are working in, or from company-addons.list; addons.list only shows the published catalog and omits an addon registered privately by a company.
+- The server shallow-merges data over the stored row by top-level key, so send the full replacement value for every key you set and omit keys you want to keep untouched.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
+
+<a id="module-github-addon"></a>
+## GitHub-аддон (`github_addon`) — 12 commands
+
+Pull requests, branches, commits and issues attached to cards by the GitHub addon.
+
+**Namespace tree**
+
+```text
+github-addon.branches
+  attach
+  detach
+  list
+github-addon.commits
+  attach
+  detach
+  list
+github-addon.issues
+  attach
+  detach
+  list
+github-addon.pulls
+  attach
+  detach
+  list
+```
+
+### `github-addon.branches.attach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon branches attach` |
+| MCP alias | `kaiten_attach_github_branch` |
+| Description | Attach a branch to a card through the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `branch_json` | `object` | yes | — | Raw GitHub REST branch object. |
+| `owner` | `string` | yes | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Attach a branch fetched with gh api repos/OWNER/REPO/branches/NAME.: `kaiten --json github-addon branches attach --card-id 10 --owner acme --repo web --branch-json @branch.json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
+- A REST branch object carries no repository, so --owner and --repo are required and form the stored branch identity.
+- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
+- Already attached entries are detected by owner/repo/branch, matching the addon UI.
+- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.branches.detach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon branches detach` |
+| MCP alias | `kaiten_detach_github_branch` |
+| Description | Detach a branch from a card in the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `branch_name` | `string` | no | — | Branch name. |
+| `pseudo_id` | `string` | no | — | Stored branch identity in owner/repo/branch form. |
+| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Detach one branch from a card.: `kaiten --json github-addon branches detach --card-id 10 --branch-name feature/login --owner acme --repo web`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the same branch name exists in several repositories.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
+- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.branches.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon branches list` |
+| MCP alias | `kaiten_list_card_github_branches` |
+| Description | List branches attached to a card through the GitHub addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read the branches attached to a card.: `kaiten --json github-addon branches list --card-id 10 --fields branchName,htmlUrl`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.commits.attach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon commits attach` |
+| MCP alias | `kaiten_attach_github_commit` |
+| Description | Attach a commit to a card through the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `commit_json` | `object` | yes | — | Raw GitHub REST commit object. |
+| `owner` | `string` | yes | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Attach a commit fetched with gh api repos/OWNER/REPO/commits/SHA.: `kaiten --json github-addon commits attach --card-id 10 --owner acme --repo web --commit-json @commit.json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
+- The stored author prefers the linked GitHub account and falls back to the git author name, exactly as the addon does.
+- Already attached entries are detected by commit sha.
+- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.commits.detach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon commits detach` |
+| MCP alias | `kaiten_detach_github_commit` |
+| Description | Detach a commit from a card in the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `sha` | `string` | no | — | Full commit sha as stored. |
+| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Detach one commit from a card.: `kaiten --json github-addon commits detach --card-id 10 --sha 3f1a2bc4d5e6f708192a3b4c5d6e7f8091a2b3c4`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- --sha is required and matched in full; short shas do not match stored entries.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
+- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.commits.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon commits list` |
+| MCP alias | `kaiten_list_card_github_commits` |
+| Description | List commits attached to a card through the GitHub addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read the commits attached to a card.: `kaiten --json github-addon commits list --card-id 10 --fields sha,htmlUrl,message`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.issues.attach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon issues attach` |
+| MCP alias | `kaiten_attach_github_issue` |
+| Description | Attach an issue to a card through the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `issue_json` | `object` | yes | — | Raw GitHub REST issue object. |
+| `owner` | `string` | yes | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Attach an issue fetched with gh api repos/OWNER/REPO/issues/NUMBER.: `kaiten --json github-addon issues attach --card-id 10 --owner acme --repo web --issue-json @issue.json`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
+- GitHub returns pull requests from the issues endpoint too; a payload with a pull_request field is rejected, attach it as a pull request instead.
+- Already attached entries are detected by GitHub numeric id and left untouched.
+- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.issues.detach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon issues detach` |
+| MCP alias | `kaiten_detach_github_issue` |
+| Description | Detach an issue from a card in the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `issue_id` | `integer` | no | — | GitHub numeric issue id. |
+| `number` | `integer` | no | — | Issue number. |
+| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Detach one issue from a card.: `kaiten --json github-addon issues detach --card-id 10 --number 7 --owner acme --repo web`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Provide --issue-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
+- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.issues.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon issues list` |
+| MCP alias | `kaiten_list_card_github_issues` |
+| Description | List issues attached to a card through the GitHub addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read the issues attached to a card.: `kaiten --json github-addon issues list --card-id 10 --fields number,htmlUrl,state`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.pulls.attach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon pulls attach` |
+| MCP alias | `kaiten_attach_github_pull` |
+| Description | Attach a pull request to a card through the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `pull_json` | `object` | yes | — | Raw GitHub REST pull request object. |
+| `owner` | `string` | no | — | GitHub repository owner login. Required when the payload carries no repository. |
+| `repo` | `string` | no | — | GitHub repository name. Required when the payload carries no repository. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Attach a PR fetched with gh api repos/OWNER/REPO/pulls/NUMBER.: `kaiten --json github-addon pulls attach --card-id 10 --pull-json @pull.json`
+- Preview the attachment without writing it.: `kaiten --json github-addon pulls attach --card-id 10 --pull-json @pull.json --dry-run`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
+- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
+- The repository is read from base.repo. A REST payload trimmed with --jq can lose it; then pass --owner and --repo. Output of gh pr view --json is a different schema entirely and is not accepted with or without them.
+- Already attached entries are detected by GitHub numeric id and left untouched.
+- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.pulls.detach`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon pulls detach` |
+| MCP alias | `kaiten_detach_github_pull` |
+| Description | Detach a pull request from a card in the GitHub addon. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `pull_id` | `integer` | no | — | GitHub numeric pull request id. |
+| `number` | `integer` | no | — | Pull request number. |
+| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+
+**Examples**
+
+- Detach one PR from a card.: `kaiten --json github-addon pulls detach --card-id 10 --number 42 --owner acme --repo web`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Provide --pull-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
+- A selector that matches nothing leaves the stored data untouched.
+- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
+- The shared row has no version or ETag: a simultaneous change from the addon UI or another CLI run can be lost. Re-read before retrying.
+- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
+### `github-addon.pulls.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten github-addon pulls list` |
+| MCP alias | `kaiten_list_card_github_pulls` |
+| Description | List pull requests attached to a card through the GitHub addon. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/cards/{card_id}/addons-data` |
+| Compact | `no` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Description |
+|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | Card ID |
+| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read the PR links attached to a card.: `kaiten --json github-addon pulls list --card-id 10 --fields number,htmlUrl,state`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
+- Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks the card's space which addons it has and retries with the registered UUID, so an empty answer is not silently an answer about the wrong addon. Pass --addon-uid to skip both steps.
+- Returns the stored attachedPulls entries; an uninstalled addon or a card without attachments both yield an empty list.
+- Card PR references can also live in external links; check external-links.list too when you need every PR referenced by a card.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
+
 <a id="module-projects"></a>
 ## Проекты и спринты (`projects`) — 13 commands
 
@@ -16909,1019 +17996,3 @@ query
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - throughput, lead_time, and cycle_time use the snapshot window when it exists; basic snapshots fall back to all locally known done transitions.
 - For repeated report generation, query metrics after snapshot build instead of re-fetching topology, cards, and history on every run.
-
-<a id="module-addons"></a>
-## Аддоны (`addons`) — 9 commands
-
-Addon catalog, space installation and per-card / per-user addon data.
-
-**Namespace tree**
-
-```text
-addons
-  list
-  uid
-card-addon-data
-  get
-  set
-space-addons
-  install
-  list
-  uninstall
-user-addon-data
-  get
-  set
-```
-
-### `addons.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten addons list` |
-| MCP alias | `kaiten_list_addons` |
-| Description | List published Kaiten addons available to the current company. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/addons` |
-| Compact | `yes` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Find the UUID of an addon by its name.: `kaiten --json addons list --fields id,name`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `addons.uid`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten addons uid` |
-| MCP alias | `kaiten_derive_addon_uid` |
-| Description | Derive an addon UUID locally from its mount path, without calling Kaiten. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/local/addons/uid` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `url_path` | `string` | yes | — | Addon mount path, for example /github. |
-
-**Examples**
-
-- Derive the GitHub addon UUID used by the addons-data endpoints.: `kaiten --json addons uid --url-path /github`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Local computation only: UUID v5 of the normalized path under the fixed Kaiten addons namespace, the same derivation self-hosted Kaiten uses.
-- Deployments that registered an addon with an explicit UUID instead of deriving it from the mount path must read the real value from addons.list.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `card-addon-data.get`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten card-addon-data get` |
-| MCP alias | `kaiten_get_card_addon_data` |
-| Description | Read the addon data rows stored on a card for one addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/addons-data/{addon_uid}` |
-| Compact | `yes` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the GitHub addon state stored on a card.: `kaiten --json card-addon-data get --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- Returns every row the current user may see: the shared row (user_uid is null) plus their own private row, if either exists.
-- Shared data is one row per card visible to everyone (writing it needs card.update); private data is a per-user row that only its owner reads and writes (card.read is enough).
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `card-addon-data.set`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten card-addon-data set` |
-| MCP alias | `kaiten_set_card_addon_data` |
-| Description | Write addon data on a card in the shared or private scope. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `direct_http` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data/{addon_uid}` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `type` | `string` | yes | `shared`, `private` | Data scope: shared for the whole card, private for the current user. |
-| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
-
-**Examples**
-
-- Replace one addon key on a card.: `kaiten --json card-addon-data set --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --type shared --data '{"attachedPulls": []}'`
-- Write an addon data object from a file.: `kaiten --json card-addon-data set --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --type shared --data @payload.json`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- The server shallow-merges data over the stored row by top-level key, so send the full replacement value for every key you set and omit keys you want to keep untouched.
-- Shared data is one row per card visible to everyone (writing it needs card.update); private data is a per-user row that only its owner reads and writes (card.read is enough).
-- The addon must be installed in the card's space before its per-card data can be written; otherwise the shared write is rejected with a permission error.
-- For the GitHub addon prefer the github-addon commands: they keep the exact widget payload shape and dedup attachments instead of overwriting the whole key.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `space-addons.install`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten space-addons install` |
-| MCP alias | `kaiten_install_space_addon` |
-| Description | Install an addon into a Kaiten space or update its space settings. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `direct_http` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/spaces/{space_id}/addons/{addon_uid}` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `settings` | `object` | no | — | Space-level addon settings object; omit to only install. |
-
-**Examples**
-
-- Install the GitHub addon into a space.: `kaiten --json space-addons install --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- Installing an already installed addon without settings is rejected as a no-op; pass settings when you only need to update configuration.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `space-addons.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten space-addons list` |
-| MCP alias | `kaiten_list_space_addons` |
-| Description | List addons installed in a Kaiten space. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/spaces/{space_id}/addons` |
-| Compact | `yes` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Check which addons a space has installed.: `kaiten --json space-addons list --space-id 1 --fields id,name`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `space-addons.uninstall`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten space-addons uninstall` |
-| MCP alias | `kaiten_uninstall_space_addon` |
-| Description | Remove an addon from a Kaiten space. |
-| Method | `DELETE` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `direct_http` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/spaces/{space_id}/addons/{addon_uid}` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-
-**Examples**
-
-- Detach an addon from a space.: `kaiten --json space-addons uninstall --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Uninstalling hides the addon in that space; per-card data rows written earlier are not deleted by this call.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `user-addon-data.get`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten user-addon-data get` |
-| MCP alias | `kaiten_get_user_addon_data` |
-| Description | Read the current user's company-level addon data for one addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `direct_http` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/company/users/current/addons-data/{addon_uid}` |
-| Compact | `yes` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the current user's addon-level settings.: `kaiten --json user-addon-data get --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- This store is per user and per company; it holds addon-level user state, not per-card state.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-### `user-addon-data.set`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten user-addon-data set` |
-| MCP alias | `kaiten_set_user_addon_data` |
-| Description | Write the current user's company-level addon data for one addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `direct_http` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/company/users/current/addons-data/{addon_uid}` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
-
-**Examples**
-
-- Reset one key of the current user's addon state.: `kaiten --json user-addon-data set --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --data '{"selectedRepo": null}'`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- addon_uid is the addon's UUID, not its name. Take it from addons.list / space-addons.list, or derive it locally with addons.uid when the addon is mounted at a known URL path on a self-hosted installation.
-- The server shallow-merges data over the stored row by top-level key, so send the full replacement value for every key you set and omit keys you want to keep untouched.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.
-
-<a id="module-github-addon"></a>
-## GitHub-аддон (`github_addon`) — 12 commands
-
-Pull requests, branches, commits and issues attached to cards by the GitHub addon.
-
-**Namespace tree**
-
-```text
-github-addon.branches
-  attach
-  detach
-  list
-github-addon.commits
-  attach
-  detach
-  list
-github-addon.issues
-  attach
-  detach
-  list
-github-addon.pulls
-  attach
-  detach
-  list
-```
-
-### `github-addon.branches.attach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon branches attach` |
-| MCP alias | `kaiten_attach_github_branch` |
-| Description | Attach a branch to a card through the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `branch_json` | `object` | yes | — | Raw GitHub REST branch object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Attach a branch fetched with gh api repos/OWNER/REPO/branches/NAME.: `kaiten --json github-addon branches attach --card-id 10 --owner acme --repo web --branch-json @branch.json`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
-- A REST branch object carries no repository, so --owner and --repo are required and form the stored branch identity.
-- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
-- Already attached entries are detected by owner/repo/branch, matching the addon UI.
-- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.branches.detach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon branches detach` |
-| MCP alias | `kaiten_detach_github_branch` |
-| Description | Detach a branch from a card in the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `branch_name` | `string` | no | — | Branch name. |
-| `pseudo_id` | `string` | no | — | Stored branch identity in owner/repo/branch form. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Detach one branch from a card.: `kaiten --json github-addon branches detach --card-id 10 --branch-name feature/login --owner acme --repo web`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the same branch name exists in several repositories.
-- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
-- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.branches.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon branches list` |
-| MCP alias | `kaiten_list_card_github_branches` |
-| Description | List branches attached to a card through the GitHub addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `custom` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the branches attached to a card.: `kaiten --json github-addon branches list --card-id 10 --fields branchName,htmlUrl`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise derived from --addon-url-path (default /github), which matches how self-hosted Kaiten derives addon UUIDs from mount paths.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.commits.attach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon commits attach` |
-| MCP alias | `kaiten_attach_github_commit` |
-| Description | Attach a commit to a card through the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `commit_json` | `object` | yes | — | Raw GitHub REST commit object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Attach a commit fetched with gh api repos/OWNER/REPO/commits/SHA.: `kaiten --json github-addon commits attach --card-id 10 --owner acme --repo web --commit-json @commit.json`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
-- The stored author prefers the linked GitHub account and falls back to the git author name, exactly as the addon does.
-- Already attached entries are detected by commit sha.
-- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.commits.detach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon commits detach` |
-| MCP alias | `kaiten_detach_github_commit` |
-| Description | Detach a commit from a card in the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `sha` | `string` | no | — | Full commit sha as stored. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Detach one commit from a card.: `kaiten --json github-addon commits detach --card-id 10 --sha 3f1a2bc4d5e6f708192a3b4c5d6e7f8091a2b3c4`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- --sha is required and matched in full; short shas do not match stored entries.
-- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
-- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.commits.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon commits list` |
-| MCP alias | `kaiten_list_card_github_commits` |
-| Description | List commits attached to a card through the GitHub addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `custom` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the commits attached to a card.: `kaiten --json github-addon commits list --card-id 10 --fields sha,htmlUrl,message`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise derived from --addon-url-path (default /github), which matches how self-hosted Kaiten derives addon UUIDs from mount paths.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.issues.attach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon issues attach` |
-| MCP alias | `kaiten_attach_github_issue` |
-| Description | Attach an issue to a card through the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `issue_json` | `object` | yes | — | Raw GitHub REST issue object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Attach an issue fetched with gh api repos/OWNER/REPO/issues/NUMBER.: `kaiten --json github-addon issues attach --card-id 10 --owner acme --repo web --issue-json @issue.json`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
-- GitHub returns pull requests from the issues endpoint too; a payload with a pull_request field is rejected, attach it as a pull request instead.
-- Already attached entries are detected by GitHub numeric id and left untouched.
-- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.issues.detach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon issues detach` |
-| MCP alias | `kaiten_detach_github_issue` |
-| Description | Detach an issue from a card in the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `issue_id` | `integer` | no | — | GitHub numeric issue id. |
-| `number` | `integer` | no | — | Issue number. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Detach one issue from a card.: `kaiten --json github-addon issues detach --card-id 10 --number 7 --owner acme --repo web`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Provide --issue-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
-- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
-- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.issues.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon issues list` |
-| MCP alias | `kaiten_list_card_github_issues` |
-| Description | List issues attached to a card through the GitHub addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `custom` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the issues attached to a card.: `kaiten --json github-addon issues list --card-id 10 --fields number,htmlUrl,state`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise derived from --addon-url-path (default /github), which matches how self-hosted Kaiten derives addon UUIDs from mount paths.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.pulls.attach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon pulls attach` |
-| MCP alias | `kaiten_attach_github_pull` |
-| Description | Attach a pull request to a card through the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `pull_json` | `object` | yes | — | Raw GitHub REST pull request object. |
-| `owner` | `string` | no | — | GitHub repository owner login. Required when the payload carries no repository. |
-| `repo` | `string` | no | — | GitHub repository name. Required when the payload carries no repository. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Attach a PR fetched with gh api repos/OWNER/REPO/pulls/NUMBER.: `kaiten --json github-addon pulls attach --card-id 10 --pull-json @pull.json`
-- Preview the attachment without writing it.: `kaiten --json github-addon pulls attach --card-id 10 --pull-json @pull.json --dry-run`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
-- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
-- The repository is read from base.repo in the payload. A trimmed payload without it (gh pr view --json ...) is rejected unless --owner and --repo are given.
-- Already attached entries are detected by GitHub numeric id and left untouched.
-- The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.pulls.detach`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon pulls detach` |
-| MCP alias | `kaiten_detach_github_pull` |
-| Description | Detach a pull request from a card in the GitHub addon. |
-| Method | `PATCH` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `pull_id` | `integer` | no | — | GitHub numeric pull request id. |
-| `number` | `integer` | no | — | Pull request number. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
-
-**Examples**
-
-- Detach one PR from a card.: `kaiten --json github-addon pulls detach --card-id 10 --number 42 --owner acme --repo web`
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Provide --pull-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
-- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
-- A selector that matches nothing leaves the stored data untouched.
-- Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
-- --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
-
-### `github-addon.pulls.list`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten github-addon pulls list` |
-| MCP alias | `kaiten_list_card_github_pulls` |
-| Description | List pull requests attached to a card through the GitHub addon. |
-| Method | `GET` |
-| Mutation | `no` |
-| Allowed in read-only mode | `yes` |
-| Remote side effects | `no` |
-| Execution mode | `custom` |
-| Cache policy | `request_scope` |
-| Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}/addons-data` |
-| Compact | `no` |
-| Fields | `yes` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
-
-**Examples**
-
-- Read the PR links attached to a card.: `kaiten --json github-addon pulls list --card-id 10 --fields number,htmlUrl,state`
-
-**Notes**
-
-- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No disk cache is read by default for this command.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise derived from --addon-url-path (default /github), which matches how self-hosted Kaiten derives addon UUIDs from mount paths.
-- Returns the stored attachedPulls entries; an uninstalled addon or a card without attachments both yield an empty list.
-- Card PR references can also live in external links; check external-links.list too when you need every PR referenced by a card.
-- Live contract: `live_not_validated`; expected statuses: —
-- Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.

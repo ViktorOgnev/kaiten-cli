@@ -53,12 +53,20 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Дашборды",
         "Experimental dashboards, collaborators, widgets and compute jobs.",
     ),
-    ModuleDocSpec(
-        "iterations", "Итерации", "Beta iterations, iteration cards and card history."
-    ),
+    ModuleDocSpec("iterations", "Итерации", "Beta iterations, iteration cards and card history."),
     ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
     ModuleDocSpec(
         "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."
+    ),
+    ModuleDocSpec(
+        "addons",
+        "Аддоны",
+        "Addon catalog, space installation and per-card / per-user addon data.",
+    ),
+    ModuleDocSpec(
+        "github_addon",
+        "GitHub-аддон",
+        "Pull requests, branches, commits and issues attached to cards by the GitHub addon.",
     ),
     ModuleDocSpec("projects", "Проекты и спринты", "Projects, project cards and sprints."),
     ModuleDocSpec(
@@ -87,16 +95,6 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
     ),
     ModuleDocSpec(
         "query", "Локальные запросы", "Local-only query and metrics commands over snapshots."
-    ),
-    ModuleDocSpec(
-        "addons",
-        "Аддоны",
-        "Addon catalog, space installation and per-card / per-user addon data.",
-    ),
-    ModuleDocSpec(
-        "github_addon",
-        "GitHub-аддон",
-        "Pull requests, branches, commits and issues attached to cards by the GitHub addon.",
     ),
 )
 

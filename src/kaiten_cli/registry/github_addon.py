@@ -4,8 +4,10 @@ The Kaiten GitHub addon does not store attachments as external links. It keeps
 them in the card's shared addon data under `attachedPulls`, `attachedBranches`,
 `attachedCommits` and `attachedIssues`, and the card widget re-reads each entry
 from GitHub by (owner, repo, number/name/sha). These commands read and write that
-store in the addon's own payload shape, so an entry written from the CLI is
-indistinguishable from one added through the addon UI.
+store in the addon's own payload shape: the same keys, the same identity fields and
+the same placeholders the addon writes. Optional presentation fields (title, state,
+author) are only as complete as the payload handed to the CLI, so pass the full REST
+object rather than a trimmed one.
 """
 
 from __future__ import annotations
@@ -30,14 +32,25 @@ from kaiten_cli.runtime.support.addons import (
 CARD_DATA_PATH = "/cards/{card_id}/addons-data"
 
 ADDON_UID_PATH_NOTE = (
-    "The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise "
-    "derived from --addon-url-path (default /github), which matches how self-hosted Kaiten "
-    "derives addon UUIDs from mount paths."
+    "The addon UUID is appended to the path at runtime, so the path template above stops at "
+    "addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path "
+    "(default /github)."
+)
+UID_FALLBACK_NOTE = (
+    "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
+    "stores a random one. When a derived UUID finds no data row the command asks the card's "
+    "space which addons it has and retries with the registered UUID, so an empty answer is not "
+    "silently an answer about the wrong addon. Pass --addon-uid to skip both steps."
+)
+RACE_NOTE = (
+    "The shared row has no version or ETag: a simultaneous change from the addon UI or another "
+    "CLI run can be lost. Re-read before retrying."
 )
 REST_JSON_NOTE = (
-    "Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub "
-    "itself, so the payload is the only source of title, state and author shown as a fallback "
-    "when the widget cannot reach GitHub."
+    "Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: "
+    "the latter returns GraphQL fields (a string node id, camelCase names) that this mapping "
+    "rejects. The CLI never calls GitHub itself, so the payload is the only source of the "
+    "title, state and author the widget shows when it cannot reach GitHub."
 )
 REPO_IDENTITY_NOTE = (
     "The card widget re-reads every attachment from GitHub by owner, repository and "
@@ -163,6 +176,7 @@ TOOLS = (
         ),
         usage_notes=(
             ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
                 "attachments both yield an empty list."
@@ -204,14 +218,18 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             REST_JSON_NOTE,
             REPO_IDENTITY_NOTE,
             (
-                "The repository is read from base.repo in the payload. A trimmed payload without "
-                "it (gh pr view --json ...) is rejected unless --owner and --repo are given."
+                "The repository is read from base.repo. A REST payload trimmed with --jq can lose "
+                "it; then pass --owner and --repo. Output of gh pr view --json is a different "
+                "schema entirely and is not accepted with or without them."
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -241,6 +259,8 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             (
                 "Provide --pull-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."
@@ -248,6 +268,7 @@ TOOLS = (
             AMBIGUOUS_SELECTOR_NOTE,
             "A selector that matches nothing leaves the stored data untouched.",
             EMPTY_KEY_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -269,7 +290,7 @@ TOOLS = (
                 description="Read the branches attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.branches.attach",
@@ -295,6 +316,8 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             REST_JSON_NOTE,
             (
                 "A REST branch object carries no repository, so --owner and --repo are required and "
@@ -303,6 +326,7 @@ TOOLS = (
             REPO_IDENTITY_NOTE,
             DEDUP_NOTE_BY_PSEUDO_ID,
             SHARED_WRITE_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -335,12 +359,15 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             (
                 "Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the "
                 "same branch name exists in several repositories."
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -362,7 +389,7 @@ TOOLS = (
                 description="Read the commits attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.commits.attach",
@@ -388,6 +415,8 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             REST_JSON_NOTE,
             (
                 "The stored author prefers the linked GitHub account and falls back to the git "
@@ -395,6 +424,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_SHA,
             SHARED_WRITE_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -423,9 +453,12 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             "--sha is required and matched in full; short shas do not match stored entries.",
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -447,7 +480,7 @@ TOOLS = (
                 description="Read the issues attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_PATH_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE, UID_FALLBACK_NOTE),
     ),
     make_tool(
         canonical_name="github-addon.issues.attach",
@@ -473,6 +506,8 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             REST_JSON_NOTE,
             (
                 "GitHub returns pull requests from the issues endpoint too; a payload with a "
@@ -480,6 +515,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),
@@ -509,12 +545,15 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            ADDON_UID_PATH_NOTE,
+            UID_FALLBACK_NOTE,
             (
                 "Provide --issue-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            RACE_NOTE,
             DRY_RUN_NOTE,
         ),
     ),

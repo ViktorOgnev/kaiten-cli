@@ -82,6 +82,14 @@ as their own mutation family:
 - In the manifest, the stable target key is card id plus addon key plus the
   attachment identity (PR/issue id, `owner/repo/branch`, commit sha), not the
   card id alone.
+- The shared row carries no version or ETag, so a read-modify-write races with
+  the addon UI and with a parallel CLI run, and the loser's entry is dropped.
+  Keep the read and the write in one command, do not fan out writes to the same
+  card, and re-read before retrying.
+- The addon UUID is derived from a mount path only on on-premises Kaiten; a
+  cloud tenant stores a random UUID. The commands re-resolve it from the card's
+  space when a derived UUID finds nothing, but for repeated writes read it once
+  from `space-addons list` and pass `--addon-uid` explicitly.
 
 ## Readback
 
