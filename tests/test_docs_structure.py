@@ -40,8 +40,11 @@ def test_primary_docs_expose_current_install_safety_and_live_metadata():
     live_validation = (root / "LIVE_VALIDATION.md").read_text(encoding="utf-8")
     behavior_matrix = (root / "API_BEHAVIOR_MATRIX.md").read_text(encoding="utf-8")
 
-    assert "@v0.1.29" in readme
+    assert "@v0.2.0" in readme
+    assert "@v0.1.29" not in readme
     assert "@v0.1.23" not in readme
+    assert "`v0.2.0` — граница совместимости" in readme
+    assert "stats.pagination_compatibility" in readme
     assert "KAITEN_CLI_READ_ONLY" in readme
     assert "KAITEN_CLI_UPDATE_CHECK" in readme
     assert "--no-update-check" in readme

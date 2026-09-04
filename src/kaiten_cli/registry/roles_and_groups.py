@@ -385,6 +385,7 @@ TOOLS = (
         ),
         usage_notes=(
             f"Uses at most {COMPANY_USERS_MAX_PAGE_SIZE} users per request for forward compatibility.",
+            "Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate users are not appended.",
             "If max_pages is reached on a full page, the command fails instead of returning a partial list.",
         ),
     ),
