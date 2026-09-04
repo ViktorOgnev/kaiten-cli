@@ -38,14 +38,20 @@ ADDON_UID_PATH_NOTE = (
 )
 UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
-    "stores a random one. When a derived UUID finds no data row the command asks the card's "
-    "space which addons it has and retries with the registered UUID, so an empty answer is not "
-    "silently an answer about the wrong addon."
+    "stores a random one. When a derived UUID finds no data row the command asks which addon "
+    "the card's board actually has - its own space first, then the other spaces the board "
+    "belongs to, because Kaiten resolves addon availability over all of them - and retries "
+    "with the registered UUID."
 )
 UID_FALLBACK_COST_NOTE = (
-    "That fallback costs two extra reads (the card and its space addons) for every card that "
-    "has no data row, so in a loop resolve the UUID once with space-addons.list and pass "
-    "--addon-uid explicitly."
+    "The lookup reads (the card, the space listing and the space addons) are reference data "
+    "cached like any other safe read, so a loop over cards pays for it once rather than per "
+    "card. Passing --addon-uid skips it entirely."
+)
+STRICT_WRITE_NOTE = (
+    "A write replaces the whole key, so the command refuses to proceed when the stored value "
+    "is not a plain list of objects: rewriting it would silently drop entries the CLI does not "
+    "understand. Inspect such a key with card-addon-data get."
 )
 RACE_NOTE = (
     "The shared row has no version or ETag: a simultaneous change from the addon UI or another "
@@ -181,9 +187,9 @@ TOOLS = (
             UID_FALLBACK_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
-                "When the UUID was derived, holds no data and the space cannot be asked, the "
-                "command fails instead of returning an empty list that could mean either "
-                '"nothing attached" or "wrong addon".'
+                "When the UUID was derived, holds no data and no readable space of the card's "
+                "board reports that addon, the command fails instead of returning an empty list "
+                'that could mean either "nothing attached" or "wrong addon".'
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
@@ -238,6 +244,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -278,6 +285,7 @@ TOOLS = (
             AMBIGUOUS_SELECTOR_NOTE,
             "A selector that matches nothing leaves the stored data untouched.",
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -337,6 +345,7 @@ TOOLS = (
             REPO_IDENTITY_NOTE,
             DEDUP_NOTE_BY_PSEUDO_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -379,6 +388,7 @@ TOOLS = (
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -437,6 +447,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_SHA,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -472,6 +483,7 @@ TOOLS = (
             "--sha is required and matched in full; short shas do not match stored entries.",
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -530,6 +542,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -569,6 +582,7 @@ TOOLS = (
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),

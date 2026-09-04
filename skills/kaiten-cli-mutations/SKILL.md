@@ -93,6 +93,10 @@ as their own mutation family:
 - A `github-addon ... list` that cannot confirm which addon it read fails
   instead of returning an empty list. Treat that error as "resolve the UUID
   first", not as "the card has nothing attached".
+- A write refuses to proceed when the stored key is not a plain list of objects,
+  because rewriting it would drop what the CLI cannot model. Read the key with
+  `card-addon-data get`, decide what the correct list is, and repair it with
+  `card-addon-data set` before retrying.
 
 ## Readback
 

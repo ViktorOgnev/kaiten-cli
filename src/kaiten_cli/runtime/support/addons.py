@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from kaiten_cli.errors import ApiError, TransportError, ValidationError
+from kaiten_cli.models import CACHE_POLICY_PERSISTENT_OPT_IN
 
 # Fixed namespace from kaiten-lib/src/shared/addons/generateAddonUid.js. On
 # self-hosted Kaiten an addon UID is the UUID v5 of its normalized URL path, so
@@ -112,40 +113,93 @@ def _iframe_url_path(url: Any) -> str | None:
         return None
 
 
+def _addon_uid_in(addons: Any, normalized_path: str) -> str | None:
+    """The UID of the addon mounted at `normalized_path` in one space listing."""
+
+    if not isinstance(addons, list):
+        return None
+    for addon in addons:
+        if not isinstance(addon, dict):
+            continue
+        if _iframe_url_path(addon.get("iframe_initial_url")) == normalized_path:
+            uid = addon.get("id")
+            if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
+                return uid.lower()
+    return None
+
+
+async def _board_space_ids(client, board_id: Any, timeout: float) -> list[int]:
+    """Every space the board belongs to, in listing order.
+
+    Kaiten decides addon availability for a card over all spaces of the card's
+    board (`space_boards` in `getAvailableAddonsForCard`), and a board can sit in
+    several spaces. There is no board->spaces endpoint, but the space listing
+    embeds each space's boards, and it is one cacheable read.
+    """
+
+    spaces = await client.get(
+        "/spaces", timeout=timeout, cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN
+    )
+    if not isinstance(spaces, list):
+        return []
+    matching: list[int] = []
+    for space in spaces:
+        if not isinstance(space, dict):
+            continue
+        boards = space.get("boards")
+        if not isinstance(boards, list):
+            continue
+        if any(isinstance(b, dict) and b.get("id") == board_id for b in boards):
+            space_id = space.get("id")
+            if isinstance(space_id, int):
+                matching.append(space_id)
+    return matching
+
+
 async def registered_addon_uid(
     client, card_id: Any, url_path: str, timeout: float, reporter
-) -> tuple[bool, str | None]:
-    """Ask the card's space which UID Kaiten registered for `url_path`.
+) -> str | None:
+    """The UID Kaiten registered for `url_path` on the card's board, or None.
 
-    Returns `(lookup_succeeded, uid)`. A successful lookup that finds no such
-    addon returns `(True, None)` - the addon is simply not installed there.
-    `(False, None)` means the question could not be answered at all, for example
-    without `space.addons.read`, and the caller must not treat the derived UID
-    as confirmed.
+    None means "not established": either the lookup could not be performed (no
+    `space.addons.read`, unreachable card) or no space of the card's board has
+    that addon. Both are indistinguishable from the caller's point of view and
+    neither confirms the derived UID, so None must never be read as "the addon
+    exists and has nothing attached".
+
+    The card's own space is checked first because it answers almost every case in
+    one read; the remaining spaces of the board are only consulted when it does
+    not, since a board shared into several spaces may carry the addon elsewhere.
     """
 
     normalized = normalize_addon_url_path(url_path)
     try:
-        card = await client.get(f"/cards/{card_id}", timeout=timeout)
-        space_id = card.get("space_id") if isinstance(card, dict) else None
-        if space_id is None:
-            return False, None
-        addons = await client.get(f"/spaces/{space_id}/addons", timeout=timeout)
+        card = await client.get(
+            f"/cards/{card_id}", timeout=timeout, cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN
+        )
+        if not isinstance(card, dict):
+            return None
+        space_id, board_id = card.get("space_id"), card.get("board_id")
+        checked: set[Any] = set()
+        for candidate in (space_id, *(await _board_space_ids(client, board_id, timeout))):
+            if candidate is None or candidate in checked:
+                continue
+            checked.add(candidate)
+            addons = await client.get(
+                f"/spaces/{candidate}/addons",
+                timeout=timeout,
+                cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
+            )
+            uid = _addon_uid_in(addons, normalized)
+            if uid is not None:
+                if reporter and candidate != space_id:
+                    reporter(f"addon lookup: found in space {candidate}, not the card's own space")
+                return uid
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: space addons unavailable ({error})")
-        return False, None
-
-    if not isinstance(addons, list):
-        return False, None
-    for addon in addons:
-        if not isinstance(addon, dict):
-            continue
-        if _iframe_url_path(addon.get("iframe_initial_url")) == normalized:
-            uid = addon.get("id")
-            if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
-                return True, uid.lower()
-    return True, None
+        return None
+    return None
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -159,15 +213,65 @@ def shared_row(rows: Any) -> dict[str, Any] | None:
     return None
 
 
-def attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
-    """Items stored under `key` in the shared row; [] for a missing/malformed blob."""
+UNSET = object()
+
+
+def stored_value(rows: Any, key: str) -> Any:
+    """Raw value stored under `key` in the shared row, or UNSET when absent.
+
+    Callers that are about to write must look at the raw value: a read-modify-write
+    that silently normalizes it would persist the normalization and drop whatever
+    it did not understand.
+    """
 
     row = shared_row(rows)
     data = row.get("data") if isinstance(row, dict) else None
-    value = data.get(key) if isinstance(data, dict) else None
+    if not isinstance(data, dict) or key not in data:
+        return UNSET
+    return data[key]
+
+
+def attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
+    """Items stored under `key` in the shared row; [] for a missing/malformed blob.
+
+    Tolerant on purpose - this is the read path. The write path uses
+    `mutable_attached_items`, which refuses to normalize anything.
+    """
+
+    value = stored_value(rows, key)
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def mutable_attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
+    """The stored list, or a hard failure when its shape is not what we can rewrite.
+
+    A write replaces the whole key, so anything the tolerant reader would have
+    dropped - a null, a legacy string marker, a value that is not a list at all -
+    would be destroyed by the rewrite. Refuse instead, and let the caller decide.
+    """
+
+    value = stored_value(rows, key)
+    if value is UNSET or value is None:
+        # No key yet, or the addon cleared it: both mean "start from empty", which
+        # is exactly what the addon UI writes when the last entry is removed.
+        return []
+    if not isinstance(value, list):
+        raise ValidationError(
+            f"Addon key {key} holds {type(value).__name__}, not a list, so this command cannot "
+            "rewrite it without losing data. Inspect it with card-addon-data get and fix it "
+            "with card-addon-data set."
+        )
+    unexpected = [index for index, item in enumerate(value) if not isinstance(item, dict)]
+    if unexpected:
+        positions = ", ".join(str(index) for index in unexpected[:5])
+        raise ValidationError(
+            f"Addon key {key} has non-object entries at position(s) {positions}; rewriting the "
+            "list would drop them. Inspect it with card-addon-data get and fix it with "
+            "card-addon-data set."
+        )
+    return list(value)
 
 
 def _require_object(value: Any, field: str) -> dict[str, Any]:
@@ -487,9 +591,10 @@ class AttachedState:
 
     addon_uid: str
     row_found: bool
-    # True when the UID is known to be the right one: it was given explicitly,
-    # or the card's space confirmed which addon is installed. False means an
-    # empty read cannot be told apart from a read of the wrong addon.
+    # True only when the UID is known to be the right one: it was given
+    # explicitly, or an addon registration was actually found for the card's
+    # board. "The space I could see has no such addon" is NOT a confirmation -
+    # the board may live in a space this user cannot read.
     uid_confirmed: bool
     items: list[dict[str, Any]]
 
@@ -501,13 +606,18 @@ async def _read_attached(
     entity: GithubEntity,
     timeout: float,
     reporter,
+    *,
+    for_write: bool = False,
 ) -> AttachedState:
     """Read the shared attachments, re-resolving the addon UID if a guess missed.
 
     Without an explicit `--addon-uid` the UID is derived from the mount path,
     which only matches on-premises installations. An empty read is therefore
-    ambiguous: no attachments, or the wrong addon entirely. Ask the card's space
-    for the registered UID before believing the empty answer.
+    ambiguous: no attachments, or the wrong addon entirely. Ask which addon the
+    card's board actually has before believing the empty answer.
+
+    `for_write` switches the item parsing from tolerant to strict, because the
+    caller is about to rewrite the whole key.
     """
 
     explicit = explicit_addon_uid(payload)
@@ -517,9 +627,10 @@ async def _read_attached(
     confirmed = explicit is not None
 
     if shared_row(rows) is None and explicit is None:
-        confirmed, registered = await registered_addon_uid(
+        registered = await registered_addon_uid(
             client, payload["card_id"], url_path, timeout, reporter
         )
+        confirmed = registered is not None
         if registered is not None and registered != addon_uid:
             if reporter:
                 reporter(
@@ -528,11 +639,12 @@ async def _read_attached(
             addon_uid = registered
             rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
 
+    read_items = mutable_attached_items if for_write else attached_items
     return AttachedState(
         addon_uid=addon_uid,
         row_found=shared_row(rows) is not None,
         uid_confirmed=confirmed,
-        items=attached_items(rows, entity.key),
+        items=read_items(rows, entity.key),
     )
 
 
@@ -575,10 +687,11 @@ def _make_list_executor(entity: GithubEntity):
             # wrong addon", and a read cannot be verified by the server the way
             # a write is. Refuse to answer instead of answering "nothing".
             raise ValidationError(
-                f"Cannot confirm that {state.addon_uid} is this card's GitHub addon: the "
-                "UUID was derived from --addon-url-path, it holds no data, and the card's "
-                "space could not be asked which addon is installed. Pass --addon-uid "
-                "(see space-addons.list or company-addons.list) and retry."
+                f"Cannot confirm that {state.addon_uid} is this card's GitHub addon: the UUID "
+                "was derived from --addon-url-path, it holds no data, and no space of the "
+                "card's board reported that addon - it may be installed in a space you cannot "
+                "read, or not installed at all. Pass --addon-uid (see space-addons.list or "
+                "company-addons.list) and retry."
             )
         if reporter and not state.row_found:
             reporter(
@@ -596,7 +709,9 @@ def _make_attach_executor(entity: GithubEntity):
         item = entity.mapper(payload.get(entity.payload_field), payload)
         if reporter:
             reporter(f"execution: read-modify-write of shared addon key {entity.key}")
-        state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        state = await _read_attached(
+            client, payload, path, entity, timeout, reporter, for_write=True
+        )
         addon_uid, existing = state.addon_uid, state.items
         result = _envelope(payload, state, entity)
         result["action"] = "attach"
@@ -630,7 +745,9 @@ def _make_detach_executor(entity: GithubEntity):
         _require_any_selector(payload, entity.selectors)
         if reporter:
             reporter(f"execution: read-modify-write of shared addon key {entity.key}")
-        state = await _read_attached(client, payload, path, entity, timeout, reporter)
+        state = await _read_attached(
+            client, payload, path, entity, timeout, reporter, for_write=True
+        )
         addon_uid, existing = state.addon_uid, state.items
         selected = [entity.matches(item, payload) for item in existing]
         removed = [item for item, hit in zip(existing, selected) if hit]
