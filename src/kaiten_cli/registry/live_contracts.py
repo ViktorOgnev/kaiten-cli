@@ -10,6 +10,7 @@ LIVE_STATUS_PASSED_WITH_RUNTIME_FIX = "live_passed_with_runtime_fix"
 LIVE_STATUS_PASSED_AS_EXPECTED_ERROR = "live_passed_as_expected_error"
 LIVE_STATUS_SYNTHETIC_READ = "synthetic_read"
 LIVE_STATUS_POLICY_EXCLUDED = "policy_excluded"
+LIVE_STATUS_NOT_VALIDATED = "live_not_validated"
 
 VALID_LIVE_STATUSES = {
     LIVE_STATUS_PASSED,
@@ -17,6 +18,7 @@ VALID_LIVE_STATUSES = {
     LIVE_STATUS_PASSED_AS_EXPECTED_ERROR,
     LIVE_STATUS_SYNTHETIC_READ,
     LIVE_STATUS_POLICY_EXCLUDED,
+    LIVE_STATUS_NOT_VALIDATED,
 }
 
 
@@ -231,6 +233,94 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
         status=LIVE_STATUS_PASSED_AS_EXPECTED_ERROR,
         note="When timer creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel timer id.",
         expected_statuses=(403, 404, 405),
+    ),
+    "addons.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "addons.uid": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "company-addons.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "space-addons.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "space-addons.install": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "space-addons.uninstall": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "card-addon-data.get": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "card-addon-data.set": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "user-addon-data.get": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "user-addon-data.set": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="Addon commands were added after the last live campaign; the live suite exercises them on read and documented-error paths, but no full live run has confirmed them yet.",
+    ),
+    "github-addon.pulls.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.pulls.attach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.pulls.detach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.branches.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.branches.attach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.branches.detach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.commits.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.commits.attach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.commits.detach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.issues.list": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.issues.attach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
+    ),
+    "github-addon.issues.detach": LiveContract(
+        status=LIVE_STATUS_NOT_VALIDATED,
+        note="GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.",
     ),
 }
 

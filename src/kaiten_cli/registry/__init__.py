@@ -15,6 +15,7 @@ from kaiten_cli.models import (
     format_schema_type,
 )
 from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
+from kaiten_cli.registry.addons import TOOLS as ADDON_TOOLS
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS
@@ -31,6 +32,7 @@ from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.dashboards import TOOLS as DASHBOARD_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
 from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
+from kaiten_cli.registry.github_addon import TOOLS as GITHUB_ADDON_TOOLS
 from kaiten_cli.registry.iterations import TOOLS as ITERATION_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
 from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
@@ -52,6 +54,8 @@ from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("spaces", SPACE_TOOLS),
     ("automations", AUTOMATION_TOOLS),
+    ("addons", ADDON_TOOLS),
+    ("github_addon", GITHUB_ADDON_TOOLS),
     ("boards", BOARD_TOOLS),
     ("cards", CARD_TOOLS),
     ("card_types", CARD_TYPE_TOOLS),

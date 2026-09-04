@@ -60,6 +60,40 @@ Use JSONL with one operation per line:
 - Do not mark a source checklist item complete or add comments/status changes
   unless those effects were explicitly authorized.
 
+## Addon data writes
+
+Addon state is not part of the card entity. A card's GitHub attachments, and any
+other addon's per-card state, live in a separate row reached through
+`card-addon-data` / `github-addon`, and never show up in `cards get`. Treat them
+as their own mutation family:
+
+- Prefer `github-addon <pulls|branches|commits|issues> attach|detach` over raw
+  `card-addon-data set`. The typed commands read the current list, dedup by the
+  addon's own identity, and rewrite only the key they touch.
+- Raw `card-addon-data set` merges by top-level key, so a partial value for a key
+  replaces that whole key. Sending one attachment overwrites the rest. Read the
+  current value first and send the full replacement list.
+- Preview with the command's own `--dry-run`. It performs the read and reports the
+  outcome without writing, but it is still classified as a mutation, so it does
+  not run under `--read-only`. Do investigation with `github-addon ... list`
+  (a plain read), then drop `--read-only` for the dry run, then authorize.
+- `detach` refuses a selector that matches more than one attachment. Narrow it
+  with `--owner`/`--repo` rather than reaching for `--all`.
+- In the manifest, the stable target key is card id plus addon key plus the
+  attachment identity (PR/issue id, `owner/repo/branch`, commit sha), not the
+  card id alone.
+- The shared row carries no version or ETag, so a read-modify-write races with
+  the addon UI and with a parallel CLI run, and the loser's entry is dropped.
+  Keep the read and the write in one command, do not fan out writes to the same
+  card, and re-read before retrying.
+- The addon UUID is derived from a mount path only on on-premises Kaiten; a
+  cloud tenant stores a random UUID. The commands re-resolve it from the card's
+  space when a derived UUID finds nothing, but for repeated writes read it once
+  from `space-addons list` and pass `--addon-uid` explicitly.
+- A `github-addon ... list` that cannot confirm which addon it read fails
+  instead of returning an empty list. Treat that error as "resolve the UUID
+  first", not as "the card has nothing attached".
+
 ## Readback
 
 Readback must be field-scoped and target-scoped:
@@ -69,6 +103,15 @@ kaiten --json --profile <name> cards batch-get \
   --card-ids '[101,102]' \
   --fields id,title,state \
   --compact
+```
+
+For an addon write, read back the addon store instead: a card read shows nothing,
+because the change never lands in a card field.
+
+```bash
+kaiten --json --profile <name> github-addon pulls list \
+  --card-id 101 \
+  --fields number,htmlUrl,state
 ```
 
 Compare the returned fields with the manifest, mark matching operations

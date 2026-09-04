@@ -5,6 +5,31 @@ from __future__ import annotations
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior, ToolSpec
 
 
+def shaping_properties() -> dict[str, dict]:
+    """Schema for the two local response-shaping options a list read can expose."""
+
+    return {
+        "compact": {
+            "type": "boolean",
+            "description": "Return compact output without heavy nested fields.",
+        },
+        "fields": {
+            "type": "string",
+            "description": "Comma-separated field names to return.",
+        },
+    }
+
+
+# A list read that accepts both shaping options above.
+SHAPED_LIST_POLICY = ResponsePolicy(
+    compact_supported=True, fields_supported=True, result_kind="list"
+)
+# A single small envelope: no shaping options, so none are advertised.
+PLAIN_ENTITY_POLICY = ResponsePolicy(result_kind="entity")
+# A list whose items are opaque to the generic transforms, so none are offered.
+PLAIN_LIST_POLICY = ResponsePolicy(result_kind="list")
+
+
 def make_tool(
     *,
     canonical_name: str,

@@ -60,6 +60,16 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
     ModuleDocSpec(
         "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."
     ),
+    ModuleDocSpec(
+        "addons",
+        "Аддоны",
+        "Addon catalog, space installation and per-card / per-user addon data.",
+    ),
+    ModuleDocSpec(
+        "github_addon",
+        "GitHub-аддон",
+        "Pull requests, branches, commits and issues attached to cards by the GitHub addon.",
+    ),
     ModuleDocSpec("projects", "Проекты и спринты", "Projects, project cards and sprints."),
     ModuleDocSpec(
         "roles_and_groups", "Роли и группы", "Roles, groups and permission-related operations."
