@@ -50,9 +50,15 @@ UID_FALLBACK_COST_NOTE = (
     "so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
-    "A write replaces the whole key, so the command refuses to proceed when the stored value "
-    "is not a plain list of objects: rewriting it would silently drop entries the CLI does not "
-    "understand. Inspect such a key with card-addon-data get."
+    "A write replaces the whole key, so the command refuses to proceed when the stored addon "
+    "data is not an object or the key is not a plain list of objects: rewriting it would "
+    "silently drop what the CLI does not understand. Inspect it with card-addon-data get."
+)
+AMBIGUOUS_ADDON_NOTE = (
+    "A mount path is not an identity - two addons can be served from different hosts under the "
+    "same path. When more than one addon of the card's board matches, the command refuses to "
+    "choose and asks for --addon-uid, because writing to the wrong one would put GitHub "
+    "attachments into unrelated addon data."
 )
 RACE_NOTE = (
     "The shared row has no version or ETag: a simultaneous change from the addon UI or another "
@@ -186,6 +192,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "When the UUID was derived, holds no data and no readable space of the card's "
@@ -237,6 +244,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             REPO_IDENTITY_NOTE,
@@ -280,6 +288,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pull-id or --number; --owner and --repo narrow the match when the same "
@@ -339,6 +348,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -384,6 +394,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the "
@@ -442,6 +453,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -482,6 +494,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             "--sha is required and matched in full; short shas do not match stored entries.",
             AMBIGUOUS_SELECTOR_NOTE,
@@ -537,6 +550,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -578,6 +592,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --issue-id or --number; --owner and --repo narrow the match when the same "

@@ -113,19 +113,42 @@ def _iframe_url_path(url: Any) -> str | None:
         return None
 
 
-def _addon_uid_in(addons: Any, normalized_path: str) -> str | None:
-    """The UID of the addon mounted at `normalized_path` in one space listing."""
+def _addon_uids_in(addons: Any, normalized_path: str) -> list[str]:
+    """Every distinct addon UID mounted at `normalized_path` in one space listing.
 
+    A path is not an identity: two addons can be served from different hosts under
+    the same path, and on a cloud tenant their UIDs are unrelated random values.
+    Returning all of them lets the caller refuse to guess.
+    """
+
+    found: list[str] = []
     if not isinstance(addons, list):
-        return None
+        return found
     for addon in addons:
         if not isinstance(addon, dict):
             continue
-        if _iframe_url_path(addon.get("iframe_initial_url")) == normalized_path:
-            uid = addon.get("id")
-            if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
-                return uid.lower()
-    return None
+        if _iframe_url_path(addon.get("iframe_initial_url")) != normalized_path:
+            continue
+        uid = addon.get("id")
+        if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
+            lowered = uid.lower()
+            if lowered not in found:
+                found.append(lowered)
+    return found
+
+
+def _single_addon_uid(uids: list[str], url_path: str, where: str) -> str | None:
+    """Exactly one candidate can be trusted; several are a refusal, not a choice."""
+
+    if not uids:
+        return None
+    if len(uids) == 1:
+        return uids[0]
+    raise ValidationError(
+        f"{where} has {len(uids)} addons mounted at {url_path} ({', '.join(uids)}), so the "
+        "right one cannot be chosen automatically. Pass --addon-uid; writing to the wrong "
+        "addon would put GitHub attachments into unrelated addon data."
+    )
 
 
 async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> list[int]:
@@ -168,10 +191,10 @@ async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> l
     return matching
 
 
-async def _space_addon_uid(
+async def _space_addon_uids(
     client, space_id: Any, normalized_path: str, timeout: float, reporter
-) -> str | None:
-    """One space's answer, or None when that space cannot be read.
+) -> list[str]:
+    """One space's candidates, or [] when that space cannot be read.
 
     A space the caller may not read must not end the search: the addon can be
     registered in another space of the same board, and that is exactly the case
@@ -183,8 +206,8 @@ async def _space_addon_uid(
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: /spaces/{space_id}/addons unavailable ({error})")
-        return None
-    return _addon_uid_in(addons, normalized_path)
+        return []
+    return _addon_uids_in(addons, normalized_path)
 
 
 async def registered_addon_uid(
@@ -212,23 +235,29 @@ async def registered_addon_uid(
 
     space_id, board_id = card.get("space_id"), card.get("board_id")
     if space_id is not None:
-        uid = await _space_addon_uid(client, space_id, normalized, timeout, reporter)
+        own = await _space_addon_uids(client, space_id, normalized, timeout, reporter)
+        uid = _single_addon_uid(own, url_path, f"Space {space_id}")
         if uid is not None:
             return uid
 
     if board_id is None:
         return None
     # Only now is the space listing worth its size: the board may be shared into
-    # spaces other than the card's own.
+    # spaces other than the card's own. Candidates are pooled across those spaces
+    # before choosing, so two different addons on the same path are a refusal
+    # rather than a race between spaces. The same UID seen in several spaces is
+    # one candidate, which is the normal shape of a shared board.
+    pooled: list[str] = []
     for candidate in await _board_space_ids(client, board_id, timeout, reporter):
         if candidate == space_id:
             continue
-        uid = await _space_addon_uid(client, candidate, normalized, timeout, reporter)
-        if uid is not None:
-            if reporter:
-                reporter(f"addon lookup: found in space {candidate}, not the card's own space")
-            return uid
-    return None
+        for uid in await _space_addon_uids(client, candidate, normalized, timeout, reporter):
+            if uid not in pooled:
+                pooled.append(uid)
+    resolved = _single_addon_uid(pooled, url_path, f"The spaces of board {board_id}")
+    if resolved is not None and reporter:
+        reporter("addon lookup: found in another space of the board, not the card's own space")
+    return resolved
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -245,6 +274,20 @@ def shared_row(rows: Any) -> dict[str, Any] | None:
 UNSET = object()
 
 
+def shared_data(rows: Any) -> Any:
+    """The whole `data` container of the shared row, or UNSET when there is no row.
+
+    Kept separate from `stored_value` because "there is no container" and "the
+    container is something we do not recognise" are different facts: only the
+    first one is a safe empty start for a write.
+    """
+
+    row = shared_row(rows)
+    if not isinstance(row, dict):
+        return UNSET
+    return row.get("data", UNSET)
+
+
 def stored_value(rows: Any, key: str) -> Any:
     """Raw value stored under `key` in the shared row, or UNSET when absent.
 
@@ -253,8 +296,7 @@ def stored_value(rows: Any, key: str) -> Any:
     it did not understand.
     """
 
-    row = shared_row(rows)
-    data = row.get("data") if isinstance(row, dict) else None
+    data = shared_data(rows)
     if not isinstance(data, dict) or key not in data:
         return UNSET
     return data[key]
@@ -280,6 +322,16 @@ def mutable_attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
     dropped - a null, a legacy string marker, a value that is not a list at all -
     would be destroyed by the rewrite. Refuse instead, and let the caller decide.
     """
+
+    data = shared_data(rows)
+    if data is not UNSET and data is not None and not isinstance(data, dict):
+        # The row exists but its container is not an object. A write would replace
+        # it with one, so whatever is stored there would be gone.
+        raise ValidationError(
+            f"Addon data for this card holds {type(data).__name__}, not an object, so this "
+            "command cannot rewrite it without losing data. Inspect it with card-addon-data "
+            "get and fix it with card-addon-data set."
+        )
 
     value = stored_value(rows, key)
     if value is UNSET or value is None:

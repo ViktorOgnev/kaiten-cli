@@ -1364,3 +1364,204 @@ async def test_space_listing_is_read_with_pagination_and_archived_spaces(monkeyp
     assert [item["number"] for item in result] == [42]
     assert spaces_route.calls[0].request.url.params["archived"] == "true"
     assert spaces_route.calls[0].request.url.params["limit"] == "100"
+
+
+@respx.mock
+async def test_two_addons_on_the_same_path_are_a_refusal_not_a_choice(monkeypatch):
+    """A path is not an identity: on cloud the two UIDs are unrelated."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    first = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    second = "11112222-3333-4444-8555-666677778888"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(
+        return_value=Response(
+            200,
+            json=[
+                {"id": first, "iframe_initial_url": "https://custom.example/github"},
+                {"id": second, "iframe_initial_url": "https://official.example/github"},
+            ],
+        )
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert first in str(error.value) and second in str(error.value)
+    assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_attach_refuses_before_writing_to_an_ambiguous_addon(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": "9f8e7d6c-5b4a-4392-8817-665544332211",
+                    "iframe_initial_url": "https://a.example/github",
+                },
+                {
+                    "id": "11112222-3333-4444-8555-666677778888",
+                    "iframe_initial_url": "https://b.example/github",
+                },
+            ],
+        )
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+
+    with pytest.raises(ValidationError):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    # The whole point: never PATCH GitHub data into some other addon's row.
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_ambiguity_across_board_spaces_is_refused(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(
+            200,
+            json=[
+                {"id": 5, "boards": [{"id": 7}]},
+                {"id": 8, "boards": [{"id": 7}]},
+                {"id": 9, "boards": [{"id": 7}]},
+            ],
+        )
+    )
+    respx.get(f"{API}/spaces/8/addons").mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": "9f8e7d6c-5b4a-4392-8817-665544332211",
+                    "iframe_initial_url": "https://a.example/github",
+                }
+            ],
+        )
+    )
+    respx.get(f"{API}/spaces/9/addons").mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": "11112222-3333-4444-8555-666677778888",
+                    "iframe_initial_url": "https://b.example/github",
+                }
+            ],
+        )
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "board 7" in str(error.value)
+
+
+@respx.mock
+async def test_the_same_addon_in_several_board_spaces_is_one_candidate(monkeypatch):
+    """A board shared across spaces normally reports the same addon in each."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(
+            200, json=[{"id": 8, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
+        )
+    )
+    for space in (8, 9):
+        respx.get(f"{API}/spaces/{space}/addons").mock(
+            return_value=Response(200, json=[_github_addon(registered_uid)])
+        )
+    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert [item["number"] for item in result] == [42]
+
+
+@respx.mock
+async def test_attach_refuses_a_malformed_addon_data_container(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": "row",
+                    "card_uid": "c",
+                    "addon_uid": GITHUB_ADDON_UID,
+                    "user_uid": None,
+                    "data": "legacy",
+                }
+            ],
+        )
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    assert "not an object" in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_list_still_reads_through_a_malformed_container(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": "row",
+                    "card_uid": "c",
+                    "addon_uid": GITHUB_ADDON_UID,
+                    "user_uid": None,
+                    "data": 7,
+                }
+            ],
+        )
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    # The row exists, so the UID is confirmed; the container simply holds nothing
+    # this command can read.
+    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
