@@ -163,6 +163,18 @@ def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
         allowed = ", ".join(map(str, enum_values))
         raise ValidationError(f"Field {_format_path(path)} must be one of: {allowed}")
 
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        minimum = schema.get("minimum")
+        maximum = schema.get("maximum")
+        if minimum is not None and value < minimum:
+            raise ValidationError(
+                f"Field {_format_path(path)} must be greater than or equal to {minimum}."
+            )
+        if maximum is not None and value > maximum:
+            raise ValidationError(
+                f"Field {_format_path(path)} must be less than or equal to {maximum}."
+            )
+
     if isinstance(value, dict):
         properties = schema.get("properties", {})
         required = schema.get("required", [])

@@ -5,6 +5,7 @@ from dataclasses import replace
 
 import pytest
 
+from kaiten_cli.app import cli
 from kaiten_cli.errors import ValidationError
 from kaiten_cli.runtime.input import merge_inputs, validate_payload
 from kaiten_cli.models import UNSET
@@ -191,3 +192,36 @@ def test_validate_payload_rejects_additional_properties_only_when_explicitly_fal
     )
     with pytest.raises(ValidationError, match=r"Unknown field\(s\) at payload: extension"):
         validate_payload(strict_root_tool, {"config": {"known": "yes"}, "extension": 1})
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"limit": 0}, "greater than or equal to 1"),
+        ({"limit": 101}, "less than or equal to 100"),
+        ({"offset": -1}, "greater than or equal to 0"),
+    ],
+)
+def test_merge_inputs_enforces_public_api_pagination_bounds(payload, message):
+    tool = resolve_tool("comments.list")
+
+    with pytest.raises(ValidationError, match=message):
+        merge_inputs(tool, {"card_id": 1, **payload})
+
+
+def test_cli_integer_ranges_match_schema_bounds(runner):
+    below = runner.invoke(cli, ["comments", "list", "--card-id", "1", "--limit", "0"])
+    above = runner.invoke(cli, ["comments", "list", "--card-id", "1", "--limit", "101"])
+
+    assert below.exit_code == 2
+    assert "1<=x<=100" in below.output
+    assert above.exit_code == 2
+    assert "1<=x<=100" in above.output
+
+
+def test_human_describe_renders_schema_bounds(runner):
+    result = runner.invoke(cli, ["describe", "comments.list"])
+
+    assert result.exit_code == 0
+    assert "--limit (integer, optional, range=1..100)" in result.output
+    assert "--offset (integer, optional, minimum=0)" in result.output

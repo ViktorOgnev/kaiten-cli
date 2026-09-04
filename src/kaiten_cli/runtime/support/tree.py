@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.errors import ConfigError
+from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
-TREE_PAGE_LIMIT = 500
+TREE_PAGE_LIMIT = 100
 TREE_MAX_PAGES = 200
 
 
@@ -28,27 +29,29 @@ async def fetch_paginated_entities(
     timeout: float,
     limit: int = TREE_PAGE_LIMIT,
     max_pages: int = TREE_MAX_PAGES,
+    reporter=None,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for page in range(max_pages):
-        offset = page * limit
-        response = await client.get(
-            path, params={"limit": limit, "offset": offset}, timeout=timeout
-        )
-        page_rows = response if isinstance(response, list) else []
-        rows.extend(row for row in page_rows if isinstance(row, dict))
-        if len(page_rows) < limit:
-            return rows
-    raise ConfigError(
-        f"{path} pagination reached {max_pages} full pages of {limit} rows; "
-        "refusing to return a possibly truncated tree"
+    rows = await fetch_all_offset_pages(
+        client,
+        path,
+        timeout=timeout,
+        page_size=limit,
+        max_pages=max_pages,
+        reporter=reporter,
     )
+    return [row for row in rows if isinstance(row, dict)]
 
 
-async def fetch_all_entities(client, *, timeout: float) -> list[dict[str, Any]]:
-    spaces_resp = await client.get("/spaces", timeout=timeout)
-    docs_resp = await fetch_paginated_entities(client, "/documents", timeout=timeout)
-    groups_resp = await fetch_paginated_entities(client, "/document-groups", timeout=timeout)
+async def fetch_all_entities(client, *, timeout: float, reporter=None) -> list[dict[str, Any]]:
+    spaces_resp = await fetch_paginated_entities(
+        client, "/spaces", timeout=timeout, reporter=reporter
+    )
+    docs_resp = await fetch_paginated_entities(
+        client, "/documents", timeout=timeout, reporter=reporter
+    )
+    groups_resp = await fetch_paginated_entities(
+        client, "/document-groups", timeout=timeout, reporter=reporter
+    )
 
     entities: list[dict[str, Any]] = []
 

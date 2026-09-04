@@ -60,6 +60,7 @@ Notes:
 
 - `selection=all|active_only|archived_only` is the preferred bulk UX.
 - Add `relations none` only when you really need to suppress nested objects at API level.
+- `cards.list-all` fails on a full `max_pages` boundary instead of returning a partial population; increase `--max-pages` only after checking the expected size.
 
 ### Bulk location history
 
@@ -88,6 +89,7 @@ Notes:
 
 - Prefer `cards.batch-get` over repeating `cards.get` after local candidate reduction.
 - Prefer `time-logs.batch-list` over repeating `time-logs.list` when work-log analytics spans many cards.
+- `time-logs.batch-list` paginates each card to completion; tune `--page-size` and `--max-pages` only when the defaults are unsuitable.
 
 ### Relation and comment evidence
 
@@ -102,6 +104,7 @@ Notes:
 
 - Prefer these over per-card `card-children list` and `comments list`.
 - Both batch paths keep partial per-card failures in-band.
+- Both paginate each card to completion and report a per-card error rather than return a truncated collection at the safety cap.
 
 ### Addon attachments across many cards
 

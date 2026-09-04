@@ -8,6 +8,7 @@ import respx
 from httpx import Response
 
 from kaiten_cli.app import cli
+from kaiten_cli.errors import ConfigError
 from kaiten_cli.runtime.client import HEAVY_TIMEOUT
 from kaiten_cli.runtime.executor import build_request, execute_tool, timeout_for_tool
 from kaiten_cli.runtime.input import merge_inputs
@@ -120,6 +121,40 @@ async def test_execute_list_all_cards_paginates_and_compacts_by_default(monkeypa
     assert first.called
     assert second.called
     assert result == [{"id": 1, "title": "A"}, {"id": 2, "title": "B"}, {"id": 3, "title": "C"}]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_list_all_cards_for_board_fails_closed_at_page_cap(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards",
+        params={
+            "relations": "none",
+            "board_id": "10",
+            "condition": "1",
+            "limit": "2",
+            "offset": "0",
+        },
+    ).mock(return_value=Response(200, json=[{"id": 1}, {"id": 2}]))
+    tool = resolve_tool("cards.list-all")
+
+    with pytest.raises(ConfigError, match="possibly truncated"):
+        await execute_tool(
+            tool,
+            merge_inputs(
+                tool,
+                {
+                    "board_id": 10,
+                    "condition": 1,
+                    "page_size": 2,
+                    "max_pages": 1,
+                },
+            ),
+        )
+
+    assert route.called
 
 
 @pytest.mark.asyncio

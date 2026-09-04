@@ -387,9 +387,20 @@ def _render_describe_text(description: dict[str, Any]) -> str:
             type_display = argument.get("type_display") or argument.get("type") or "unknown"
             option_name = _cli_option_name(str(argument.get("name")))
             enum_display = _format_enum(argument.get("enum"))
+            minimum = argument.get("minimum")
+            maximum = argument.get("maximum")
+            if minimum is not None and maximum is not None:
+                bounds_display = f", range={minimum}..{maximum}"
+            elif minimum is not None:
+                bounds_display = f", minimum={minimum}"
+            elif maximum is not None:
+                bounds_display = f", maximum={maximum}"
+            else:
+                bounds_display = ""
             arg_description = argument.get("description") or "No description."
             lines.append(
-                f"  {option_name} ({type_display}, {required}{enum_display}): {arg_description}"
+                f"  {option_name} ({type_display}, {required}{enum_display}{bounds_display}): "
+                f"{arg_description}"
             )
     else:
         lines.append("  No tool-specific arguments.")
@@ -664,9 +675,9 @@ def _click_type_for(schema: dict[str, Any]) -> click.ParamType | None:
     if len(allowed) > 1:
         return click.STRING
     if "integer" in allowed and "string" not in allowed:
-        return click.INT
+        return click.IntRange(min=schema.get("minimum"), max=schema.get("maximum"))
     if "number" in allowed:
-        return click.FLOAT
+        return click.FloatRange(min=schema.get("minimum"), max=schema.get("maximum"))
     if "boolean" in allowed:
         return None
     return click.STRING

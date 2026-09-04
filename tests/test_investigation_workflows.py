@@ -21,13 +21,19 @@ async def test_execute_card_children_batch_list_deduplicates_and_reports_partial
 ):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    first = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/children").mock(
+    first = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/children",
+        params={"limit": "100", "offset": "0"},
+    ).mock(
         return_value=Response(
             200,
             json=[{"id": 11, "title": "Child", "owner": {"id": 7, "full_name": "Alice"}}],
         )
     )
-    second = respx.get("https://sandbox.kaiten.ru/api/latest/cards/2/children").mock(
+    second = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/2/children",
+        params={"limit": "100", "offset": "0"},
+    ).mock(
         return_value=Response(404, json={"message": "missing"})
     )
 
@@ -58,7 +64,10 @@ async def test_execute_card_children_batch_list_deduplicates_and_reports_partial
 async def test_execute_comments_batch_list_shapes_nested_payloads(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1/comments").mock(
+    route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/comments",
+        params={"limit": "100", "offset": "0"},
+    ).mock(
         return_value=Response(
             200,
             json=[
@@ -125,7 +134,12 @@ async def test_execute_time_logs_batch_list_propagates_query_and_shapes_payloads
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     route = respx.get(
         "https://sandbox.kaiten.ru/api/latest/cards/1/time-logs",
-        params={"for_date": "2026-04-01", "personal": "true"},
+        params={
+            "for_date": "2026-04-01",
+            "personal": "true",
+            "limit": "100",
+            "offset": "0",
+        },
     ).mock(
         return_value=Response(
             200,
@@ -158,6 +172,100 @@ async def test_execute_time_logs_batch_list_propagates_query_and_shapes_payloads
         {"card_id": 1, "time_logs": [{"id": 10, "time_spent": 30, "for_date": "2026-04-01"}]}
     ]
     assert result["errors"] == []
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_card_children_batch_list_paginates_each_card(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    first = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/children",
+        params={"limit": "2", "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 11}, {"id": 12}]))
+    second = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/children",
+        params={"limit": "2", "offset": "2"},
+    ).mock(return_value=Response(200, json=[{"id": 13}]))
+    tool = resolve_tool("card-children.batch-list")
+
+    result = await execute_tool(
+        tool,
+        merge_inputs(tool, {"card_ids": "[1]", "page_size": 2, "max_pages": 3}),
+    )
+
+    assert first.called and second.called
+    assert result["items"] == [
+        {"card_id": 1, "children": [{"id": 11}, {"id": 12}, {"id": 13}]}
+    ]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_comments_batch_list_keeps_cap_failure_local_to_card(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    for offset in (0, 2):
+        respx.get(
+            "https://sandbox.kaiten.ru/api/latest/cards/1/comments",
+            params={"limit": "2", "offset": str(offset)},
+        ).mock(
+            return_value=Response(
+                200, json=[{"id": offset + 1}, {"id": offset + 2}]
+            )
+        )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/2/comments",
+        params={"limit": "2", "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 9}]))
+    tool = resolve_tool("comments.batch-list")
+
+    result = await execute_tool(
+        tool,
+        merge_inputs(
+            tool,
+            {"card_ids": "[1,2]", "workers": 2, "page_size": 2, "max_pages": 2},
+        ),
+    )
+
+    assert result["items"] == [{"card_id": 2, "comments": [{"id": 9}]}]
+    assert result["errors"][0]["card_id"] == 1
+    assert result["errors"][0]["error_type"] == "config_error"
+    assert "possibly truncated" in result["errors"][0]["message"]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_time_logs_batch_list_preserves_filters_on_every_page(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    common = {"for_date": "2026-04-01", "personal": "true", "limit": "2"}
+    first = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/time-logs",
+        params={**common, "offset": "0"},
+    ).mock(return_value=Response(200, json=[{"id": 1}, {"id": 2}]))
+    second = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/1/time-logs",
+        params={**common, "offset": "2"},
+    ).mock(return_value=Response(200, json=[]))
+    tool = resolve_tool("time-logs.batch-list")
+
+    result = await execute_tool(
+        tool,
+        merge_inputs(
+            tool,
+            {
+                "card_ids": "[1]",
+                "for_date": "2026-04-01",
+                "personal": True,
+                "page_size": 2,
+                "max_pages": 3,
+            },
+        ),
+    )
+
+    assert first.called and second.called
+    assert result["items"] == [{"card_id": 1, "time_logs": [{"id": 1}, {"id": 2}]}]
 
 
 @pytest.mark.asyncio

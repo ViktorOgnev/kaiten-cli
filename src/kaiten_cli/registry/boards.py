@@ -84,6 +84,8 @@ TOOLS = (
         usage_notes=(
             "Without --space-id the command preserves the existing GET /boards/{board_id} behavior.",
             "With --space-id it uses GET /spaces/{space_id}/boards/{board_id} from the current Public API documentation.",
+            "Cards are not part of this command's guaranteed response contract and disappear from both Public API routes on 2026-11-01.",
+            "Fetch active board cards with cards.list-all using board_id and condition=1; this command never performs that extra request implicitly.",
         ),
     ),
     make_tool(

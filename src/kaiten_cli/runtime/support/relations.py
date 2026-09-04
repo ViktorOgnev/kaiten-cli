@@ -8,6 +8,10 @@ from kaiten_cli.runtime.support.batch import (
     DEFAULT_BATCH_WORKERS,
     fetch_card_collection_batch,
 )
+from kaiten_cli.runtime.support.pagination import (
+    API_MAX_PAGE_SIZE,
+    DEFAULT_COLLECTION_MAX_PAGES,
+)
 from kaiten_cli.runtime.transforms import compact_response, select_fields
 
 
@@ -22,6 +26,8 @@ async def fetch_card_children_batch(
     token: str,
     card_ids: list[int],
     workers: int = DEFAULT_BATCH_WORKERS,
+    page_size: int = API_MAX_PAGE_SIZE,
+    max_pages: int = DEFAULT_COLLECTION_MAX_PAGES,
     compact: bool = False,
     fields: str | None = None,
     timeout: float,
@@ -39,6 +45,8 @@ async def fetch_card_children_batch(
         execution_context=execution_context,
         cache_policy=cache_policy,
         path_for_card=lambda card_id: f"/cards/{card_id}/children",
+        page_size=page_size,
+        max_pages=max_pages,
         result_field="children",
         transform_items=lambda items: _shape_nested_items(items, compact=compact, fields=fields),
         worker_label="batch-children",
@@ -51,6 +59,8 @@ async def fetch_comments_batch(
     token: str,
     card_ids: list[int],
     workers: int = DEFAULT_BATCH_WORKERS,
+    page_size: int = API_MAX_PAGE_SIZE,
+    max_pages: int = DEFAULT_COLLECTION_MAX_PAGES,
     compact: bool = False,
     fields: str | None = None,
     timeout: float,
@@ -68,6 +78,8 @@ async def fetch_comments_batch(
         execution_context=execution_context,
         cache_policy=cache_policy,
         path_for_card=lambda card_id: f"/cards/{card_id}/comments",
+        page_size=page_size,
+        max_pages=max_pages,
         result_field="comments",
         transform_items=lambda items: _shape_nested_items(items, compact=compact, fields=fields),
         worker_label="batch-comments",

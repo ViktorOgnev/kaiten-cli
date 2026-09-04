@@ -21,6 +21,10 @@ from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_
 from kaiten_cli.runtime.support.checklists import extract_card_checklists, extract_checklist_items
 from kaiten_cli.runtime.support.documents import prepare_document_body
 from kaiten_cli.runtime.support.projects import fetch_project_cards
+from kaiten_cli.runtime.support.pagination import (
+    API_MAX_PAGE_SIZE,
+    DEFAULT_COLLECTION_MAX_PAGES,
+)
 from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
 from kaiten_cli.runtime.support.spaces import fetch_space_topology
 from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
@@ -227,6 +231,15 @@ def encode_object_query_request(
     return path, shaped_query or None, body
 
 
+def reject_custom_property_include_values(tool, payload: dict[str, Any]) -> None:
+    if payload.get("include_values") is True:
+        raise ValidationError(
+            "Field include_values is no longer supported by Kaiten Public API. "
+            "List Select options with `kaiten custom-properties select-values list` "
+            "and Catalog entries with `kaiten custom-properties catalog-values list`."
+        )
+
+
 def scim_query_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:
@@ -292,7 +305,7 @@ async def execute_tree_children_list(
 ) -> Any:
     if reporter:
         reporter("execution: aggregated read from spaces, documents, and document groups")
-    entities = await fetch_all_entities(client, timeout=timeout)
+    entities = await fetch_all_entities(client, timeout=timeout, reporter=reporter)
     return list_children(entities, payload.get("parent_entity_uid"))
 
 
@@ -308,7 +321,7 @@ async def execute_tree_get(
 ) -> Any:
     if reporter:
         reporter("execution: aggregated tree build from spaces, documents, and document groups")
-    entities = await fetch_all_entities(client, timeout=timeout)
+    entities = await fetch_all_entities(client, timeout=timeout, reporter=reporter)
     return build_tree(entities, payload.get("root_uid"), payload.get("depth", 0))
 
 
@@ -491,6 +504,8 @@ async def execute_card_children_batch_list(
         token=client.token,
         card_ids=list(payload["card_ids"]),
         workers=workers,
+        page_size=payload.get("page_size", API_MAX_PAGE_SIZE),
+        max_pages=payload.get("max_pages", DEFAULT_COLLECTION_MAX_PAGES),
         compact=bool(payload.get("compact", False)),
         fields=payload.get("fields"),
         timeout=timeout,
@@ -602,6 +617,8 @@ async def execute_comments_batch_list(
         token=client.token,
         card_ids=list(payload["card_ids"]),
         workers=workers,
+        page_size=payload.get("page_size", API_MAX_PAGE_SIZE),
+        max_pages=payload.get("max_pages", DEFAULT_COLLECTION_MAX_PAGES),
         compact=bool(payload.get("compact", False)),
         fields=payload.get("fields"),
         timeout=timeout,
@@ -642,6 +659,8 @@ async def execute_time_logs_batch_list(
         token=client.token,
         card_ids=list(payload["card_ids"]),
         workers=workers,
+        page_size=payload.get("page_size", API_MAX_PAGE_SIZE),
+        max_pages=payload.get("max_pages", DEFAULT_COLLECTION_MAX_PAGES),
         for_date=payload.get("for_date"),
         personal=payload.get("personal"),
         compact=bool(payload.get("compact", False)),

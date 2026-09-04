@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.behaviors import payload_body_request
+from kaiten_cli.runtime.behaviors import (
+    payload_body_request,
+    reject_custom_property_include_values,
+)
 
 
 CARD_CATALOG_PROPERTY_USAGE_NOTES = (
@@ -35,7 +38,10 @@ TOOLS = (
             "properties": {
                 "include_values": {
                     "type": "boolean",
-                    "description": "Include select/catalog values",
+                    "description": (
+                        "Deprecated compatibility input. false is ignored; true is rejected. "
+                        "Use select-values.list or catalog-values.list instead."
+                    ),
                 },
                 "include_author": {"type": "boolean", "description": "Include author user object"},
                 "types": {"type": "string", "description": "Comma-separated type names to filter"},
@@ -53,15 +59,23 @@ TOOLS = (
                     "type": "integer",
                     "description": "Filter properties available on a specific board",
                 },
-                "limit": {"type": "integer", "description": "Max results"},
-                "offset": {"type": "integer", "description": "Pagination offset"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
             },
         },
         operation=OperationSpec(
             method="GET",
             path_template="/company/custom-properties",
             query_fields=(
-                "include_values",
                 "include_author",
                 "types",
                 "conditions",
@@ -74,6 +88,9 @@ TOOLS = (
             ),
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
+        runtime_behavior=RuntimeBehavior(
+            payload_validator=reject_custom_property_include_values,
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json custom-properties list --types select",
@@ -84,7 +101,10 @@ TOOLS = (
                 description="List card fields of type Catalog/Справочник.",
             ),
         ),
-        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
+        usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES
+        + (
+            "include_values is retained only as a migration input: false is ignored and true fails with replacement command guidance.",
+        ),
     ),
     make_tool(
         canonical_name="custom-properties.get",
@@ -295,8 +315,17 @@ TOOLS = (
                 },
                 "conditions": {"type": "string", "description": "Comma-separated conditions"},
                 "v2_select_search": {"type": "boolean", "description": "Use v2 search mode"},
-                "limit": {"type": "integer", "description": "Max results"},
-                "offset": {"type": "integer", "description": "Pagination offset"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
             },
             "required": ["property_id"],
         },
@@ -511,8 +540,17 @@ TOOLS = (
                     "type": "string",
                     "description": "Condition filter: active or inactive",
                 },
-                "limit": {"type": "integer", "description": "Max results"},
-                "offset": {"type": "integer", "description": "Pagination offset"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
             },
             "required": ["property_id"],
         },

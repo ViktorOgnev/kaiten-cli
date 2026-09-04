@@ -15,13 +15,24 @@ TOOLS = (
     make_tool(
         canonical_name="comments.list",
         mcp_alias="kaiten_list_comments",
-        description="List all comments on a card.",
+        description="List one page of comments on a card.",
         input_schema={
             "type": "object",
             "properties": {
                 "card_id": {
                     "type": "integer",
                     "description": "ID of the card whose comments to list.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100).",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset.",
                 },
                 "compact": {
                     "type": "boolean",
@@ -32,9 +43,14 @@ TOOLS = (
             "required": ["card_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/cards/{card_id}/comments", path_fields=("card_id",)
+            method="GET",
+            path_template="/cards/{card_id}/comments",
+            path_fields=("card_id",),
+            query_fields=("limit", "offset"),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, default_limit=50, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json comments list --card-id 10 --compact",
@@ -42,6 +58,7 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
             "This is a per-card read and becomes expensive when repeated across large card populations.",
             "For report and investigation workflows, prefer comments.batch-list over one-card-at-a-time loops.",
         ),
@@ -62,6 +79,18 @@ TOOLS = (
                 "workers": {
                     "type": "integer",
                     "description": "Parallel workers (default 2, max 6)",
+                },
+                "page_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Comments per request (default 100, max 100).",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Safety limit per card (default 100, max 1000).",
                 },
                 "compact": {
                     "type": "boolean",
@@ -93,6 +122,7 @@ TOOLS = (
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Each card is paginated to completion; a full max_pages boundary becomes a per-card error instead of a partial comment list.",
             "Use this bulk path when you need comment evidence across many cards.",
         ),
     ),

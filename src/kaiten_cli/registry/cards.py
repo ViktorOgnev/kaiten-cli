@@ -132,8 +132,17 @@ LIST_CARD_SCHEMA = {
             "description": "JSON-encoded visibility filter",
         },
         "archived": {"type": "boolean", "description": "Include archived"},
-        "limit": {"type": "integer", "description": "Max results (default 50, max 100)"},
-        "offset": {"type": "integer", "description": "Pagination offset"},
+        "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Max results (default 50, max 100)",
+        },
+        "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Pagination offset",
+        },
         "compact": {
             "type": "boolean",
             "description": "Return compact response without heavy fields (avatars, nested user objects)",
@@ -876,23 +885,42 @@ TOOLS = (
     make_tool(
         canonical_name="card-allowed-users.list",
         mcp_alias="kaiten_list_card_allowed_users",
-        description="List users allowed to access a card.",
+        description="List one page of users allowed to access a card.",
         input_schema={
             "type": "object",
-            "properties": {"card_id": {"type": "integer", "description": "Card ID."}},
+            "properties": {
+                "card_id": {"type": "integer", "description": "Card ID."},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100).",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset.",
+                },
+            },
             "required": ["card_id"],
         },
         operation=OperationSpec(
             method="GET",
             path_template="/cards/{card_id}/allowed-users",
             path_fields=("card_id",),
+            query_fields=("limit", "offset"),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, default_limit=50, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json card-allowed-users list --card-id 123 --compact",
                 description="List card allowed users.",
             ),
+        ),
+        usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
         ),
     ),
     make_tool(
@@ -972,11 +1000,15 @@ TOOLS = (
                 },
                 "page_size": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Cards per page (default 100, max 100)",
                 },
                 "max_pages": {
                     "type": "integer",
-                    "description": "Safety limit on pages to fetch (default 50)",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Safety limit on pages to fetch (default 50, max 1000)",
                 },
                 "compact": {
                     "type": "boolean",
@@ -1017,6 +1049,7 @@ TOOLS = (
         usage_notes=(
             "For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.",
             "active_only is computed as all_cards minus the archived subset to match the documented bulk CLI behavior.",
+            "If max_pages is reached on a full page, the command fails instead of returning a partial card list.",
         ),
     ),
 )

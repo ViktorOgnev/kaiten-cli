@@ -94,7 +94,7 @@ cards
 |---|---|
 | CLI command | `kaiten card-allowed-users list` |
 | MCP alias | `kaiten_list_card_allowed_users` |
-| Description | List users allowed to access a card. |
+| Description | List one page of users allowed to access a card. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -109,9 +109,11 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
 
 **Examples**
 
@@ -124,6 +126,7 @@ cards
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 
 ### `card-baselines.list`
 
@@ -146,9 +149,9 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
 
 **Examples**
 
@@ -183,12 +186,12 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `email` | `string` | yes | — | External recipient email. |
-| `name` | `string` | no | — | External recipient display name. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `email` | `string` | yes | — | — | External recipient email. |
+| `name` | `string` | no | — | — | External recipient display name. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -223,10 +226,10 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `email` | `string` | yes | — | External recipient email. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `email` | `string` | yes | — | — | External recipient email. |
 
 **Examples**
 
@@ -261,11 +264,11 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer|string` | yes | — | Card ID or key |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer|string` | yes | — | — | Card ID or key |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
 
 **Examples**
 
@@ -300,12 +303,12 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_ids` | `array` | yes | — | Card IDs to fetch |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6) |
-| `compact` | `boolean` | no | — | Strip heavy nested fields from card payloads |
-| `fields` | `string` | no | — | Comma-separated card field names to keep |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_ids` | `array` | yes | — | — | Card IDs to fetch |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
+| `compact` | `boolean` | no | — | — | Strip heavy nested fields from card payloads |
+| `fields` | `string` | no | — | — | Comma-separated card field names to keep |
 
 **Examples**
 
@@ -343,16 +346,16 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | no | — | Criteria board ID. |
-| `column_id` | `integer` | no | — | Criteria column ID. |
-| `lane_id` | `integer` | no | — | Criteria lane ID. |
-| `owner_id` | `integer` | no | — | Criteria owner user ID. |
-| `type_id` | `integer` | no | — | Criteria card type ID. |
-| `condition` | `integer` | no | `1`, `2` | Criteria condition: 1=active, 2=archived. |
-| `attributes` | `object` | yes | — | Attributes to change on matching cards. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | no | — | — | Criteria board ID. |
+| `column_id` | `integer` | no | — | — | Criteria column ID. |
+| `lane_id` | `integer` | no | — | — | Criteria lane ID. |
+| `owner_id` | `integer` | no | — | — | Criteria owner user ID. |
+| `type_id` | `integer` | no | — | — | Criteria card type ID. |
+| `condition` | `integer` | no | `1`, `2` | — | Criteria condition: 1=active, 2=archived. |
+| `attributes` | `object` | yes | — | — | Attributes to change on matching cards. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -389,36 +392,36 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Card title (1-1024 chars) |
-| `board_id` | `integer` | yes | — | Target board ID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
-| `column_id` | `integer` | no | — | Target column ID |
-| `lane_id` | `integer` | no | — | Target lane ID |
-| `description` | `string` | no | — | Card description (max 32768) |
-| `due_date` | `string|null` | no | — | Deadline (ISO 8601) |
-| `asap` | `boolean` | no | — | ASAP marker |
-| `size_text` | `string` | no | — | Size (e.g. S, M, L, 1, 23.45) |
-| `owner_id` | `integer` | no | — | Owner user ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `external_id` | `string` | no | — | External ID (max 1024) |
-| `sort_order` | `number` | no | — | Position in cell |
-| `position` | `integer` | no | `1`, `2` | 1=first, 2=last in cell |
-| `properties` | `object` | no | — | Custom properties as {id_N: value} |
-| `tags` | `array` | no | — | Tags to attach |
-| `sprint_id` | `integer` | no | — | Sprint ID to assign card to |
-| `planned_start` | `string|null` | no | — | Planned start date (ISO 8601) |
-| `planned_end` | `string|null` | no | — | Planned end date (ISO 8601) |
-| `responsible_id` | `integer` | no | — | Responsible user ID |
-| `condition` | `integer` | no | `1`, `2` | 1=active, 2=archived |
-| `due_date_time_present` | `boolean` | no | — | True if due_date includes time component |
-| `expires_later` | `boolean` | no | — | Expires later flag |
-| `estimate_workload` | `integer` | no | — | Estimated workload in minutes (resource planning) |
-| `child_card_ids` | `array` | no | — | Child card IDs to link (max 1) |
-| `parent_card_ids` | `array` | no | — | Parent card IDs to link (max 1) |
-| `project_id` | `string` | no | — | Project UUID to attach card to |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Card title (1-1024 chars) |
+| `board_id` | `integer` | yes | — | — | Target board ID |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| `column_id` | `integer` | no | — | — | Target column ID |
+| `lane_id` | `integer` | no | — | — | Target lane ID |
+| `description` | `string` | no | — | — | Card description (max 32768) |
+| `due_date` | `string|null` | no | — | — | Deadline (ISO 8601) |
+| `asap` | `boolean` | no | — | — | ASAP marker |
+| `size_text` | `string` | no | — | — | Size (e.g. S, M, L, 1, 23.45) |
+| `owner_id` | `integer` | no | — | — | Owner user ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `external_id` | `string` | no | — | — | External ID (max 1024) |
+| `sort_order` | `number` | no | — | — | Position in cell |
+| `position` | `integer` | no | `1`, `2` | — | 1=first, 2=last in cell |
+| `properties` | `object` | no | — | — | Custom properties as {id_N: value} |
+| `tags` | `array` | no | — | — | Tags to attach |
+| `sprint_id` | `integer` | no | — | — | Sprint ID to assign card to |
+| `planned_start` | `string|null` | no | — | — | Planned start date (ISO 8601) |
+| `planned_end` | `string|null` | no | — | — | Planned end date (ISO 8601) |
+| `responsible_id` | `integer` | no | — | — | Responsible user ID |
+| `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
+| `due_date_time_present` | `boolean` | no | — | — | True if due_date includes time component |
+| `expires_later` | `boolean` | no | — | — | Expires later flag |
+| `estimate_workload` | `integer` | no | — | — | Estimated workload in minutes (resource planning) |
+| `child_card_ids` | `array` | no | — | — | Child card IDs to link (max 1) |
+| `parent_card_ids` | `array` | no | — | — | Parent card IDs to link (max 1) |
+| `project_id` | `string` | no | — | — | Project UUID to attach card to |
 
 **Examples**
 
@@ -454,11 +457,11 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer|string` | yes | — | Card ID or key |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer|string` | yes | — | — | Card ID or key |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
 
 **Examples**
 
@@ -493,14 +496,14 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer|string` | yes | — | Card ID or key (e.g. PROJ-123) |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
-| `markdown` | `boolean` | no | — | Save the card as Markdown instead of returning JSON. |
-| `output` | `string` | no | — | Markdown output file or directory. Defaults to the current working directory. |
-| `overwrite` | `boolean` | no | — | Replace an existing Markdown output file. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer|string` | yes | — | — | Card ID or key (e.g. PROJ-123) |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| `markdown` | `boolean` | no | — | — | Save the card as Markdown instead of returning JSON. |
+| `output` | `string` | no | — | — | Markdown output file or directory. Defaults to the current working directory. |
+| `overwrite` | `boolean` | no | — | — | Replace an existing Markdown output file. |
 
 **Examples**
 
@@ -544,62 +547,62 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Full-text search query |
-| `space_id` | `integer` | no | — | Filter by space ID |
-| `board_id` | `integer` | no | — | Filter by board ID |
-| `column_id` | `integer` | no | — | Filter by column ID |
-| `lane_id` | `integer` | no | — | Filter by lane ID |
-| `condition` | `integer` | no | `1`, `2` | 1=active, 2=archived |
-| `type_id` | `integer` | no | — | Filter by card type ID |
-| `owner_id` | `integer` | no | — | Filter by owner user ID |
-| `responsible_id` | `integer` | no | — | Filter by responsible user ID |
-| `tag_ids` | `string` | no | — | Comma-separated tag IDs |
-| `member_ids` | `string` | no | — | Comma-separated member IDs |
-| `states` | `string` | no | — | Comma-separated states (1=queued,2=inProgress,3=done) |
-| `created_after` | `string` | no | — | ISO datetime filter |
-| `created_before` | `string` | no | — | ISO datetime filter |
-| `updated_after` | `string` | no | — | ISO datetime filter |
-| `updated_before` | `string` | no | — | ISO datetime filter |
-| `first_moved_in_progress_after` | `string` | no | — | ISO datetime filter for first move into in-progress state |
-| `first_moved_in_progress_before` | `string` | no | — | ISO datetime filter for first move into in-progress state |
-| `last_moved_to_done_at_after` | `string` | no | — | ISO datetime filter for last move to done column |
-| `last_moved_to_done_at_before` | `string` | no | — | ISO datetime filter for last move to done column |
-| `due_date_after` | `string` | no | — | ISO datetime filter |
-| `due_date_before` | `string` | no | — | ISO datetime filter |
-| `tag` | `string` | no | — | Filter by tag name |
-| `type_ids` | `string` | no | — | Comma-separated card type IDs |
-| `owner_ids` | `string` | no | — | Comma-separated owner user IDs |
-| `responsible_ids` | `string` | no | — | Comma-separated responsible user IDs |
-| `column_ids` | `string` | no | — | Comma-separated column IDs |
-| `exclude_board_ids` | `string` | no | — | Comma-separated board IDs to exclude |
-| `exclude_lane_ids` | `string` | no | — | Comma-separated lane IDs to exclude |
-| `exclude_column_ids` | `string` | no | — | Comma-separated column IDs to exclude |
-| `exclude_owner_ids` | `string` | no | — | Comma-separated owner IDs to exclude |
-| `exclude_card_ids` | `string` | no | — | Comma-separated card IDs to exclude |
-| `organization_ids` | `string` | no | — | Comma-separated Service Desk organization IDs |
-| `additional_card_fields` | `string` | no | — | Comma-separated extra fields to request. Supported by API: description |
-| `search_fields` | `string` | no | — | Comma-separated fields to search in for version=2 |
-| `start_position` | `string` | no | — | Search cursor for version=2 pagination |
-| `filter` | `string` | no | — | Encoded Kaiten filter query |
-| `order_by` | `string` | no | — | Sort field list |
-| `order_direction` | `string` | no | — | Sort direction list |
-| `external_id` | `string` | no | — | External ID filter |
-| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
-| `overdue` | `boolean` | no | — | Filter overdue cards |
-| `asap` | `boolean` | no | — | Filter ASAP cards |
-| `done_on_time` | `boolean` | no | — | Filter cards done on time |
-| `with_due_date` | `boolean` | no | — | Filter cards with due date |
-| `is_request` | `boolean` | no | — | Filter Service Desk request cards |
-| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2 |
-| `visible` | `string` | no | — | JSON-encoded visibility filter |
-| `archived` | `boolean` | no | — | Include archived |
-| `limit` | `integer` | no | — | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | Pagination offset |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `relations` | `string` | no | — | Comma-separated relations to include (members,type,custom_properties,...) or 'none' to exclude all. Default: include all. |
-| `fields` | `string` | no | — | Comma-separated field names to return per card. Strips everything else. Example: 'id,title,created,last_moved_to_done_at' |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Full-text search query |
+| `space_id` | `integer` | no | — | — | Filter by space ID |
+| `board_id` | `integer` | no | — | — | Filter by board ID |
+| `column_id` | `integer` | no | — | — | Filter by column ID |
+| `lane_id` | `integer` | no | — | — | Filter by lane ID |
+| `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
+| `type_id` | `integer` | no | — | — | Filter by card type ID |
+| `owner_id` | `integer` | no | — | — | Filter by owner user ID |
+| `responsible_id` | `integer` | no | — | — | Filter by responsible user ID |
+| `tag_ids` | `string` | no | — | — | Comma-separated tag IDs |
+| `member_ids` | `string` | no | — | — | Comma-separated member IDs |
+| `states` | `string` | no | — | — | Comma-separated states (1=queued,2=inProgress,3=done) |
+| `created_after` | `string` | no | — | — | ISO datetime filter |
+| `created_before` | `string` | no | — | — | ISO datetime filter |
+| `updated_after` | `string` | no | — | — | ISO datetime filter |
+| `updated_before` | `string` | no | — | — | ISO datetime filter |
+| `first_moved_in_progress_after` | `string` | no | — | — | ISO datetime filter for first move into in-progress state |
+| `first_moved_in_progress_before` | `string` | no | — | — | ISO datetime filter for first move into in-progress state |
+| `last_moved_to_done_at_after` | `string` | no | — | — | ISO datetime filter for last move to done column |
+| `last_moved_to_done_at_before` | `string` | no | — | — | ISO datetime filter for last move to done column |
+| `due_date_after` | `string` | no | — | — | ISO datetime filter |
+| `due_date_before` | `string` | no | — | — | ISO datetime filter |
+| `tag` | `string` | no | — | — | Filter by tag name |
+| `type_ids` | `string` | no | — | — | Comma-separated card type IDs |
+| `owner_ids` | `string` | no | — | — | Comma-separated owner user IDs |
+| `responsible_ids` | `string` | no | — | — | Comma-separated responsible user IDs |
+| `column_ids` | `string` | no | — | — | Comma-separated column IDs |
+| `exclude_board_ids` | `string` | no | — | — | Comma-separated board IDs to exclude |
+| `exclude_lane_ids` | `string` | no | — | — | Comma-separated lane IDs to exclude |
+| `exclude_column_ids` | `string` | no | — | — | Comma-separated column IDs to exclude |
+| `exclude_owner_ids` | `string` | no | — | — | Comma-separated owner IDs to exclude |
+| `exclude_card_ids` | `string` | no | — | — | Comma-separated card IDs to exclude |
+| `organization_ids` | `string` | no | — | — | Comma-separated Service Desk organization IDs |
+| `additional_card_fields` | `string` | no | — | — | Comma-separated extra fields to request. Supported by API: description |
+| `search_fields` | `string` | no | — | — | Comma-separated fields to search in for version=2 |
+| `start_position` | `string` | no | — | — | Search cursor for version=2 pagination |
+| `filter` | `string` | no | — | — | Encoded Kaiten filter query |
+| `order_by` | `string` | no | — | — | Sort field list |
+| `order_direction` | `string` | no | — | — | Sort direction list |
+| `external_id` | `string` | no | — | — | External ID filter |
+| `version` | `integer` | no | — | — | Search version. Use 2 for OpenSearch result/position response. |
+| `overdue` | `boolean` | no | — | — | Filter overdue cards |
+| `asap` | `boolean` | no | — | — | Filter ASAP cards |
+| `done_on_time` | `boolean` | no | — | — | Filter cards done on time |
+| `with_due_date` | `boolean` | no | — | — | Filter cards with due date |
+| `is_request` | `boolean` | no | — | — | Filter Service Desk request cards |
+| `include_search_preview` | `boolean` | no | — | — | Include search preview objects for version=2 |
+| `visible` | `string` | no | — | — | JSON-encoded visibility filter |
+| `archived` | `boolean` | no | — | — | Include archived |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `relations` | `string` | no | — | — | Comma-separated relations to include (members,type,custom_properties,...) or 'none' to exclude all. Default: include all. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return per card. Strips everything else. Example: 'id,title,created,last_moved_to_done_at' |
 
 **Examples**
 
@@ -635,65 +638,65 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Full-text search query |
-| `space_id` | `integer` | no | — | Filter by space ID |
-| `board_id` | `integer` | no | — | Filter by board ID |
-| `column_id` | `integer` | no | — | Filter by column ID |
-| `lane_id` | `integer` | no | — | Filter by lane ID |
-| `condition` | `integer` | no | `1`, `2` | 1=active, 2=archived |
-| `type_id` | `integer` | no | — | Filter by card type ID |
-| `owner_id` | `integer` | no | — | Filter by owner user ID |
-| `responsible_id` | `integer` | no | — | Filter by responsible user ID |
-| `tag_ids` | `string` | no | — | Comma-separated tag IDs |
-| `member_ids` | `string` | no | — | Comma-separated member IDs |
-| `states` | `string` | no | — | Comma-separated states (1=queued,2=inProgress,3=done) |
-| `created_after` | `string` | no | — | ISO datetime filter |
-| `created_before` | `string` | no | — | ISO datetime filter |
-| `updated_after` | `string` | no | — | ISO datetime filter |
-| `updated_before` | `string` | no | — | ISO datetime filter |
-| `first_moved_in_progress_after` | `string` | no | — | ISO datetime filter for first move into in-progress state |
-| `first_moved_in_progress_before` | `string` | no | — | ISO datetime filter for first move into in-progress state |
-| `last_moved_to_done_at_after` | `string` | no | — | ISO datetime filter for last move to done column |
-| `last_moved_to_done_at_before` | `string` | no | — | ISO datetime filter for last move to done column |
-| `due_date_after` | `string` | no | — | ISO datetime filter |
-| `due_date_before` | `string` | no | — | ISO datetime filter |
-| `tag` | `string` | no | — | Filter by tag name |
-| `type_ids` | `string` | no | — | Comma-separated type IDs |
-| `owner_ids` | `string` | no | — | Comma-separated owner IDs |
-| `responsible_ids` | `string` | no | — | Comma-separated responsible IDs |
-| `column_ids` | `string` | no | — | Comma-separated column IDs |
-| `exclude_board_ids` | `string` | no | — | Comma-separated board IDs to exclude |
-| `exclude_lane_ids` | `string` | no | — | Comma-separated lane IDs to exclude |
-| `exclude_column_ids` | `string` | no | — | Comma-separated column IDs to exclude |
-| `exclude_owner_ids` | `string` | no | — | Comma-separated owner IDs to exclude |
-| `exclude_card_ids` | `string` | no | — | Comma-separated card IDs to exclude |
-| `organization_ids` | `string` | no | — | Comma-separated Service Desk organization IDs |
-| `additional_card_fields` | `string` | no | — | Comma-separated extra fields to request. Supported by API: description |
-| `search_fields` | `string` | no | — | Comma-separated fields to search in for version=2 |
-| `start_position` | `string` | no | — | Search cursor for version=2 pagination |
-| `filter` | `string` | no | — | Encoded Kaiten filter query |
-| `order_by` | `string` | no | — | Sort field list |
-| `order_direction` | `string` | no | — | Sort direction list |
-| `external_id` | `string` | no | — | External ID filter |
-| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
-| `overdue` | `boolean` | no | — | Filter overdue cards |
-| `asap` | `boolean` | no | — | Filter ASAP cards |
-| `done_on_time` | `boolean` | no | — | Filter cards done on time |
-| `with_due_date` | `boolean` | no | — | Filter cards with due date |
-| `is_request` | `boolean` | no | — | Filter Service Desk request cards |
-| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2 |
-| `visible` | `string` | no | — | JSON-encoded visibility filter |
-| `archived` | `boolean` | no | — | Include archived |
-| `limit` | `integer` | no | — | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | Pagination offset |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (default true for bulk) |
-| `relations` | `string` | no | — | Relations to include or 'none' to exclude all nested objects (default 'none' for bulk). |
-| `fields` | `string` | no | — | Comma-separated field names to return per card after pagination. |
-| `selection` | `string` | no | `all`, `active_only`, `archived_only` | Normalized bulk selection: all, active_only, or archived_only. |
-| `page_size` | `integer` | no | — | Cards per page (default 100, max 100) |
-| `max_pages` | `integer` | no | — | Safety limit on pages to fetch (default 50) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Full-text search query |
+| `space_id` | `integer` | no | — | — | Filter by space ID |
+| `board_id` | `integer` | no | — | — | Filter by board ID |
+| `column_id` | `integer` | no | — | — | Filter by column ID |
+| `lane_id` | `integer` | no | — | — | Filter by lane ID |
+| `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
+| `type_id` | `integer` | no | — | — | Filter by card type ID |
+| `owner_id` | `integer` | no | — | — | Filter by owner user ID |
+| `responsible_id` | `integer` | no | — | — | Filter by responsible user ID |
+| `tag_ids` | `string` | no | — | — | Comma-separated tag IDs |
+| `member_ids` | `string` | no | — | — | Comma-separated member IDs |
+| `states` | `string` | no | — | — | Comma-separated states (1=queued,2=inProgress,3=done) |
+| `created_after` | `string` | no | — | — | ISO datetime filter |
+| `created_before` | `string` | no | — | — | ISO datetime filter |
+| `updated_after` | `string` | no | — | — | ISO datetime filter |
+| `updated_before` | `string` | no | — | — | ISO datetime filter |
+| `first_moved_in_progress_after` | `string` | no | — | — | ISO datetime filter for first move into in-progress state |
+| `first_moved_in_progress_before` | `string` | no | — | — | ISO datetime filter for first move into in-progress state |
+| `last_moved_to_done_at_after` | `string` | no | — | — | ISO datetime filter for last move to done column |
+| `last_moved_to_done_at_before` | `string` | no | — | — | ISO datetime filter for last move to done column |
+| `due_date_after` | `string` | no | — | — | ISO datetime filter |
+| `due_date_before` | `string` | no | — | — | ISO datetime filter |
+| `tag` | `string` | no | — | — | Filter by tag name |
+| `type_ids` | `string` | no | — | — | Comma-separated type IDs |
+| `owner_ids` | `string` | no | — | — | Comma-separated owner IDs |
+| `responsible_ids` | `string` | no | — | — | Comma-separated responsible IDs |
+| `column_ids` | `string` | no | — | — | Comma-separated column IDs |
+| `exclude_board_ids` | `string` | no | — | — | Comma-separated board IDs to exclude |
+| `exclude_lane_ids` | `string` | no | — | — | Comma-separated lane IDs to exclude |
+| `exclude_column_ids` | `string` | no | — | — | Comma-separated column IDs to exclude |
+| `exclude_owner_ids` | `string` | no | — | — | Comma-separated owner IDs to exclude |
+| `exclude_card_ids` | `string` | no | — | — | Comma-separated card IDs to exclude |
+| `organization_ids` | `string` | no | — | — | Comma-separated Service Desk organization IDs |
+| `additional_card_fields` | `string` | no | — | — | Comma-separated extra fields to request. Supported by API: description |
+| `search_fields` | `string` | no | — | — | Comma-separated fields to search in for version=2 |
+| `start_position` | `string` | no | — | — | Search cursor for version=2 pagination |
+| `filter` | `string` | no | — | — | Encoded Kaiten filter query |
+| `order_by` | `string` | no | — | — | Sort field list |
+| `order_direction` | `string` | no | — | — | Sort direction list |
+| `external_id` | `string` | no | — | — | External ID filter |
+| `version` | `integer` | no | — | — | Search version. Use 2 for OpenSearch result/position response. |
+| `overdue` | `boolean` | no | — | — | Filter overdue cards |
+| `asap` | `boolean` | no | — | — | Filter ASAP cards |
+| `done_on_time` | `boolean` | no | — | — | Filter cards done on time |
+| `with_due_date` | `boolean` | no | — | — | Filter cards with due date |
+| `is_request` | `boolean` | no | — | — | Filter Service Desk request cards |
+| `include_search_preview` | `boolean` | no | — | — | Include search preview objects for version=2 |
+| `visible` | `string` | no | — | — | JSON-encoded visibility filter |
+| `archived` | `boolean` | no | — | — | Include archived |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (default true for bulk) |
+| `relations` | `string` | no | — | — | Relations to include or 'none' to exclude all nested objects (default 'none' for bulk). |
+| `fields` | `string` | no | — | — | Comma-separated field names to return per card after pagination. |
+| `selection` | `string` | no | `all`, `active_only`, `archived_only` | — | Normalized bulk selection: all, active_only, or archived_only. |
+| `page_size` | `integer` | no | — | >= 1, <= 100 | Cards per page (default 100, max 100) |
+| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit on pages to fetch (default 50, max 1000) |
 
 **Examples**
 
@@ -709,6 +712,7 @@ cards
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - For bulk reads, prefer selection=all|active_only|archived_only over raw archived/condition filters.
 - active_only is computed as all_cards minus the archived subset to match the documented bulk CLI behavior.
+- If max_pages is reached on a full page, the command fails instead of returning a partial card list.
 
 ### `cards.move`
 
@@ -731,15 +735,15 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer|string` | yes | — | Card ID or key |
-| `board_id` | `integer` | no | — | Target board ID |
-| `column_id` | `integer` | no | — | Target column ID |
-| `lane_id` | `integer` | no | — | Target lane ID |
-| `sort_order` | `number` | no | — | Position in cell |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer|string` | yes | — | — | Card ID or key |
+| `board_id` | `integer` | no | — | — | Target board ID |
+| `column_id` | `integer` | no | — | — | Target column ID |
+| `lane_id` | `integer` | no | — | — | Target lane ID |
+| `sort_order` | `number` | no | — | — | Position in cell |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
 
 **Examples**
 
@@ -774,16 +778,16 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_url` | `string` | yes | — | Kaiten card URL containing /boards/card/<id-or-key> |
-| `target_url` | `string` | yes | — | Kaiten board URL with focus=column and focusId=<column_id> |
-| `lane_id` | `integer` | no | — | Target lane ID; required for boards with multiple lanes. |
-| `sort_order` | `number` | no | — | Position in cell |
-| `dry_run` | `boolean` | no | — | Resolve the move target without patching the card |
-| `verify` | `boolean` | no | — | Fetch the card after moving and verify its final location |
-| `compact` | `boolean` | no | — | Return compact card response without heavy fields |
-| `fields` | `string` | no | — | Comma-separated card fields to keep inside the returned card |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_url` | `string` | yes | — | — | Kaiten card URL containing /boards/card/<id-or-key> |
+| `target_url` | `string` | yes | — | — | Kaiten board URL with focus=column and focusId=<column_id> |
+| `lane_id` | `integer` | no | — | — | Target lane ID; required for boards with multiple lanes. |
+| `sort_order` | `number` | no | — | — | Position in cell |
+| `dry_run` | `boolean` | no | — | — | Resolve the move target without patching the card |
+| `verify` | `boolean` | no | — | — | Fetch the card after moving and verify its final location |
+| `compact` | `boolean` | no | — | — | Return compact card response without heavy fields |
+| `fields` | `string` | no | — | — | Comma-separated card fields to keep inside the returned card |
 
 **Examples**
 
@@ -823,37 +827,37 @@ cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer|string` | yes | — | Card ID or key |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
-| `title` | `string` | no | — | New title |
-| `description` | `string|null` | no | — | New description |
-| `board_id` | `integer` | no | — | Move to board |
-| `column_id` | `integer` | no | — | Move to column |
-| `lane_id` | `integer` | no | — | Move to lane |
-| `sort_order` | `number` | no | — | Position in cell |
-| `owner_id` | `integer` | no | — | New owner user ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `condition` | `integer` | no | `1`, `2` | 1=active, 2=archived |
-| `due_date` | `string|null` | no | — | Deadline (ISO 8601 or null) |
-| `asap` | `boolean` | no | — | ASAP marker |
-| `size_text` | `string|null` | no | — | Size |
-| `blocked` | `boolean` | no | — | Set to false to unblock |
-| `external_id` | `string|null` | no | — | External ID |
-| `properties` | `object` | no | — | Custom properties as {id_N: value} |
-| `sprint_id` | `integer|null` | no | — | Sprint ID (null to remove) |
-| `planned_start` | `string|null` | no | — | Planned start date (ISO 8601) |
-| `planned_end` | `string|null` | no | — | Planned end date (ISO 8601) |
-| `state` | `integer` | no | `1`, `2`, `3` | Card state: 1=queued, 2=inProgress, 3=done |
-| `block_reason` | `string|null` | no | — | Block reason text (null to clear) |
-| `locked` | `string|null` | no | — | Lock identifier (null to unlock) |
-| `due_date_time_present` | `boolean` | no | — | True if due_date includes time component |
-| `expires_later` | `boolean` | no | — | Expires later flag |
-| `estimate_workload` | `integer` | no | — | Estimated workload in minutes (resource planning) |
-| `child_card_ids` | `array` | no | — | Child card IDs to link |
-| `parent_card_ids` | `array` | no | — | Parent card IDs to link |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer|string` | yes | — | — | Card ID or key |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
+| `title` | `string` | no | — | — | New title |
+| `description` | `string|null` | no | — | — | New description |
+| `board_id` | `integer` | no | — | — | Move to board |
+| `column_id` | `integer` | no | — | — | Move to column |
+| `lane_id` | `integer` | no | — | — | Move to lane |
+| `sort_order` | `number` | no | — | — | Position in cell |
+| `owner_id` | `integer` | no | — | — | New owner user ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
+| `due_date` | `string|null` | no | — | — | Deadline (ISO 8601 or null) |
+| `asap` | `boolean` | no | — | — | ASAP marker |
+| `size_text` | `string|null` | no | — | — | Size |
+| `blocked` | `boolean` | no | — | — | Set to false to unblock |
+| `external_id` | `string|null` | no | — | — | External ID |
+| `properties` | `object` | no | — | — | Custom properties as {id_N: value} |
+| `sprint_id` | `integer|null` | no | — | — | Sprint ID (null to remove) |
+| `planned_start` | `string|null` | no | — | — | Planned start date (ISO 8601) |
+| `planned_end` | `string|null` | no | — | — | Planned end date (ISO 8601) |
+| `state` | `integer` | no | `1`, `2`, `3` | — | Card state: 1=queued, 2=inProgress, 3=done |
+| `block_reason` | `string|null` | no | — | — | Block reason text (null to clear) |
+| `locked` | `string|null` | no | — | — | Lock identifier (null to unlock) |
+| `due_date_time_present` | `boolean` | no | — | — | True if due_date includes time component |
+| `expires_later` | `boolean` | no | — | — | Expires later flag |
+| `estimate_workload` | `integer` | no | — | — | Estimated workload in minutes (resource planning) |
+| `child_card_ids` | `array` | no | — | — | Child card IDs to link |
+| `parent_card_ids` | `array` | no | — | — | Parent card IDs to link |
 
 **Examples**
 
@@ -905,12 +909,14 @@ comments
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_ids` | `array` | yes | — | Card IDs to inspect |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6) |
-| `compact` | `boolean` | no | — | Strip heavy fields from comment payloads |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each comment |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_ids` | `array` | yes | — | — | Card IDs to inspect |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
+| `page_size` | `integer` | no | — | >= 1, <= 100 | Comments per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `compact` | `boolean` | no | — | — | Strip heavy fields from comment payloads |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each comment |
 
 **Examples**
 
@@ -925,6 +931,7 @@ comments
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
+- Each card is paginated to completion; a full max_pages boundary becomes a per-card error instead of a partial comment list.
 - Use this bulk path when you need comment evidence across many cards.
 
 ### `comments.create`
@@ -948,12 +955,12 @@ comments
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card to comment on. |
-| `text` | `string` | yes | — | Comment text. For format=html send HTML content. |
-| `format` | `string` | no | `markdown`, `html` | Comment format. 'markdown' (default) stores raw markdown, 'html' switches the request to HTML mode. |
-| `internal` | `boolean` | no | — | Mark the comment as internal (visible only to team). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card to comment on. |
+| `text` | `string` | yes | — | — | Comment text. For format=html send HTML content. |
+| `format` | `string` | no | `markdown`, `html` | — | Comment format. 'markdown' (default) stores raw markdown, 'html' switches the request to HTML mode. |
+| `internal` | `boolean` | no | — | — | Mark the comment as internal (visible only to team). |
 
 **Examples**
 
@@ -988,10 +995,10 @@ comments
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `comment_id` | `integer` | yes | — | ID of the comment to delete. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `comment_id` | `integer` | yes | — | — | ID of the comment to delete. |
 
 **Examples**
 
@@ -1011,7 +1018,7 @@ comments
 |---|---|
 | CLI command | `kaiten comments list` |
 | MCP alias | `kaiten_list_comments` |
-| Description | List all comments on a card. |
+| Description | List one page of comments on a card. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -1026,10 +1033,12 @@ comments
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card whose comments to list. |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card whose comments to list. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects). |
 
 **Examples**
 
@@ -1043,6 +1052,7 @@ comments
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For report and investigation workflows, prefer comments.batch-list over one-card-at-a-time loops.
 
@@ -1067,12 +1077,12 @@ comments
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `comment_id` | `integer` | yes | — | ID of the comment to update. |
-| `text` | `string` | yes | — | New comment text. For format=html send HTML content. |
-| `format` | `string` | no | `markdown`, `html` | Comment format. 'html' switches the request to HTML mode, 'markdown' switches back to markdown. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `comment_id` | `integer` | yes | — | — | ID of the comment to update. |
+| `text` | `string` | yes | — | — | New comment text. For format=html send HTML content. |
+| `format` | `string` | no | `markdown`, `html` | — | Comment format. 'html' switches the request to HTML mode, 'markdown' switches back to markdown. |
 
 **Examples**
 
@@ -1126,10 +1136,10 @@ users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `user_id` | `integer` | yes | — | ID of the user to add as a member. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `user_id` | `integer` | yes | — | — | ID of the user to add as a member. |
 
 **Examples**
 
@@ -1164,10 +1174,10 @@ users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, etc.). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, etc.). |
 
 **Examples**
 
@@ -1202,10 +1212,10 @@ users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `user_id` | `integer` | yes | — | ID of the user to remove. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `user_id` | `integer` | yes | — | — | ID of the user to remove. |
 
 **Examples**
 
@@ -1240,12 +1250,12 @@ users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `member_id` | `integer` | yes | — | Card member ID from Kaiten. |
-| `role_id` | `string` | no | — | Role ID to assign. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `member_id` | `integer` | yes | — | — | Card member ID from Kaiten. |
+| `role_id` | `string` | no | — | — | Role ID to assign. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -1315,18 +1325,18 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type` | `string` | no | `all`, `shared`, `domain` | User visibility scope supported by the Kaiten API. |
-| `query` | `string` | no | — | Search filter for user names or emails. |
-| `access_type_permissions` | `string` | no | `member`, `guest` | Filter by Kaiten access type when supported by the endpoint. |
-| `ids` | `string` | no | — | Comma-separated user IDs. |
-| `uids` | `string` | no | — | Comma-separated user UUIDs. |
-| `exclude_directly_added_members_by_entity_uid` | `string` | no | — | Exclude users directly added to the given entity UID. |
-| `limit` | `integer` | no | — | Maximum number of users to return (default 50). |
-| `offset` | `integer` | no | — | Number of users to skip (for pagination). |
-| `include_inactive` | `boolean` | no | — | Include inactive (deactivated) users in results. |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, etc.). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type` | `string` | no | `all`, `shared`, `domain` | — | User visibility scope supported by the Kaiten API. |
+| `query` | `string` | no | — | — | Search filter for user names or emails. |
+| `access_type_permissions` | `string` | no | `member`, `guest` | — | Filter by Kaiten access type when supported by the endpoint. |
+| `ids` | `string` | no | — | — | Comma-separated user IDs. |
+| `uids` | `string` | no | — | — | Comma-separated user UUIDs. |
+| `exclude_directly_added_members_by_entity_uid` | `string` | no | — | — | Exclude users directly added to the given entity UID. |
+| `limit` | `integer` | no | — | — | Maximum number of users to return (default 50). |
+| `offset` | `integer` | no | — | — | Number of users to skip (for pagination). |
+| `include_inactive` | `boolean` | no | — | — | Include inactive (deactivated) users in results. |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, etc.). |
 
 **Examples**
 
@@ -1362,12 +1372,12 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | yes | — | User ID. |
-| `full_name` | `string` | no | — | Full name. |
-| `email` | `string` | no | — | Email. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | — | User ID. |
+| `full_name` | `string` | no | — | — | Full name. |
+| `email` | `string` | no | — | — | Email. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -1420,14 +1430,16 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_ids` | `array` | yes | — | Card IDs to inspect |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6) |
-| `for_date` | `string` | no | — | Optional YYYY-MM-DD filter passed to each per-card request. |
-| `personal` | `boolean` | no | — | Only include the current user's time logs. |
-| `compact` | `boolean` | no | — | Strip heavy nested fields from time-log payloads |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each time log |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_ids` | `array` | yes | — | — | Card IDs to inspect |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
+| `page_size` | `integer` | no | — | >= 1, <= 100 | Time logs per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `for_date` | `string` | no | — | — | Optional YYYY-MM-DD filter passed to each per-card request. |
+| `personal` | `boolean` | no | — | — | Only include the current user's time logs. |
+| `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each time log |
 
 **Examples**
 
@@ -1442,6 +1454,7 @@ timesheet
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
+- Each card is paginated to completion; a full max_pages boundary becomes a per-card error instead of a partial time-log list.
 - Use this bulk path for work-log analytics and snapshot builds instead of repeating time-logs.list for every card.
 
 ### `time-logs.create`
@@ -1465,13 +1478,13 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `time_spent` | `integer` | yes | — | Time spent in minutes (minimum 1). |
-| `role_id` | `integer` | no | — | Role ID for the time log. Use -1 for the default role. |
-| `for_date` | `string` | no | — | Date for the time log (YYYY-MM-DD). Defaults to today. |
-| `comment` | `string` | no | — | Optional comment for the time log. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `time_spent` | `integer` | yes | — | — | Time spent in minutes (minimum 1). |
+| `role_id` | `integer` | no | — | — | Role ID for the time log. Use -1 for the default role. |
+| `for_date` | `string` | no | — | — | Date for the time log (YYYY-MM-DD). Defaults to today. |
+| `comment` | `string` | no | — | — | Optional comment for the time log. |
 
 **Examples**
 
@@ -1506,10 +1519,10 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `time_log_id` | `integer` | yes | — | ID of the time log to delete. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `time_log_id` | `integer` | yes | — | — | ID of the time log to delete. |
 
 **Examples**
 
@@ -1529,7 +1542,7 @@ timesheet
 |---|---|
 | CLI command | `kaiten time-logs list` |
 | MCP alias | `kaiten_list_card_time_logs` |
-| Description | List time logs for a card. |
+| Description | List one page of time logs for a card. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -1544,13 +1557,15 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `for_date` | `string` | no | — | Filter by date (YYYY-MM-DD). |
-| `personal` | `boolean` | no | — | Return only the current user's time logs. |
-| `compact` | `boolean` | no | — | Strip heavy nested fields from time-log payloads. |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each time log. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `for_date` | `string` | no | — | — | Filter by date (YYYY-MM-DD). |
+| `personal` | `boolean` | no | — | — | Return only the current user's time logs. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads. |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each time log. |
 
 **Examples**
 
@@ -1564,6 +1579,7 @@ timesheet
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 - This is a per-card read and becomes expensive when repeated across large card populations.
 - For analytics snapshots and work-log investigations, prefer time-logs.batch-list over one-card-at-a-time loops.
 
@@ -1588,14 +1604,14 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `time_log_id` | `integer` | yes | — | ID of the time log to update. |
-| `time_spent` | `integer` | no | — | Updated time spent in minutes. |
-| `role_id` | `integer` | no | — | Updated role ID. |
-| `comment` | `string` | no | — | Updated comment. |
-| `for_date` | `string` | no | — | Updated date (YYYY-MM-DD). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `time_log_id` | `integer` | yes | — | — | ID of the time log to update. |
+| `time_spent` | `integer` | no | — | — | Updated time spent in minutes. |
+| `role_id` | `integer` | no | — | — | Updated role ID. |
+| `comment` | `string` | no | — | — | Updated comment. |
+| `for_date` | `string` | no | — | — | Updated date (YYYY-MM-DD). |
 
 **Examples**
 
@@ -1630,17 +1646,17 @@ timesheet
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | no | — | Filter by user ID. |
-| `card_id` | `integer` | no | — | Filter by card ID. |
-| `for_date` | `string` | no | — | Filter by date (YYYY-MM-DD). |
-| `date_from` | `string` | no | — | Start date filter. |
-| `date_to` | `string` | no | — | End date filter. |
-| `limit` | `integer` | no | — | Max results. |
-| `offset` | `integer` | no | — | Pagination offset. |
-| `compact` | `boolean` | no | — | Strip heavy nested fields from time-log payloads. |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each time log. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | no | — | — | Filter by user ID. |
+| `card_id` | `integer` | no | — | — | Filter by card ID. |
+| `for_date` | `string` | no | — | — | Filter by date (YYYY-MM-DD). |
+| `date_from` | `string` | no | — | — | Start date filter. |
+| `date_to` | `string` | no | — | — | End date filter. |
+| `limit` | `integer` | no | — | — | Max results. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads. |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each time log. |
 
 **Examples**
 
@@ -1694,10 +1710,10 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `name` | `string` | yes | — | Tag name (1-255 chars) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `name` | `string` | yes | — | — | Tag name (1-255 chars) |
 
 **Examples**
 
@@ -1732,9 +1748,9 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
 
 **Examples**
 
@@ -1769,10 +1785,10 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `tag_id` | `integer` | yes | — | Tag ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `tag_id` | `integer` | yes | — | — | Tag ID |
 
 **Examples**
 
@@ -1807,9 +1823,9 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Tag name (1-255 chars, must be unique within the company) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Tag name (1-255 chars, must be unique within the company) |
 
 **Examples**
 
@@ -1844,9 +1860,9 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `tag_id` | `integer` | yes | — | Tag ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `tag_id` | `integer` | yes | — | — | Tag ID |
 
 **Examples**
 
@@ -1881,13 +1897,13 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter (matches by name) |
-| `space_id` | `integer` | no | — | Filter tags by space (only tags used on cards in this space) |
-| `ids` | `string` | no | — | Comma-separated tag IDs to fetch specific tags |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter (matches by name) |
+| `space_id` | `integer` | no | — | — | Filter tags by space (only tags used on cards in this space) |
+| `ids` | `string` | no | — | — | Comma-separated tag IDs to fetch specific tags |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -1922,11 +1938,11 @@ tags
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `tag_id` | `integer` | yes | — | Tag ID |
-| `name` | `string` | no | — | New tag name (1-255 chars) |
-| `color` | `integer` | no | — | Color index (1-17) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `tag_id` | `integer` | yes | — | — | Tag ID |
+| `name` | `string` | no | — | — | New tag name (1-255 chars) |
+| `color` | `integer` | no | — | — | Color index (1-17) |
 
 **Examples**
 
@@ -1993,10 +2009,10 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `checklist_id` | `integer` | yes | — | Checklist ID. |
-| `only_shared_cards` | `boolean` | no | — | Return only shared cards. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `checklist_id` | `integer` | yes | — | — | Checklist ID. |
+| `only_shared_cards` | `boolean` | no | — | — | Return only shared cards. |
 
 **Examples**
 
@@ -2031,15 +2047,15 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
-| `text` | `string` | yes | — | Item text |
-| `checked` | `boolean` | no | — | Whether the item is checked |
-| `sort_order` | `number` | no | — | Sort order |
-| `user_id` | `integer` | no | — | Assigned user ID |
-| `due_date` | `string` | no | — | Due date (ISO 8601 format) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | no | — | — | Optional card ID for the legacy nested route. |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
+| `text` | `string` | yes | — | — | Item text |
+| `checked` | `boolean` | no | — | — | Whether the item is checked |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `user_id` | `integer` | no | — | — | Assigned user ID |
+| `due_date` | `string` | no | — | — | Due date (ISO 8601 format) |
 
 **Examples**
 
@@ -2076,11 +2092,11 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
-| `item_id` | `integer` | yes | — | Checklist item ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | no | — | — | Optional card ID for the legacy nested route. |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
+| `item_id` | `integer` | yes | — | — | Checklist item ID |
 
 **Examples**
 
@@ -2116,10 +2132,10 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
 
 **Examples**
 
@@ -2157,16 +2173,16 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | no | — | Optional card ID for the legacy nested route. |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
-| `item_id` | `integer` | yes | — | Checklist item ID |
-| `text` | `string` | no | — | Item text |
-| `checked` | `boolean` | no | — | Whether the item is checked |
-| `sort_order` | `number` | no | — | Sort order |
-| `user_id` | `integer` | no | — | Assigned user ID |
-| `due_date` | `string` | no | — | Due date (ISO 8601 format) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | no | — | — | Optional card ID for the legacy nested route. |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
+| `item_id` | `integer` | yes | — | — | Checklist item ID |
+| `text` | `string` | no | — | — | Item text |
+| `checked` | `boolean` | no | — | — | Whether the item is checked |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `user_id` | `integer` | no | — | — | Assigned user ID |
+| `due_date` | `string` | no | — | — | Due date (ISO 8601 format) |
 
 **Examples**
 
@@ -2202,11 +2218,11 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `name` | `string` | yes | — | Checklist name |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `name` | `string` | yes | — | — | Checklist name |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -2241,10 +2257,10 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
 
 **Examples**
 
@@ -2279,12 +2295,12 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `checklist_id` | `integer` | yes | — | Checklist ID. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -2319,9 +2335,9 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
 
 **Examples**
 
@@ -2359,12 +2375,12 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `checklist_id` | `integer` | yes | — | Checklist ID |
-| `name` | `string` | no | — | Checklist name |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `checklist_id` | `integer` | yes | — | — | Checklist ID |
+| `name` | `string` | no | — | — | Checklist name |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -2399,12 +2415,12 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
-| `text` | `string` | yes | — | Checklist item text. |
-| `sort_order` | `number` | no | — | Sort order. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
+| `text` | `string` | yes | — | — | Checklist item text. |
+| `sort_order` | `number` | no | — | — | Sort order. |
 
 **Examples**
 
@@ -2439,11 +2455,11 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
-| `item_uid` | `string` | yes | — | Template checklist item UID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
+| `item_uid` | `string` | yes | — | — | Template checklist item UID. |
 
 **Examples**
 
@@ -2478,13 +2494,13 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
-| `item_uid` | `string` | yes | — | Template checklist item UID. |
-| `text` | `string` | no | — | Checklist item text. |
-| `sort_order` | `number` | no | — | Sort order. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
+| `item_uid` | `string` | yes | — | — | Template checklist item UID. |
+| `text` | `string` | no | — | — | Checklist item text. |
+| `sort_order` | `number` | no | — | — | Sort order. |
 
 **Examples**
 
@@ -2519,11 +2535,11 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `name` | `string` | yes | — | Template checklist name. |
-| `sort_order` | `number` | no | — | Sort order. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `name` | `string` | yes | — | — | Template checklist name. |
+| `sort_order` | `number` | no | — | — | Sort order. |
 
 **Examples**
 
@@ -2558,10 +2574,10 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
 
 **Examples**
 
@@ -2596,9 +2612,9 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
 
 **Examples**
 
@@ -2633,12 +2649,12 @@ space-template-checklists
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UID. |
-| `template_checklist_uid` | `string` | yes | — | Template checklist UID. |
-| `name` | `string` | no | — | Template checklist name. |
-| `sort_order` | `number` | no | — | Sort order. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UID. |
+| `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
+| `name` | `string` | no | — | — | Template checklist name. |
+| `sort_order` | `number` | no | — | — | Sort order. |
 
 **Examples**
 
@@ -2699,10 +2715,10 @@ current-user-blockers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `blocker_id` | `integer` | yes | — | Blocker ID. |
-| `category_uuid` | `string` | yes | — | Category UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | — | Blocker ID. |
+| `category_uuid` | `string` | yes | — | — | Category UUID. |
 
 **Examples**
 
@@ -2772,10 +2788,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `blocker_id` | `integer` | yes | — | Blocker ID. |
-| `category_uuid` | `string` | yes | — | Category UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | — | Blocker ID. |
+| `category_uuid` | `string` | yes | — | — | Category UUID. |
 
 **Examples**
 
@@ -2810,10 +2826,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `blocker_id` | `integer` | yes | — | Blocker ID. |
-| `user_id` | `integer` | yes | — | User ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | — | Blocker ID. |
+| `user_id` | `integer` | yes | — | — | User ID. |
 
 **Examples**
 
@@ -2848,9 +2864,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `blocker_id` | `integer` | yes | — | Blocker ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | — | Blocker ID. |
 
 **Examples**
 
@@ -2885,10 +2901,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `blocker_id` | `integer` | yes | — | Blocker ID. |
-| `user_id` | `integer` | yes | — | User ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `blocker_id` | `integer` | yes | — | — | Blocker ID. |
+| `user_id` | `integer` | yes | — | — | User ID. |
 
 **Examples**
 
@@ -2923,11 +2939,11 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card to add a blocker to. |
-| `reason` | `string` | no | — | Reason for the blocker. |
-| `blocker_card_id` | `integer` | no | — | ID of the card that blocks this one. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card to add a blocker to. |
+| `reason` | `string` | no | — | — | Reason for the blocker. |
+| `blocker_card_id` | `integer` | no | — | — | ID of the card that blocks this one. |
 
 **Examples**
 
@@ -2962,10 +2978,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `blocker_id` | `integer` | yes | — | ID of the blocker to delete. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `blocker_id` | `integer` | yes | — | — | ID of the blocker to delete. |
 
 **Examples**
 
@@ -3000,10 +3016,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `blocker_id` | `integer` | yes | — | ID of the blocker to retrieve. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `blocker_id` | `integer` | yes | — | — | ID of the blocker to retrieve. |
 
 **Examples**
 
@@ -3038,9 +3054,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card whose blockers to list. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card whose blockers to list. |
 
 **Examples**
 
@@ -3075,11 +3091,11 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the card. |
-| `blocker_id` | `integer` | yes | — | ID of the blocker to update. |
-| `reason` | `string` | no | — | New reason for the blocker. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the card. |
+| `blocker_id` | `integer` | yes | — | — | ID of the blocker to update. |
+| `reason` | `string` | no | — | — | New reason for the blocker. |
 
 **Examples**
 
@@ -3172,10 +3188,10 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the parent card. |
-| `child_card_id` | `integer` | yes | — | ID of the card to add as a child. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the parent card. |
+| `child_card_id` | `integer` | yes | — | — | ID of the card to add as a child. |
 
 **Examples**
 
@@ -3210,12 +3226,14 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_ids` | `array` | yes | — | Parent card IDs to inspect |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6) |
-| `compact` | `boolean` | no | — | Strip heavy nested fields from child card payloads |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each child card |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_ids` | `array` | yes | — | — | Parent card IDs to inspect |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
+| `page_size` | `integer` | no | — | >= 1, <= 100 | Child cards per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `compact` | `boolean` | no | — | — | Strip heavy nested fields from child card payloads |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each child card |
 
 **Examples**
 
@@ -3230,6 +3248,7 @@ planned-relations
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.
+- Each card is paginated to completion; a full max_pages boundary becomes a per-card error instead of a partial child-card list.
 - Use this bulk path for relation-heavy investigations instead of per-parent card-children.list loops.
 
 ### `card-children.list`
@@ -3238,7 +3257,7 @@ planned-relations
 |---|---|
 | CLI command | `kaiten card-children list` |
 | MCP alias | `kaiten_list_card_children` |
-| Description | List all child cards of a given card. |
+| Description | List one page of child cards for a given card. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -3253,9 +3272,11 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the parent card. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the parent card. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
 
 **Examples**
 
@@ -3269,6 +3290,7 @@ planned-relations
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 - This is a per-card read and becomes expensive when repeated across many parent cards.
 - For investigation and reporting workflows, prefer card-children.batch-list over one-card-at-a-time loops.
 
@@ -3293,10 +3315,10 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the parent card. |
-| `child_id` | `integer` | yes | — | ID of the child card to remove. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the parent card. |
+| `child_id` | `integer` | yes | — | — | ID of the child card to remove. |
 
 **Examples**
 
@@ -3331,10 +3353,10 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the child card. |
-| `parent_card_id` | `integer` | yes | — | ID of the card to add as a parent. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the child card. |
+| `parent_card_id` | `integer` | yes | — | — | ID of the card to add as a parent. |
 
 **Examples**
 
@@ -3354,7 +3376,7 @@ planned-relations
 |---|---|
 | CLI command | `kaiten card-parents list` |
 | MCP alias | `kaiten_list_card_parents` |
-| Description | List all parent cards of a given card. |
+| Description | List one page of parent cards for a given card. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -3369,9 +3391,11 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the child card. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the child card. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
 
 **Examples**
 
@@ -3384,6 +3408,7 @@ planned-relations
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 
 ### `card-parents.remove`
 
@@ -3406,10 +3431,10 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the child card. |
-| `parent_id` | `integer` | yes | — | ID of the parent card to remove. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the child card. |
+| `parent_id` | `integer` | yes | — | — | ID of the parent card to remove. |
 
 **Examples**
 
@@ -3444,11 +3469,11 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the source (predecessor) card. |
-| `target_card_id` | `integer` | yes | — | ID of the target (successor) card. |
-| `type` | `string` | no | `end-start` | Relation type. Defaults to 'end-start'. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the source (predecessor) card. |
+| `target_card_id` | `integer` | yes | — | — | ID of the target (successor) card. |
+| `type` | `string` | no | `end-start` | — | Relation type. Defaults to 'end-start'. |
 
 **Examples**
 
@@ -3483,10 +3508,10 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the source (predecessor) card. |
-| `target_card_id` | `integer` | yes | — | ID of the target (successor) card to unlink. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the source (predecessor) card. |
+| `target_card_id` | `integer` | yes | — | — | ID of the target (successor) card to unlink. |
 
 **Examples**
 
@@ -3521,12 +3546,12 @@ planned-relations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | ID of the source (predecessor) card. |
-| `target_card_id` | `integer` | yes | — | ID of the target (successor) card. |
-| `gap` | `integer|null` | yes | — | Distance between cards (-1000..1000). Positive = lag, negative = lead. null to clear. |
-| `gap_type` | `string|null` | yes | `hours`, `days` | Unit of the gap: 'hours', 'days', or null to clear. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | ID of the source (predecessor) card. |
+| `target_card_id` | `integer` | yes | — | — | ID of the target (successor) card. |
+| `gap` | `integer|null` | yes | — | — | Distance between cards (-1000..1000). Positive = lag, negative = lead. null to clear. |
+| `gap_type` | `string|null` | yes | `hours`, `days` | — | Unit of the gap: 'hours', 'days', or null to clear. |
 
 **Examples**
 
@@ -3576,11 +3601,11 @@ external-links
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `url` | `string` | yes | — | URL of the external link |
-| `description` | `string` | no | — | Description of the external link |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `url` | `string` | yes | — | — | URL of the external link |
+| `description` | `string` | no | — | — | Description of the external link |
 
 **Examples**
 
@@ -3615,10 +3640,10 @@ external-links
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `link_id` | `integer` | yes | — | External link ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `link_id` | `integer` | yes | — | — | External link ID |
 
 **Examples**
 
@@ -3653,9 +3678,9 @@ external-links
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
 
 **Examples**
 
@@ -3690,12 +3715,12 @@ external-links
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `link_id` | `integer` | yes | — | External link ID |
-| `url` | `string` | no | — | URL of the external link |
-| `description` | `string` | no | — | Description of the external link |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `link_id` | `integer` | yes | — | — | External link ID |
+| `url` | `string` | no | — | — | URL of the external link |
+| `description` | `string` | no | — | — | Description of the external link |
 
 **Examples**
 
@@ -3762,16 +3787,16 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `url` | `string` | yes | — | URL of the file. |
-| `name` | `string` | yes | — | Display name of the file. |
-| `type` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6` | File type: 1=attachment, 2=googleDrive, 3=dropBox, 4=box, 5=oneDrive, 6=yandexDisk. |
-| `size` | `integer` | no | — | File size in bytes. |
-| `sort_order` | `number` | no | — | Sort order of the file in the list. |
-| `custom_property_id` | `integer` | no | — | Custom property ID to associate the file with. |
-| `card_cover` | `boolean` | no | — | Set this file as the card cover image. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `url` | `string` | yes | — | — | URL of the file. |
+| `name` | `string` | yes | — | — | Display name of the file. |
+| `type` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6` | — | File type: 1=attachment, 2=googleDrive, 3=dropBox, 4=box, 5=oneDrive, 6=yandexDisk. |
+| `size` | `integer` | no | — | — | File size in bytes. |
+| `sort_order` | `number` | no | — | — | Sort order of the file in the list. |
+| `custom_property_id` | `integer` | no | — | — | Custom property ID to associate the file with. |
+| `card_cover` | `boolean` | no | — | — | Set this file as the card cover image. |
 
 **Examples**
 
@@ -3806,10 +3831,10 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `file_id` | `integer` | yes | — | File ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `file_id` | `integer` | yes | — | — | File ID. |
 
 **Examples**
 
@@ -3844,23 +3869,23 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `url` | `string` | no | — | Kaiten /api/... file URL, internal /files/... URL, or direct http(s) URL. |
-| `entity_type` | `string` | no | `card`, `document`, `comment`, `custom_property`, `conversation_message` | Attachment owner type when not passing --url. |
-| `file_id` | `string|integer` | no | — | File identifier. UUID values may include the original extension. |
-| `card_id` | `string|integer` | no | — | Card ID for card, comment, or custom property files. |
-| `card_uid` | `string` | no | — | Card UID for card, comment, or custom property files. |
-| `card_id_or_uid` | `string` | no | — | Card ID or UID for card, comment, or custom property files. |
-| `document_uid` | `string` | no | — | Document UID for document files. |
-| `comment_uid` | `string` | no | — | Comment UID for comment files. |
-| `custom_property_uid` | `string` | no | — | Custom property UID for custom property files. |
-| `conversation_uid` | `string` | no | — | Conversation UID for conversation message files. |
-| `conversation_message_uid` | `string` | no | — | Conversation message UID for conversation message files. |
-| `output` | `string` | no | — | Output file or directory. Defaults to the current working directory. |
-| `name` | `string` | no | — | Preferred local filename when --output is a directory or omitted. |
-| `overwrite` | `boolean` | no | — | Replace an existing output file. |
-| `continue` | `boolean` | no | — | Resume an existing .part file with HTTP Range. Enabled by default. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `url` | `string` | no | — | — | Kaiten /api/... file URL, internal /files/... URL, or direct http(s) URL. |
+| `entity_type` | `string` | no | `card`, `document`, `comment`, `custom_property`, `conversation_message` | — | Attachment owner type when not passing --url. |
+| `file_id` | `string|integer` | no | — | — | File identifier. UUID values may include the original extension. |
+| `card_id` | `string|integer` | no | — | — | Card ID for card, comment, or custom property files. |
+| `card_uid` | `string` | no | — | — | Card UID for card, comment, or custom property files. |
+| `card_id_or_uid` | `string` | no | — | — | Card ID or UID for card, comment, or custom property files. |
+| `document_uid` | `string` | no | — | — | Document UID for document files. |
+| `comment_uid` | `string` | no | — | — | Comment UID for comment files. |
+| `custom_property_uid` | `string` | no | — | — | Custom property UID for custom property files. |
+| `conversation_uid` | `string` | no | — | — | Conversation UID for conversation message files. |
+| `conversation_message_uid` | `string` | no | — | — | Conversation message UID for conversation message files. |
+| `output` | `string` | no | — | — | Output file or directory. Defaults to the current working directory. |
+| `name` | `string` | no | — | — | Preferred local filename when --output is a directory or omitted. |
+| `overwrite` | `boolean` | no | — | — | Replace an existing output file. |
+| `continue` | `boolean` | no | — | — | Resume an existing .part file with HTTP Range. Enabled by default. |
 
 **Examples**
 
@@ -3906,9 +3931,9 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
 
 **Examples**
 
@@ -3943,17 +3968,17 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `file_id` | `integer` | yes | — | File ID. |
-| `url` | `string` | no | — | New URL of the file. |
-| `name` | `string` | no | — | New display name. |
-| `type` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6` | File type: 1=attachment, 2=googleDrive, 3=dropBox, 4=box, 5=oneDrive, 6=yandexDisk. |
-| `size` | `integer` | no | — | File size in bytes. |
-| `sort_order` | `number` | no | — | Sort order of the file in the list. |
-| `custom_property_id` | `integer` | no | — | Custom property ID to associate the file with. |
-| `card_cover` | `boolean` | no | — | Set this file as the card cover image. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `file_id` | `integer` | yes | — | — | File ID. |
+| `url` | `string` | no | — | — | New URL of the file. |
+| `name` | `string` | no | — | — | New display name. |
+| `type` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6` | — | File type: 1=attachment, 2=googleDrive, 3=dropBox, 4=box, 5=oneDrive, 6=yandexDisk. |
+| `size` | `integer` | no | — | — | File size in bytes. |
+| `sort_order` | `number` | no | — | — | Sort order of the file in the list. |
+| `custom_property_id` | `integer` | no | — | — | Custom property ID to associate the file with. |
+| `card_cover` | `boolean` | no | — | — | Set this file as the card cover image. |
 
 **Examples**
 
@@ -3988,10 +4013,10 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID. |
-| `file` | `string` | yes | — | Local file path to upload. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID. |
+| `file` | `string` | yes | — | — | Local file path to upload. |
 
 **Examples**
 
@@ -4030,10 +4055,10 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4069,10 +4094,10 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4109,12 +4134,12 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
-| `name` | `string` | no | — | New file name. |
-| `card_cover` | `boolean` | no | — | Use this image as the card cover. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | — | New file name. |
+| `card_cover` | `boolean` | no | — | — | Use this image as the card cover. |
 
 **Examples**
 
@@ -4150,10 +4175,10 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `file` | `string` | yes | — | Local file path to upload. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `file` | `string` | yes | — | — | Local file path to upload. |
 
 **Examples**
 
@@ -4191,11 +4216,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `comment_uid` | `string` | yes | — | Comment UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | — | Comment UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4231,11 +4256,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `comment_uid` | `string` | yes | — | Comment UUID, or `new` before the comment is created. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | — | Comment UUID, or `new` before the comment is created. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4272,13 +4297,13 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `comment_uid` | `string` | yes | — | Comment UUID, or `new` before the comment is created. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
-| `name` | `string` | no | — | New file name. |
-| `card_cover` | `boolean` | no | — | Use this image as the card cover; requires card update permission. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | — | Comment UUID, or `new` before the comment is created. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | — | New file name. |
+| `card_cover` | `boolean` | no | — | — | Use this image as the card cover; requires card update permission. |
 
 **Examples**
 
@@ -4314,11 +4339,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `comment_uid` | `string` | yes | — | Comment UUID. |
-| `file` | `string` | yes | — | Local file path to upload. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `comment_uid` | `string` | yes | — | — | Comment UUID. |
+| `file` | `string` | yes | — | — | Local file path to upload. |
 
 **Examples**
 
@@ -4354,11 +4379,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `property_uid` | `string` | yes | — | Custom property UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `property_uid` | `string` | yes | — | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4394,11 +4419,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `property_uid` | `string` | yes | — | Custom property UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `property_uid` | `string` | yes | — | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
 
 **Examples**
 
@@ -4435,13 +4460,13 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `property_uid` | `string` | yes | — | Custom property UUID. |
-| `file_id` | `string` | yes | — | Restricted Access file UUID. |
-| `name` | `string` | no | — | New file name. |
-| `card_cover` | `boolean` | no | — | Use this image as the card cover. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `property_uid` | `string` | yes | — | — | Custom property UUID. |
+| `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `name` | `string` | no | — | — | New file name. |
+| `card_cover` | `boolean` | no | — | — | Use this image as the card cover. |
 
 **Examples**
 
@@ -4477,11 +4502,11 @@ private-custom-property-files
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `property_uid` | `string` | yes | — | Custom property UUID. |
-| `file` | `string` | yes | — | Local file path to upload. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `property_uid` | `string` | yes | — | — | Custom property UUID. |
+| `file` | `string` | yes | — | — | Local file path to upload. |
 
 **Examples**
 
@@ -4535,10 +4560,10 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `user_id` | `integer` | yes | — | User ID to subscribe |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `user_id` | `integer` | yes | — | — | User ID to subscribe |
 
 **Examples**
 
@@ -4573,10 +4598,10 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -4613,10 +4638,10 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `user_id` | `integer` | yes | — | User ID to unsubscribe |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `user_id` | `integer` | yes | — | — | User ID to unsubscribe |
 
 **Examples**
 
@@ -4651,11 +4676,11 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `user_id` | `integer` | yes | — | User ID to subscribe |
-| `type` | `integer` | no | — | Subscription type (1=all, 2=mentions only). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `user_id` | `integer` | yes | — | — | User ID to subscribe |
+| `type` | `integer` | no | — | — | Subscription type (1=all, 2=mentions only). |
 
 **Examples**
 
@@ -4690,10 +4715,10 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -4730,10 +4755,10 @@ column-subscribers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `user_id` | `integer` | yes | — | User ID to unsubscribe |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `user_id` | `integer` | yes | — | — | User ID to unsubscribe |
 
 **Examples**
 
@@ -4786,9 +4811,9 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -4824,14 +4849,14 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Space title |
-| `description` | `string` | no | — | Space description |
-| `access` | `string` | no | `for_everyone`, `by_invite` | Access type (default: for_everyone) |
-| `external_id` | `string` | no | — | External ID |
-| `parent_entity_uid` | `string` | no | — | Parent entity UID for nesting spaces |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Space title |
+| `description` | `string` | no | — | — | Space description |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | Access type (default: for_everyone) |
+| `external_id` | `string` | no | — | — | External ID |
+| `parent_entity_uid` | `string` | no | — | — | Parent entity UID for nesting spaces |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -4866,9 +4891,9 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -4903,9 +4928,9 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -4925,7 +4950,7 @@ spaces
 |---|---|
 | CLI command | `kaiten spaces list` |
 | MCP alias | `kaiten_list_spaces` |
-| Description | List all Kaiten spaces. Returns array of space objects with id, title, description, access type. |
+| Description | List one page of Kaiten spaces with explicit limit/offset pagination. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -4940,11 +4965,13 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `archived` | `boolean` | no | — | Include archived spaces |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title' |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `archived` | `boolean` | no | — | — | Include archived spaces |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title' |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 
 **Examples**
 
@@ -4958,6 +4985,8 @@ spaces
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
+- Use tree.get or tree.children.list when a complete hierarchy is required.
 
 ### `spaces.update`
 
@@ -4980,15 +5009,15 @@ spaces
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `title` | `string` | no | — | New title |
-| `description` | `string` | no | — | New description |
-| `access` | `string` | no | `for_everyone`, `by_invite` | Access type |
-| `external_id` | `string` | no | — | External ID |
-| `parent_entity_uid` | `string` | no | — | Parent entity UID for nesting spaces |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `title` | `string` | no | — | — | New title |
+| `description` | `string` | no | — | — | New description |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | Access type |
+| `external_id` | `string` | no | — | — | External ID |
+| `parent_entity_uid` | `string` | no | — | — | Parent entity UID for nesting spaces |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -5040,16 +5069,16 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `title` | `string` | yes | — | Board title |
-| `description` | `string` | no | — | Board description |
-| `external_id` | `string` | no | — | External ID |
-| `top` | `number` | no | — | Top position (px) |
-| `left` | `number` | no | — | Left position (px) |
-| `sort_order` | `number` | no | — | Sort order |
-| `default_card_type_id` | `integer` | no | — | Default card type ID for new cards |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `title` | `string` | yes | — | — | Board title |
+| `description` | `string` | no | — | — | Board description |
+| `external_id` | `string` | no | — | — | External ID |
+| `top` | `number` | no | — | — | Top position (px) |
+| `left` | `number` | no | — | — | Left position (px) |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards |
 
 **Examples**
 
@@ -5084,11 +5113,11 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `board_id` | `integer` | yes | — | Board ID |
-| `force` | `boolean` | no | — | Force deletion when the board contains child entities |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `force` | `boolean` | no | — | — | Force deletion when the board contains child entities |
 
 **Examples**
 
@@ -5125,10 +5154,10 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `space_id` | `integer` | no | — | Optional space ID. When provided, use the documented /spaces/{space_id}/boards/{board_id} route. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `space_id` | `integer` | no | — | — | Optional space ID. When provided, use the documented /spaces/{space_id}/boards/{board_id} route. |
 
 **Examples**
 
@@ -5144,6 +5173,8 @@ boards
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Without --space-id the command preserves the existing GET /boards/{board_id} behavior.
 - With --space-id it uses GET /spaces/{space_id}/boards/{board_id} from the current Public API documentation.
+- Cards are not part of this command's guaranteed response contract and disappear from both Public API routes on 2026-11-01.
+- Fetch active board cards with cards.list-all using board_id and condition=1; this command never performs that extra request implicitly.
 
 ### `boards.list`
 
@@ -5166,11 +5197,11 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'id,title' |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title' |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 
 **Examples**
 
@@ -5206,13 +5237,13 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Target space ID |
-| `board_id` | `integer` | yes | — | Existing board ID |
-| `top` | `number` | no | — | Top position (px). Defaults to 0. |
-| `left` | `number` | no | — | Left position (px). Defaults to 0. |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Target space ID |
+| `board_id` | `integer` | yes | — | — | Existing board ID |
+| `top` | `number` | no | — | — | Top position (px). Defaults to 0. |
+| `left` | `number` | no | — | — | Left position (px). Defaults to 0. |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -5250,17 +5281,17 @@ boards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `board_id` | `integer` | yes | — | Board ID |
-| `title` | `string` | no | — | New title |
-| `description` | `string` | no | — | New description |
-| `external_id` | `string` | no | — | External ID |
-| `top` | `number` | no | — | Top position (px) |
-| `left` | `number` | no | — | Left position (px) |
-| `sort_order` | `number` | no | — | Sort order |
-| `default_card_type_id` | `integer` | no | — | Default card type ID for new cards |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `title` | `string` | no | — | — | New title |
+| `description` | `string` | no | — | — | New description |
+| `external_id` | `string` | no | — | — | External ID |
+| `top` | `number` | no | — | — | Top position (px) |
+| `left` | `number` | no | — | — | Left position (px) |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards |
 
 **Examples**
 
@@ -5315,15 +5346,15 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `title` | `string` | yes | — | Column title |
-| `type` | `integer` | yes | `1`, `2`, `3` | Column type: 1=queue, 2=in_progress, 3=done |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `wip_limit_type` | `integer` | no | — | WIP limit type (1=cards count, 2=size sum) |
-| `col_count` | `integer` | no | — | Number of sub-columns to split into |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `title` | `string` | yes | — | — | Column title |
+| `type` | `integer` | yes | `1`, `2`, `3` | — | Column type: 1=queue, 2=in_progress, 3=done |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
+| `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -5358,10 +5389,10 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `column_id` | `integer` | yes | — | Column ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `column_id` | `integer` | yes | — | — | Column ID |
 
 **Examples**
 
@@ -5396,9 +5427,9 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
 
 **Examples**
 
@@ -5433,16 +5464,16 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `column_id` | `integer` | yes | — | Column ID |
-| `title` | `string` | no | — | New title |
-| `type` | `integer` | no | `1`, `2`, `3` | Column type |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `wip_limit_type` | `integer` | no | — | WIP limit type (1=cards count, 2=size sum) |
-| `col_count` | `integer` | no | — | Number of sub-columns to split into |
-| `sort_order` | `number` | no | — | Sort order |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `title` | `string` | no | — | — | New title |
+| `type` | `integer` | no | `1`, `2`, `3` | — | Column type |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
+| `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
+| `sort_order` | `number` | no | — | — | Sort order |
 
 **Examples**
 
@@ -5477,13 +5508,13 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `title` | `string` | yes | — | Subcolumn title |
-| `sort_order` | `number` | no | — | Sort order |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `col_count` | `integer` | no | — | Number of sub-columns to split into |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `title` | `string` | yes | — | — | Subcolumn title |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 
 **Examples**
 
@@ -5518,10 +5549,10 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `subcolumn_id` | `integer` | yes | — | Subcolumn ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `subcolumn_id` | `integer` | yes | — | — | Subcolumn ID |
 
 **Examples**
 
@@ -5556,9 +5587,9 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
 
 **Examples**
 
@@ -5593,14 +5624,14 @@ subcolumns
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `column_id` | `integer` | yes | — | Column ID |
-| `subcolumn_id` | `integer` | yes | — | Subcolumn ID |
-| `title` | `string` | no | — | New title |
-| `sort_order` | `number` | no | — | Sort order |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `col_count` | `integer` | no | — | Number of sub-columns to split into |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `subcolumn_id` | `integer` | yes | — | — | Subcolumn ID |
+| `title` | `string` | no | — | — | New title |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 
 **Examples**
 
@@ -5650,15 +5681,15 @@ lanes
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `title` | `string` | yes | — | Lane title |
-| `sort_order` | `number` | no | — | Sort order |
-| `row_count` | `integer` | no | — | Number of sub-rows to split into |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `wip_limit_type` | `integer` | no | — | WIP limit type (1=cards count, 2=size sum) |
-| `default_card_type_id` | `integer` | no | — | Default card type ID for new cards in this lane |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `title` | `string` | yes | — | — | Lane title |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `row_count` | `integer` | no | — | — | Number of sub-rows to split into |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
+| `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards in this lane |
 
 **Examples**
 
@@ -5693,10 +5724,10 @@ lanes
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `lane_id` | `integer` | yes | — | Lane ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `lane_id` | `integer` | yes | — | — | Lane ID |
 
 **Examples**
 
@@ -5731,9 +5762,9 @@ lanes
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
 
 **Examples**
 
@@ -5768,17 +5799,17 @@ lanes
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `board_id` | `integer` | yes | — | Board ID |
-| `lane_id` | `integer` | yes | — | Lane ID |
-| `title` | `string` | no | — | New title |
-| `sort_order` | `number` | no | — | Sort order |
-| `row_count` | `integer` | no | — | Number of sub-rows to split into |
-| `wip_limit` | `integer` | no | — | WIP limit |
-| `wip_limit_type` | `integer` | no | — | WIP limit type (1=cards count, 2=size sum) |
-| `default_card_type_id` | `integer` | no | — | Default card type ID for new cards in this lane |
-| `condition` | `integer` | no | `1`, `2` | 1=active, 2=archived |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `lane_id` | `integer` | yes | — | — | Lane ID |
+| `title` | `string` | no | — | — | New title |
+| `sort_order` | `number` | no | — | — | Sort order |
+| `row_count` | `integer` | no | — | — | Number of sub-rows to split into |
+| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
+| `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards in this lane |
+| `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
 
 **Examples**
 
@@ -5833,12 +5864,12 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Type name (1-64 chars) |
-| `letter` | `string` | yes | — | Single letter or emoji |
-| `color` | `integer` | yes | — | Color (2-25) |
-| `description_template` | `string` | no | — | Template for card description |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Type name (1-64 chars) |
+| `letter` | `string` | yes | — | — | Single letter or emoji |
+| `color` | `integer` | yes | — | — | Color (2-25) |
+| `description_template` | `string` | no | — | — | Template for card description |
 
 **Examples**
 
@@ -5873,13 +5904,13 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID to delete |
-| `replace_type_id` | `integer` | yes | — | Replacement card type ID |
-| `has_to_replace_in_automation` | `boolean` | no | — | Replace this type in automations. |
-| `has_to_replace_in_restriction` | `boolean` | no | — | Replace this type in restrictions. |
-| `has_to_replace_in_workflow` | `boolean` | no | — | Replace this type in workflows. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID to delete |
+| `replace_type_id` | `integer` | yes | — | — | Replacement card type ID |
+| `has_to_replace_in_automation` | `boolean` | no | — | — | Replace this type in automations. |
+| `has_to_replace_in_restriction` | `boolean` | no | — | — | Replace this type in restrictions. |
+| `has_to_replace_in_workflow` | `boolean` | no | — | — | Replace this type in workflows. |
 
 **Examples**
 
@@ -5914,9 +5945,9 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID |
 
 **Examples**
 
@@ -5951,11 +5982,11 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -5990,11 +6021,11 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID |
-| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID |
+| `tree_entity_uid` | `string` | yes | — | — | Tree entity UID |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -6029,9 +6060,9 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID |
 
 **Examples**
 
@@ -6066,10 +6097,10 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID |
-| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID |
+| `tree_entity_uid` | `string` | yes | — | — | Tree entity UID |
 
 **Examples**
 
@@ -6104,13 +6135,13 @@ card-types.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `type_id` | `integer` | yes | — | Card type ID |
-| `name` | `string` | no | — | New name |
-| `letter` | `string` | no | — | New letter |
-| `color` | `integer` | no | — | New color (2-25) |
-| `description_template` | `string` | no | — | Description template |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `type_id` | `integer` | yes | — | — | Card type ID |
+| `name` | `string` | no | — | — | New name |
+| `letter` | `string` | no | — | — | New letter |
+| `color` | `integer` | no | — | — | New color (2-25) |
+| `description_template` | `string` | no | — | — | Description template |
 
 **Examples**
 
@@ -6175,13 +6206,13 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Directory name. |
-| `description` | `string|null` | no | — | Directory description. |
-| `settings` | `object` | no | — | Directory settings, for example multi_select or allow_editing. |
-| `fields` | `array` | no | — | Initial directory fields, when supported by the API. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Directory name. |
+| `description` | `string|null` | no | — | — | Directory description. |
+| `settings` | `object` | no | — | — | Directory settings, for example multi_select or allow_editing. |
+| `fields` | `array` | no | — | — | Initial directory fields, when supported by the API. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6224,9 +6255,9 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
 
 **Examples**
 
@@ -6269,12 +6300,12 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `include_fields` | `boolean` | no | — | Include directory field definitions. |
-| `include_author` | `boolean` | no | — | Include author user object. |
-| `include_records_count` | `boolean` | no | — | Include records_count. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `include_fields` | `boolean` | no | — | — | Include directory field definitions. |
+| `include_author` | `boolean` | no | — | — | Include author user object. |
+| `include_records_count` | `boolean` | no | — | — | Include records_count. |
 
 **Examples**
 
@@ -6317,15 +6348,15 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `include_fields` | `boolean` | no | — | Include directory field definitions. |
-| `include_author` | `boolean` | no | — | Include author user object. |
-| `include_records_count` | `boolean` | no | — | Include records_count. |
-| `query` | `string` | no | — | Search by directory name. |
-| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
-| `limit` | `integer` | no | — | Max results, capped by Kaiten at 200. |
-| `offset` | `integer` | no | — | Pagination offset. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `include_fields` | `boolean` | no | — | — | Include directory field definitions. |
+| `include_author` | `boolean` | no | — | — | Include author user object. |
+| `include_records_count` | `boolean` | no | — | — | Include records_count. |
+| `query` | `string` | no | — | — | Search by directory name. |
+| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 200. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
 
 **Examples**
 
@@ -6368,14 +6399,14 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `name` | `string` | no | — | Directory name. |
-| `description` | `string|null` | no | — | Directory description. |
-| `settings` | `object` | no | — | Directory settings. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | Directory condition. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `name` | `string` | no | — | — | Directory name. |
+| `description` | `string|null` | no | — | — | Directory description. |
+| `settings` | `object` | no | — | — | Directory settings. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Directory condition. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6418,16 +6449,16 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `name` | `string` | yes | — | Field name. |
-| `type` | `string` | yes | — | Field type, for example string, email, phone, or catalog. |
-| `required` | `boolean` | no | — | Whether the field is required. |
-| `is_display` | `boolean` | no | — | Whether the field is used as display value. |
-| `sort_order` | `number` | no | — | Field sort order. |
-| `settings` | `object` | no | — | Type-specific field settings. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `name` | `string` | yes | — | — | Field name. |
+| `type` | `string` | yes | — | — | Field type, for example string, email, phone, or catalog. |
+| `required` | `boolean` | no | — | — | Whether the field is required. |
+| `is_display` | `boolean` | no | — | — | Whether the field is used as display value. |
+| `sort_order` | `number` | no | — | — | Field sort order. |
+| `settings` | `object` | no | — | — | Type-specific field settings. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6470,10 +6501,10 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | — | Custom directory field ID (UUID). |
 
 **Examples**
 
@@ -6516,10 +6547,10 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | — | Custom directory field ID (UUID). |
 
 **Examples**
 
@@ -6562,11 +6593,11 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `include_author` | `boolean` | no | — | Include author user object. |
-| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `include_author` | `boolean` | no | — | — | Include author user object. |
+| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
 
 **Examples**
 
@@ -6609,17 +6640,17 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `field_id` | `string` | yes | — | Custom directory field ID (UUID). |
-| `name` | `string` | no | — | Field name. |
-| `required` | `boolean` | no | — | Whether the field is required. |
-| `is_display` | `boolean` | no | — | Whether the field is used as display value. |
-| `sort_order` | `number` | no | — | Field sort order. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | Field condition. |
-| `settings` | `object` | no | — | Type-specific field settings. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `field_id` | `string` | yes | — | — | Custom directory field ID (UUID). |
+| `name` | `string` | no | — | — | Field name. |
+| `required` | `boolean` | no | — | — | Whether the field is required. |
+| `is_display` | `boolean` | no | — | — | Whether the field is used as display value. |
+| `sort_order` | `number` | no | — | — | Field sort order. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Field condition. |
+| `settings` | `object` | no | — | — | Type-specific field settings. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6662,13 +6693,13 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
-| `filter` | `string` | no | — | Base64-encoded JSON card filter. |
-| `limit` | `integer` | no | — | Max results, capped by Kaiten at 100. |
-| `offset` | `integer` | no | — | Pagination offset. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
+| `filter` | `string` | no | — | — | Base64-encoded JSON card filter. |
+| `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 100. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
 
 **Examples**
 
@@ -6711,11 +6742,11 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `values` | `object|array` | yes | — | Field values for the record. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `values` | `object|array` | yes | — | — | Field values for the record. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6758,10 +6789,10 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
 
 **Examples**
 
@@ -6804,11 +6835,11 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
-| `profile` | `string` | no | `none`, `summary`, `details`, `full` | Controls included relations. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations. |
 
 **Examples**
 
@@ -6851,18 +6882,18 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `query` | `string` | no | — | Quick search by record display value. |
-| `profile` | `string` | no | `none`, `summary`, `details`, `full` | Controls included relations. |
-| `include_values` | `boolean` | no | — | Legacy flag to include values array. |
-| `include_author` | `boolean` | no | — | Include author user object. |
-| `conditions` | `array` | no | — | Condition filters, for example ["active", "inactive", "removed"]. |
-| `filters` | `object` | no | — | Advanced field-based filters as JSON. |
-| `filter_operator` | `string` | no | `and`, `or` | Boolean operator for filters. |
-| `limit` | `integer` | no | — | Max results, capped by Kaiten at 100. |
-| `offset` | `integer` | no | — | Pagination offset. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `query` | `string` | no | — | — | Quick search by record display value. |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations. |
+| `include_values` | `boolean` | no | — | — | Legacy flag to include values array. |
+| `include_author` | `boolean` | no | — | — | Include author user object. |
+| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `filters` | `object` | no | — | — | Advanced field-based filters as JSON. |
+| `filter_operator` | `string` | no | `and`, `or` | — | Boolean operator for filters. |
+| `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 100. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
 
 **Examples**
 
@@ -6905,13 +6936,13 @@ custom-directory-records.cards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `directory_id` | `string` | yes | — | Custom directory ID (UUID). |
-| `record_id` | `string` | yes | — | Custom directory record ID (UUID). |
-| `values` | `object|array` | no | — | Field values for the record. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | Record condition. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
+| `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
+| `values` | `object|array` | no | — | — | Field values for the record. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Record condition. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
 **Examples**
 
@@ -6995,12 +7026,12 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `name` | `string` | no | — | Catalog value display name |
-| `value` | `object` | yes | — | Catalog value fields keyed by field UID. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `name` | `string` | no | — | — | Catalog value display name |
+| `value` | `object` | yes | — | — | Catalog value fields keyed by field UID. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7041,10 +7072,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Catalog value ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Catalog value ID |
 
 **Examples**
 
@@ -7085,10 +7116,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Catalog value ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Catalog value ID |
 
 **Examples**
 
@@ -7129,13 +7160,13 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `query` | `string` | no | — | Text search filter by catalog values |
-| `conditions` | `string` | no | — | Condition filter: active or inactive |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `query` | `string` | no | — | — | Text search filter by catalog values |
+| `conditions` | `string` | no | — | — | Condition filter: active or inactive |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
 
 **Examples**
 
@@ -7176,14 +7207,14 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Catalog value ID |
-| `name` | `string` | no | — | Catalog value display name |
-| `value` | `object` | no | — | Catalog value fields keyed by field UID. |
-| `condition` | `string` | no | `active`, `inactive` | Value condition |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Catalog value ID |
+| `name` | `string` | no | — | — | Catalog value display name |
+| `value` | `object` | no | — | — | Catalog value fields keyed by field UID. |
+| `condition` | `string` | no | `active`, `inactive` | — | Value condition |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7224,12 +7255,12 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
-| `value` | `string|number|object` | yes | — | Score value. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value` | `string|number|object` | yes | — | — | Score value. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7264,10 +7295,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
 
 **Examples**
 
@@ -7302,13 +7333,13 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Score value ID |
-| `value` | `string|number|object` | no | — | Score value. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Score value ID |
+| `value` | `string|number|object` | no | — | — | Score value. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7343,12 +7374,12 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
-| `value` | `string|number|object` | yes | — | Vote value. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value` | `string|number|object` | yes | — | — | Vote value. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7383,11 +7414,11 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Vote value ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Vote value ID |
 
 **Examples**
 
@@ -7422,10 +7453,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
 
 **Examples**
 
@@ -7460,13 +7491,13 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Vote value ID |
-| `value` | `string|number|object` | no | — | Vote value. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Vote value ID |
+| `value` | `string|number|object` | no | — | — | Vote value. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7501,19 +7532,19 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Property name (1-255 chars) |
-| `type` | `string` | yes | `string`, `number`, `date`, `email`, `checkbox`, `select`, `formula`, `url`, `collective_score`, `vote`, `collective_vote`, `catalog`, `phone`, `user`, `attachment` | Property type |
-| `show_on_facade` | `boolean` | no | — | Show on card facade |
-| `multi_select` | `boolean` | no | — | Enable multi-select |
-| `colorful` | `boolean` | no | — | Enable colors for select values |
-| `multiline` | `boolean` | no | — | Multiline text field |
-| `values_creatable_by_users` | `boolean` | no | — | Allow regular users to create values |
-| `values_type` | `string` | no | `number`, `text` | Values type (required for collective_score) |
-| `vote_variant` | `string` | no | `rating`, `scale`, `emoji_set` | Vote variant (required for vote/collective_vote) |
-| `color` | `integer` | no | — | Color index |
-| `data` | `object` | no | — | Type-specific data; required for vote/collective_vote and some other typed properties |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Property name (1-255 chars) |
+| `type` | `string` | yes | `string`, `number`, `date`, `email`, `checkbox`, `select`, `formula`, `url`, `collective_score`, `vote`, `collective_vote`, `catalog`, `phone`, `user`, `attachment` | — | Property type |
+| `show_on_facade` | `boolean` | no | — | — | Show on card facade |
+| `multi_select` | `boolean` | no | — | — | Enable multi-select |
+| `colorful` | `boolean` | no | — | — | Enable colors for select values |
+| `multiline` | `boolean` | no | — | — | Multiline text field |
+| `values_creatable_by_users` | `boolean` | no | — | — | Allow regular users to create values |
+| `values_type` | `string` | no | `number`, `text` | — | Values type (required for collective_score) |
+| `vote_variant` | `string` | no | `rating`, `scale`, `emoji_set` | — | Vote variant (required for vote/collective_vote) |
+| `color` | `integer` | no | — | — | Color index |
+| `data` | `object` | no | — | — | Type-specific data; required for vote/collective_vote and some other typed properties |
 
 **Examples**
 
@@ -7554,9 +7585,9 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
 
 **Examples**
 
@@ -7596,9 +7627,9 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
 
 **Examples**
 
@@ -7638,18 +7669,18 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `include_values` | `boolean` | no | — | Include select/catalog values |
-| `include_author` | `boolean` | no | — | Include author user object |
-| `types` | `string` | no | — | Comma-separated type names to filter |
-| `conditions` | `string` | no | — | Comma-separated conditions to filter |
-| `query` | `string` | no | — | Search filter by name |
-| `order_by` | `string` | no | — | Sort column |
-| `order_direction` | `string` | no | — | Sort direction (asc or desc) |
-| `board_id` | `integer` | no | — | Filter properties available on a specific board |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `include_values` | `boolean` | no | — | — | Deprecated compatibility input. false is ignored; true is rejected. Use select-values.list or catalog-values.list instead. |
+| `include_author` | `boolean` | no | — | — | Include author user object |
+| `types` | `string` | no | — | — | Comma-separated type names to filter |
+| `conditions` | `string` | no | — | — | Comma-separated conditions to filter |
+| `query` | `string` | no | — | — | Search filter by name |
+| `order_by` | `string` | no | — | — | Sort column |
+| `order_direction` | `string` | no | — | — | Sort direction (asc or desc) |
+| `board_id` | `integer` | no | — | — | Filter properties available on a specific board |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
 
 **Examples**
 
@@ -7668,6 +7699,7 @@ custom-properties.tree-entities
 - Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.
 - Allowed entries/options are managed separately from the field definition.
 - Do not confuse this with UI catalog tables (`custom-directories`) or document groups.
+- include_values is retained only as a migration input: false is ignored and true fails with replacement command guidance.
 
 ### `custom-properties.select-values.create`
 
@@ -7690,12 +7722,12 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value` | `string` | yes | — | Select value text |
-| `color` | `integer` | no | — | Color index |
-| `sort_order` | `number` | no | — | Sort order (float) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value` | `string` | yes | — | — | Select value text |
+| `color` | `integer` | no | — | — | Color index |
+| `sort_order` | `number` | no | — | — | Sort order (float) |
 
 **Examples**
 
@@ -7730,10 +7762,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Select value ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Select value ID |
 
 **Examples**
 
@@ -7768,10 +7800,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Select value ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Select value ID |
 
 **Examples**
 
@@ -7806,15 +7838,15 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `query` | `string` | no | — | Search filter by value text |
-| `order_by` | `string` | no | `id`, `sort_order`, `match_query_priority` | Sort order mode |
-| `conditions` | `string` | no | — | Comma-separated conditions |
-| `v2_select_search` | `boolean` | no | — | Use v2 search mode |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `query` | `string` | no | — | — | Search filter by value text |
+| `order_by` | `string` | no | `id`, `sort_order`, `match_query_priority` | — | Sort order mode |
+| `conditions` | `string` | no | — | — | Comma-separated conditions |
+| `v2_select_search` | `boolean` | no | — | — | Use v2 search mode |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
 
 **Examples**
 
@@ -7849,14 +7881,14 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `value_id` | `integer` | yes | — | Select value ID |
-| `value` | `string` | no | — | New value text |
-| `condition` | `string` | no | `active`, `inactive` | Value status |
-| `color` | `integer` | no | — | Color index |
-| `sort_order` | `number` | no | — | Sort order (float) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `value_id` | `integer` | yes | — | — | Select value ID |
+| `value` | `string` | no | — | — | New value text |
+| `condition` | `string` | no | `active`, `inactive` | — | Value status |
+| `color` | `integer` | no | — | — | Color index |
+| `sort_order` | `number` | no | — | — | Sort order (float) |
 
 **Examples**
 
@@ -7891,11 +7923,11 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `tree_entity_uid` | `string` | yes | — | — | Tree entity UID |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -7930,9 +7962,9 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
 
 **Examples**
 
@@ -7967,10 +7999,10 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `tree_entity_uid` | `string` | yes | — | Tree entity UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `tree_entity_uid` | `string` | yes | — | — | Tree entity UID |
 
 **Examples**
 
@@ -8005,20 +8037,20 @@ custom-properties.tree-entities
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `property_id` | `integer` | yes | — | Property ID |
-| `name` | `string` | no | — | New name |
-| `condition` | `string` | no | `active`, `inactive` | Status |
-| `show_on_facade` | `boolean` | no | — | Show on card facade |
-| `multi_select` | `boolean` | no | — | Multi-select mode |
-| `colorful` | `boolean` | no | — | Enable colors |
-| `multiline` | `boolean` | no | — | Multiline mode |
-| `values_creatable_by_users` | `boolean` | no | — | Allow users to create values |
-| `is_used_as_progress` | `boolean` | no | — | Use this formula property as progress |
-| `color` | `integer` | no | — | Color index |
-| `data` | `object` | no | — | Type-specific data |
-| `fields_settings` | `object` | no | — | Catalog fields configuration |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `property_id` | `integer` | yes | — | — | Property ID |
+| `name` | `string` | no | — | — | New name |
+| `condition` | `string` | no | `active`, `inactive` | — | Status |
+| `show_on_facade` | `boolean` | no | — | — | Show on card facade |
+| `multi_select` | `boolean` | no | — | — | Multi-select mode |
+| `colorful` | `boolean` | no | — | — | Enable colors |
+| `multiline` | `boolean` | no | — | — | Multiline mode |
+| `values_creatable_by_users` | `boolean` | no | — | — | Allow users to create values |
+| `is_used_as_progress` | `boolean` | no | — | — | Use this formula property as progress |
+| `color` | `integer` | no | — | — | Color index |
+| `data` | `object` | no | — | — | Type-specific data |
+| `fields_settings` | `object` | no | — | — | Catalog fields configuration |
 
 **Examples**
 
@@ -8085,10 +8117,10 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `document_uid` | `string` | yes | — | Document UID |
-| `file_id` | `string` | yes | — | Document file UID without extension |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Document UID |
+| `file_id` | `string` | yes | — | — | Document file UID without extension |
 
 **Examples**
 
@@ -8124,10 +8156,10 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `document_uid` | `string` | yes | — | Document UID. |
-| `file` | `string` | yes | — | Local file path to upload. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Document UID. |
+| `file` | `string` | yes | — | — | Local file path to upload. |
 
 **Examples**
 
@@ -8164,11 +8196,11 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Group title |
-| `parent_entity_uid` | `string` | no | — | Parent group UID for nesting |
-| `sort_order` | `integer` | no | — | Sort order (auto-generated if not provided) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Group title |
+| `parent_entity_uid` | `string` | no | — | — | Parent group UID for nesting |
+| `sort_order` | `integer` | no | — | — | Sort order (auto-generated if not provided) |
 
 **Examples**
 
@@ -8207,9 +8239,9 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Document group UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Document group UID |
 
 **Examples**
 
@@ -8248,9 +8280,9 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Document group UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Document group UID |
 
 **Examples**
 
@@ -8289,11 +8321,11 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `limit` | `integer` | no | — | Max results (default: 50) |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default: 50, max: 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
 
 **Examples**
 
@@ -8332,10 +8364,10 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Document group UID |
-| `title` | `string` | no | — | New group title |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Document group UID |
+| `title` | `string` | no | — | — | New group title |
 
 **Examples**
 
@@ -8374,9 +8406,9 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `schema_id` | `integer` | yes | — | Document schema ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `schema_id` | `integer` | yes | — | — | Document schema ID. |
 
 **Examples**
 
@@ -8411,14 +8443,14 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Document title |
-| `text` | `string` | no | — | Markdown content converted to ProseMirror. |
-| `data` | `object` | no | — | Raw ProseMirror JSON. |
-| `parent_entity_uid` | `string` | no | — | Parent document group UID |
-| `sort_order` | `integer` | no | — | Sort order (auto-generated if not provided) |
-| `key` | `string` | no | — | Unique key identifier |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Document title |
+| `text` | `string` | no | — | — | Markdown content converted to ProseMirror. |
+| `data` | `object` | no | — | — | Raw ProseMirror JSON. |
+| `parent_entity_uid` | `string` | no | — | — | Parent document group UID |
+| `sort_order` | `integer` | no | — | — | Sort order (auto-generated if not provided) |
+| `key` | `string` | no | — | — | Unique key identifier |
 
 **Examples**
 
@@ -8455,9 +8487,9 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `document_uid` | `string` | yes | — | Document UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Document UID |
 
 **Examples**
 
@@ -8492,12 +8524,12 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `document_uid` | `string` | yes | — | Document UID |
-| `markdown` | `boolean` | no | — | Save the document body as Markdown instead of returning JSON. |
-| `output` | `string` | no | — | Markdown output file or directory. Defaults to the current working directory. |
-| `overwrite` | `boolean` | no | — | Replace an existing Markdown output file. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Document UID |
+| `markdown` | `boolean` | no | — | — | Save the document body as Markdown instead of returning JSON. |
+| `output` | `string` | no | — | — | Markdown output file or directory. Defaults to the current working directory. |
+| `overwrite` | `boolean` | no | — | — | Replace an existing Markdown output file. |
 
 **Examples**
 
@@ -8537,18 +8569,18 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `limit` | `integer` | no | — | Max results (default: 50) |
-| `offset` | `integer` | no | — | Pagination offset |
-| `version` | `integer` | no | — | Search version. Use 2 for OpenSearch result/position response. |
-| `condition` | `integer` | no | — | Filter condition for version=2 |
-| `search_fields` | `string` | no | — | Comma-separated API search fields for version=2. Sent as Kaiten query parameter 'fields'. |
-| `start_position` | `string` | no | — | Search cursor for version=2 pagination. |
-| `include_search_preview` | `boolean` | no | — | Include search preview objects for version=2. |
-| `fields` | `string` | no | — | Comma-separated field names to keep in the response. Example: 'uid,title' |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default: 50, max: 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `version` | `integer` | no | — | — | Search version. Use 2 for OpenSearch result/position response. |
+| `condition` | `integer` | no | — | — | Filter condition for version=2 |
+| `search_fields` | `string` | no | — | — | Comma-separated API search fields for version=2. Sent as Kaiten query parameter 'fields'. |
+| `start_position` | `string` | no | — | — | Search cursor for version=2 pagination. |
+| `include_search_preview` | `boolean` | no | — | — | Include search preview objects for version=2. |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'uid,title' |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 
 **Examples**
 
@@ -8584,15 +8616,15 @@ documents
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `document_uid` | `string` | yes | — | Document UID |
-| `title` | `string` | no | — | New document title |
-| `text` | `string` | no | — | Markdown content converted to ProseMirror. |
-| `data` | `object` | no | — | Raw ProseMirror JSON. |
-| `parent_entity_uid` | `string` | no | — | New parent group UID |
-| `sort_order` | `integer` | no | — | Sort order |
-| `key` | `string` | no | — | Unique key identifier |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Document UID |
+| `title` | `string` | no | — | — | New document title |
+| `text` | `string` | no | — | — | Markdown content converted to ProseMirror. |
+| `data` | `object` | no | — | — | Raw ProseMirror JSON. |
+| `parent_entity_uid` | `string` | no | — | — | New parent group UID |
+| `sort_order` | `integer` | no | — | — | Sort order |
+| `key` | `string` | no | — | — | Unique key identifier |
 
 **Examples**
 
@@ -8659,11 +8691,11 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `widget_ids` | `array` | yes | — | JSON array containing 1 to 100 widget UUIDs. |
-| `force` | `boolean` | no | — | Force recomputation. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `widget_ids` | `array` | yes | — | — | JSON array containing 1 to 100 widget UUIDs. |
+| `force` | `boolean` | no | — | — | Force recomputation. |
 
 **Examples**
 
@@ -8700,12 +8732,12 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `job_id` | `string|integer` | yes | — | Compute job ID returned by create. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `job_id` | `string|integer` | yes | — | — | Compute job ID returned by create. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -8742,11 +8774,11 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `user_uid` | `string` | yes | — | Company user UUID. |
-| `role` | `string` | yes | `viewer`, `editor` | Dashboard role. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | — | Company user UUID. |
+| `role` | `string` | yes | `viewer`, `editor` | — | Dashboard role. |
 
 **Examples**
 
@@ -8783,13 +8815,13 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `limit` | `integer` | no | — | Maximum users to return (server cap 50). |
-| `offset` | `integer` | no | — | Pagination offset. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `limit` | `integer` | no | — | — | Maximum users to return (server cap 50). |
+| `offset` | `integer` | no | — | — | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -8826,10 +8858,10 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `user_uid` | `string` | yes | — | Company user UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | — | Company user UUID. |
 
 **Examples**
 
@@ -8866,11 +8898,11 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `user_uid` | `string` | yes | — | Company user UUID. |
-| `role` | `string` | yes | `viewer`, `editor` | New dashboard role. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `user_uid` | `string` | yes | — | — | Company user UUID. |
+| `role` | `string` | yes | `viewer`, `editor` | — | New dashboard role. |
 
 **Examples**
 
@@ -8907,13 +8939,13 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `title` | `string` | yes | — | Widget title. |
-| `source` | `string` | yes | — | Widget source; current examples include metric, cardList, distribution, cardsTrend. |
-| `visualization` | `string` | yes | — | Visualization identifier accepted by the current Kaiten installation. |
-| `config` | `object` | yes | — | Source-specific widget config JSON. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `title` | `string` | yes | — | — | Widget title. |
+| `source` | `string` | yes | — | — | Widget source; current examples include metric, cardList, distribution, cardsTrend. |
+| `visualization` | `string` | yes | — | — | Visualization identifier accepted by the current Kaiten installation. |
+| `config` | `object` | yes | — | — | Source-specific widget config JSON. |
 
 **Examples**
 
@@ -8951,10 +8983,10 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `widget_id` | `string` | yes | — | Widget UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `widget_id` | `string` | yes | — | — | Widget UUID. |
 
 **Examples**
 
@@ -8990,11 +9022,11 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9030,14 +9062,14 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `widget_id` | `string` | yes | — | Widget UUID. |
-| `title` | `string` | no | — | Widget title. |
-| `source` | `string` | no | — | Widget source. |
-| `visualization` | `string` | no | — | Visualization identifier. |
-| `config` | `object` | no | — | Partial config merged by Kaiten. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `widget_id` | `string` | yes | — | — | Widget UUID. |
+| `title` | `string` | no | — | — | Widget title. |
+| `source` | `string` | no | — | — | Widget source. |
+| `visualization` | `string` | no | — | — | Visualization identifier. |
+| `config` | `object` | no | — | — | Partial config merged by Kaiten. |
 
 **Examples**
 
@@ -9074,11 +9106,11 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `source_dashboard_id` | `string` | yes | — | Accessible source dashboard UUID. |
-| `title` | `string` | yes | — | Title for the new dashboard. |
-| `is_public` | `boolean` | no | — | Override copied visibility; otherwise inherit it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `source_dashboard_id` | `string` | yes | — | — | Accessible source dashboard UUID. |
+| `title` | `string` | yes | — | — | Title for the new dashboard. |
+| `is_public` | `boolean` | no | — | — | Override copied visibility; otherwise inherit it. |
 
 **Examples**
 
@@ -9115,10 +9147,10 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Dashboard title. |
-| `is_public` | `boolean` | no | — | Make the dashboard visible company-wide (default false). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Dashboard title. |
+| `is_public` | `boolean` | no | — | — | Make the dashboard visible company-wide (default false). |
 
 **Examples**
 
@@ -9156,9 +9188,9 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
 
 **Examples**
 
@@ -9195,12 +9227,12 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `include` | `string` | no | — | Comma-separated relations to include; currently widgets. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `include` | `string` | no | — | — | Comma-separated relations to include; currently widgets. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9237,13 +9269,13 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `search` | `string` | no | — | Search dashboard titles. |
-| `limit` | `integer` | no | — | Maximum dashboards to return (server cap 50). |
-| `offset` | `integer` | no | — | Pagination offset. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `search` | `string` | no | — | — | Search dashboard titles. |
+| `limit` | `integer` | no | — | — | Maximum dashboards to return (server cap 50). |
+| `offset` | `integer` | no | — | — | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9279,13 +9311,13 @@ dashboards
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `dashboard_id` | `string` | yes | — | Dashboard UUID. |
-| `title` | `string` | no | — | New title (owner only). |
-| `is_public` | `boolean` | no | — | New visibility (owner only). |
-| `filter` | `object|null` | no | — | Dashboard filter JSON; use null to clear it. |
-| `layout` | `object` | no | — | Responsive dashboard layout keyed by breakpoint and widget UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `dashboard_id` | `string` | yes | — | — | Dashboard UUID. |
+| `title` | `string` | no | — | — | New title (owner only). |
+| `is_public` | `boolean` | no | — | — | New visibility (owner only). |
+| `filter` | `object|null` | no | — | — | Dashboard filter JSON; use null to clear it. |
+| `layout` | `object` | no | — | — | Responsive dashboard layout keyed by breakpoint and widget UUID. |
 
 **Examples**
 
@@ -9344,11 +9376,11 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_uid` | `string` | yes | — | Card UUID. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_uid` | `string` | yes | — | — | Card UUID. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9384,11 +9416,11 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `card_uid` | `string` | yes | — | Card UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `card_uid` | `string` | yes | — | — | Card UUID. |
 
 **Examples**
 
@@ -9425,13 +9457,13 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `status` | `string` | no | `active`, `removed` | Relation status filter. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `status` | `string` | no | `active`, `removed` | — | Relation status filter. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9467,11 +9499,11 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `card_uid` | `string` | yes | — | Card UUID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `card_uid` | `string` | yes | — | — | Card UUID. |
 
 **Examples**
 
@@ -9508,13 +9540,13 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `title` | `string` | yes | — | Iteration title. |
-| `goal` | `string` | no | — | Iteration goal. |
-| `start_date` | `string` | no | — | ISO 8601 start date. |
-| `finish_date` | `string` | no | — | ISO 8601 finish date. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `title` | `string` | yes | — | — | Iteration title. |
+| `goal` | `string` | no | — | — | Iteration goal. |
+| `start_date` | `string` | no | — | — | ISO 8601 start date. |
+| `finish_date` | `string` | no | — | — | ISO 8601 finish date. |
 
 **Examples**
 
@@ -9550,11 +9582,11 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `new_iteration_id` | `string` | no | — | Target planned/active iteration for cards before deletion. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `new_iteration_id` | `string` | no | — | — | Target planned/active iteration for cards before deletion. |
 
 **Examples**
 
@@ -9591,12 +9623,12 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9632,16 +9664,16 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `status` | `string` | no | — | Comma-separated statuses: planned, active, closed. |
-| `with_data` | `string` | no | `cards` | Include related cards. |
-| `limit` | `integer` | no | — | Maximum iterations to return (server cap 100). |
-| `offset` | `integer` | no | — | Pagination offset. |
-| `order` | `string` | no | `asc`, `desc` | Result order. |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `status` | `string` | no | — | — | Comma-separated statuses: planned, active, closed. |
+| `with_data` | `string` | no | `cards` | — | Include related cards. |
+| `limit` | `integer` | no | — | — | Maximum iterations to return (server cap 100). |
+| `offset` | `integer` | no | — | — | Pagination offset. |
+| `order` | `string` | no | `asc`, `desc` | — | Result order. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -9677,17 +9709,17 @@ iterations
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_uid` | `string` | yes | — | Space UUID. |
-| `iteration_id` | `string` | yes | — | Iteration UUID. |
-| `title` | `string` | no | — | New title. |
-| `goal` | `string` | no | — | New goal. |
-| `status` | `string` | no | `planned`, `active`, `closed` | Next iteration status. |
-| `start_date` | `string` | no | — | ISO 8601 start date. |
-| `finish_date` | `string` | no | — | ISO 8601 finish date. |
-| `actual_finish_date` | `string` | no | — | ISO 8601 actual finish date when closing. |
-| `new_iteration_id` | `string` | no | — | Target planned/active iteration for remaining cards. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_uid` | `string` | yes | — | — | Space UUID. |
+| `iteration_id` | `string` | yes | — | — | Iteration UUID. |
+| `title` | `string` | no | — | — | New title. |
+| `goal` | `string` | no | — | — | New goal. |
+| `status` | `string` | no | `planned`, `active`, `closed` | — | Next iteration status. |
+| `start_date` | `string` | no | — | — | ISO 8601 start date. |
+| `finish_date` | `string` | no | — | — | ISO 8601 finish date. |
+| `actual_finish_date` | `string` | no | — | — | ISO 8601 actual finish date when closing. |
+| `new_iteration_id` | `string` | no | — | — | Target planned/active iteration for remaining cards. |
 
 **Examples**
 
@@ -9746,16 +9778,16 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `board_id` | `integer` | yes | — | Board ID |
-| `column_id` | `integer` | yes | — | Column ID |
-| `lane_id` | `integer` | yes | — | Lane ID |
-| `owner_id` | `integer` | yes | — | Owner user ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `position` | `integer` | no | — | Position in the column |
-| `format` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6`, `7` | Payload format |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `column_id` | `integer` | yes | — | — | Column ID |
+| `lane_id` | `integer` | yes | — | — | Lane ID |
+| `owner_id` | `integer` | yes | — | — | Owner user ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `position` | `integer` | no | — | — | Position in the column |
+| `format` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6`, `7` | — | Payload format |
 
 **Examples**
 
@@ -9790,10 +9822,10 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `webhook_id` | `string` | yes | — | Webhook ID (hash string) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `webhook_id` | `string` | yes | — | — | Webhook ID (hash string) |
 
 **Examples**
 
@@ -9828,9 +9860,9 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -9865,17 +9897,17 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `webhook_id` | `string` | yes | — | Webhook ID (hash string) |
-| `board_id` | `integer` | no | — | Board ID |
-| `column_id` | `integer` | no | — | Column ID |
-| `lane_id` | `integer` | no | — | Lane ID |
-| `owner_id` | `integer` | no | — | Owner user ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `position` | `integer` | no | — | Position in the column |
-| `format` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6`, `7` | Payload format |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `webhook_id` | `string` | yes | — | — | Webhook ID (hash string) |
+| `board_id` | `integer` | no | — | — | Board ID |
+| `column_id` | `integer` | no | — | — | Column ID |
+| `lane_id` | `integer` | no | — | — | Lane ID |
+| `owner_id` | `integer` | no | — | — | Owner user ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `position` | `integer` | no | — | — | Position in the column |
+| `format` | `integer` | no | `1`, `2`, `3`, `4`, `5`, `6`, `7` | — | Payload format |
 
 **Examples**
 
@@ -9910,10 +9942,10 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `url` | `string` | yes | — | Webhook URL |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `url` | `string` | yes | — | — | Webhook URL |
 
 **Examples**
 
@@ -9948,10 +9980,10 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `webhook_id` | `integer` | yes | — | Webhook ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `webhook_id` | `integer` | yes | — | — | Webhook ID |
 
 **Examples**
 
@@ -9988,10 +10020,10 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `webhook_id` | `integer` | yes | — | Webhook ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `webhook_id` | `integer` | yes | — | — | Webhook ID |
 
 **Examples**
 
@@ -10028,9 +10060,9 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -10065,12 +10097,12 @@ webhooks
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `webhook_id` | `integer` | yes | — | Webhook ID |
-| `url` | `string` | no | — | Webhook URL |
-| `enabled` | `boolean` | no | — | Whether the webhook is enabled |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `webhook_id` | `integer` | yes | — | — | Webhook ID |
+| `url` | `string` | no | — | — | Webhook URL |
+| `enabled` | `boolean` | no | — | — | Whether the webhook is enabled |
 
 **Examples**
 
@@ -10128,11 +10160,11 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Source space ID |
-| `automation_id` | `string` | yes | — | Automation ID (UUID) |
-| `target_space_id` | `integer` | yes | — | Target space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Source space ID |
+| `automation_id` | `string` | yes | — | — | Automation ID (UUID) |
+| `target_space_id` | `integer` | yes | — | — | Target space ID |
 
 **Examples**
 
@@ -10169,16 +10201,16 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `name` | `string` | yes | — | Automation name |
-| `trigger` | `object` | yes | — | Trigger configuration |
-| `actions` | `array` | yes | — | Action configurations |
-| `conditions` | `object` | no | — | Conditions configuration |
-| `type` | `string` | no | `on_action`, `on_date`, `on_demand`, `on_workflow` | Automation type |
-| `sort_order` | `number` | no | — | Sort position |
-| `source_automation_id` | `string` | no | — | Automation ID to clone from |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `name` | `string` | yes | — | — | Automation name |
+| `trigger` | `object` | yes | — | — | Trigger configuration |
+| `actions` | `array` | yes | — | — | Action configurations |
+| `conditions` | `object` | no | — | — | Conditions configuration |
+| `type` | `string` | no | `on_action`, `on_date`, `on_demand`, `on_workflow` | — | Automation type |
+| `sort_order` | `number` | no | — | — | Sort position |
+| `source_automation_id` | `string` | no | — | — | Automation ID to clone from |
 
 **Examples**
 
@@ -10215,10 +10247,10 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `automation_id` | `string` | yes | — | Automation ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `automation_id` | `string` | yes | — | — | Automation ID (UUID) |
 
 **Examples**
 
@@ -10255,10 +10287,10 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `automation_id` | `string` | yes | — | Automation ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `automation_id` | `string` | yes | — | — | Automation ID (UUID) |
 
 **Examples**
 
@@ -10280,7 +10312,7 @@ workflows
 |---|---|
 | CLI command | `kaiten automations list` |
 | MCP alias | `kaiten_list_automations` |
-| Description | List all automations for a Kaiten space. |
+| Description | List one page of automations for a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -10295,9 +10327,11 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
 
 **Examples**
 
@@ -10310,6 +10344,7 @@ workflows
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 
 ### `automations.update`
 
@@ -10332,16 +10367,16 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `automation_id` | `string` | yes | — | Automation ID (UUID) |
-| `name` | `string` | no | — | New automation name |
-| `trigger` | `object` | no | — | New trigger configuration |
-| `actions` | `array` | no | — | New action configurations |
-| `conditions` | `object` | no | — | New conditions configuration |
-| `status` | `string` | no | `active`, `disabled` | Automation status |
-| `sort_order` | `number` | no | — | Sort position |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `automation_id` | `string` | yes | — | — | Automation ID (UUID) |
+| `name` | `string` | no | — | — | New automation name |
+| `trigger` | `object` | no | — | — | New trigger configuration |
+| `actions` | `array` | no | — | — | New action configurations |
+| `conditions` | `object` | no | — | — | New conditions configuration |
+| `status` | `string` | no | `active`, `disabled` | — | Automation status |
+| `sort_order` | `number` | no | — | — | Sort position |
 
 **Examples**
 
@@ -10378,11 +10413,11 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Workflow name |
-| `stages` | `array` | yes | — | Workflow stages |
-| `transitions` | `array` | yes | — | Workflow transitions |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Workflow name |
+| `stages` | `array` | yes | — | — | Workflow stages |
+| `transitions` | `array` | yes | — | — | Workflow transitions |
 
 **Examples**
 
@@ -10419,9 +10454,9 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `workflow_id` | `string` | yes | — | Workflow ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `workflow_id` | `string` | yes | — | — | Workflow ID (UUID) |
 
 **Examples**
 
@@ -10458,9 +10493,9 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `workflow_id` | `string` | yes | — | Workflow ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `workflow_id` | `string` | yes | — | — | Workflow ID (UUID) |
 
 **Examples**
 
@@ -10497,10 +10532,10 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Maximum number of results |
-| `offset` | `integer` | no | — | Offset for pagination |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Maximum number of results |
+| `offset` | `integer` | no | — | — | Offset for pagination |
 
 **Examples**
 
@@ -10535,12 +10570,12 @@ workflows
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `workflow_id` | `string` | yes | — | Workflow ID (UUID) |
-| `name` | `string` | no | — | New workflow name |
-| `stages` | `array` | no | — | Updated stages |
-| `transitions` | `array` | no | — | Updated transitions |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `workflow_id` | `string` | yes | — | — | Workflow ID (UUID) |
+| `name` | `string` | no | — | — | New workflow name |
+| `stages` | `array` | no | — | — | Updated stages |
+| `transitions` | `array` | no | — | — | Updated transitions |
 
 **Examples**
 
@@ -11703,10 +11738,10 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
-| `card_id` | `integer` | yes | — | Card ID to add |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
+| `card_id` | `integer` | yes | — | — | Card ID to add |
 
 **Examples**
 
@@ -11741,10 +11776,10 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields (avatars, nested user objects). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects). |
 
 **Examples**
 
@@ -11781,10 +11816,10 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
-| `card_id` | `integer` | yes | — | Card ID to remove |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
+| `card_id` | `integer` | yes | — | — | Card ID to remove |
 
 **Examples**
 
@@ -11819,13 +11854,13 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Project title (stored as 'name') |
-| `description` | `string` | no | — | Project description |
-| `work_calendar_id` | `string` | no | — | Work calendar UUID to attach to the project |
-| `settings` | `object` | no | — | Project settings |
-| `properties` | `object` | no | — | Custom property values as {id_<N>: value} pairs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Project title (stored as 'name') |
+| `description` | `string` | no | — | — | Project description |
+| `work_calendar_id` | `string` | no | — | — | Work calendar UUID to attach to the project |
+| `settings` | `object` | no | — | — | Project settings |
+| `properties` | `object` | no | — | — | Custom property values as {id_<N>: value} pairs |
 
 **Examples**
 
@@ -11860,9 +11895,9 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
 
 **Examples**
 
@@ -11897,10 +11932,10 @@ sprints
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
-| `with_cards_data` | `boolean` | no | — | Include full card data with path info and custom properties |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
+| `with_cards_data` | `boolean` | no | — | — | Include full card data with path info and custom properties |
 
 **Examples**
 
@@ -11970,15 +12005,15 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `project_id` | `string` | yes | — | Project ID (UUID) |
-| `title` | `string` | no | — | Project title (stored as 'name') |
-| `description` | `string` | no | — | Project description |
-| `condition` | `string` | no | `active`, `inactive` | Project condition (active or inactive) |
-| `work_calendar_id` | `string` | no | — | Work calendar UUID to attach to the project |
-| `settings` | `object` | no | — | Project settings |
-| `properties` | `object` | no | — | Custom property values as {id_<N>: value} pairs; set a key to null to clear it |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `project_id` | `string` | yes | — | — | Project ID (UUID) |
+| `title` | `string` | no | — | — | Project title (stored as 'name') |
+| `description` | `string` | no | — | — | Project description |
+| `condition` | `string` | no | `active`, `inactive` | — | Project condition (active or inactive) |
+| `work_calendar_id` | `string` | no | — | — | Work calendar UUID to attach to the project |
+| `settings` | `object` | no | — | — | Project settings |
+| `properties` | `object` | no | — | — | Custom property values as {id_<N>: value} pairs; set a key to null to clear it |
 
 **Examples**
 
@@ -12013,13 +12048,13 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Sprint title |
-| `board_id` | `integer` | yes | — | Board ID for the sprint |
-| `goal` | `string` | no | — | Sprint goal |
-| `start_date` | `string` | no | — | Start date (ISO 8601) |
-| `finish_date` | `string` | no | — | Finish date (ISO 8601) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Sprint title |
+| `board_id` | `integer` | yes | — | — | Board ID for the sprint |
+| `goal` | `string` | no | — | — | Sprint goal |
+| `start_date` | `string` | no | — | — | Start date (ISO 8601) |
+| `finish_date` | `string` | no | — | — | Finish date (ISO 8601) |
 
 **Examples**
 
@@ -12056,9 +12091,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sprint_id` | `integer` | yes | — | Sprint ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sprint_id` | `integer` | yes | — | — | Sprint ID |
 
 **Examples**
 
@@ -12095,10 +12130,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sprint_id` | `integer` | yes | — | Sprint ID |
-| `exclude_deleted_cards` | `boolean` | no | — | Exclude deleted cards from the sprint summary |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sprint_id` | `integer` | yes | — | — | Sprint ID |
+| `exclude_deleted_cards` | `boolean` | no | — | — | Exclude deleted cards from the sprint summary |
 
 **Examples**
 
@@ -12135,11 +12170,11 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `active` | `boolean` | no | — | Filter by active/inactive |
-| `limit` | `integer` | no | — | Max results (max 100) |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `active` | `boolean` | no | — | — | Filter by active/inactive |
+| `limit` | `integer` | no | — | — | Max results (max 100) |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -12176,15 +12211,15 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sprint_id` | `integer` | yes | — | Sprint ID |
-| `title` | `string` | no | — | Sprint title |
-| `goal` | `string` | no | — | Sprint goal |
-| `start_date` | `string` | no | — | Start date (ISO 8601) |
-| `finish_date` | `string` | no | — | Finish date (ISO 8601) |
-| `active` | `boolean` | no | — | Set to false to finish/complete the sprint |
-| `archive_done_cards` | `boolean` | no | — | Archive completed cards when finishing a sprint |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sprint_id` | `integer` | yes | — | — | Sprint ID |
+| `title` | `string` | no | — | — | Sprint title |
+| `goal` | `string` | no | — | — | Sprint goal |
+| `start_date` | `string` | no | — | — | Start date (ISO 8601) |
+| `finish_date` | `string` | no | — | — | Finish date (ISO 8601) |
+| `active` | `boolean` | no | — | — | Set to false to finish/complete the sprint |
+| `archive_done_cards` | `boolean` | no | — | — | Archive completed cards when finishing a sprint |
 
 **Examples**
 
@@ -12270,9 +12305,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Group name |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Group name |
 
 **Examples**
 
@@ -12307,9 +12342,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
 
 **Examples**
 
@@ -12344,9 +12379,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
 
 **Examples**
 
@@ -12381,11 +12416,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search query |
-| `limit` | `integer` | no | — | Max results to return |
-| `offset` | `integer` | no | — | Offset for pagination |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search query |
+| `limit` | `integer` | no | — | — | Max results to return |
+| `offset` | `integer` | no | — | — | Offset for pagination |
 
 **Examples**
 
@@ -12420,10 +12455,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `name` | `string` | no | — | New group name |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `name` | `string` | no | — | — | New group name |
 
 **Examples**
 
@@ -12458,21 +12493,21 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `for_members_section` | `boolean` | no | — | Use the administrative Members section response shape (default true). |
-| `query` | `string` | no | — | Search by email or full name. |
-| `limit` | `integer` | no | — | Maximum number of users to return (default 100). |
-| `offset` | `integer` | no | — | Number of users to skip (default 0). |
-| `only_records_count` | `boolean` | no | — | Return only the filtered user count. |
-| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | Filter by Kaiten access type. |
-| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | Filter by Service Desk access. |
-| `take_licence` | `string` | no | `any`, `yes`, `no` | Filter by users who take a paid license. |
-| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | Filter by temporary deactivation status. |
-| `group_ids` | `array` | no | — | JSON array of company group IDs. |
-| `permissions` | `array` | no | — | JSON array of company permission criteria. |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return per user. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `for_members_section` | `boolean` | no | — | — | Use the administrative Members section response shape (default true). |
+| `query` | `string` | no | — | — | Search by email or full name. |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Maximum number of users to return (default 100). |
+| `offset` | `integer` | no | — | >= 0 | Number of users to skip (default 0). |
+| `only_records_count` | `boolean` | no | — | — | Return only the filtered user count. |
+| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | — | Filter by Kaiten access type. |
+| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | — | Filter by Service Desk access. |
+| `take_licence` | `string` | no | `any`, `yes`, `no` | — | Filter by users who take a paid license. |
+| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | — | Filter by temporary deactivation status. |
+| `group_ids` | `array` | no | — | — | JSON array of company group IDs. |
+| `permissions` | `array` | no | — | — | JSON array of company permission criteria. |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return per user. |
 
 **Examples**
 
@@ -12509,20 +12544,20 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `for_members_section` | `boolean` | no | — | Use the administrative Members response shape (default true). |
-| `query` | `string` | no | — | Search by email or full name. |
-| `page_size` | `integer` | no | — | Users per request (1..100, default 100). |
-| `max_pages` | `integer` | no | — | Safety cap for requests; a full final page causes an error instead of truncation (default 100). |
-| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | Filter by Kaiten access type. |
-| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | Filter by Service Desk access. |
-| `take_licence` | `string` | no | `any`, `yes`, `no` | Filter by paid-license usage. |
-| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | Filter by temporary deactivation status. |
-| `group_ids` | `array` | no | — | JSON array of group IDs. |
-| `permissions` | `array` | no | — | JSON array of company permission criteria. |
-| `compact` | `boolean` | no | — | Return compact output without heavy fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return per user. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `for_members_section` | `boolean` | no | — | — | Use the administrative Members response shape (default true). |
+| `query` | `string` | no | — | — | Search by email or full name. |
+| `page_size` | `integer` | no | — | >= 1, <= 100 | Users per request (1..100, default 100). |
+| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety cap for requests; a full final page causes an error instead of truncation (default 100). |
+| `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | — | Filter by Kaiten access type. |
+| `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | — | Filter by Service Desk access. |
+| `take_licence` | `string` | no | `any`, `yes`, `no` | — | Filter by paid-license usage. |
+| `temporarily_inactive_status` | `string` | no | `all_users`, `only_temporarily_inactive_users`, `only_active_users` | — | Filter by temporary deactivation status. |
+| `group_ids` | `array` | no | — | — | JSON array of group IDs. |
+| `permissions` | `array` | no | — | — | JSON array of company permission criteria. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return per user. |
 
 **Examples**
 
@@ -12559,9 +12594,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | yes | — | Virtual user ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | — | Virtual user ID |
 
 **Examples**
 
@@ -12596,12 +12631,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | yes | — | User ID |
-| `full_name` | `string` | no | — | Full name |
-| `email` | `string` | no | — | Email |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | — | User ID |
+| `full_name` | `string` | no | — | — | Full name |
+| `email` | `string` | no | — | — | Email |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -12636,10 +12671,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `user_id` | `integer` | yes | — | User ID to add as admin |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `user_id` | `integer` | yes | — | — | User ID to add as admin |
 
 **Examples**
 
@@ -12674,10 +12709,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -12712,10 +12747,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `user_id` | `integer` | yes | — | User ID to remove |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `user_id` | `integer` | yes | — | — | User ID to remove |
 
 **Examples**
 
@@ -12750,12 +12785,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `entity_uid` | `string` | yes | — | Tree entity UID |
-| `role_ids` | `array` | yes | — | Tree entity role IDs. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `entity_uid` | `string` | yes | — | — | Tree entity UID |
+| `role_ids` | `array` | yes | — | — | Tree entity role IDs. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -12790,9 +12825,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
 
 **Examples**
 
@@ -12827,10 +12862,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `entity_uid` | `string` | yes | — | Tree entity UID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `entity_uid` | `string` | yes | — | — | Tree entity UID |
 
 **Examples**
 
@@ -12865,12 +12900,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `entity_uid` | `string` | yes | — | Tree entity UID |
-| `role_ids` | `array` | no | — | Tree entity role IDs. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `entity_uid` | `string` | yes | — | — | Tree entity UID |
+| `role_ids` | `array` | no | — | — | Tree entity role IDs. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -12905,10 +12940,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `user_id` | `integer` | yes | — | User ID to add |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `user_id` | `integer` | yes | — | — | User ID to add |
 
 **Examples**
 
@@ -12928,7 +12963,7 @@ user-roles
 |---|---|
 | CLI command | `kaiten group-users list` |
 | MCP alias | `kaiten_list_group_users` |
-| Description | List users in a company group. |
+| Description | List one page of users in a company group. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -12943,10 +12978,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -12959,6 +12996,7 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 
 ### `group-users.remove`
 
@@ -12981,10 +13019,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_uid` | `string` | yes | — | Group UID |
-| `user_id` | `integer` | yes | — | User ID to remove |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `user_id` | `integer` | yes | — | — | User ID to remove |
 
 **Examples**
 
@@ -13019,9 +13057,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `role_id` | `string` | yes | — | Role ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `string` | yes | — | — | Role ID (UUID) |
 
 **Examples**
 
@@ -13056,11 +13094,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search query |
-| `limit` | `integer` | no | — | Max results to return |
-| `offset` | `integer` | no | — | Offset for pagination |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search query |
+| `limit` | `integer` | no | — | — | Max results to return |
+| `offset` | `integer` | no | — | — | Offset for pagination |
 
 **Examples**
 
@@ -13095,11 +13133,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `user_id` | `integer` | yes | — | User ID to add |
-| `role_id` | `string` | no | — | Role ID (UUID) to assign |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `user_id` | `integer` | yes | — | — | User ID to add |
+| `role_id` | `string` | no | — | — | Role ID (UUID) to assign |
 
 **Examples**
 
@@ -13134,11 +13172,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `user_id` | `integer` | yes | — | User ID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `user_id` | `integer` | yes | — | — | User ID |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -13158,7 +13196,7 @@ user-roles
 |---|---|
 | CLI command | `kaiten space-users list` |
 | MCP alias | `kaiten_list_space_users` |
-| Description | List users of a Kaiten space. |
+| Description | List one page of users in a Kaiten space. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -13173,10 +13211,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `compact` | `boolean` | no | — | Return compact response without heavy fields. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
 
@@ -13189,6 +13229,7 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- This direct command returns one page; increase offset to read subsequent pages.
 
 ### `space-users.remove`
 
@@ -13211,10 +13252,10 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `user_id` | `integer` | yes | — | User ID to remove |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `user_id` | `integer` | yes | — | — | User ID to remove |
 
 **Examples**
 
@@ -13249,11 +13290,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `user_id` | `integer` | yes | — | User ID to update |
-| `role_id` | `string` | no | — | New role ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `user_id` | `integer` | yes | — | — | User ID to update |
+| `role_id` | `string` | no | — | — | New role ID (UUID) |
 
 **Examples**
 
@@ -13288,11 +13329,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Role name |
-| `permissions` | `object` | no | — | Role permissions JSON. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Role name |
+| `permissions` | `object` | no | — | — | Role permissions JSON. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -13327,9 +13368,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `role_id` | `integer` | yes | — | User role ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | — | User role ID |
 
 **Examples**
 
@@ -13364,9 +13405,9 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `role_id` | `integer` | yes | — | User role ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | — | User role ID |
 
 **Examples**
 
@@ -13401,11 +13442,11 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search query |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search query |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -13440,12 +13481,12 @@ user-roles
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `role_id` | `integer` | yes | — | User role ID |
-| `name` | `string` | no | — | Role name |
-| `permissions` | `object` | no | — | Role permissions JSON. |
-| `payload` | `object` | no | — | Extra JSON body fields from the Kaiten API docs. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `integer` | yes | — | — | User role ID |
+| `name` | `string` | no | — | — | Role name |
+| `permissions` | `object` | no | — | — | Role permissions JSON. |
+| `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
 
@@ -13500,9 +13541,9 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
 
 **Examples**
 
@@ -13537,9 +13578,9 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_id` | `string` | yes | — | SCIM group ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_id` | `string` | yes | — | — | SCIM group ID. |
 
 **Examples**
 
@@ -13574,11 +13615,11 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `start_index` | `integer` | no | — | SCIM start index. |
-| `count` | `integer` | no | — | SCIM page size. |
-| `filter` | `string` | no | — | SCIM filter expression. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `start_index` | `integer` | no | — | — | SCIM start index. |
+| `count` | `integer` | no | — | — | SCIM page size. |
+| `filter` | `string` | no | — | — | SCIM filter expression. |
 
 **Examples**
 
@@ -13613,10 +13654,10 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `group_id` | `string` | yes | — | SCIM group ID. |
-| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_id` | `string` | yes | — | — | SCIM group ID. |
+| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
 
 **Examples**
 
@@ -13651,9 +13692,9 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
 
 **Examples**
 
@@ -13688,9 +13729,9 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `string` | yes | — | SCIM user ID. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `string` | yes | — | — | SCIM user ID. |
 
 **Examples**
 
@@ -13725,11 +13766,11 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `start_index` | `integer` | no | — | SCIM start index. |
-| `count` | `integer` | no | — | SCIM page size. |
-| `filter` | `string` | no | — | SCIM filter expression. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `start_index` | `integer` | no | — | — | SCIM start index. |
+| `count` | `integer` | no | — | — | SCIM page size. |
+| `filter` | `string` | no | — | — | SCIM filter expression. |
 
 **Examples**
 
@@ -13764,10 +13805,10 @@ scim.users
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `string` | yes | — | SCIM user ID. |
-| `payload` | `object` | yes | — | SCIM JSON payload. Sent as the request body. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `string` | yes | — | — | SCIM user ID. |
+| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
 
 **Examples**
 
@@ -13831,14 +13872,14 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `categories` | `string` | no | — | Comma-separated log categories |
-| `actions` | `string` | no | — | Comma-separated audit actions |
-| `from` | `string` | no | — | Start of date range filter |
-| `to` | `string` | no | — | End of date range filter |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `categories` | `string` | no | — | — | Comma-separated log categories |
+| `actions` | `string` | no | — | — | Comma-separated audit actions |
+| `from` | `string` | no | — | — | Start of date range filter |
+| `to` | `string` | no | — | — | End of date range filter |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -13873,11 +13914,11 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -13912,11 +13953,11 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_ids` | `array` | yes | — | Card IDs to fetch |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6) |
-| `fields` | `string` | no | — | Comma-separated field names to keep for each history row |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_ids` | `array` | yes | — | — | Card IDs to fetch |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep for each history row |
 
 **Examples**
 
@@ -13954,9 +13995,9 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
 
 **Examples**
 
@@ -13994,18 +14035,18 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `actions` | `string` | no | — | Comma-separated action types |
-| `created_after` | `string` | no | — | Filter activities after this datetime |
-| `created_before` | `string` | no | — | Filter activities before this datetime |
-| `author_id` | `integer` | no | — | Filter by author user ID |
-| `cursor_created` | `string` | no | — | Cursor datetime |
-| `cursor_id` | `integer` | no | — | Cursor ID |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
-| `compact` | `boolean` | no | — | Strip heavy fields |
-| `fields` | `string` | no | — | Comma-separated field names to keep |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `actions` | `string` | no | — | — | Comma-separated action types |
+| `created_after` | `string` | no | — | — | Filter activities after this datetime |
+| `created_before` | `string` | no | — | — | Filter activities before this datetime |
+| `author_id` | `integer` | no | — | — | Filter by author user ID |
+| `cursor_created` | `string` | no | — | — | Cursor datetime |
+| `cursor_id` | `integer` | no | — | — | Cursor ID |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
+| `compact` | `boolean` | no | — | — | Strip heavy fields |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep |
 
 **Examples**
 
@@ -14040,11 +14081,11 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Filter name |
-| `filter` | `object` | yes | — | Filter criteria object |
-| `shared` | `boolean` | no | — | Whether the filter is shared with the team |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Filter name |
+| `filter` | `object` | yes | — | — | Filter criteria object |
+| `shared` | `boolean` | no | — | — | Whether the filter is shared with the team |
 
 **Examples**
 
@@ -14079,9 +14120,9 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `filter_id` | `integer` | yes | — | Filter ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `filter_id` | `integer` | yes | — | — | Filter ID |
 
 **Examples**
 
@@ -14116,9 +14157,9 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `filter_id` | `integer` | yes | — | Filter ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `filter_id` | `integer` | yes | — | — | Filter ID |
 
 **Examples**
 
@@ -14153,10 +14194,10 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -14191,12 +14232,12 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `filter_id` | `integer` | yes | — | Filter ID |
-| `name` | `string` | no | — | Filter name |
-| `filter` | `object` | no | — | Filter criteria object |
-| `shared` | `boolean` | no | — | Whether the filter is shared with the team |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `filter_id` | `integer` | yes | — | — | Filter ID |
+| `name` | `string` | no | — | — | Filter name |
+| `filter` | `object` | no | — | — | Filter criteria object |
+| `shared` | `boolean` | no | — | — | Whether the filter is shared with the team |
 
 **Examples**
 
@@ -14231,17 +14272,17 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `actions` | `string` | no | — | Comma-separated action types |
-| `created_after` | `string` | no | — | Filter activities after this datetime |
-| `created_before` | `string` | no | — | Filter activities before this datetime |
-| `author_id` | `integer` | no | — | Filter by author user ID |
-| `page_size` | `integer` | no | — | Events per page (default 100, max 100) |
-| `max_pages` | `integer` | no | — | Safety limit on pages to fetch |
-| `compact` | `boolean` | no | — | Strip heavy fields; defaults to true for bulk |
-| `fields` | `string` | no | — | Comma-separated field names to keep |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `actions` | `string` | no | — | — | Comma-separated action types |
+| `created_after` | `string` | no | — | — | Filter activities after this datetime |
+| `created_before` | `string` | no | — | — | Filter activities before this datetime |
+| `author_id` | `integer` | no | — | — | Filter by author user ID |
+| `page_size` | `integer` | no | — | — | Events per page (default 100, max 100) |
+| `max_pages` | `integer` | no | — | — | Safety limit on pages to fetch |
+| `compact` | `boolean` | no | — | — | Strip heavy fields; defaults to true for bulk |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep |
 
 **Examples**
 
@@ -14277,17 +14318,17 @@ space-activity-all
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `actions` | `string` | no | — | Comma-separated action types |
-| `created_after` | `string` | no | — | Filter activities after this datetime |
-| `created_before` | `string` | no | — | Filter activities before this datetime |
-| `author_id` | `integer` | no | — | Filter by author user ID |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
-| `compact` | `boolean` | no | — | Strip heavy fields |
-| `fields` | `string` | no | — | Comma-separated field names to keep |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `actions` | `string` | no | — | — | Comma-separated action types |
+| `created_after` | `string` | no | — | — | Filter activities after this datetime |
+| `created_before` | `string` | no | — | — | Filter activities before this datetime |
+| `author_id` | `integer` | no | — | — | Filter by author user ID |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
+| `compact` | `boolean` | no | — | — | Strip heavy fields |
+| `fields` | `string` | no | — | — | Comma-separated field names to keep |
 
 **Examples**
 
@@ -14396,9 +14437,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
 
 **Examples**
 
@@ -14433,10 +14474,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
 
 **Examples**
 
@@ -14471,10 +14512,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
 
 **Examples**
 
@@ -14509,11 +14550,11 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `user_id` | `integer` | yes | — | User ID |
-| `permissions` | `integer` | no | — | Permission bitmask |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `user_id` | `integer` | yes | — | — | User ID |
+| `permissions` | `integer` | no | — | — | Permission bitmask |
 
 **Examples**
 
@@ -14548,10 +14589,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `user_ids` | `array` | yes | — | User IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `user_ids` | `array` | yes | — | — | User IDs |
 
 **Examples**
 
@@ -14586,10 +14627,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `user_ids` | `array` | yes | — | User IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `user_ids` | `array` | yes | — | — | User IDs |
 
 **Examples**
 
@@ -14624,10 +14665,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `user_id` | `integer` | yes | — | User ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `user_id` | `integer` | yes | — | — | User ID |
 
 **Examples**
 
@@ -14662,11 +14703,11 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `user_id` | `integer` | yes | — | User ID |
-| `permissions` | `integer` | no | — | Permission bitmask |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `user_id` | `integer` | yes | — | — | User ID |
+| `permissions` | `integer` | no | — | — | Permission bitmask |
 
 **Examples**
 
@@ -14703,10 +14744,10 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Organization name |
-| `description` | `string` | no | — | Organization description |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Organization name |
+| `description` | `string` | no | — | — | Organization description |
 
 **Examples**
 
@@ -14741,9 +14782,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
 
 **Examples**
 
@@ -14778,9 +14819,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
 
 **Examples**
 
@@ -14815,12 +14856,12 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `includeUsers` | `boolean` | no | — | Include organization users |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `includeUsers` | `boolean` | no | — | — | Include organization users |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -14855,11 +14896,11 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `organization_id` | `integer` | yes | — | Organization ID |
-| `name` | `string` | no | — | Organization name |
-| `description` | `string` | no | — | Organization description |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `organization_id` | `integer` | yes | — | — | Organization ID |
+| `name` | `string` | no | — | — | Organization name |
+| `description` | `string` | no | — | — | Organization description |
 
 **Examples**
 
@@ -14894,12 +14935,12 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `title` | `string` | yes | — | Request title |
-| `service_id` | `integer` | yes | — | Service ID |
-| `description` | `string` | no | — | Request description |
-| `priority` | `string` | no | — | Request priority |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | — | Request title |
+| `service_id` | `integer` | yes | — | — | Service ID |
+| `description` | `string` | no | — | — | Request description |
+| `priority` | `string` | no | — | — | Request priority |
 
 **Examples**
 
@@ -14936,9 +14977,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `request_id` | `integer` | yes | — | Request ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `request_id` | `integer` | yes | — | — | Request ID |
 
 **Examples**
 
@@ -14975,9 +15016,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `request_id` | `integer` | yes | — | Request ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `request_id` | `integer` | yes | — | — | Request ID |
 
 **Examples**
 
@@ -15014,11 +15055,11 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -15053,12 +15094,12 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `request_id` | `integer` | yes | — | Request ID |
-| `title` | `string` | no | — | Request title |
-| `description` | `string` | no | — | Request description |
-| `priority` | `string` | no | — | Request priority |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `request_id` | `integer` | yes | — | — | Request ID |
+| `title` | `string` | no | — | — | Request title |
+| `description` | `string` | no | — | — | Request description |
+| `priority` | `string` | no | — | — | Request priority |
 
 **Examples**
 
@@ -15095,24 +15136,24 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Service name |
-| `board_id` | `integer` | yes | — | Board ID |
-| `position` | `integer` | yes | — | Sort position |
-| `description` | `string` | no | — | Service description |
-| `template_description` | `string` | no | — | Default description template |
-| `lng` | `string` | yes | `en`, `ru` | Language code |
-| `display_status` | `string` | no | `by_column`, `by_state` | How status is displayed |
-| `column_id` | `integer` | no | — | Default column ID |
-| `lane_id` | `integer` | no | — | Default lane ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `email_settings` | `integer` | no | — | Email settings bitmask |
-| `fields_settings` | `object` | no | — | Request form fields configuration |
-| `settings` | `object` | no | — | Additional settings |
-| `allow_to_add_external_recipients` | `boolean` | no | — | Allow external recipients |
-| `hide_in_list` | `boolean` | no | — | Hide service in list |
-| `is_default` | `boolean` | no | — | Set as default service |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Service name |
+| `board_id` | `integer` | yes | — | — | Board ID |
+| `position` | `integer` | yes | — | — | Sort position |
+| `description` | `string` | no | — | — | Service description |
+| `template_description` | `string` | no | — | — | Default description template |
+| `lng` | `string` | yes | `en`, `ru` | — | Language code |
+| `display_status` | `string` | no | `by_column`, `by_state` | — | How status is displayed |
+| `column_id` | `integer` | no | — | — | Default column ID |
+| `lane_id` | `integer` | no | — | — | Default lane ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `email_settings` | `integer` | no | — | — | Email settings bitmask |
+| `fields_settings` | `object` | no | — | — | Request form fields configuration |
+| `settings` | `object` | no | — | — | Additional settings |
+| `allow_to_add_external_recipients` | `boolean` | no | — | — | Allow external recipients |
+| `hide_in_list` | `boolean` | no | — | — | Hide service in list |
+| `is_default` | `boolean` | no | — | — | Set as default service |
 
 **Examples**
 
@@ -15147,9 +15188,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_id` | `integer` | yes | — | Service ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_id` | `integer` | yes | — | — | Service ID |
 
 **Examples**
 
@@ -15184,9 +15225,9 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_id` | `integer` | yes | — | Service ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_id` | `integer` | yes | — | — | Service ID |
 
 **Examples**
 
@@ -15221,12 +15262,12 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `include_archived` | `boolean` | no | — | Include archived services |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `include_archived` | `boolean` | no | — | — | Include archived services |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -15261,25 +15302,25 @@ space-sla-measurements
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_id` | `integer` | yes | — | Service ID |
-| `name` | `string` | no | — | Service name |
-| `description` | `string` | no | — | Service description |
-| `template_description` | `string` | no | — | Default description template |
-| `lng` | `string` | no | — | Language code |
-| `display_status` | `string` | no | `by_column`, `by_state` | How status is displayed |
-| `board_id` | `integer` | no | — | Board ID |
-| `column_id` | `integer` | no | — | Default column ID |
-| `lane_id` | `integer` | no | — | Default lane ID |
-| `type_id` | `integer` | no | — | Card type ID |
-| `position` | `integer` | no | — | Sort position |
-| `email_settings` | `integer` | no | — | Email settings bitmask |
-| `fields_settings` | `object` | no | — | Request form fields configuration |
-| `settings` | `object` | no | — | Additional settings |
-| `archived` | `boolean` | no | — | Archive or unarchive service |
-| `allow_to_add_external_recipients` | `boolean` | no | — | Allow external recipients |
-| `hide_in_list` | `boolean` | no | — | Hide service in list |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_id` | `integer` | yes | — | — | Service ID |
+| `name` | `string` | no | — | — | Service name |
+| `description` | `string` | no | — | — | Service description |
+| `template_description` | `string` | no | — | — | Default description template |
+| `lng` | `string` | no | — | — | Language code |
+| `display_status` | `string` | no | `by_column`, `by_state` | — | How status is displayed |
+| `board_id` | `integer` | no | — | — | Board ID |
+| `column_id` | `integer` | no | — | — | Default column ID |
+| `lane_id` | `integer` | no | — | — | Default lane ID |
+| `type_id` | `integer` | no | — | — | Card type ID |
+| `position` | `integer` | no | — | — | Sort position |
+| `email_settings` | `integer` | no | — | — | Email settings bitmask |
+| `fields_settings` | `object` | no | — | — | Request form fields configuration |
+| `settings` | `object` | no | — | — | Additional settings |
+| `archived` | `boolean` | no | — | — | Archive or unarchive service |
+| `allow_to_add_external_recipients` | `boolean` | no | — | — | Allow external recipients |
+| `hide_in_list` | `boolean` | no | — | — | Hide service in list |
 
 **Examples**
 
@@ -15349,9 +15390,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_desk_settings` | `object` | yes | — | Service Desk configuration object |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_desk_settings` | `object` | yes | — | — | Service Desk configuration object |
 
 **Examples**
 
@@ -15386,15 +15427,15 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
-| `type` | `string` | no | — | Rule type |
-| `calendar_id` | `string` | no | — | Calendar ID |
-| `start_column_uid` | `string` | no | — | Start column UID |
-| `finish_column_uid` | `string` | no | — | Finish column UID |
-| `estimated_time` | `integer` | no | — | Target time in seconds |
-| `notification_settings` | `object` | no | — | Notification configuration |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
+| `type` | `string` | no | — | — | Rule type |
+| `calendar_id` | `string` | no | — | — | Calendar ID |
+| `start_column_uid` | `string` | no | — | — | Start column UID |
+| `finish_column_uid` | `string` | no | — | — | Finish column UID |
+| `estimated_time` | `integer` | no | — | — | Target time in seconds |
+| `notification_settings` | `object` | no | — | — | Notification configuration |
 
 **Examples**
 
@@ -15431,10 +15472,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
-| `rule_id` | `string` | yes | — | Rule ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
+| `rule_id` | `string` | yes | — | — | Rule ID |
 
 **Examples**
 
@@ -15471,16 +15512,16 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
-| `rule_id` | `string` | yes | — | Rule ID |
-| `type` | `string` | no | — | Rule type |
-| `calendar_id` | `string` | no | — | Calendar ID |
-| `start_column_uid` | `string` | no | — | Start column UID |
-| `finish_column_uid` | `string` | no | — | Finish column UID |
-| `estimated_time` | `integer` | no | — | Target time in seconds |
-| `notification_settings` | `object` | no | — | Notification configuration |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
+| `rule_id` | `string` | yes | — | — | Rule ID |
+| `type` | `string` | no | — | — | Rule type |
+| `calendar_id` | `string` | no | — | — | Calendar ID |
+| `start_column_uid` | `string` | no | — | — | Start column UID |
+| `finish_column_uid` | `string` | no | — | — | Finish column UID |
+| `estimated_time` | `integer` | no | — | — | Target time in seconds |
+| `notification_settings` | `object` | no | — | — | Notification configuration |
 
 **Examples**
 
@@ -15517,12 +15558,12 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | SLA policy name |
-| `rules` | `array` | yes | — | SLA rules |
-| `notification_settings` | `object` | no | — | Notification configuration |
-| `v2` | `boolean` | no | — | Use v2 SLA format |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | SLA policy name |
+| `rules` | `array` | yes | — | — | SLA rules |
+| `notification_settings` | `object` | no | — | — | Notification configuration |
+| `v2` | `boolean` | no | — | — | Use v2 SLA format |
 
 **Examples**
 
@@ -15557,9 +15598,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
 
 **Examples**
 
@@ -15594,9 +15635,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
 
 **Examples**
 
@@ -15631,10 +15672,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -15669,9 +15710,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
 
 **Examples**
 
@@ -15706,15 +15747,15 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `date_from` | `string` | no | — | Start date (ISO format) |
-| `date_to` | `string` | no | — | End date (ISO format) |
-| `sla_id` | `string` | no | — | SLA ID |
-| `service_id` | `integer` | no | — | Service ID |
-| `responsible_id` | `integer` | no | — | Responsible user ID |
-| `card_type_ids` | `string` | no | — | JSON array of card type IDs |
-| `tag_ids` | `string` | no | — | JSON array of tag IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `date_from` | `string` | no | — | — | Start date (ISO format) |
+| `date_to` | `string` | no | — | — | End date (ISO format) |
+| `sla_id` | `string` | no | — | — | SLA ID |
+| `service_id` | `integer` | no | — | — | Service ID |
+| `responsible_id` | `integer` | no | — | — | Responsible user ID |
+| `card_type_ids` | `string` | no | — | — | JSON array of card type IDs |
+| `tag_ids` | `string` | no | — | — | JSON array of tag IDs |
 
 **Examples**
 
@@ -15749,13 +15790,13 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `sla_id` | `string` | yes | — | SLA ID (UUID) |
-| `name` | `string` | no | — | SLA policy name |
-| `status` | `string` | no | — | SLA status |
-| `notification_settings` | `object` | no | — | Notification configuration |
-| `should_delete_sla_from_cards` | `boolean` | no | — | Remove SLA from cards when deactivating |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `sla_id` | `string` | yes | — | — | SLA ID (UUID) |
+| `name` | `string` | no | — | — | SLA policy name |
+| `status` | `string` | no | — | — | SLA status |
+| `notification_settings` | `object` | no | — | — | Notification configuration |
+| `should_delete_sla_from_cards` | `boolean` | no | — | — | Remove SLA from cards when deactivating |
 
 **Examples**
 
@@ -15790,12 +15831,12 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `date_from` | `string` | no | — | Start date (ISO format) |
-| `date_to` | `string` | no | — | End date (ISO format) |
-| `service_id` | `integer` | no | — | Service ID |
-| `report` | `boolean` | no | — | Enable report mode |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `date_from` | `string` | no | — | — | Start date (ISO format) |
+| `date_to` | `string` | no | — | — | End date (ISO format) |
+| `service_id` | `integer` | no | — | — | Service ID |
+| `report` | `boolean` | no | — | — | Enable report mode |
 
 **Examples**
 
@@ -15830,10 +15871,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Template name |
-| `text` | `string` | yes | — | Template answer text |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Template name |
+| `text` | `string` | yes | — | — | Template answer text |
 
 **Examples**
 
@@ -15868,9 +15909,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `template_answer_id` | `string` | yes | — | Template answer ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `template_answer_id` | `string` | yes | — | — | Template answer ID (UUID) |
 
 **Examples**
 
@@ -15905,9 +15946,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `template_answer_id` | `string` | yes | — | Template answer ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `template_answer_id` | `string` | yes | — | — | Template answer ID (UUID) |
 
 **Examples**
 
@@ -15977,11 +16018,11 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `template_answer_id` | `string` | yes | — | Template answer ID (UUID) |
-| `name` | `string` | no | — | Template name |
-| `text` | `string` | no | — | Template answer text |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `template_answer_id` | `string` | yes | — | — | Template answer ID (UUID) |
+| `name` | `string` | no | — | — | Template name |
+| `text` | `string` | no | — | — | Template answer text |
 
 **Examples**
 
@@ -16016,13 +16057,13 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search filter |
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
-| `include_paid_users` | `boolean` | no | — | Include paid users |
-| `include_all_sd_users` | `boolean` | no | — | Include all SD users |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search filter |
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
+| `include_paid_users` | `boolean` | no | — | — | Include paid users |
+| `include_all_sd_users` | `boolean` | no | — | — | Include all SD users |
 
 **Examples**
 
@@ -16057,9 +16098,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | yes | — | User ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | — | User ID |
 
 **Examples**
 
@@ -16096,11 +16137,11 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `user_id` | `integer` | yes | — | User ID |
-| `full_name` | `string` | no | — | User full name |
-| `lng` | `string` | no | — | Language code |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `user_id` | `integer` | yes | — | — | User ID |
+| `full_name` | `string` | no | — | — | User full name |
+| `lng` | `string` | no | — | — | Language code |
 
 **Examples**
 
@@ -16137,10 +16178,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_id` | `integer` | yes | — | Service ID |
-| `id` | `integer` | yes | — | Custom property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_id` | `integer` | yes | — | — | Service ID |
+| `id` | `integer` | yes | — | — | Custom property ID |
 
 **Examples**
 
@@ -16175,10 +16216,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `service_id` | `integer` | yes | — | Service ID |
-| `property_id` | `integer` | yes | — | Vote property ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `service_id` | `integer` | yes | — | — | Service ID |
+| `property_id` | `integer` | yes | — | — | Vote property ID |
 
 **Examples**
 
@@ -16213,9 +16254,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -16289,10 +16330,10 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `category_ids` | `array` | no | — | Filter by blocker category IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `category_ids` | `array` | no | — | — | Filter by blocker category IDs |
 
 **Examples**
 
@@ -16330,9 +16371,9 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
 
 **Examples**
 
@@ -16367,17 +16408,17 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `cardTypes` | `array` | no | — | Filter by card type IDs (alternative field name used by CFD) |
-| `selectedLanes` | `array` | no | — | Filter by lane IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `cardTypes` | `array` | no | — | — | Filter by card type IDs (alternative field name used by CFD) |
+| `selectedLanes` | `array` | no | — | — | Filter by lane IDs |
 
 **Examples**
 
@@ -16415,19 +16456,19 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `start_columns` | `array` | yes | — | Start column IDs (required) |
-| `end_columns` | `array` | yes | — | End column IDs (required) |
-| `start_column_lanes` | `object` | yes | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
-| `end_column_lanes` | `object` | yes | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `start_columns` | `array` | yes | — | — | Start column IDs (required) |
+| `end_columns` | `array` | yes | — | — | End column IDs (required) |
+| `start_column_lanes` | `object` | yes | — | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
+| `end_column_lanes` | `object` | yes | — | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
 
 **Examples**
 
@@ -16465,17 +16506,17 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `start_column` | `integer` | yes | — | Start column ID |
-| `end_column` | `integer` | yes | — | End column ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `start_column` | `integer` | yes | — | — | Start column ID |
+| `end_column` | `integer` | yes | — | — | End column ID |
 
 **Examples**
 
@@ -16513,20 +16554,20 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `card_date_from` | `string` | yes | — | Card date range start (ISO 8601) |
-| `card_date_to` | `string` | yes | — | Card date range end (ISO 8601) |
-| `checklist_item_date_from` | `string` | yes | — | Checklist item date range start (ISO 8601) |
-| `checklist_item_date_to` | `string` | yes | — | Checklist item date range end (ISO 8601) |
-| `due_date` | `string` | no | — | Due date filter (ISO 8601) |
-| `responsible_id` | `integer` | no | — | Responsible user ID |
-| `tz_offset` | `integer` | no | — | Timezone offset in minutes |
-| `lane_ids` | `array` | no | — | Filter by lane IDs |
-| `column_ids` | `array` | no | — | Filter by column IDs |
-| `card_type_ids` | `array` | no | — | Filter by card type IDs |
-| `tag_ids` | `array` | no | — | Filter by tag IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `card_date_from` | `string` | yes | — | — | Card date range start (ISO 8601) |
+| `card_date_to` | `string` | yes | — | — | Card date range end (ISO 8601) |
+| `checklist_item_date_from` | `string` | yes | — | — | Checklist item date range start (ISO 8601) |
+| `checklist_item_date_to` | `string` | yes | — | — | Checklist item date range end (ISO 8601) |
+| `due_date` | `string` | no | — | — | Due date filter (ISO 8601) |
+| `responsible_id` | `integer` | no | — | — | Responsible user ID |
+| `tz_offset` | `integer` | no | — | — | Timezone offset in minutes |
+| `lane_ids` | `array` | no | — | — | Filter by lane IDs |
+| `column_ids` | `array` | no | — | — | Filter by column IDs |
+| `card_type_ids` | `array` | no | — | — | Filter by card type IDs |
+| `tag_ids` | `array` | no | — | — | Filter by tag IDs |
 
 **Examples**
 
@@ -16564,19 +16605,19 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `start_columns` | `array` | yes | — | Start column IDs (required) |
-| `end_columns` | `array` | yes | — | End column IDs (required) |
-| `start_column_lanes` | `object` | yes | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
-| `end_column_lanes` | `object` | yes | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `start_columns` | `array` | yes | — | — | Start column IDs (required) |
+| `end_columns` | `array` | yes | — | — | End column IDs (required) |
+| `start_column_lanes` | `object` | yes | — | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
+| `end_column_lanes` | `object` | yes | — | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
 
 **Examples**
 
@@ -16614,16 +16655,16 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `board_configs` | `array` | yes | — | Array of board configuration objects. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `board_configs` | `array` | yes | — | — | Array of board configuration objects. |
 
 **Examples**
 
@@ -16661,19 +16702,19 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `start_columns` | `array` | yes | — | Start column IDs (required) |
-| `end_columns` | `array` | yes | — | End column IDs (required) |
-| `start_column_lanes` | `object` | yes | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
-| `end_column_lanes` | `object` | yes | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `start_columns` | `array` | yes | — | — | Start column IDs (required) |
+| `end_columns` | `array` | yes | — | — | End column IDs (required) |
+| `start_column_lanes` | `object` | yes | — | — | Mapping of start column ID to array of lane IDs, e.g. {"10": [1, 2]} |
+| `end_column_lanes` | `object` | yes | — | — | Mapping of end column ID to array of lane IDs, e.g. {"20": [3, 4]} |
 
 **Examples**
 
@@ -16711,12 +16752,12 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | yes | — | End date (ISO 8601) |
-| `done_columns` | `array` | yes | — | Array of done column IDs |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | yes | — | — | End date (ISO 8601) |
+| `done_columns` | `array` | yes | — | — | Array of done column IDs |
 
 **Examples**
 
@@ -16754,14 +16795,14 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `timezone` | `string` | no | — | Timezone name (e.g. Europe/Moscow) |
-| `includeArchivedCards` | `boolean` | no | — | Include archived cards |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `itemsFilter` | `object` | no | — | Additional filter object for items |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `timezone` | `string` | no | — | — | Timezone name (e.g. Europe/Moscow) |
+| `includeArchivedCards` | `boolean` | no | — | — | Include archived cards |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `itemsFilter` | `object` | no | — | — | Additional filter object for items |
 
 **Examples**
 
@@ -16799,16 +16840,16 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | no | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `end_column` | `integer` | yes | — | End (done) column ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | no | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `end_column` | `integer` | yes | — | — | End (done) column ID |
 
 **Examples**
 
@@ -16846,16 +16887,16 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `date_from` | `string` | yes | — | Start date (ISO 8601) |
-| `date_to` | `string` | no | — | End date (ISO 8601) |
-| `tags` | `array` | no | — | Filter by tag IDs |
-| `only_asap_cards` | `boolean` | no | — | Include only ASAP (expedite) cards |
-| `card_types` | `array` | no | — | Filter by card type IDs |
-| `group_by` | `string` | no | — | Grouping mode |
-| `start_column` | `integer` | yes | — | Start (input) column ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `date_from` | `string` | yes | — | — | Start date (ISO 8601) |
+| `date_to` | `string` | no | — | — | End date (ISO 8601) |
+| `tags` | `array` | no | — | — | Filter by tag IDs |
+| `only_asap_cards` | `boolean` | no | — | — | Include only ASAP (expedite) cards |
+| `card_types` | `array` | no | — | — | Filter by card type IDs |
+| `group_by` | `string` | no | — | — | Grouping mode |
+| `start_column` | `integer` | yes | — | — | Start (input) column ID |
 
 **Examples**
 
@@ -16893,9 +16934,9 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `job_id` | `integer` | yes | — | Compute job ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `job_id` | `integer` | yes | — | — | Compute job ID |
 
 **Examples**
 
@@ -16932,9 +16973,9 @@ compute-jobs
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `job_id` | `integer` | yes | — | Compute job ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `job_id` | `integer` | yes | — | — | Compute job ID |
 
 **Examples**
 
@@ -16992,11 +17033,11 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `query` | `string` | no | — | Search query. |
-| `limit` | `integer` | no | — | Max results. |
-| `offset` | `integer` | no | — | Pagination offset. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | Search query. |
+| `limit` | `integer` | no | — | — | Max results. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
 
 **Examples**
 
@@ -17031,11 +17072,11 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uids` | `array` | yes | — | Explicit tree entity UUIDs to process in input order. |
-| `expired_at` | `string|null` | no | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uids` | `array` | yes | — | — | Explicit tree entity UUIDs to process in input order. |
+| `expired_at` | `string|null` | no | — | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6). |
 
 **Examples**
 
@@ -17076,10 +17117,10 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uids` | `array` | yes | — | Explicit tree entity UUIDs to process in input order. |
-| `workers` | `integer` | no | — | Parallel workers (default 2, max 6). |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uids` | `array` | yes | — | — | Explicit tree entity UUIDs to process in input order. |
+| `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6). |
 
 **Examples**
 
@@ -17119,9 +17160,9 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UUID for a space, document, document group, or story map. |
 
 **Examples**
 
@@ -17160,10 +17201,10 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
-| `expired_at` | `string|null` | no | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UUID for a space, document, document group, or story map. |
+| `expired_at` | `string|null` | no | — | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
 
 **Examples**
 
@@ -17205,9 +17246,9 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UUID for a space, document, document group, or story map. |
 
 **Examples**
 
@@ -17247,10 +17288,10 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `entity_uid` | `string` | yes | — | Tree entity UUID for a space, document, document group, or story map. |
-| `expired_at` | `string|null` | yes | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UUID for a space, document, document group, or story map. |
+| `expired_at` | `string|null` | yes | — | — | Future ISO-8601 expiration timestamp; pass null to remove expiration. |
 
 **Examples**
 
@@ -17290,9 +17331,9 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `parent_entity_uid` | `string` | no | — | Parent entity UID. Omit to list root-level entities. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `parent_entity_uid` | `string` | no | — | — | Parent entity UID. Omit to list root-level entities. |
 
 **Examples**
 
@@ -17308,7 +17349,7 @@ tree.children
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
-- `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
+- `/spaces`, `/documents`, and `/document-groups` are paginated internally with `limit=100` and `offset=0,100,...` until a short page is returned.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
 - Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
@@ -17334,10 +17375,10 @@ tree.children
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `root_uid` | `string` | no | — | Start tree from this entity UID. Omit for full tree from roots. |
-| `depth` | `integer` | no | — | Max recursion depth (0 = unlimited). Default: 0. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `root_uid` | `string` | no | — | — | Start tree from this entity UID. Omit for full tree from roots. |
+| `depth` | `integer` | no | — | — | Max recursion depth (0 = unlimited). Default: 0. |
 
 **Examples**
 
@@ -17353,7 +17394,7 @@ tree.children
 - This aggregated command builds its local catalog from `/spaces`, `/documents`, and `/document-groups`.
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
-- `/spaces` is read once; `/documents` and `/document-groups` are paginated internally with `limit=500` and `offset=0,500,...` until a short page is returned.
+- `/spaces`, `/documents`, and `/document-groups` are paginated internally with `limit=100` and `offset=0,100,...` until a short page is returned.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
 - Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
@@ -17410,9 +17451,9 @@ user-timers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Name for the API key |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Name for the API key |
 
 **Examples**
 
@@ -17449,9 +17490,9 @@ user-timers
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `key_id` | `integer` | yes | — | API key ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `key_id` | `integer` | yes | — | — | API key ID |
 
 **Examples**
 
@@ -17523,9 +17564,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `calendar_id` | `string` | yes | — | Calendar ID (UUID) |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `calendar_id` | `string` | yes | — | — | Calendar ID (UUID) |
 
 **Examples**
 
@@ -17560,10 +17601,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -17668,9 +17709,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | no | — | Company name |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | no | — | — | Company name |
 
 **Examples**
 
@@ -17705,10 +17746,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -17745,10 +17786,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `limit` | `integer` | no | — | Max results |
-| `offset` | `integer` | no | — | Pagination offset |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `limit` | `integer` | no | — | — | Max results |
+| `offset` | `integer` | no | — | — | Pagination offset |
 
 **Examples**
 
@@ -17785,9 +17826,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID to start timer for |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID to start timer for |
 
 **Examples**
 
@@ -17824,9 +17865,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `timer_id` | `integer` | yes | — | Timer ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `timer_id` | `integer` | yes | — | — | Timer ID |
 
 **Examples**
 
@@ -17863,9 +17904,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `timer_id` | `integer` | yes | — | Timer ID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `timer_id` | `integer` | yes | — | — | Timer ID |
 
 **Examples**
 
@@ -17939,10 +17980,10 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `timer_id` | `integer` | yes | — | Timer ID |
-| `paused` | `boolean` | no | — | Whether the timer is paused |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `timer_id` | `integer` | yes | — | — | Timer ID |
+| `paused` | `boolean` | no | — | — | Whether the timer is paused |
 
 **Examples**
 
@@ -17995,14 +18036,14 @@ snapshot
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Stable snapshot name. |
-| `space_id` | `integer` | yes | — | Source space ID. |
-| `board_ids` | `array` | no | — | Optional board IDs to keep inside the snapshot. |
-| `preset` | `string` | no | `basic`, `analytics`, `evidence`, `full` | Snapshot scope preset. |
-| `window_start` | `string` | no | — | Window start timestamp for analytics/full snapshots. |
-| `window_end` | `string` | no | — | Window end timestamp for analytics/full snapshots. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Stable snapshot name. |
+| `space_id` | `integer` | yes | — | — | Source space ID. |
+| `board_ids` | `array` | no | — | — | Optional board IDs to keep inside the snapshot. |
+| `preset` | `string` | no | `basic`, `analytics`, `evidence`, `full` | — | Snapshot scope preset. |
+| `window_start` | `string` | no | — | — | Window start timestamp for analytics/full snapshots. |
+| `window_end` | `string` | no | — | — | Window end timestamp for analytics/full snapshots. |
 
 **Examples**
 
@@ -18040,9 +18081,9 @@ snapshot
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Snapshot name. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Snapshot name. |
 
 **Examples**
 
@@ -18112,9 +18153,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Snapshot name to rebuild. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Snapshot name to rebuild. |
 
 **Examples**
 
@@ -18151,9 +18192,9 @@ _No tool-specific arguments._
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | Snapshot name. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | — | Snapshot name. |
 
 **Examples**
 
@@ -18201,15 +18242,15 @@ query
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `snapshot` | `string` | yes | — | Snapshot name. |
-| `filter` | `object` | no | — | Local filter object for card selection. |
-| `view` | `string` | no | `summary`, `detail`, `evidence` | Local output view. summary is the default and keeps payloads narrow for repeated analytics and LLM workflows. |
-| `fields` | `string` | no | — | Comma-separated card or derived field names to keep. |
-| `limit` | `integer` | no | — | Max returned rows. Default 100. |
-| `offset` | `integer` | no | — | Pagination offset. |
-| `compact` | `boolean` | no | — | Return a compact card response. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `snapshot` | `string` | yes | — | — | Snapshot name. |
+| `filter` | `object` | no | — | — | Local filter object for card selection. |
+| `view` | `string` | no | `summary`, `detail`, `evidence` | — | Local output view. summary is the default and keeps payloads narrow for repeated analytics and LLM workflows. |
+| `fields` | `string` | no | — | — | Comma-separated card or derived field names to keep. |
+| `limit` | `integer` | no | — | — | Max returned rows. Default 100. |
+| `offset` | `integer` | no | — | — | Pagination offset. |
+| `compact` | `boolean` | no | — | — | Return a compact card response. |
 
 **Examples**
 
@@ -18248,12 +18289,12 @@ query
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `snapshot` | `string` | yes | — | Snapshot name. |
-| `metric` | `string` | yes | `count`, `wip`, `throughput`, `lead_time`, `cycle_time`, `aging` | Metric to compute locally. |
-| `filter` | `object` | no | — | Optional local filter object applied before metrics. |
-| `group_by` | `string|null` | no | `board_id`, `column_id`, `lane_id`, `type_id`, `owner_id`, `responsible_id`, `state`, `condition`, `None` | Optional grouping field. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `snapshot` | `string` | yes | — | — | Snapshot name. |
+| `metric` | `string` | yes | `count`, `wip`, `throughput`, `lead_time`, `cycle_time`, `aging` | — | Metric to compute locally. |
+| `filter` | `object` | no | — | — | Optional local filter object applied before metrics. |
+| `group_by` | `string|null` | no | `board_id`, `column_id`, `lane_id`, `type_id`, `owner_id`, `responsible_id`, `state`, `condition`, `None` | — | Optional grouping field. |
 
 **Examples**
 

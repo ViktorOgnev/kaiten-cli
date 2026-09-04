@@ -330,7 +330,11 @@ def test_validation_details_for_unsupported_shaping(capsys):
     assert bulk_payload["error"]["details"]["bulk_alternative"] == (
         "card-children.batch-list"
     )
-    assert bulk_payload["error"]["details"]["supported_options"] == ["--card-id"]
+    assert bulk_payload["error"]["details"]["supported_options"] == [
+        "--card-id",
+        "--limit",
+        "--offset",
+    ]
 
 
 def test_tool_specific_profile_is_not_treated_as_misplaced_global(runner):

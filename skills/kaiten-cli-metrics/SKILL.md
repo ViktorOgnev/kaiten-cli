@@ -61,6 +61,7 @@ kaiten --json cards list-all \
 ```
 
 Use `active_only` for WIP-oriented reads and `archived_only` for completion-oriented reads.
+`cards.list-all` fails rather than silently truncating when a full page reaches `max_pages`; raise the cap only after reviewing the expected population.
 
 ### 4. Escalate only if card fields are not enough
 
@@ -86,6 +87,8 @@ If the metric depends on work logs or you need detail enrichment for a narrowed 
 kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date
 kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description
 ```
+
+The relation, comment, and time-log batch commands paginate every card to completion. A full per-card `max_pages` boundary is surfaced as an error instead of a partial evidence set.
 
 ## Anti-patterns
 

@@ -20,11 +20,22 @@ TOOLS = (
     make_tool(
         canonical_name="space-users.list",
         mcp_alias="kaiten_list_space_users",
-        description="List users of a Kaiten space.",
+        description="List one page of users in a Kaiten space.",
         input_schema={
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields.",
@@ -33,14 +44,22 @@ TOOLS = (
             "required": ["space_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/spaces/{space_id}/users", path_fields=("space_id",)
+            method="GET",
+            path_template="/spaces/{space_id}/users",
+            path_fields=("space_id",),
+            query_fields=("limit", "offset"),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, default_limit=50, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json space-users list --space-id 1 --compact",
                 description="List space users.",
             ),
+        ),
+        usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
         ),
     ),
     make_tool(
@@ -168,10 +187,13 @@ TOOLS = (
                 },
                 "limit": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Maximum number of users to return (default 100).",
                 },
                 "offset": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of users to skip (default 0).",
                 },
                 "only_records_count": {
@@ -278,10 +300,14 @@ TOOLS = (
                 "query": {"type": "string", "description": "Search by email or full name."},
                 "page_size": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Users per request (1..100, default 100).",
                 },
                 "max_pages": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "description": (
                         "Safety cap for requests; a full final page causes an error instead of truncation "
                         f"(default {COMPANY_USERS_DEFAULT_MAX_PAGES})."
@@ -643,11 +669,22 @@ TOOLS = (
     make_tool(
         canonical_name="group-users.list",
         mcp_alias="kaiten_list_group_users",
-        description="List users in a company group.",
+        description="List one page of users in a company group.",
         input_schema={
             "type": "object",
             "properties": {
                 "group_uid": {"type": "string", "description": "Group UID"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields.",
@@ -656,14 +693,22 @@ TOOLS = (
             "required": ["group_uid"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/groups/{group_uid}/users", path_fields=("group_uid",)
+            method="GET",
+            path_template="/groups/{group_uid}/users",
+            path_fields=("group_uid",),
+            query_fields=("limit", "offset"),
         ),
-        response_policy=ResponsePolicy(compact_supported=True, result_kind="list"),
+        response_policy=ResponsePolicy(
+            compact_supported=True, default_limit=50, result_kind="list"
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json group-users list --group-uid grp-1 --compact",
                 description="List group users.",
             ),
+        ),
+        usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
         ),
     ),
     make_tool(
