@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
-from kaiten_cli.errors import ApiError, TransportError, ValidationError
+from kaiten_cli.errors import ApiError, ConfigError, TransportError, ValidationError
 from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
 # Fixed namespace from kaiten-lib/src/shared/addons/generateAddonUid.js. On
@@ -102,13 +102,25 @@ def addon_url_path(payload: dict[str, Any]) -> str:
     return payload.get("addon_url_path") or GITHUB_ADDON_URL_PATH
 
 
-def _iframe_url_path(url: Any) -> str | None:
-    """Normalized path of an addon's iframe URL, the input of the UID derivation."""
+def mount_path_key(url_path: str) -> str:
+    """Comparison key for a mount path.
 
-    if not isinstance(url, str) or not url:
+    Only for matching, never for derivation: surrounding whitespace is stripped
+    because a registered `iframe_initial_url` really does carry it, while
+    `normalize_addon_url_path` must keep byte-matching the platform helper that
+    produces the UUID.
+    """
+
+    return normalize_addon_url_path(url_path.strip())
+
+
+def _iframe_url_path(url: Any) -> str | None:
+    """Comparison key for an addon's iframe URL."""
+
+    if not isinstance(url, str) or not url.strip():
         return None
     try:
-        return normalize_addon_url_path(urlparse(url).path)
+        return mount_path_key(urlparse(url.strip()).path)
     except ValueError:  # pragma: no cover - urlparse only raises on malformed IPv6
         return None
 
@@ -172,7 +184,9 @@ async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> l
             timeout=timeout,
             reporter=reporter,
         )
-    except (ApiError, TransportError) as error:
+    except (ApiError, ConfigError, TransportError) as error:
+        # ConfigError comes from the pagination guard on an unexpected response
+        # shape; this read is best effort, so it narrows the search, not the run.
         if reporter:
             reporter(f"addon lookup: /spaces unavailable ({error})")
         return []
@@ -210,54 +224,88 @@ async def _space_addon_uids(
     return _addon_uids_in(addons, normalized_path)
 
 
-async def registered_addon_uid(
+@dataclass(frozen=True, slots=True)
+class AddonResolution:
+    """What the lookup established about the card's addon."""
+
+    uid: str | None
+    # True when the answer is authoritative: either an addon was found, or the
+    # card itself told us which addons it has and none of them is this one.
+    # False means "could not establish", which is not an answer.
+    authoritative: bool
+
+
+def _card_board_spaces(card: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """The board's spaces embedded in a card response, or None when absent.
+
+    `Card.readById` attaches `board.spaces.addons` only when the card actually
+    has addons available to this user, filtered to exactly those addons. So the
+    embedded listing is authoritative for "which addon may this card use", and
+    its absence means "no addons at all here, or an older server".
+    """
+
+    board = card.get("board")
+    spaces = board.get("spaces") if isinstance(board, dict) else None
+    if not isinstance(spaces, list):
+        return None
+    return [space for space in spaces if isinstance(space, dict)]
+
+
+def _uids_from_card(spaces: list[dict[str, Any]], normalized_path: str) -> list[str]:
+    pooled: list[str] = []
+    for space in spaces:
+        for uid in _addon_uids_in(space.get("addons"), normalized_path):
+            if uid not in pooled:
+                pooled.append(uid)
+    return pooled
+
+
+async def resolve_addon_uid(
     client, card_id: Any, url_path: str, timeout: float, reporter
-) -> str | None:
-    """The UID Kaiten registered for `url_path` on the card's board, or None.
+) -> AddonResolution:
+    """Establish which addon registration at `url_path` this card may use.
 
-    None means "not established": the lookup could not be performed, or no space
-    of the card's board reports that addon. Neither confirms the derived UID, so
-    None must never be read as "the addon exists and has nothing attached".
+    One card read answers it: the response embeds the board's spaces together
+    with the addons available for the card, which is the same set the server
+    checks when a write is authorized. The space listing stays as a fallback for
+    responses that do not carry it.
 
-    Each read is fault-isolated: one unreadable space narrows the search instead
+    Each read is fault-isolated: an unreadable space narrows the search instead
     of ending it.
     """
 
-    normalized = normalize_addon_url_path(url_path)
+    normalized = mount_path_key(url_path)
     try:
         card = await client.get(f"/cards/{card_id}", timeout=timeout)
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: /cards/{card_id} unavailable ({error})")
-        return None
+        return AddonResolution(None, authoritative=False)
     if not isinstance(card, dict):
-        return None
+        return AddonResolution(None, authoritative=False)
 
-    space_id, board_id = card.get("space_id"), card.get("board_id")
-    if space_id is not None:
-        own = await _space_addon_uids(client, space_id, normalized, timeout, reporter)
-        uid = _single_addon_uid(own, url_path, f"Space {space_id}")
-        if uid is not None:
-            return uid
+    embedded = _card_board_spaces(card)
+    if embedded is not None:
+        pooled = _uids_from_card(embedded, normalized)
+        uid = _single_addon_uid(pooled, url_path, "This card's board")
+        if reporter:
+            reporter(f"addon lookup: card reported {len(pooled)} addon(s) at {url_path}")
+        # An embedded listing without a match is a real answer: the card has no
+        # such addon, so it cannot have attachments under one.
+        return AddonResolution(uid, authoritative=True)
 
+    board_id = card.get("board_id")
     if board_id is None:
-        return None
-    # Only now is the space listing worth its size: the board may be shared into
-    # spaces other than the card's own. Candidates are pooled across those spaces
-    # before choosing, so two different addons on the same path are a refusal
-    # rather than a race between spaces. The same UID seen in several spaces is
-    # one candidate, which is the normal shape of a shared board.
-    pooled: list[str] = []
+        return AddonResolution(None, authoritative=False)
+    if reporter:
+        reporter("addon lookup: card carries no board spaces, falling back to the space listing")
+    pooled = []
     for candidate in await _board_space_ids(client, board_id, timeout, reporter):
-        if candidate == space_id:
-            continue
         for uid in await _space_addon_uids(client, candidate, normalized, timeout, reporter):
             if uid not in pooled:
                 pooled.append(uid)
     resolved = _single_addon_uid(pooled, url_path, f"The spaces of board {board_id}")
-    if resolved is not None and reporter:
-        reporter("addon lookup: found in another space of the board, not the card's own space")
-    return resolved
+    return AddonResolution(resolved, authoritative=resolved is not None)
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -708,16 +756,24 @@ async def _read_attached(
     confirmed = explicit is not None
 
     if shared_row(rows) is None and explicit is None:
-        registered = await registered_addon_uid(
+        resolution = await resolve_addon_uid(
             client, payload["card_id"], url_path, timeout, reporter
         )
-        confirmed = registered is not None
-        if registered is not None and registered != addon_uid:
+        confirmed = resolution.authoritative
+        if for_write and resolution.authoritative and resolution.uid is None:
+            # Writing to the derived UID would be rejected by the server anyway;
+            # say why instead of forwarding a bare permission error.
+            raise ValidationError(
+                f"No addon mounted at {url_path} is available for this card, so there is "
+                "nothing to write to. Install it in the card's space (space-addons.install) "
+                "or pass --addon-uid if it is registered elsewhere."
+            )
+        if resolution.uid is not None and resolution.uid != addon_uid:
             if reporter:
                 reporter(
-                    f"addon uid: derived {addon_uid} has no data, using registered {registered}"
+                    f"addon uid: derived {addon_uid} has no data, using registered {resolution.uid}"
                 )
-            addon_uid = registered
+            addon_uid = resolution.uid
             rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
 
     read_items = mutable_attached_items if for_write else attached_items

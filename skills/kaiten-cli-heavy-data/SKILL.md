@@ -127,7 +127,7 @@ Notes:
 - A card can also reference a PR through `external-links list`. Read both when the
   question is "every PR this card references".
 - Resolve the addon UUID once with `space-addons list` and pass `--addon-uid` in
-  the loop. Without it every card costs two extra reads while the command works
+  the loop. Without it every card costs one extra read while the command works
   out which addon it is looking at, and nothing amortizes: the card read is per
   card, and a write clears the cache scope for the whole profile.
 - A card whose addon cannot be resolved fails the call instead of reporting an

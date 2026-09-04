@@ -38,16 +38,15 @@ ADDON_UID_PATH_NOTE = (
 )
 UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
-    "stores a random one. When a derived UUID finds no data row the command asks which addon "
-    "the card's board actually has - its own space first, then the other spaces the board "
-    "belongs to, because Kaiten resolves addon availability over all of them - and retries "
-    "with the registered UUID."
+    "stores a random one. When a derived UUID finds no data row the command reads the card, "
+    "whose response lists the addons available to it across every space of its board - the "
+    "same set the server checks when authorizing a write - and retries with the registered "
+    "UUID. A card that reports no such addon is a real answer: it can have no attachments."
 )
 UID_FALLBACK_COST_NOTE = (
-    "The lookup costs two extra reads per card (the card and its space addons), and the space "
-    "listing on top of that only when the card's own space has no such addon. Nothing here is "
-    "amortized across cards - the card read is per card, and a write clears the cache scope - "
-    "so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
+    "The lookup costs one extra read per card - the card itself - and falls back to the space "
+    "listing only for responses that do not carry the addon data. Nothing is amortized across "
+    "cards, so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
     "A write replaces the whole key, so the command refuses to proceed when the stored addon "
