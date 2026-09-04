@@ -1287,7 +1287,7 @@ async def test_card_read_alone_resolves_the_addon(monkeypatch):
 
 
 @respx.mock
-async def test_unreadable_own_space_does_not_end_the_search(monkeypatch):
+async def test_an_unreadable_space_does_not_end_the_search(monkeypatch):
     """The space the caller cannot read is exactly why the other spaces matter."""
 
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
@@ -1595,3 +1595,67 @@ async def test_list_still_reads_through_a_malformed_container(monkeypatch):
     # The row exists, so the UID is confirmed; the container simply holds nothing
     # this command can read.
     assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+
+
+@respx.mock
+async def test_a_complete_walk_without_the_addon_is_an_answer(monkeypatch):
+    """A board whose spaces hold no addons at all gets no embedded listing."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_legacy_card()
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    # Everything was read and the addon is simply not there.
+    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+
+
+@respx.mock
+async def test_attach_after_a_complete_walk_explains_instead_of_patching(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_legacy_card()
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+
+    # Without the completeness signal this used to PATCH the derived UUID and
+    # surface a bare 403 from the server.
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    assert "nothing to write to" in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_a_partial_walk_is_still_not_an_answer(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_legacy_card()
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(
+            200, json=[{"id": 5, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
+        )
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    respx.get(f"{API}/spaces/9/addons").mock(return_value=Response(403, json={"message": "nope"}))
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "--addon-uid" in str(error.value)

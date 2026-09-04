@@ -163,7 +163,9 @@ def _single_addon_uid(uids: list[str], url_path: str, where: str) -> str | None:
     )
 
 
-async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> list[int]:
+async def _board_space_ids(
+    client, board_id: Any, timeout: float, reporter
+) -> tuple[list[int], bool]:
     """Every space the board belongs to, in listing order.
 
     Kaiten decides addon availability for a card over all spaces of the card's
@@ -172,8 +174,10 @@ async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> l
     embeds each space's boards. Archived spaces are included because the server
     does not filter them out either.
 
-    Only consulted after the card's own space came up empty: the listing is large
-    on a big tenant, and the card's own space answers almost every case.
+    Only consulted when the card response does not carry the addon data itself:
+    the listing is large on a big tenant. Returns `(space_ids, complete)`, where
+    complete says the listing was actually read - an incomplete walk cannot rule
+    an addon out.
     """
 
     try:
@@ -189,7 +193,7 @@ async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> l
         # shape; this read is best effort, so it narrows the search, not the run.
         if reporter:
             reporter(f"addon lookup: /spaces unavailable ({error})")
-        return []
+        return [], False
 
     matching: list[int] = []
     for space in spaces:
@@ -202,17 +206,18 @@ async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> l
             space_id = space.get("id")
             if isinstance(space_id, int):
                 matching.append(space_id)
-    return matching
+    return matching, True
 
 
 async def _space_addon_uids(
     client, space_id: Any, normalized_path: str, timeout: float, reporter
-) -> list[str]:
-    """One space's candidates, or [] when that space cannot be read.
+) -> tuple[list[str], bool]:
+    """One space's candidates and whether that space could be read at all.
 
     A space the caller may not read must not end the search: the addon can be
     registered in another space of the same board, and that is exactly the case
-    this lookup exists for.
+    this lookup exists for. But it must not be silently counted as "checked and
+    empty" either, or a partial walk would rule the addon out.
     """
 
     try:
@@ -220,8 +225,8 @@ async def _space_addon_uids(
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: /spaces/{space_id}/addons unavailable ({error})")
-        return []
-    return _addon_uids_in(addons, normalized_path)
+        return [], False
+    return _addon_uids_in(addons, normalized_path), True
 
 
 @dataclass(frozen=True, slots=True)
@@ -268,10 +273,12 @@ async def resolve_addon_uid(
     One card read answers it: the response embeds the board's spaces together
     with the addons available for the card, which is the same set the server
     checks when a write is authorized. The space listing stays as a fallback for
-    responses that do not carry it.
+    responses that do not carry it - there is no cheaper first step, because a
+    card response carries no `space_id` of its own.
 
     Each read is fault-isolated: an unreadable space narrows the search instead
-    of ending it.
+    of ending it. What it must not do is narrow the answer, so the fallback also
+    reports whether its walk was complete.
     """
 
     normalized = mount_path_key(url_path)
@@ -299,13 +306,20 @@ async def resolve_addon_uid(
         return AddonResolution(None, authoritative=False)
     if reporter:
         reporter("addon lookup: card carries no board spaces, falling back to the space listing")
-    pooled = []
-    for candidate in await _board_space_ids(client, board_id, timeout, reporter):
-        for uid in await _space_addon_uids(client, candidate, normalized, timeout, reporter):
+
+    space_ids, complete = await _board_space_ids(client, board_id, timeout, reporter)
+    pooled: list[str] = []
+    for candidate in space_ids:
+        uids, ok = await _space_addon_uids(client, candidate, normalized, timeout, reporter)
+        complete = complete and ok
+        for uid in uids:
             if uid not in pooled:
                 pooled.append(uid)
     resolved = _single_addon_uid(pooled, url_path, f"The spaces of board {board_id}")
-    return AddonResolution(resolved, authoritative=resolved is not None)
+    # A walk that finished is an answer even when it found nothing; a walk that
+    # could not finish is not, because the addon may sit behind the part we
+    # failed to read.
+    return AddonResolution(resolved, authoritative=resolved is not None or complete)
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
