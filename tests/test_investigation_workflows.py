@@ -33,9 +33,7 @@ async def test_execute_card_children_batch_list_deduplicates_and_reports_partial
     second = respx.get(
         "https://sandbox.kaiten.ru/api/latest/cards/2/children",
         params={"limit": "100", "offset": "0"},
-    ).mock(
-        return_value=Response(404, json={"message": "missing"})
-    )
+    ).mock(return_value=Response(404, json={"message": "missing"}))
 
     tool = resolve_tool("card-children.batch-list")
     payload = merge_inputs(
@@ -195,9 +193,7 @@ async def test_execute_card_children_batch_list_paginates_each_card(monkeypatch)
     )
 
     assert first.called and second.called
-    assert result["items"] == [
-        {"card_id": 1, "children": [{"id": 11}, {"id": 12}, {"id": 13}]}
-    ]
+    assert result["items"] == [{"card_id": 1, "children": [{"id": 11}, {"id": 12}, {"id": 13}]}]
 
 
 @pytest.mark.asyncio
@@ -209,11 +205,7 @@ async def test_execute_comments_batch_list_keeps_cap_failure_local_to_card(monke
         respx.get(
             "https://sandbox.kaiten.ru/api/latest/cards/1/comments",
             params={"limit": "2", "offset": str(offset)},
-        ).mock(
-            return_value=Response(
-                200, json=[{"id": offset + 1}, {"id": offset + 2}]
-            )
-        )
+        ).mock(return_value=Response(200, json=[{"id": offset + 1}, {"id": offset + 2}]))
     respx.get(
         "https://sandbox.kaiten.ru/api/latest/cards/2/comments",
         params={"limit": "2", "offset": "0"},
@@ -459,9 +451,7 @@ def test_trace_file_from_env_redacts_tokens(config_env, monkeypatch, tmp_path, c
     assert entry["argv"][token_index + 1] == "[REDACTED]"
 
 
-def test_trace_summarize_streams_bounded_payload_free_recommendations(
-    tmp_path, capsys
-):
+def test_trace_summarize_streams_bounded_payload_free_recommendations(tmp_path, capsys):
     trace_file = tmp_path / "trace.jsonl"
     entries = []
     for index in range(5):
@@ -543,9 +533,7 @@ def test_trace_summarize_streams_bounded_payload_free_recommendations(
     assert data["entries"] == 8
     assert data["invalid_lines"] == 1
     assert data["http_request_count"] == 12
-    assert data["path_families"] == [
-        {"path_family": "/cards/:id", "count": 10}
-    ]
+    assert data["path_families"] == [{"path_family": "/cards/:id", "count": 10}]
     assert [item["code"] for item in data["recommendations"]] == [
         "prefer_batch",
         "prefer_snapshot",

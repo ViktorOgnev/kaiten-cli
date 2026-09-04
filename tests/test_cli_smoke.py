@@ -213,9 +213,7 @@ def test_discovery_commands_json_output_stays_machine_readable(runner):
     examples_payload = json.loads(examples.output)
     assert examples_payload["success"] is True
     assert examples_payload["command"] == "examples"
-    assert examples_payload["data"]["examples"][0].startswith(
-        "kaiten --json cards list-all"
-    )
+    assert examples_payload["data"]["examples"][0].startswith("kaiten --json cards list-all")
 
 
 def test_registry_examples_keep_root_json_before_the_command(runner):
@@ -293,8 +291,7 @@ def test_validation_details_for_misplaced_global_options(capsys):
     )
     multi_flag_payload = json.loads(capsys.readouterr().out)
     assert multi_flag_payload["error"]["details"]["suggested_usage"] == (
-        "kaiten --json --cache-mode <auto|off|readwrite|refresh> "
-        "cards get [command options]"
+        "kaiten --json --cache-mode <auto|off|readwrite|refresh> cards get [command options]"
     )
 
 
@@ -327,9 +324,7 @@ def test_validation_details_for_unsupported_shaping(capsys):
         == 2
     )
     bulk_payload = json.loads(capsys.readouterr().out)
-    assert bulk_payload["error"]["details"]["bulk_alternative"] == (
-        "card-children.batch-list"
-    )
+    assert bulk_payload["error"]["details"]["bulk_alternative"] == ("card-children.batch-list")
     assert bulk_payload["error"]["details"]["supported_options"] == [
         "--card-id",
         "--limit",

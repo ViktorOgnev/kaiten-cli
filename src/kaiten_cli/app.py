@@ -1252,6 +1252,7 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
 def profile_probe_command(ctx: click.Context) -> None:
     options = _ctx_options(ctx)
     try:
+
         def probe():
             resolved = resolve_profile(
                 options.profile_name,
@@ -1370,9 +1371,7 @@ def _supported_context_options(error: click.UsageError) -> list[str]:
     )
 
 
-def _suggested_root_options(
-    *, offending_option: str, supported_options: list[str]
-) -> list[str]:
+def _suggested_root_options(*, offending_option: str, supported_options: list[str]) -> list[str]:
     suggested: list[str] = []
     seen: set[str] = set()
     for token in _CURRENT_ARGV or []:
@@ -1410,9 +1409,7 @@ def _validation_details(error: click.UsageError) -> dict[str, Any] | None:
             "code": "global_option_position",
             "option": option,
             "canonical_name": canonical_name,
-            "suggested_usage": (
-                f"kaiten {root_options} {command} [command options]"
-            ),
+            "suggested_usage": (f"kaiten {root_options} {command} [command options]"),
             "supported_options": supported_options,
         }
     else:

@@ -55,9 +55,7 @@ async def fetch_all_offset_pages(
     rows: list[Any] = []
 
     if reporter is not None:
-        reporter(
-            f"pagination: path={path} page_size={page_size} max_pages={max_pages}"
-        )
+        reporter(f"pagination: path={path} page_size={page_size} max_pages={max_pages}")
 
     for page_index in range(max_pages):
         page_params = {

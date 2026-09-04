@@ -367,9 +367,7 @@ def test_profile_probe_is_fresh_read_only_and_anonymized(config_env, capsys):
 
 @pytest.mark.parametrize("status_code", [401, 403, 503])
 @respx.mock
-def test_profile_probe_preserves_http_failure_class(
-    status_code, config_env, capsys
-):
+def test_profile_probe_preserves_http_failure_class(status_code, config_env, capsys):
     add_profile("main", domain="sandbox", token="secret-token", set_active=True)
     respx.get("https://sandbox.kaiten.ru/api/latest/users/current").mock(
         return_value=Response(status_code, json={"message": "probe failed"})

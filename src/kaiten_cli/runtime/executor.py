@@ -197,9 +197,7 @@ async def execute_tool_with_diagnostics(
         result, _ = strip_base64(result)
     return (
         result,
-        context.stats
-        if context is not None
-        else ExecutionStats(cache_policy=tool.cache_policy),
+        context.stats if context is not None else ExecutionStats(cache_policy=tool.cache_policy),
     )
 
 

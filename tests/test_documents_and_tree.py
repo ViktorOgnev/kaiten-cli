@@ -476,9 +476,7 @@ async def test_execute_tree_get_promotes_missing_parent_group_to_root(monkeypatc
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(
         "https://sandbox.kaiten.ru/api/latest/spaces", params={"limit": "100", "offset": "0"}
-    ).mock(
-        return_value=Response(200, json=[])
-    )
+    ).mock(return_value=Response(200, json=[]))
     respx.get(
         "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "100", "offset": "0"}
     ).mock(
@@ -550,9 +548,7 @@ async def test_fetch_paginated_entities_raises_when_safety_cap_is_full():
 def test_cli_nested_tree_alias_and_canonical_match(runner):
     respx.get(
         "https://sandbox.kaiten.ru/api/latest/spaces", params={"limit": "100", "offset": "0"}
-    ).mock(
-        return_value=Response(200, json=[])
-    )
+    ).mock(return_value=Response(200, json=[]))
     respx.get(
         "https://sandbox.kaiten.ru/api/latest/documents", params={"limit": "100", "offset": "0"}
     ).mock(return_value=Response(200, json=[]))

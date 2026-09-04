@@ -28,10 +28,7 @@ def test_help_shows_roles_groups_and_subscribers(runner):
 def test_resolve_roles_groups_and_subscribers_aliases():
     assert resolve_tool("kaiten_list_space_users").canonical_name == "space-users.list"
     assert resolve_tool("kaiten_list_company_users").canonical_name == "company-users.list"
-    assert (
-        resolve_tool("kaiten_list_all_company_users").canonical_name
-        == "company-users.list-all"
-    )
+    assert resolve_tool("kaiten_list_all_company_users").canonical_name == "company-users.list-all"
     assert resolve_tool("kaiten_create_company_group").canonical_name == "company-groups.create"
     assert resolve_tool("kaiten_get_role").canonical_name == "roles.get"
     assert resolve_tool("kaiten_add_column_subscriber").canonical_name == "column-subscribers.add"

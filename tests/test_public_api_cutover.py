@@ -48,14 +48,10 @@ def test_cutover_pagination_defaults_to_safe_single_page(name, required, default
 
 
 @pytest.mark.parametrize(("name", "required", "default_limit"), ALL_CUTOVER_LISTS)
-def test_cutover_pagination_forwards_explicit_limit_and_offset(
-    name, required, default_limit
-):
+def test_cutover_pagination_forwards_explicit_limit_and_offset(name, required, default_limit):
     tool = resolve_tool(name)
 
-    _, query, _ = build_request(
-        tool, merge_inputs(tool, {**required, "limit": 100, "offset": 200})
-    )
+    _, query, _ = build_request(tool, merge_inputs(tool, {**required, "limit": 100, "offset": 200}))
 
     assert query is not None
     assert query["limit"] == 100
@@ -73,9 +69,7 @@ def test_cutover_list_schemas_expose_server_pagination_bounds(name, required, de
 
 @pytest.mark.parametrize(("name", "required", "default_limit"), ALL_CUTOVER_LISTS)
 @pytest.mark.parametrize("invalid", ({"limit": 0}, {"limit": 101}, {"offset": -1}))
-def test_cutover_pagination_rejects_out_of_range_values(
-    name, required, default_limit, invalid
-):
+def test_cutover_pagination_rejects_out_of_range_values(name, required, default_limit, invalid):
     tool = resolve_tool(name)
 
     with pytest.raises(ValidationError):

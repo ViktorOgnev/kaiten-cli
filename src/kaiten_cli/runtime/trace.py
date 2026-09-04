@@ -309,9 +309,7 @@ def summarize_trace(path: str | Path) -> dict[str, Any]:
     try:
         handle = trace_path.open("r", encoding="utf-8", errors="replace")
     except OSError as exc:
-        raise ValidationError(
-            f"Unable to read trace file: {type(exc).__name__}."
-        ) from exc
+        raise ValidationError(f"Unable to read trace file: {type(exc).__name__}.") from exc
 
     with handle:
         for line in handle:
@@ -383,11 +381,7 @@ def summarize_trace(path: str | Path) -> dict[str, Any]:
     )
     n_plus_one_paths = sorted(family for family, count in path_counts.items() if count >= 10)
     repeated_populations = sorted(
-        {
-            command
-            for (command, _), count in working_set_signatures.items()
-            if count >= 2
-        }
+        {command for (command, _), count in working_set_signatures.items() if count >= 2}
     )
     recommendations: list[dict[str, Any]] = []
     if n_plus_one_commands or n_plus_one_paths:
@@ -428,8 +422,7 @@ def summarize_trace(path: str | Path) -> dict[str, Any]:
         "commands": _counter_payload(command_counts, key="canonical_name"),
         "path_families": _counter_payload(path_counts, key="path_family"),
         "truncated": (
-            len(command_counts) > _TRACE_SUMMARY_LIMIT
-            or len(path_counts) > _TRACE_SUMMARY_LIMIT
+            len(command_counts) > _TRACE_SUMMARY_LIMIT or len(path_counts) > _TRACE_SUMMARY_LIMIT
         ),
         "recommendations": recommendations,
     }

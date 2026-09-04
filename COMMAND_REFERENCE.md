@@ -10637,10 +10637,10 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -10679,9 +10679,9 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `url_path` | `string` | yes | — | Addon mount path, for example /github. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `url_path` | `string` | yes | — | — | Addon mount path, for example /github. |
 
 **Examples**
 
@@ -10721,10 +10721,10 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
 
 **Examples**
 
@@ -10764,12 +10764,12 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `type` | `string` | yes | `shared`, `private` | Data scope: shared for the whole card, private for the current user. |
-| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
+| `type` | `string` | yes | `shared`, `private` | — | Data scope: shared for the whole card, private for the current user. |
+| `data` | `object` | yes | — | — | Addon data object merged over the stored row by top-level key. |
 
 **Examples**
 
@@ -10813,10 +10813,10 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -10855,11 +10855,11 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `settings` | `object` | no | — | Space-level addon settings object; omit to only install. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
+| `settings` | `object` | no | — | — | Space-level addon settings object; omit to only install. |
 
 **Examples**
 
@@ -10898,11 +10898,11 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -10940,10 +10940,10 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `space_id` | `integer` | yes | — | Space ID |
-| `addon_uid` | `string` | yes | — | Addon UUID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
 
 **Examples**
 
@@ -10981,9 +10981,9 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `addon_uid` | `string` | yes | — | Addon UUID |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
 
 **Examples**
 
@@ -11022,10 +11022,10 @@ user-addon-data
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `addon_uid` | `string` | yes | — | Addon UUID |
-| `data` | `object` | yes | — | Addon data object merged over the stored row by top-level key. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `addon_uid` | `string` | yes | — | — | Addon UUID |
+| `data` | `object` | yes | — | — | Addon data object merged over the stored row by top-level key. |
 
 **Examples**
 
@@ -11090,15 +11090,15 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `branch_json` | `object` | yes | — | Raw GitHub REST branch object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `branch_json` | `object` | yes | — | — | Raw GitHub REST branch object. |
+| `owner` | `string` | yes | — | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11145,17 +11145,17 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `branch_name` | `string` | no | — | Branch name. |
-| `pseudo_id` | `string` | no | — | Stored branch identity in owner/repo/branch form. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `branch_name` | `string` | no | — | — | Branch name. |
+| `pseudo_id` | `string` | no | — | — | Stored branch identity in owner/repo/branch form. |
+| `owner` | `string` | no | — | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11200,12 +11200,12 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -11245,15 +11245,15 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `commit_json` | `object` | yes | — | Raw GitHub REST commit object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `commit_json` | `object` | yes | — | — | Raw GitHub REST commit object. |
+| `owner` | `string` | yes | — | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11299,16 +11299,16 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `sha` | `string` | no | — | Full commit sha as stored. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `sha` | `string` | no | — | — | Full commit sha as stored. |
+| `owner` | `string` | no | — | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11353,12 +11353,12 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -11398,15 +11398,15 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `issue_json` | `object` | yes | — | Raw GitHub REST issue object. |
-| `owner` | `string` | yes | — | GitHub repository owner login. |
-| `repo` | `string` | yes | — | GitHub repository name. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `issue_json` | `object` | yes | — | — | Raw GitHub REST issue object. |
+| `owner` | `string` | yes | — | — | GitHub repository owner login. |
+| `repo` | `string` | yes | — | — | GitHub repository name. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11452,17 +11452,17 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `issue_id` | `integer` | no | — | GitHub numeric issue id. |
-| `number` | `integer` | no | — | Issue number. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `issue_id` | `integer` | no | — | — | GitHub numeric issue id. |
+| `number` | `integer` | no | — | — | Issue number. |
+| `owner` | `string` | no | — | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11507,12 +11507,12 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
@@ -11552,15 +11552,15 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `pull_json` | `object` | yes | — | Raw GitHub REST pull request object. |
-| `owner` | `string` | no | — | GitHub repository owner login. Required when the payload carries no repository. |
-| `repo` | `string` | no | — | GitHub repository name. Required when the payload carries no repository. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `pull_json` | `object` | yes | — | — | Raw GitHub REST pull request object. |
+| `owner` | `string` | no | — | — | GitHub repository owner login. Required when the payload carries no repository. |
+| `repo` | `string` | no | — | — | GitHub repository name. Required when the payload carries no repository. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11608,17 +11608,17 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `pull_id` | `integer` | no | — | GitHub numeric pull request id. |
-| `number` | `integer` | no | — | Pull request number. |
-| `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
-| `repo` | `string` | no | — | GitHub repository name. Optional filter. |
-| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
-| `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `pull_id` | `integer` | no | — | — | GitHub numeric pull request id. |
+| `number` | `integer` | no | — | — | Pull request number. |
+| `owner` | `string` | no | — | — | GitHub repository owner login. Optional filter. |
+| `repo` | `string` | no | — | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | — | Allow removing every attachment the selectors match, not just one. |
+| `dry_run` | `boolean` | no | — | — | Report the resulting change without writing it. |
 
 **Examples**
 
@@ -11664,12 +11664,12 @@ github-addon.pulls
 
 **Arguments**
 
-| Argument | Type | Required | Enum | Description |
-|---|---|---|---|---|
-| `card_id` | `integer` | yes | — | Card ID |
-| `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
-| `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `fields` | `string` | no | — | Comma-separated field names to return. |
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `card_id` | `integer` | yes | — | — | Card ID |
+| `addon_uid` | `string` | no | — | — | GitHub addon UUID; derived from the mount path when omitted. |
+| `addon_url_path` | `string` | no | — | — | GitHub addon mount path used to derive the UUID (default /github). |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
