@@ -12571,6 +12571,7 @@ user-roles
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Uses at most 100 users per request for forward compatibility.
+- Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate users are not appended.
 - If max_pages is reached on a full page, the command fails instead of returning a partial list.
 
 ### `company-users.remove-virtual`
@@ -17350,6 +17351,7 @@ tree.children
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
 - `/spaces`, `/documents`, and `/document-groups` are paginated internally with `limit=100` and `offset=0,100,...` until a short page is returned.
+- Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate rows are not appended.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
 - Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.
@@ -17395,6 +17397,7 @@ tree.children
 - Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.
 - Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.
 - `/spaces`, `/documents`, and `/document-groups` are paginated internally with `limit=100` and `offset=0,100,...` until a short page is returned.
+- Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate rows are not appended.
 - No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.
 - If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.
 - Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.

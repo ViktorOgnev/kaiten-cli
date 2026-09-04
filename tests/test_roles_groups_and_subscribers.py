@@ -149,6 +149,68 @@ async def test_company_users_list_all_paginates_to_short_page_and_shapes(monkeyp
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_company_users_list_all_accepts_oversized_legacy_envelope(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/users").mock(
+        return_value=Response(
+            200,
+            json={"records": [{"id": 1}, {"id": 2}, {"id": 3}]},
+        )
+    )
+    tool = resolve_tool("company-users.list-all")
+    payload = merge_inputs(tool, {"page_size": 2, "max_pages": 3})
+
+    result = await execute_tool(tool, payload)
+
+    assert result == [{"id": 1}, {"id": 2}, {"id": 3}]
+    assert route.call_count == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_company_users_list_all_accepts_repeated_legacy_envelope_without_duplicates(
+    monkeypatch,
+):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    page = {"users": [{"id": 1}, {"id": 2}]}
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/users").mock(
+        side_effect=[Response(200, json=page), Response(200, json=page)]
+    )
+    tool = resolve_tool("company-users.list-all")
+    payload = merge_inputs(tool, {"page_size": 2, "max_pages": 3})
+
+    result = await execute_tool(tool, payload)
+
+    assert result == [{"id": 1}, {"id": 2}]
+    assert route.call_count == 2
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_company_users_list_all_fails_closed_on_repeat_after_progress(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    first_page = [{"id": 1}, {"id": 2}]
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/company/users").mock(
+        side_effect=[
+            Response(200, json={"data": first_page}),
+            Response(200, json={"data": [{"id": 3}, {"id": 4}]}),
+            Response(200, json={"data": first_page}),
+        ]
+    )
+    tool = resolve_tool("company-users.list-all")
+    payload = merge_inputs(tool, {"page_size": 2, "max_pages": 4})
+
+    with pytest.raises(ValidationError, match="repeated a previously received page after progress"):
+        await execute_tool(tool, payload)
+
+    assert route.call_count == 3
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_company_users_list_all_fails_instead_of_truncating_on_cap(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")

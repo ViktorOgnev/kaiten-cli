@@ -27,6 +27,7 @@ TREE_CATALOG_USAGE_NOTES = (
     "Here `catalog` means an internal fetched entity index for tree assembly, not UI catalog tables (`custom-directories`) and not `custom-properties catalog-values`.",
     "Use `document-groups.*` to create, update, or delete document folder containers; tree commands are read-only aggregate views.",
     "`/spaces`, `/documents`, and `/document-groups` are paginated internally with `limit=100` and `offset=0,100,...` until a short page is returned.",
+    "Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate rows are not appended.",
     "No pagination options are required or accepted for this command; callers control only `parent_entity_uid` for children listing or `root_uid`/`depth` for nested tree output.",
     "If the internal pagination safety cap is reached with full pages, the command fails instead of returning a silently truncated tree.",
     "Visible entities whose `parent_entity_uid` is missing or inaccessible in the fetched catalog are promoted to root-level output.",
