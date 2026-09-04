@@ -39,14 +39,17 @@ ADDON_UID_PATH_NOTE = (
 UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
     "stores a random one. When a derived UUID finds no data row the command reads the card, "
-    "whose response lists the addons available to it across every space of its board - the "
-    "same set the server checks when authorizing a write - and retries with the registered "
-    "UUID. A card that reports no such addon is a real answer: it can have no attachments."
+    "whose response lists the addons available to it across every space of its board, and "
+    "retries with the registered UUID. That listing is built from read access and keeps "
+    "archived addons, while a write is authorized against update access without them, so "
+    "resolving successfully still does not promise the write will be allowed."
 )
 UID_FALLBACK_COST_NOTE = (
-    "The lookup costs one extra read per card - the card itself - and falls back to the space "
-    "listing only for responses that do not carry the addon data. Nothing is amortized across "
-    "cards, so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
+    "The lookup costs one extra read per card - the card itself. A card whose board has no "
+    "addons at all carries no such data, and then the whole space listing of the tenant is "
+    "walked instead: that is the normal shape of the not-installed case, not an exception, "
+    "and it can be hundreds of spaces in one response. Nothing is amortized across cards, so "
+    "in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
     "A write replaces the whole key, so the command refuses to proceed when the stored addon "
@@ -194,11 +197,11 @@ TOOLS = (
             AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
-                "When the UUID was derived, holds no data and no readable space of the card's "
-                "board reports that addon, the command fails instead of returning an empty list "
-                'that could mean either "nothing attached" or "wrong addon". If the addon is '
-                "simply not installed for this board, that failure is expected and the card "
-                "genuinely has no attachments."
+                "A derived UUID that holds no data is only trusted once the search around the "
+                "card actually completed. When it did and found nothing, the addon is not there "
+                "and the empty list is a real answer; when it could not complete, the command "
+                "fails and asks for --addon-uid rather than return an empty list that might "
+                "describe the wrong addon."
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "

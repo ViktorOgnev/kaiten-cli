@@ -1659,3 +1659,67 @@ async def test_a_partial_walk_is_still_not_an_answer(monkeypatch):
         await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
 
     assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_board_missing_from_the_space_listing_is_not_an_answer(monkeypatch):
+    """Every board is in some space, so finding none means the search failed."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_legacy_card()
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 99}]}])
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_an_unaddressable_addon_id_is_not_an_answer(monkeypatch):
+    """We matched the path but cannot address the addon; that is not "absent"."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    # A UUID v1: real enough to be a registration, outside uuidIdRule.
+    _mock_addon_lookup([_github_addon("e8b5a5f0-a8f1-11ee-be56-0242ac120002")])
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_empty_embedded_spaces_fall_back_instead_of_answering(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "board_id": 7, "board": {"id": 7, "spaces": []}})
+    )
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
+    )
+    respx.get(SPACE_ADDONS_URL).mock(
+        return_value=Response(200, json=[_github_addon(registered_uid)])
+    )
+    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    # An empty listing is the server not populating it, not "no spaces".
+    assert [item["number"] for item in result] == [42]

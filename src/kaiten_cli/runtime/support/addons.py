@@ -125,28 +125,36 @@ def _iframe_url_path(url: Any) -> str | None:
         return None
 
 
-def _addon_uids_in(addons: Any, normalized_path: str) -> list[str]:
-    """Every distinct addon UID mounted at `normalized_path` in one space listing.
+def _addon_uids_in(addons: Any, normalized_path: str) -> tuple[list[str], int]:
+    """Distinct addon UIDs mounted at `normalized_path`, plus a count of rejects.
 
     A path is not an identity: two addons can be served from different hosts under
     the same path, and on a cloud tenant their UIDs are unrelated random values.
     Returning all of them lets the caller refuse to guess.
+
+    An addon that matched the path but whose id is outside the route contract is
+    counted, not dropped: we cannot address it, but "we did not understand this
+    registration" is a different fact from "there is no such addon", and only the
+    second one is an answer.
     """
 
     found: list[str] = []
+    rejected = 0
     if not isinstance(addons, list):
-        return found
+        return found, rejected
     for addon in addons:
         if not isinstance(addon, dict):
             continue
         if _iframe_url_path(addon.get("iframe_initial_url")) != normalized_path:
             continue
         uid = addon.get("id")
-        if isinstance(uid, str) and _UUID_PATTERN.match(uid.lower()):
-            lowered = uid.lower()
-            if lowered not in found:
-                found.append(lowered)
-    return found
+        if not isinstance(uid, str) or not _UUID_PATTERN.match(uid.lower()):
+            rejected += 1
+            continue
+        lowered = uid.lower()
+        if lowered not in found:
+            found.append(lowered)
+    return found, rejected
 
 
 def _single_addon_uid(uids: list[str], url_path: str, where: str) -> str | None:
@@ -206,13 +214,17 @@ async def _board_space_ids(
             space_id = space.get("id")
             if isinstance(space_id, int):
                 matching.append(space_id)
-    return matching, True
+    # Every board belongs to at least one space, so finding none means the board
+    # is not visible in this listing - a search that did not work, not an answer.
+    if not matching and reporter:
+        reporter(f"addon lookup: board {board_id} is in no space of the listing")
+    return matching, bool(matching)
 
 
 async def _space_addon_uids(
     client, space_id: Any, normalized_path: str, timeout: float, reporter
-) -> tuple[list[str], bool]:
-    """One space's candidates and whether that space could be read at all.
+) -> tuple[list[str], int, bool]:
+    """One space's candidates, unusable matches, and whether the space was read.
 
     A space the caller may not read must not end the search: the addon can be
     registered in another space of the same board, and that is exactly the case
@@ -225,8 +237,14 @@ async def _space_addon_uids(
     except (ApiError, TransportError) as error:
         if reporter:
             reporter(f"addon lookup: /spaces/{space_id}/addons unavailable ({error})")
-        return [], False
-    return _addon_uids_in(addons, normalized_path), True
+        return [], 0, False
+    uids, rejected = _addon_uids_in(addons, normalized_path)
+    if rejected and reporter:
+        reporter(
+            f"addon lookup: space {space_id} has {rejected} addon(s) at the path "
+            "whose id is outside the route contract"
+        )
+    return uids, rejected, True
 
 
 @dataclass(frozen=True, slots=True)
@@ -245,24 +263,31 @@ def _card_board_spaces(card: dict[str, Any]) -> list[dict[str, Any]] | None:
 
     `Card.readById` attaches `board.spaces.addons` only when the card actually
     has addons available to this user, filtered to exactly those addons. So the
-    embedded listing is authoritative for "which addon may this card use", and
-    its absence means "no addons at all here, or an older server".
+    embedded listing answers "which addon may this card use", and its absence
+    means "no addons at all here, or an older server" - which is why the absence
+    sends us to the space listing rather than straight to an answer.
     """
 
     board = card.get("board")
     spaces = board.get("spaces") if isinstance(board, dict) else None
     if not isinstance(spaces, list):
         return None
-    return [space for space in spaces if isinstance(space, dict)]
+    usable = [space for space in spaces if isinstance(space, dict)]
+    # A board always belongs to at least one space, so an empty listing means the
+    # server did not populate it rather than "the board has no spaces".
+    return usable or None
 
 
-def _uids_from_card(spaces: list[dict[str, Any]], normalized_path: str) -> list[str]:
+def _uids_from_card(spaces: list[dict[str, Any]], normalized_path: str) -> tuple[list[str], int]:
     pooled: list[str] = []
+    rejected = 0
     for space in spaces:
-        for uid in _addon_uids_in(space.get("addons"), normalized_path):
+        uids, space_rejected = _addon_uids_in(space.get("addons"), normalized_path)
+        rejected += space_rejected
+        for uid in uids:
             if uid not in pooled:
                 pooled.append(uid)
-    return pooled
+    return pooled, rejected
 
 
 async def resolve_addon_uid(
@@ -293,13 +318,17 @@ async def resolve_addon_uid(
 
     embedded = _card_board_spaces(card)
     if embedded is not None:
-        pooled = _uids_from_card(embedded, normalized)
+        pooled, rejected = _uids_from_card(embedded, normalized)
         uid = _single_addon_uid(pooled, url_path, "This card's board")
         if reporter:
-            reporter(f"addon lookup: card reported {len(pooled)} addon(s) at {url_path}")
+            reporter(
+                f"addon lookup: card reported {len(pooled)} usable and {rejected} "
+                f"unusable addon(s) at {url_path}"
+            )
         # An embedded listing without a match is a real answer: the card has no
-        # such addon, so it cannot have attachments under one.
-        return AddonResolution(uid, authoritative=True)
+        # such addon, so it cannot have attachments under one. Unless something
+        # there matched the path and we could not address it.
+        return AddonResolution(uid, authoritative=uid is not None or rejected == 0)
 
     board_id = card.get("board_id")
     if board_id is None:
@@ -310,8 +339,10 @@ async def resolve_addon_uid(
     space_ids, complete = await _board_space_ids(client, board_id, timeout, reporter)
     pooled: list[str] = []
     for candidate in space_ids:
-        uids, ok = await _space_addon_uids(client, candidate, normalized, timeout, reporter)
-        complete = complete and ok
+        uids, rejected, ok = await _space_addon_uids(
+            client, candidate, normalized, timeout, reporter
+        )
+        complete = complete and ok and rejected == 0
         for uid in uids:
             if uid not in pooled:
                 pooled.append(uid)
@@ -838,11 +869,11 @@ def _make_list_executor(entity: GithubEntity):
             # wrong addon", and a read cannot be verified by the server the way
             # a write is. Refuse to answer instead of answering "nothing".
             raise ValidationError(
-                f"Cannot confirm that {state.addon_uid} is this card's GitHub addon: the UUID "
-                "was derived from --addon-url-path, it holds no data, and no space of the "
-                "card's board reported that addon - it may be installed in a space you cannot "
-                "read, or not installed at all. Pass --addon-uid (see space-addons.list or "
-                "company-addons.list) and retry."
+                f"Cannot establish whether {state.addon_uid} is this card's GitHub addon: the "
+                "UUID was derived from --addon-url-path, it holds no data, and the search "
+                "around the card could not be completed - a space, the space listing or an "
+                "addon registration could not be read. Pass --addon-uid (see space-addons.list "
+                "or company-addons.list) and retry."
             )
         if reporter and not state.row_found:
             reporter(
