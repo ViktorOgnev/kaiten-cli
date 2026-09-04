@@ -17,7 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from kaiten_cli.errors import ApiError, TransportError, ValidationError
-from kaiten_cli.models import CACHE_POLICY_PERSISTENT_OPT_IN
+from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
 # Fixed namespace from kaiten-lib/src/shared/addons/generateAddonUid.js. On
 # self-hosted Kaiten an addon UID is the UUID v5 of its normalized URL path, so
@@ -128,20 +128,32 @@ def _addon_uid_in(addons: Any, normalized_path: str) -> str | None:
     return None
 
 
-async def _board_space_ids(client, board_id: Any, timeout: float) -> list[int]:
+async def _board_space_ids(client, board_id: Any, timeout: float, reporter) -> list[int]:
     """Every space the board belongs to, in listing order.
 
     Kaiten decides addon availability for a card over all spaces of the card's
     board (`space_boards` in `getAvailableAddonsForCard`), and a board can sit in
     several spaces. There is no board->spaces endpoint, but the space listing
-    embeds each space's boards, and it is one cacheable read.
+    embeds each space's boards. Archived spaces are included because the server
+    does not filter them out either.
+
+    Only consulted after the card's own space came up empty: the listing is large
+    on a big tenant, and the card's own space answers almost every case.
     """
 
-    spaces = await client.get(
-        "/spaces", timeout=timeout, cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN
-    )
-    if not isinstance(spaces, list):
+    try:
+        spaces = await fetch_all_offset_pages(
+            client,
+            "/spaces",
+            params={"archived": True},
+            timeout=timeout,
+            reporter=reporter,
+        )
+    except (ApiError, TransportError) as error:
+        if reporter:
+            reporter(f"addon lookup: /spaces unavailable ({error})")
         return []
+
     matching: list[int] = []
     for space in spaces:
         if not isinstance(space, dict):
@@ -156,49 +168,66 @@ async def _board_space_ids(client, board_id: Any, timeout: float) -> list[int]:
     return matching
 
 
+async def _space_addon_uid(
+    client, space_id: Any, normalized_path: str, timeout: float, reporter
+) -> str | None:
+    """One space's answer, or None when that space cannot be read.
+
+    A space the caller may not read must not end the search: the addon can be
+    registered in another space of the same board, and that is exactly the case
+    this lookup exists for.
+    """
+
+    try:
+        addons = await client.get(f"/spaces/{space_id}/addons", timeout=timeout)
+    except (ApiError, TransportError) as error:
+        if reporter:
+            reporter(f"addon lookup: /spaces/{space_id}/addons unavailable ({error})")
+        return None
+    return _addon_uid_in(addons, normalized_path)
+
+
 async def registered_addon_uid(
     client, card_id: Any, url_path: str, timeout: float, reporter
 ) -> str | None:
     """The UID Kaiten registered for `url_path` on the card's board, or None.
 
-    None means "not established": either the lookup could not be performed (no
-    `space.addons.read`, unreachable card) or no space of the card's board has
-    that addon. Both are indistinguishable from the caller's point of view and
-    neither confirms the derived UID, so None must never be read as "the addon
-    exists and has nothing attached".
+    None means "not established": the lookup could not be performed, or no space
+    of the card's board reports that addon. Neither confirms the derived UID, so
+    None must never be read as "the addon exists and has nothing attached".
 
-    The card's own space is checked first because it answers almost every case in
-    one read; the remaining spaces of the board are only consulted when it does
-    not, since a board shared into several spaces may carry the addon elsewhere.
+    Each read is fault-isolated: one unreadable space narrows the search instead
+    of ending it.
     """
 
     normalized = normalize_addon_url_path(url_path)
     try:
-        card = await client.get(
-            f"/cards/{card_id}", timeout=timeout, cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN
-        )
-        if not isinstance(card, dict):
-            return None
-        space_id, board_id = card.get("space_id"), card.get("board_id")
-        checked: set[Any] = set()
-        for candidate in (space_id, *(await _board_space_ids(client, board_id, timeout))):
-            if candidate is None or candidate in checked:
-                continue
-            checked.add(candidate)
-            addons = await client.get(
-                f"/spaces/{candidate}/addons",
-                timeout=timeout,
-                cache_policy=CACHE_POLICY_PERSISTENT_OPT_IN,
-            )
-            uid = _addon_uid_in(addons, normalized)
-            if uid is not None:
-                if reporter and candidate != space_id:
-                    reporter(f"addon lookup: found in space {candidate}, not the card's own space")
-                return uid
+        card = await client.get(f"/cards/{card_id}", timeout=timeout)
     except (ApiError, TransportError) as error:
         if reporter:
-            reporter(f"addon lookup: space addons unavailable ({error})")
+            reporter(f"addon lookup: /cards/{card_id} unavailable ({error})")
         return None
+    if not isinstance(card, dict):
+        return None
+
+    space_id, board_id = card.get("space_id"), card.get("board_id")
+    if space_id is not None:
+        uid = await _space_addon_uid(client, space_id, normalized, timeout, reporter)
+        if uid is not None:
+            return uid
+
+    if board_id is None:
+        return None
+    # Only now is the space listing worth its size: the board may be shared into
+    # spaces other than the card's own.
+    for candidate in await _board_space_ids(client, board_id, timeout, reporter):
+        if candidate == space_id:
+            continue
+        uid = await _space_addon_uid(client, candidate, normalized, timeout, reporter)
+        if uid is not None:
+            if reporter:
+                reporter(f"addon lookup: found in space {candidate}, not the card's own space")
+            return uid
     return None
 
 

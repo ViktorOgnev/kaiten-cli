@@ -1239,29 +1239,128 @@ async def test_attach_starts_from_empty_when_the_addon_cleared_the_key(monkeypat
 
 
 @respx.mock
-async def test_uid_lookup_reads_are_cacheable_across_the_run(monkeypatch):
-    """The resolution must not cost a full lookup per card in a loop."""
+async def test_own_space_answer_skips_the_space_listing(monkeypatch):
+    """The listing is large on a real tenant, so it must stay off the common path."""
 
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
     _mock_addon_lookup([_github_addon(registered_uid)])
+    spaces_route = respx.get(f"{API}/spaces")
     respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
         return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
     )
 
     tool = resolve_tool("github-addon.pulls.list")
-    payload = merge_inputs(tool, {"card_id": 10})
+    _, stats = await execute_tool_with_diagnostics(tool, merge_inputs(tool, {"card_id": 10}))
 
-    # First run resolves everything: derived addons-data, card, spaces, space
-    # addons, then the addons-data read under the registered UID.
-    _, first = await execute_tool_with_diagnostics(tool, payload)
-    assert first.http_request_count == 5
+    # derived addons-data, card, own space addons, registered addons-data.
+    assert stats.http_request_count == 4
+    assert not spaces_route.called
 
-    # A second CLI process repeats only the two addons-data reads: the three
-    # lookup reads are reference data and come back from the persistent cache,
-    # which is what keeps a loop over cards from re-resolving the UID every time.
-    _, second = await execute_tool_with_diagnostics(tool, payload)
-    assert second.http_request_count == 2
-    assert second.disk_cache_hits >= 3
+
+@respx.mock
+async def test_unreadable_own_space_does_not_end_the_search(monkeypatch):
+    """The space the caller cannot read is exactly why the other spaces matter."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(403, json={"message": "no access"}))
+    respx.get(f"{API}/spaces").mock(
+        return_value=Response(
+            200, json=[{"id": 5, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
+        )
+    )
+    space_9 = respx.get(f"{API}/spaces/9/addons").mock(
+        return_value=Response(200, json=[_github_addon(registered_uid)])
+    )
+    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert space_9.called
+    assert [item["number"] for item in result] == [42]
+
+
+@respx.mock
+async def test_space_listing_failure_still_lets_the_own_space_answer(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(
+        return_value=Response(200, json=[_github_addon(registered_uid)])
+    )
+    respx.get(f"{API}/spaces").mock(return_value=Response(500, json={"message": "boom"}))
+    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    assert [i["number"] for i in await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))] == [
+        42
+    ]
+
+
+@respx.mock
+async def test_missing_board_id_skips_the_space_listing(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(return_value=Response(200, json={"id": 10, "space_id": 5}))
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    spaces_route = respx.get(f"{API}/spaces")
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert not spaces_route.called
+
+
+@respx.mock
+async def test_space_listing_is_read_with_pagination_and_archived_spaces(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
+    )
+    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
+    # The board is only reachable through an archived space on the second page.
+    first_page = [{"id": 100 + i, "boards": []} for i in range(100)]
+    spaces_route = respx.get(f"{API}/spaces").mock(
+        side_effect=[
+            Response(200, json=first_page),
+            Response(200, json=[{"id": 9, "archived": True, "boards": [{"id": 7}]}]),
+            Response(200, json=[]),
+        ]
+    )
+    respx.get(f"{API}/spaces/9/addons").mock(
+        return_value=Response(200, json=[_github_addon(registered_uid)])
+    )
+    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
+    )
+
+    tool = resolve_tool("github-addon.pulls.list")
+    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert [item["number"] for item in result] == [42]
+    assert spaces_route.calls[0].request.url.params["archived"] == "true"
+    assert spaces_route.calls[0].request.url.params["limit"] == "100"

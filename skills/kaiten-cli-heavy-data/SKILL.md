@@ -126,9 +126,11 @@ Notes:
   snapshot; `cards list-all` and `query cards` never return them.
 - A card can also reference a PR through `external-links list`. Read both when the
   question is "every PR this card references".
-- The addon UUID lookup is cached like other reference reads, so a loop pays for
-  it once; passing `--addon-uid` from `space-addons list` removes it entirely.
-  A card whose addon cannot be resolved fails the call instead of reporting an
+- Resolve the addon UUID once with `space-addons list` and pass `--addon-uid` in
+  the loop. Without it every card costs two extra reads while the command works
+  out which addon it is looking at, and nothing amortizes: the card read is per
+  card, and a write clears the cache scope for the whole profile.
+- A card whose addon cannot be resolved fails the call instead of reporting an
   empty list, so handle that error rather than counting it as "no attachments".
 
 ### Space topology

@@ -88,8 +88,9 @@ as their own mutation family:
   card, and re-read before retrying.
 - The addon UUID is derived from a mount path only on on-premises Kaiten; a
   cloud tenant stores a random UUID. The commands re-resolve it from the card's
-  space when a derived UUID finds nothing, but for repeated writes read it once
-  from `space-addons list` and pass `--addon-uid` explicitly.
+  board when a derived UUID finds nothing, but that costs two extra reads per
+  card and every write clears the cache scope, so for repeated writes read the
+  UUID once from `space-addons list` and pass `--addon-uid` explicitly.
 - A `github-addon ... list` that cannot confirm which addon it read fails
   instead of returning an empty list. Treat that error as "resolve the UUID
   first", not as "the card has nothing attached".

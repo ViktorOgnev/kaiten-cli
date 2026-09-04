@@ -44,9 +44,10 @@ UID_FALLBACK_NOTE = (
     "with the registered UUID."
 )
 UID_FALLBACK_COST_NOTE = (
-    "The lookup reads (the card, the space listing and the space addons) are reference data "
-    "cached like any other safe read, so a loop over cards pays for it once rather than per "
-    "card. Passing --addon-uid skips it entirely."
+    "The lookup costs two extra reads per card (the card and its space addons), and the space "
+    "listing on top of that only when the card's own space has no such addon. Nothing here is "
+    "amortized across cards - the card read is per card, and a write clears the cache scope - "
+    "so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
     "A write replaces the whole key, so the command refuses to proceed when the stored value "
@@ -189,7 +190,9 @@ TOOLS = (
             (
                 "When the UUID was derived, holds no data and no readable space of the card's "
                 "board reports that addon, the command fails instead of returning an empty list "
-                'that could mean either "nothing attached" or "wrong addon".'
+                'that could mean either "nothing attached" or "wrong addon". If the addon is '
+                "simply not installed for this board, that failure is expected and the card "
+                "genuinely has no attachments."
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "

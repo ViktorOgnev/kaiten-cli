@@ -11114,7 +11114,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
 - A REST branch object carries no repository, so --owner and --repo are required and form the stored branch identity.
 - The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
@@ -11172,7 +11172,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the same branch name exists in several repositories.
 - A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
@@ -11223,7 +11223,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Live contract: `live_not_validated`; expected statuses: —
 - Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
 
@@ -11271,7 +11271,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
 - The stored author prefers the linked GitHub account and falls back to the git author name, exactly as the addon does.
 - Already attached entries are detected by commit sha.
@@ -11327,7 +11327,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - --sha is required and matched in full; short shas do not match stored entries.
 - A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
@@ -11378,7 +11378,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Live contract: `live_not_validated`; expected statuses: —
 - Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
 
@@ -11426,7 +11426,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
 - GitHub returns pull requests from the issues endpoint too; a payload with a pull_request field is rejected, attach it as a pull request instead.
 - Already attached entries are detected by GitHub numeric id and left untouched.
@@ -11483,7 +11483,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Provide --issue-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
 - A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
@@ -11534,7 +11534,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Live contract: `live_not_validated`; expected statuses: —
 - Live note: GitHub addon commands were added after the last live campaign. The live suite covers reads and dry runs; a real attach/detach needs a tenant with the addon installed and has not been live-validated yet.
 
@@ -11583,7 +11583,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Pass the raw GitHub REST object from gh api repos/OWNER/REPO/..., not gh pr view --json: the latter returns GraphQL fields (a string node id, camelCase names) that this mapping rejects. The CLI never calls GitHub itself, so the payload is the only source of the title, state and author the widget shows when it cannot reach GitHub.
 - The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
 - The repository is read from base.repo. A REST payload trimmed with --jq can lose it; then pass --owner and --repo. Output of gh pr view --json is a different schema entirely and is not accepted with or without them.
@@ -11641,7 +11641,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
 - Provide --pull-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
 - A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - A selector that matches nothing leaves the stored data untouched.
@@ -11693,8 +11693,8 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - The addon UUID is appended to the path at runtime, so the path template above stops at addons-data. It is --addon-uid when given, otherwise derived from --addon-url-path (default /github).
 - Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten stores a random one. When a derived UUID finds no data row the command asks which addon the card's board actually has - its own space first, then the other spaces the board belongs to, because Kaiten resolves addon availability over all of them - and retries with the registered UUID.
-- The lookup reads (the card, the space listing and the space addons) are reference data cached like any other safe read, so a loop over cards pays for it once rather than per card. Passing --addon-uid skips it entirely.
-- When the UUID was derived, holds no data and no readable space of the card's board reports that addon, the command fails instead of returning an empty list that could mean either "nothing attached" or "wrong addon".
+- The lookup costs two extra reads per card (the card and its space addons), and the space listing on top of that only when the card's own space has no such addon. Nothing here is amortized across cards - the card read is per card, and a write clears the cache scope - so in a loop resolve the UUID once with space-addons.list and pass --addon-uid.
+- When the UUID was derived, holds no data and no readable space of the card's board reports that addon, the command fails instead of returning an empty list that could mean either "nothing attached" or "wrong addon". If the addon is simply not installed for this board, that failure is expected and the card genuinely has no attachments.
 - Returns the stored attachedPulls entries; an uninstalled addon or a card without attachments both yield an empty list.
 - Card PR references can also live in external links; check external-links.list too when you need every PR referenced by a card.
 - Live contract: `live_not_validated`; expected statuses: —

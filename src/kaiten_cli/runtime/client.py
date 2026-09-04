@@ -273,28 +273,15 @@ class KaitenClient:
         raise TransportError("Rate limit retries exhausted")
 
     async def get(
-        self,
-        path: str,
-        *,
-        params: dict[str, Any] | None = None,
-        timeout: float = DEFAULT_TIMEOUT,
-        cache_policy: str | None = None,
+        self, path: str, *, params: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT
     ) -> Any:
-        """Safe read. `cache_policy` overrides the tool's policy for this call only.
-
-        A custom executor sometimes makes a supporting read whose cacheability
-        differs from the command's own: a mutation is uncacheable, but the
-        reference data it resolves first is not, and re-reading it per entity in
-        a loop is the expensive part.
-        """
-
         if self.execution_context is None:
             return await self._request("GET", path, params=params, timeout=timeout)
         return await self.execution_context.get_json(
             method="GET",
             path=path,
             params=params,
-            cache_policy=cache_policy or self.cache_policy,
+            cache_policy=self.cache_policy,
             fetch=lambda: self._request("GET", path, params=params, timeout=timeout),
         )
 
