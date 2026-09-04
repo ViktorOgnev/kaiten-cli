@@ -17389,6 +17389,7 @@ github-addon.pulls
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
 - A REST branch object carries no repository, so --owner and --repo are required and form the stored branch identity.
+- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
 - Already attached entries are detected by owner/repo/branch, matching the addon UI.
 - The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
@@ -17425,6 +17426,7 @@ github-addon.pulls
 | `pseudo_id` | `string` | no | — | Stored branch identity in owner/repo/branch form. |
 | `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
 | `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
 | `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
 
 **Examples**
@@ -17439,6 +17441,7 @@ github-addon.pulls
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the same branch name exists in several repositories.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
 - Live contract: `live_not_validated`; expected statuses: —
@@ -17459,7 +17462,7 @@ github-addon.pulls
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/addons-data` |
-| Compact | `yes` |
+| Compact | `no` |
 | Fields | `yes` |
 | Heavy | `no` |
 
@@ -17470,7 +17473,6 @@ github-addon.pulls
 | `card_id` | `integer` | yes | — | Card ID |
 | `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
 | `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | Comma-separated field names to return. |
 
 **Examples**
@@ -17567,6 +17569,7 @@ github-addon.pulls
 | `sha` | `string` | no | — | Full commit sha as stored. |
 | `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
 | `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
 | `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
 
 **Examples**
@@ -17581,6 +17584,7 @@ github-addon.pulls
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - --sha is required and matched in full; short shas do not match stored entries.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
 - Live contract: `live_not_validated`; expected statuses: —
@@ -17601,7 +17605,7 @@ github-addon.pulls
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/addons-data` |
-| Compact | `yes` |
+| Compact | `no` |
 | Fields | `yes` |
 | Heavy | `no` |
 
@@ -17612,7 +17616,6 @@ github-addon.pulls
 | `card_id` | `integer` | yes | — | Card ID |
 | `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
 | `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | Comma-separated field names to return. |
 
 **Examples**
@@ -17710,6 +17713,7 @@ github-addon.pulls
 | `number` | `integer` | no | — | Issue number. |
 | `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
 | `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
 | `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
 
 **Examples**
@@ -17724,6 +17728,7 @@ github-addon.pulls
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Provide --issue-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
 - Live contract: `live_not_validated`; expected statuses: —
@@ -17744,7 +17749,7 @@ github-addon.pulls
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/addons-data` |
-| Compact | `yes` |
+| Compact | `no` |
 | Fields | `yes` |
 | Heavy | `no` |
 
@@ -17755,7 +17760,6 @@ github-addon.pulls
 | `card_id` | `integer` | yes | — | Card ID |
 | `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
 | `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | Comma-separated field names to return. |
 
 **Examples**
@@ -17800,6 +17804,8 @@ github-addon.pulls
 | `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
 | `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
 | `pull_json` | `object` | yes | — | Raw GitHub REST pull request object. |
+| `owner` | `string` | no | — | GitHub repository owner login. Required when the payload carries no repository. |
+| `repo` | `string` | no | — | GitHub repository name. Required when the payload carries no repository. |
 | `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
 
 **Examples**
@@ -17815,6 +17821,8 @@ github-addon.pulls
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub itself, so the payload is the only source of title, state and author shown as a fallback when the widget cannot reach GitHub.
+- The card widget re-reads every attachment from GitHub by owner, repository and number/name/sha, so the repository is part of the stored identity: a wrong or missing value leaves an entry that can never resolve again.
+- The repository is read from base.repo in the payload. A trimmed payload without it (gh pr view --json ...) is rejected unless --owner and --repo are given.
 - Already attached entries are detected by GitHub numeric id and left untouched.
 - The write needs card.update in the card's space and the GitHub addon installed there; otherwise Kaiten rejects the shared row update.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
@@ -17851,6 +17859,7 @@ github-addon.pulls
 | `number` | `integer` | no | — | Pull request number. |
 | `owner` | `string` | no | — | GitHub repository owner login. Optional filter. |
 | `repo` | `string` | no | — | GitHub repository name. Optional filter. |
+| `all` | `boolean` | no | — | Allow removing every attachment the selectors match, not just one. |
 | `dry_run` | `boolean` | no | — | Report the resulting change without writing it. |
 
 **Examples**
@@ -17865,7 +17874,8 @@ github-addon.pulls
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Provide --pull-id or --number; --owner and --repo narrow the match when the same number exists in several repositories.
-- Every attachment matching the given selectors is removed; a selector that matches nothing leaves the stored data untouched.
+- A selector that matches several attachments is rejected as ambiguous; narrow it with --owner and --repo, or pass --all when removing every match is what you want.
+- A selector that matches nothing leaves the stored data untouched.
 - Detaching the last entry stores null for the key rather than an empty array, which is what the addon UI writes and what hides the widget section on the card.
 - --dry-run reads the current attachments and reports the outcome without writing; it is still classified as a mutation, so it is blocked by --read-only.
 - Live contract: `live_not_validated`; expected statuses: —
@@ -17886,7 +17896,7 @@ github-addon.pulls
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/cards/{card_id}/addons-data` |
-| Compact | `yes` |
+| Compact | `no` |
 | Fields | `yes` |
 | Heavy | `no` |
 
@@ -17897,7 +17907,6 @@ github-addon.pulls
 | `card_id` | `integer` | yes | — | Card ID |
 | `addon_uid` | `string` | no | — | GitHub addon UUID; derived from the mount path when omitted. |
 | `addon_url_path` | `string` | no | — | GitHub addon mount path used to derive the UUID (default /github). |
-| `compact` | `boolean` | no | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | Comma-separated field names to return. |
 
 **Examples**

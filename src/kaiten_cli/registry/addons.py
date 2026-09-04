@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
-from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.support.addons import execute_addon_uid
+from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
+from kaiten_cli.registry.base import (
+    PLAIN_ENTITY_POLICY,
+    SHAPED_LIST_POLICY,
+    make_tool,
+    shaping_properties,
+)
+from kaiten_cli.runtime.support.addons import execute_addon_uid, validate_addon_uid_payload
 
 ADDON_UID_NOTE = (
     "addon_uid is the addon's UUID, not its name. Take it from addons.list / "
@@ -24,22 +29,7 @@ ADDON_INSTALL_NOTE = (
     "otherwise the shared write is rejected with a permission error."
 )
 
-LIST_POLICY = ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list")
-# Write results are small envelopes, so they expose no --compact / --fields options.
-ENTITY_POLICY = ResponsePolicy(result_kind="entity")
-
-
-def _shaping_properties() -> dict[str, dict]:
-    return {
-        "compact": {
-            "type": "boolean",
-            "description": "Return compact output without heavy nested fields.",
-        },
-        "fields": {
-            "type": "string",
-            "description": "Comma-separated field names to return.",
-        },
-    }
+ADDON_UID_VALIDATION = RuntimeBehavior(payload_validator=validate_addon_uid_payload)
 
 
 TOOLS = (
@@ -49,10 +39,10 @@ TOOLS = (
         description="List published Kaiten addons available to the current company.",
         input_schema={
             "type": "object",
-            "properties": {**_shaping_properties()},
+            "properties": {**shaping_properties()},
         },
         operation=OperationSpec(method="GET", path_template="/addons"),
-        response_policy=LIST_POLICY,
+        response_policy=SHAPED_LIST_POLICY,
         examples=(
             ExampleSpec(
                 command="kaiten --json addons list --fields id,name",
@@ -76,7 +66,7 @@ TOOLS = (
             "required": ["url_path"],
         },
         operation=OperationSpec(method="GET", path_template="/local/addons/uid"),
-        response_policy=ENTITY_POLICY,
+        response_policy=PLAIN_ENTITY_POLICY,
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
             custom_executor=execute_addon_uid,
@@ -108,7 +98,7 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
-                **_shaping_properties(),
+                **shaping_properties(),
             },
             "required": ["space_id"],
         },
@@ -117,7 +107,7 @@ TOOLS = (
             path_template="/spaces/{space_id}/addons",
             path_fields=("space_id",),
         ),
-        response_policy=LIST_POLICY,
+        response_policy=SHAPED_LIST_POLICY,
         examples=(
             ExampleSpec(
                 command="kaiten --json space-addons list --space-id 1 --fields id,name",
@@ -148,7 +138,8 @@ TOOLS = (
             path_fields=("space_id", "addon_uid"),
             body_fields=("settings",),
         ),
-        response_policy=ENTITY_POLICY,
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json space-addons install --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",
@@ -180,7 +171,8 @@ TOOLS = (
             path_template="/spaces/{space_id}/addons/{addon_uid}",
             path_fields=("space_id", "addon_uid"),
         ),
-        response_policy=ENTITY_POLICY,
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json space-addons uninstall --space-id 1 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",
@@ -203,7 +195,7 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "addon_uid": {"type": "string", "description": "Addon UUID"},
-                **_shaping_properties(),
+                **shaping_properties(),
             },
             "required": ["card_id", "addon_uid"],
         },
@@ -212,7 +204,8 @@ TOOLS = (
             path_template="/cards/{card_id}/addons-data/{addon_uid}",
             path_fields=("card_id", "addon_uid"),
         ),
-        response_policy=LIST_POLICY,
+        response_policy=SHAPED_LIST_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json card-addon-data get --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",
@@ -255,7 +248,8 @@ TOOLS = (
             path_fields=("card_id", "addon_uid"),
             body_fields=("type", "data"),
         ),
-        response_policy=ENTITY_POLICY,
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json card-addon-data set --card-id 10 --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --type shared --data '{\"attachedPulls\": []}'",
@@ -285,7 +279,7 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "addon_uid": {"type": "string", "description": "Addon UUID"},
-                **_shaping_properties(),
+                **shaping_properties(),
             },
             "required": ["addon_uid"],
         },
@@ -294,7 +288,8 @@ TOOLS = (
             path_template="/company/users/current/addons-data/{addon_uid}",
             path_fields=("addon_uid",),
         ),
-        response_policy=LIST_POLICY,
+        response_policy=SHAPED_LIST_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json user-addon-data get --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990",
@@ -330,7 +325,8 @@ TOOLS = (
             path_fields=("addon_uid",),
             body_fields=("data",),
         ),
-        response_policy=ENTITY_POLICY,
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=ADDON_UID_VALIDATION,
         examples=(
             ExampleSpec(
                 command="kaiten --json user-addon-data set --addon-uid 0ce23a01-560f-51e0-9982-1e3445dc5990 --data '{\"selectedRepo\": null}'",

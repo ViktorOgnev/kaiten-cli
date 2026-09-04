@@ -1087,7 +1087,10 @@ def _exercise_integrations(h) -> None:
 
 # Deterministic UID of the GitHub addon mounted at /github on self-hosted Kaiten.
 GITHUB_ADDON_UID = "0ce23a01-560f-51e0-9982-1e3445dc5990"
-SENTINEL_ADDON_UID = "00000000-0000-0000-0000-000000000000"
+# Must satisfy uuidIdRule ([45] version, [89abAB] variant) from kaiten/shared/idRules.js,
+# otherwise the route regex rejects the request and the probe validates a routing 404
+# instead of the endpoint contract.
+SENTINEL_ADDON_UID = "00000000-0000-4000-8000-000000000000"
 
 
 def _live_github_payloads() -> dict[str, dict]:

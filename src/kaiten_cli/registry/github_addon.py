@@ -11,7 +11,7 @@ indistinguishable from one added through the addon UI.
 from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
-from kaiten_cli.registry.base import make_tool
+from kaiten_cli.registry.base import PLAIN_ENTITY_POLICY, make_tool
 from kaiten_cli.runtime.support.addons import (
     execute_github_branches_attach,
     execute_github_branches_detach,
@@ -29,7 +29,7 @@ from kaiten_cli.runtime.support.addons import (
 
 CARD_DATA_PATH = "/cards/{card_id}/addons-data"
 
-ADDON_UID_NOTE = (
+ADDON_UID_PATH_NOTE = (
     "The addon UUID is appended to the path at runtime: --addon-uid when given, otherwise "
     "derived from --addon-url-path (default /github), which matches how self-hosted Kaiten "
     "derives addon UUIDs from mount paths."
@@ -38,6 +38,15 @@ REST_JSON_NOTE = (
     "Pass the raw GitHub REST object, for example from gh api. The CLI never calls GitHub "
     "itself, so the payload is the only source of title, state and author shown as a fallback "
     "when the widget cannot reach GitHub."
+)
+REPO_IDENTITY_NOTE = (
+    "The card widget re-reads every attachment from GitHub by owner, repository and "
+    "number/name/sha, so the repository is part of the stored identity: a wrong or missing "
+    "value leaves an entry that can never resolve again."
+)
+AMBIGUOUS_SELECTOR_NOTE = (
+    "A selector that matches several attachments is rejected as ambiguous; narrow it with "
+    "--owner and --repo, or pass --all when removing every match is what you want."
 )
 SHARED_WRITE_NOTE = (
     "The write needs card.update in the card's space and the GitHub addon installed there; "
@@ -57,12 +66,12 @@ DRY_RUN_NOTE = (
     "still classified as a mutation, so it is blocked by --read-only."
 )
 
-LIST_POLICY = ResponsePolicy(compact_supported=True, fields_supported=True, result_kind="list")
-# Write results are small envelopes, so they expose no --compact / --fields options.
-ENTITY_POLICY = ResponsePolicy(result_kind="entity")
+# Attachments are GitHub-shaped JSON, so the generic --compact rules have nothing
+# to strip here; only field selection is offered.
+LIST_POLICY = ResponsePolicy(fields_supported=True, result_kind="list")
 
 
-def _addon_properties() -> dict[str, dict]:
+def _card_addon_properties() -> dict[str, dict]:
     return {
         "card_id": {"type": "integer", "description": "Card ID"},
         "addon_uid": {
@@ -76,12 +85,8 @@ def _addon_properties() -> dict[str, dict]:
     }
 
 
-def _shaping_properties() -> dict[str, dict]:
+def _fields_property() -> dict[str, dict]:
     return {
-        "compact": {
-            "type": "boolean",
-            "description": "Return compact output without heavy nested fields.",
-        },
         "fields": {
             "type": "string",
             "description": "Comma-separated field names to return.",
@@ -89,8 +94,18 @@ def _shaping_properties() -> dict[str, dict]:
     }
 
 
-def _repo_properties(required: bool) -> dict[str, dict]:
-    suffix = "" if required else " Optional filter."
+# The same two options play three different roles: stored identity (branches,
+# commits, issues), fallback identity (a pull payload without base.repo) and an
+# optional narrowing filter (detach).
+_REPO_ROLE_SUFFIX = {
+    "identity": "",
+    "fallback": " Required when the payload carries no repository.",
+    "filter": " Optional filter.",
+}
+
+
+def _repo_properties(role: str) -> dict[str, dict]:
+    suffix = _REPO_ROLE_SUFFIX[role]
     return {
         "owner": {"type": "string", "description": f"GitHub repository owner login.{suffix}"},
         "repo": {"type": "string", "description": f"GitHub repository name.{suffix}"},
@@ -106,6 +121,15 @@ def _dry_run_property() -> dict[str, dict]:
     }
 
 
+def _all_property() -> dict[str, dict]:
+    return {
+        "all": {
+            "type": "boolean",
+            "description": "Allow removing every attachment the selectors match, not just one.",
+        },
+    }
+
+
 def _list_operation() -> OperationSpec:
     return OperationSpec(method="GET", path_template=CARD_DATA_PATH, path_fields=("card_id",))
 
@@ -114,11 +138,7 @@ def _write_operation() -> OperationSpec:
     return OperationSpec(method="PATCH", path_template=CARD_DATA_PATH, path_fields=("card_id",))
 
 
-def _list_behavior(executor) -> RuntimeBehavior:
-    return RuntimeBehavior(execution_mode="custom", custom_executor=executor)
-
-
-def _write_behavior(executor) -> RuntimeBehavior:
+def _behavior(executor) -> RuntimeBehavior:
     return RuntimeBehavior(execution_mode="custom", custom_executor=executor)
 
 
@@ -129,12 +149,12 @@ TOOLS = (
         description="List pull requests attached to a card through the GitHub addon.",
         input_schema={
             "type": "object",
-            "properties": {**_addon_properties(), **_shaping_properties()},
+            "properties": {**_card_addon_properties(), **_fields_property()},
             "required": ["card_id"],
         },
         operation=_list_operation(),
         response_policy=LIST_POLICY,
-        runtime_behavior=_list_behavior(execute_github_pulls_list),
+        runtime_behavior=_behavior(execute_github_pulls_list),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon pulls list --card-id 10 --fields number,htmlUrl,state",
@@ -142,7 +162,7 @@ TOOLS = (
             ),
         ),
         usage_notes=(
-            ADDON_UID_NOTE,
+            ADDON_UID_PATH_NOTE,
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
                 "attachments both yield an empty list."
@@ -160,18 +180,19 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "pull_json": {
                     "type": "object",
                     "description": "Raw GitHub REST pull request object.",
                 },
+                **_repo_properties("fallback"),
                 **_dry_run_property(),
             },
             "required": ["card_id", "pull_json"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_pulls_attach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_pulls_attach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon pulls attach --card-id 10 --pull-json @pull.json",
@@ -182,7 +203,17 @@ TOOLS = (
                 description="Preview the attachment without writing it.",
             ),
         ),
-        usage_notes=(REST_JSON_NOTE, DEDUP_NOTE_BY_ID, SHARED_WRITE_NOTE, DRY_RUN_NOTE),
+        usage_notes=(
+            REST_JSON_NOTE,
+            REPO_IDENTITY_NOTE,
+            (
+                "The repository is read from base.repo in the payload. A trimmed payload without "
+                "it (gh pr view --json ...) is rejected unless --owner and --repo are given."
+            ),
+            DEDUP_NOTE_BY_ID,
+            SHARED_WRITE_NOTE,
+            DRY_RUN_NOTE,
+        ),
     ),
     make_tool(
         canonical_name="github-addon.pulls.detach",
@@ -191,17 +222,18 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "pull_id": {"type": "integer", "description": "GitHub numeric pull request id."},
                 "number": {"type": "integer", "description": "Pull request number."},
-                **_repo_properties(required=False),
+                **_repo_properties("filter"),
+                **_all_property(),
                 **_dry_run_property(),
             },
             "required": ["card_id"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_pulls_detach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_pulls_detach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon pulls detach --card-id 10 --number 42 --owner acme --repo web",
@@ -213,10 +245,8 @@ TOOLS = (
                 "Provide --pull-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."
             ),
-            (
-                "Every attachment matching the given selectors is removed; a selector that matches "
-                "nothing leaves the stored data untouched."
-            ),
+            AMBIGUOUS_SELECTOR_NOTE,
+            "A selector that matches nothing leaves the stored data untouched.",
             EMPTY_KEY_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -227,19 +257,19 @@ TOOLS = (
         description="List branches attached to a card through the GitHub addon.",
         input_schema={
             "type": "object",
-            "properties": {**_addon_properties(), **_shaping_properties()},
+            "properties": {**_card_addon_properties(), **_fields_property()},
             "required": ["card_id"],
         },
         operation=_list_operation(),
         response_policy=LIST_POLICY,
-        runtime_behavior=_list_behavior(execute_github_branches_list),
+        runtime_behavior=_behavior(execute_github_branches_list),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon branches list --card-id 10 --fields branchName,htmlUrl",
                 description="Read the branches attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE,),
     ),
     make_tool(
         canonical_name="github-addon.branches.attach",
@@ -248,16 +278,16 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "branch_json": {"type": "object", "description": "Raw GitHub REST branch object."},
-                **_repo_properties(required=True),
+                **_repo_properties("identity"),
                 **_dry_run_property(),
             },
             "required": ["card_id", "branch_json", "owner", "repo"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_branches_attach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_branches_attach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon branches attach --card-id 10 --owner acme --repo web --branch-json @branch.json",
@@ -270,6 +300,7 @@ TOOLS = (
                 "A REST branch object carries no repository, so --owner and --repo are required and "
                 "form the stored branch identity."
             ),
+            REPO_IDENTITY_NOTE,
             DEDUP_NOTE_BY_PSEUDO_ID,
             SHARED_WRITE_NOTE,
             DRY_RUN_NOTE,
@@ -282,20 +313,21 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "branch_name": {"type": "string", "description": "Branch name."},
                 "pseudo_id": {
                     "type": "string",
                     "description": "Stored branch identity in owner/repo/branch form.",
                 },
-                **_repo_properties(required=False),
+                **_repo_properties("filter"),
+                **_all_property(),
                 **_dry_run_property(),
             },
             "required": ["card_id"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_branches_detach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_branches_detach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon branches detach --card-id 10 --branch-name feature/login --owner acme --repo web",
@@ -307,6 +339,7 @@ TOOLS = (
                 "Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the "
                 "same branch name exists in several repositories."
             ),
+            AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -317,19 +350,19 @@ TOOLS = (
         description="List commits attached to a card through the GitHub addon.",
         input_schema={
             "type": "object",
-            "properties": {**_addon_properties(), **_shaping_properties()},
+            "properties": {**_card_addon_properties(), **_fields_property()},
             "required": ["card_id"],
         },
         operation=_list_operation(),
         response_policy=LIST_POLICY,
-        runtime_behavior=_list_behavior(execute_github_commits_list),
+        runtime_behavior=_behavior(execute_github_commits_list),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon commits list --card-id 10 --fields sha,htmlUrl,message",
                 description="Read the commits attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE,),
     ),
     make_tool(
         canonical_name="github-addon.commits.attach",
@@ -338,16 +371,16 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "commit_json": {"type": "object", "description": "Raw GitHub REST commit object."},
-                **_repo_properties(required=True),
+                **_repo_properties("identity"),
                 **_dry_run_property(),
             },
             "required": ["card_id", "commit_json", "owner", "repo"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_commits_attach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_commits_attach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon commits attach --card-id 10 --owner acme --repo web --commit-json @commit.json",
@@ -372,16 +405,17 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "sha": {"type": "string", "description": "Full commit sha as stored."},
-                **_repo_properties(required=False),
+                **_repo_properties("filter"),
+                **_all_property(),
                 **_dry_run_property(),
             },
             "required": ["card_id"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_commits_detach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_commits_detach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon commits detach --card-id 10 --sha 3f1a2bc4d5e6f708192a3b4c5d6e7f8091a2b3c4",
@@ -390,6 +424,7 @@ TOOLS = (
         ),
         usage_notes=(
             "--sha is required and matched in full; short shas do not match stored entries.",
+            AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -400,19 +435,19 @@ TOOLS = (
         description="List issues attached to a card through the GitHub addon.",
         input_schema={
             "type": "object",
-            "properties": {**_addon_properties(), **_shaping_properties()},
+            "properties": {**_card_addon_properties(), **_fields_property()},
             "required": ["card_id"],
         },
         operation=_list_operation(),
         response_policy=LIST_POLICY,
-        runtime_behavior=_list_behavior(execute_github_issues_list),
+        runtime_behavior=_behavior(execute_github_issues_list),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon issues list --card-id 10 --fields number,htmlUrl,state",
                 description="Read the issues attached to a card.",
             ),
         ),
-        usage_notes=(ADDON_UID_NOTE,),
+        usage_notes=(ADDON_UID_PATH_NOTE,),
     ),
     make_tool(
         canonical_name="github-addon.issues.attach",
@@ -421,16 +456,16 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "issue_json": {"type": "object", "description": "Raw GitHub REST issue object."},
-                **_repo_properties(required=True),
+                **_repo_properties("identity"),
                 **_dry_run_property(),
             },
             "required": ["card_id", "issue_json", "owner", "repo"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_issues_attach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_issues_attach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon issues attach --card-id 10 --owner acme --repo web --issue-json @issue.json",
@@ -455,17 +490,18 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                **_addon_properties(),
+                **_card_addon_properties(),
                 "issue_id": {"type": "integer", "description": "GitHub numeric issue id."},
                 "number": {"type": "integer", "description": "Issue number."},
-                **_repo_properties(required=False),
+                **_repo_properties("filter"),
+                **_all_property(),
                 **_dry_run_property(),
             },
             "required": ["card_id"],
         },
         operation=_write_operation(),
-        response_policy=ENTITY_POLICY,
-        runtime_behavior=_write_behavior(execute_github_issues_detach),
+        response_policy=PLAIN_ENTITY_POLICY,
+        runtime_behavior=_behavior(execute_github_issues_detach),
         examples=(
             ExampleSpec(
                 command="kaiten --json github-addon issues detach --card-id 10 --number 7 --owner acme --repo web",
@@ -477,6 +513,7 @@ TOOLS = (
                 "Provide --issue-id or --number; --owner and --repo narrow the match when the same "
                 "number exists in several repositories."
             ),
+            AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
             DRY_RUN_NOTE,
         ),

@@ -118,7 +118,8 @@ def test_github_addon_uid_resolution_prefers_the_explicit_value():
     assert resolve_github_addon_uid({"addon_url_path": "/gh-mirror"}) == generate_addon_uid(
         "/gh-mirror"
     )
-    assert resolve_github_addon_uid({"addon_uid": "explicit-uid"}) == "explicit-uid"
+    explicit = "11111111-2222-4333-8444-555555555555"
+    assert resolve_github_addon_uid({"addon_uid": explicit}) == explicit
 
 
 def test_attached_items_only_reads_the_shared_row():
@@ -147,8 +148,10 @@ def test_map_rest_pull_matches_the_addon_dto():
     assert map_rest_pull(_rest_pull(), {}) == _addon_pull()
 
 
-def test_map_rest_pull_uses_addon_placeholders_for_missing_fields():
-    mapped = map_rest_pull({"id": 1, "number": 2}, {})
+def test_map_rest_pull_uses_addon_placeholders_for_cosmetic_fields():
+    minimal = {"id": 1, "number": 2, "base": {"repo": {"name": "web", "owner": {"login": "acme"}}}}
+
+    mapped = map_rest_pull(minimal, {})
 
     assert mapped["author"] == {
         "login": "Неизвестный автор",
@@ -156,12 +159,28 @@ def test_map_rest_pull_uses_addon_placeholders_for_missing_fields():
         "avatar": "https://avatars.githubusercontent.com/u/583231?v=4",
     }
     assert mapped["baseBranch"] == "no data"
-    assert mapped["repoOwner"] == "no data"
 
 
 def test_map_rest_pull_rejects_a_payload_without_github_ids():
     with pytest.raises(ValidationError):
         map_rest_pull({"number": 2}, {})
+
+
+def test_map_rest_pull_rejects_a_payload_without_a_repository():
+    # The widget refreshes an attachment by (repoOwner, repoName, number), so a
+    # placeholder repository would store an entry that can never resolve again.
+    trimmed = {"id": 1, "number": 2, "html_url": "https://github.com/acme/web/pull/2"}
+
+    with pytest.raises(ValidationError):
+        map_rest_pull(trimmed, {})
+
+
+def test_map_rest_pull_accepts_an_explicit_repository_fallback():
+    trimmed = {"id": 1, "number": 2}
+
+    mapped = map_rest_pull(trimmed, {"owner": "acme", "repo": "web"})
+
+    assert (mapped["repoOwner"], mapped["repoName"]) == ("acme", "web")
 
 
 def test_build_request_for_card_addon_data_set():
@@ -202,6 +221,7 @@ def test_build_request_for_space_addon_install():
     path, query, body = build_request(tool, payload)
 
     assert path == f"/spaces/1/addons/{GITHUB_ADDON_UID}"
+    assert query is None
     assert body == {"settings": {"repo": "acme/web"}}
 
 
@@ -511,3 +531,124 @@ def test_cli_pulls_attach_accepts_a_custom_addon_mount_path(runner):
     payload = json.loads(result.output)
     assert payload["data"]["addon_uid"] == mirror_uid
     assert payload["data"]["status"] == "attached"
+
+
+@respx.mock
+async def test_pulls_detach_rejects_an_ambiguous_selector(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    other_repo = {**_addon_pull(222, 42), "repoOwner": "other", "repoName": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull(), other_repo]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.detach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "number": 42}))
+
+    assert "acme/web#42" in str(error.value)
+    assert "other/api#42" in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_pulls_detach_removes_every_match_with_all(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    other_repo = {**_addon_pull(222, 42), "repoOwner": "other", "repoName": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull(), other_repo]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.detach")
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "number": 42, "all": True})
+    )
+
+    assert result["status"] == "detached"
+    assert len(result["removed"]) == 2
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert sent == {"type": "shared", "data": {"attachedPulls": None}}
+
+
+@respx.mock
+async def test_pulls_detach_narrowed_by_repository_removes_one(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    other_repo = {**_addon_pull(222, 42), "repoOwner": "other", "repoName": "api"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull(), other_repo]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.detach")
+    result = await execute_tool(
+        tool,
+        merge_inputs(tool, {"card_id": 10, "number": 42, "owner": "acme", "repo": "web"}),
+    )
+
+    assert [item["id"] for item in result["removed"]] == [111]
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert sent["data"]["attachedPulls"] == [other_repo]
+
+
+async def test_detach_rejects_a_blank_selector(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    tool = resolve_tool("github-addon.branches.detach")
+
+    with pytest.raises(ValidationError):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "branch_name": "  "}))
+
+
+@respx.mock
+async def test_branch_attach_prepends_like_the_addon_ui(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    existing = {"branchName": "master", "pseudoId": "acme/web/master"}
+    respx.get(CARD_ADDON_DATA_URL).mock(
+        return_value=Response(200, json=_rows({"attachedBranches": [existing]}))
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.branches.attach")
+    await execute_tool(
+        tool,
+        merge_inputs(
+            tool,
+            {
+                "card_id": 10,
+                "owner": "acme",
+                "repo": "web",
+                "branch_json": {"name": "feature/login"},
+            },
+        ),
+    )
+
+    # branch-select.jsx prepends a new branch; pulls, commits and issues append.
+    sent = json.loads(patch_route.calls.last.request.content)
+    assert [item["pseudoId"] for item in sent["data"]["attachedBranches"]] == [
+        "acme/web/feature/login",
+        "acme/web/master",
+    ]
+
+
+def test_addon_uid_must_be_a_uuid():
+    tool = resolve_tool("card-addon-data.get")
+
+    with pytest.raises(ValidationError):
+        merge_inputs(tool, {"card_id": 10, "addon_uid": "../../cards/999"})
+
+
+async def test_github_addon_uid_override_must_be_a_uuid(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError):
+        await execute_tool(
+            tool, merge_inputs(tool, {"card_id": 10, "addon_uid": "../../cards/999"})
+        )

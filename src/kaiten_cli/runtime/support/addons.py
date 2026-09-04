@@ -9,6 +9,7 @@ sibling keys of other addon features untouched.
 
 from __future__ import annotations
 
+import re
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -42,6 +43,27 @@ FALLBACK_AUTHOR_URL = "https://github.com"
 FALLBACK_AVATAR_URL = "https://avatars.githubusercontent.com/u/583231?v=4"
 NO_DATA = "no data"
 
+# Addon UIDs are canonical UUIDs (the API routes only accept that shape). Checking
+# the format locally keeps a stray value out of the request path, where it would
+# otherwise silently redirect the call to a different endpoint.
+_UUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$")
+
+
+def validate_addon_uid_value(value: Any, field: str = "addon_uid") -> str:
+    if not isinstance(value, str) or not _UUID_PATTERN.match(value.strip()):
+        raise ValidationError(
+            f"Field {field} must be an addon UUID such as "
+            "0ce23a01-560f-51e0-9982-1e3445dc5990; take it from addons.list, "
+            "space-addons.list or addons.uid."
+        )
+    return value.strip()
+
+
+def validate_addon_uid_payload(tool, payload: dict[str, Any]) -> None:
+    """Payload validator for the tools that take addon_uid as a path segment."""
+
+    validate_addon_uid_value(payload.get("addon_uid"))
+
 
 def generate_addon_uid(url_path: str) -> str:
     """Deterministic addon UID for a mount path, mirroring `generateAddonUid`."""
@@ -60,7 +82,7 @@ def resolve_github_addon_uid(payload: dict[str, Any]) -> str:
 
     explicit = payload.get("addon_uid")
     if isinstance(explicit, str) and explicit.strip():
-        return explicit.strip()
+        return validate_addon_uid_value(explicit)
     return generate_addon_uid(payload.get("addon_url_path") or GITHUB_ADDON_URL_PATH)
 
 
@@ -126,6 +148,18 @@ def map_rest_pull(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     """Map a GitHub REST pull object to the addon's `attachedPulls` entry shape."""
 
     pull = _require_object(rest, "pull_json")
+    # The card widget re-reads every attached PR by (repoOwner, repoName, number),
+    # so the repository is identity, not decoration: a placeholder here would
+    # store an entry that can never resolve on GitHub again. A trimmed payload
+    # (gh pr view --json ...) may omit base.repo, hence the explicit fallback.
+    owner = _nested(pull, "base", "repo", "owner", "login") or payload.get("owner")
+    repo = _nested(pull, "base", "repo", "name") or payload.get("repo")
+    if not owner or not repo:
+        raise ValidationError(
+            "Field pull_json has no base.repo.owner.login / base.repo.name; pass the full "
+            "GitHub REST pull object (gh api repos/OWNER/REPO/pulls/NUMBER) or give "
+            "--owner and --repo explicitly."
+        )
     return {
         "id": _require_int(pull.get("id"), "pull_json.id"),
         "number": _require_int(pull.get("number"), "pull_json.number"),
@@ -137,8 +171,8 @@ def map_rest_pull(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
         "author": _author(pull.get("user")),
         "baseBranch": _nested(pull, "base", "ref") or NO_DATA,
         "headBranch": _nested(pull, "head", "ref") or NO_DATA,
-        "repoName": _nested(pull, "base", "repo", "name") or NO_DATA,
-        "repoOwner": _nested(pull, "base", "repo", "owner", "login") or NO_DATA,
+        "repoName": repo,
+        "repoOwner": owner,
     }
 
 
@@ -240,10 +274,20 @@ def _repo_matches(
     return True
 
 
+def _option(field: str) -> str:
+    return f"--{field.replace('_', '-')}"
+
+
 def _require_any_selector(payload: dict[str, Any], fields: tuple[str, ...]) -> None:
     if not any(payload.get(field) is not None for field in fields):
-        options = ", ".join(f"--{field.replace('_', '-')}" for field in fields)
+        options = ", ".join(_option(field) for field in fields)
         raise ValidationError(f"Provide at least one selector: {options}.")
+    # An empty string reaches here from an unset shell variable. Treated as a
+    # filter it would silently match nothing, so reject it instead.
+    for field in (*fields, "owner", "repo"):
+        value = payload.get(field)
+        if isinstance(value, str) and not value.strip():
+            raise ValidationError(f"Field {_option(field)} must not be empty.")
 
 
 def _pull_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
@@ -263,7 +307,7 @@ def _branch_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
 
 
 def _commit_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
-    if item.get("sha") != payload["sha"]:
+    if payload.get("sha") is not None and item.get("sha") != payload["sha"]:
         return False
     return _repo_matches(item, payload, "owner", "repo")
 
@@ -287,6 +331,9 @@ class GithubEntity:
     identity: Callable[[dict[str, Any]], Any]
     matches: Callable[[dict[str, Any], dict[str, Any]], bool]
     selectors: tuple[str, ...]
+    # The addon UI prepends new branches and appends everything else; the stored
+    # order is what the card widget renders, so it is mirrored here.
+    prepend: bool = False
 
 
 PULLS = GithubEntity(
@@ -306,6 +353,7 @@ BRANCHES = GithubEntity(
     identity=_branch_identity,
     matches=_branch_matches,
     selectors=("pseudo_id", "branch_name"),
+    prepend=True,
 )
 COMMITS = GithubEntity(
     name="commits",
@@ -325,6 +373,18 @@ ISSUES = GithubEntity(
     matches=_issue_matches,
     selectors=("issue_id", "number"),
 )
+
+
+def _describe_item(entity: GithubEntity, item: dict[str, Any]) -> str:
+    """Short human-readable identity of one attachment, for error messages."""
+
+    if entity is BRANCHES:
+        return str(item.get("pseudoId") or item.get("branchName"))
+    if entity is COMMITS:
+        return f"{item.get('owner')}/{item.get('repo')}@{item.get('sha')}"
+    owner = item.get("repoOwner")
+    repo = item.get("repoName")
+    return f"{owner}/{repo}#{item.get('number')}"
 
 
 def _addon_data_path(path: str, addon_uid: str) -> str:
@@ -387,7 +447,7 @@ def _make_attach_executor(entity: GithubEntity):
             result["attached_count"] = len(existing)
             return result
 
-        updated = [*existing, item]
+        updated = [item, *existing] if entity.prepend else [*existing, item]
         result["attached_count"] = len(updated)
         if payload.get("dry_run", False):
             result["status"] = "would_attach"
@@ -417,7 +477,6 @@ def _make_detach_executor(entity: GithubEntity):
         result = _envelope(payload, addon_uid, entity)
         result["action"] = "detach"
         result["removed"] = removed
-        result["attached_count"] = len(kept)
 
         if not removed:
             # Nothing selected: skip the write entirely instead of rewriting the
@@ -426,6 +485,18 @@ def _make_detach_executor(entity: GithubEntity):
             result["attached_count"] = len(existing)
             result["dry_run"] = bool(payload.get("dry_run", False))
             return result
+
+        # A number or a branch name is only unique inside one repository, so a
+        # selector that hits several attachments is ambiguous rather than a
+        # request to remove them all. Removing the extra ones has to be asked for.
+        if len(removed) > 1 and not payload.get("all", False):
+            raise ValidationError(
+                f"Selector matches {len(removed)} attachments: "
+                + ", ".join(_describe_item(entity, item) for item in removed)
+                + ". Narrow it with --owner and --repo, or pass --all to remove every match."
+            )
+
+        result["attached_count"] = len(kept)
 
         if payload.get("dry_run", False):
             result["status"] = "would_detach"
