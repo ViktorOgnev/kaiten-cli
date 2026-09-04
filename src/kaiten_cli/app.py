@@ -387,9 +387,20 @@ def _render_describe_text(description: dict[str, Any]) -> str:
             type_display = argument.get("type_display") or argument.get("type") or "unknown"
             option_name = _cli_option_name(str(argument.get("name")))
             enum_display = _format_enum(argument.get("enum"))
+            minimum = argument.get("minimum")
+            maximum = argument.get("maximum")
+            if minimum is not None and maximum is not None:
+                bounds_display = f", range={minimum}..{maximum}"
+            elif minimum is not None:
+                bounds_display = f", minimum={minimum}"
+            elif maximum is not None:
+                bounds_display = f", maximum={maximum}"
+            else:
+                bounds_display = ""
             arg_description = argument.get("description") or "No description."
             lines.append(
-                f"  {option_name} ({type_display}, {required}{enum_display}): {arg_description}"
+                f"  {option_name} ({type_display}, {required}{enum_display}{bounds_display}): "
+                f"{arg_description}"
             )
     else:
         lines.append("  No tool-specific arguments.")
@@ -456,7 +467,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill.",
-            "Treat dashboards as experimental and iterations/private files as beta; run discovery first and expect feature/version gates.",
+            "Treat dashboards as experimental and iterations/Restricted Access Files as beta; run discovery first and expect feature/version gates.",
         ],
         "quickstart": [
             'Discover commands: kaiten search-tools "wip cards"',
@@ -488,7 +499,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
             "Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>.",
             "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.",
-            "Dashboards are experimental; iterations and private files are beta and may be unavailable on older installations or tariffs.",
+            "Dashboards are experimental; iterations and Restricted Access Files are beta and may be unavailable on older installations or tariffs.",
         ],
         "docs": {
             "repository": REPOSITORY_URL,
@@ -528,7 +539,7 @@ def _agent_help_text() -> str:
             "15. summarize: kaiten --json trace summarize --file <trace.jsonl>",
             "16. before mutations: kaiten --json --profile <name> --read-only profile probe",
             "17. live validation only runs when KAITEN_LIVE=1|true",
-            "18. dashboards are experimental; iterations/private files are beta, so discover and probe before use",
+            "18. dashboards are experimental; iterations/Restricted Access Files are beta, so discover and probe before use",
             "",
             "Good bulk defaults:",
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
@@ -664,9 +675,9 @@ def _click_type_for(schema: dict[str, Any]) -> click.ParamType | None:
     if len(allowed) > 1:
         return click.STRING
     if "integer" in allowed and "string" not in allowed:
-        return click.INT
+        return click.IntRange(min=schema.get("minimum"), max=schema.get("maximum"))
     if "number" in allowed:
-        return click.FLOAT
+        return click.FloatRange(min=schema.get("minimum"), max=schema.get("maximum"))
     if "boolean" in allowed:
         return None
     return click.STRING
@@ -1241,6 +1252,7 @@ def profile_show_command(ctx: click.Context, name: str | None) -> None:
 def profile_probe_command(ctx: click.Context) -> None:
     options = _ctx_options(ctx)
     try:
+
         def probe():
             resolved = resolve_profile(
                 options.profile_name,
@@ -1359,9 +1371,7 @@ def _supported_context_options(error: click.UsageError) -> list[str]:
     )
 
 
-def _suggested_root_options(
-    *, offending_option: str, supported_options: list[str]
-) -> list[str]:
+def _suggested_root_options(*, offending_option: str, supported_options: list[str]) -> list[str]:
     suggested: list[str] = []
     seen: set[str] = set()
     for token in _CURRENT_ARGV or []:
@@ -1399,9 +1409,7 @@ def _validation_details(error: click.UsageError) -> dict[str, Any] | None:
             "code": "global_option_position",
             "option": option,
             "canonical_name": canonical_name,
-            "suggested_usage": (
-                f"kaiten {root_options} {command} [command options]"
-            ),
+            "suggested_usage": (f"kaiten {root_options} {command} [command options]"),
             "supported_options": supported_options,
         }
     else:

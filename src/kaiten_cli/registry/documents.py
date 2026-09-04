@@ -42,8 +42,17 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search filter"},
-                "limit": {"type": "integer", "description": "Max results (default: 50)"},
-                "offset": {"type": "integer", "description": "Pagination offset"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default: 50, max: 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
                 "version": {
                     "type": "integer",
                     "description": "Search version. Use 2 for OpenSearch result/position response.",
@@ -334,8 +343,17 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search filter"},
-                "limit": {"type": "integer", "description": "Max results (default: 50)"},
-                "offset": {"type": "integer", "description": "Pagination offset"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default: 50, max: 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
             },
         },
         operation=OperationSpec(

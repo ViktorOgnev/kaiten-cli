@@ -61,7 +61,7 @@ async def test_download_card_file_asks_for_json_not_redirect(monkeypatch, tmp_pa
         "https://sandbox.kaiten.ru/api/latest/cards/123/files/file-1",
         params={"prevent_redirect": "true", "response_type": "json"},
     ).mock(return_value=Response(200, json={"url": "https://storage.example.test/card.bin"}))
-    respx.get("https://storage.example.test/card.bin").mock(
+    storage_route = respx.get("https://storage.example.test/card.bin").mock(
         return_value=Response(200, content=b"card")
     )
 
@@ -78,8 +78,11 @@ async def test_download_card_file_asks_for_json_not_redirect(monkeypatch, tmp_pa
     result = await execute_tool(tool, payload)
 
     assert resolve_route.called
+    assert storage_route.called
+    assert "authorization" not in storage_route.calls[0].request.headers
     assert (tmp_path / "card.bin").read_bytes() == b"card"
     assert result["source_kind"] == "kaiten_api"
+    assert "url" not in result
 
 
 @pytest.mark.asyncio

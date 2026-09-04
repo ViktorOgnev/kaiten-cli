@@ -116,14 +116,23 @@ def _format_enum(values) -> str:
     return ", ".join(f"`{value}`" for value in values)
 
 
+def _format_constraints(definition: dict) -> str:
+    constraints = []
+    if definition.get("minimum") is not None:
+        constraints.append(f">= {definition['minimum']}")
+    if definition.get("maximum") is not None:
+        constraints.append(f"<= {definition['maximum']}")
+    return ", ".join(constraints) or "—"
+
+
 def _render_argument_table(tool: ToolSpec) -> str:
     properties = tool.input_schema.get("properties", {})
     required = set(tool.input_schema.get("required", []))
     if not properties:
         return "_No tool-specific arguments._"
     lines = [
-        "| Argument | Type | Required | Enum | Description |",
-        "|---|---|---|---|---|",
+        "| Argument | Type | Required | Enum | Constraints | Description |",
+        "|---|---|---|---|---|---|",
     ]
     for name, definition in properties.items():
         lines.append(
@@ -134,6 +143,7 @@ def _render_argument_table(tool: ToolSpec) -> str:
                     f"`{format_schema_type(definition)}`",
                     "yes" if name in required else "no",
                     _format_enum(definition.get("enum")),
+                    _format_constraints(definition),
                     _escape_table(definition.get("description")),
                 ]
             )

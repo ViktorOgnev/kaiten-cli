@@ -189,6 +189,9 @@ kaiten_get_document_file_url
 kaiten_get_document_group
 kaiten_get_document_schema
 kaiten_get_iteration
+kaiten_get_private_card_file
+kaiten_get_private_comment_file
+kaiten_get_private_custom_property_file
 kaiten_get_project
 kaiten_get_role
 kaiten_get_saved_filter
@@ -376,6 +379,9 @@ kaiten_update_incoming_webhook
 kaiten_update_iteration
 kaiten_update_lane
 kaiten_update_planned_relation
+kaiten_update_private_card_file
+kaiten_update_private_comment_file
+kaiten_update_private_custom_property_file
 kaiten_update_project
 kaiten_update_saved_filter
 kaiten_update_scim_group

@@ -11,6 +11,7 @@ from kaiten_cli.registry import resolve_tool
 from kaiten_cli.runtime.executor import build_request, execute_tool, request_path_for_tool
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.client import KaitenClient
+from kaiten_cli.runtime.support.files import resolve_download_source
 
 
 EXPECTED_NEW_TOOLS = {
@@ -55,6 +56,12 @@ EXPECTED_NEW_TOOLS = {
     "document-schemas.get",
     "scim.users.list",
     "scim.groups.update",
+    "private-card-files.get",
+    "private-card-files.update",
+    "private-comment-files.get",
+    "private-comment-files.update",
+    "private-custom-property-files.get",
+    "private-custom-property-files.update",
 }
 
 
@@ -79,6 +86,83 @@ def test_build_request_for_cards_batch_update_merges_payload():
     assert path == "/cards"
     assert query is None
     assert body == {"board_id": 10, "attributes": {"owner_id": 7}, "lane_id": 3}
+
+
+def test_boards_get_preserves_direct_route_and_supports_documented_space_route():
+    tool = resolve_tool("boards.get")
+
+    direct = build_request(tool, merge_inputs(tool, {"board_id": 10}))
+    scoped = build_request(tool, merge_inputs(tool, {"space_id": 1, "board_id": 10}))
+
+    assert direct == ("/boards/10", None, None)
+    assert scoped == ("/spaces/1/boards/10", None, None)
+
+
+@pytest.mark.parametrize(
+    ("name", "payload", "expected"),
+    [
+        (
+            "checklist-items.create",
+            {"card_id": 10, "checklist_id": 20, "text": "Ship it"},
+            ("/cards/10/checklists/20/items", None, {"text": "Ship it"}),
+        ),
+        (
+            "checklist-items.update",
+            {"card_id": 10, "checklist_id": 20, "item_id": 30, "checked": True},
+            ("/cards/10/checklists/20/items/30", None, {"checked": True}),
+        ),
+        (
+            "checklist-items.delete",
+            {"card_id": 10, "checklist_id": 20, "item_id": 30},
+            ("/cards/10/checklists/20/items/30", None, None),
+        ),
+    ],
+)
+def test_documented_nested_checklist_item_routes_remain_covered(name, payload, expected):
+    tool = resolve_tool(name)
+
+    assert build_request(tool, merge_inputs(tool, payload)) == expected
+
+
+@pytest.mark.parametrize(
+    ("payload", "metadata_path", "documented_content_path"),
+    [
+        (
+            {"entity_type": "card", "card_uid": "card-1", "file_id": "file-1"},
+            "/cards/card-1/files/file-1",
+            "/cards/card-1/files/file-1/content",
+        ),
+        (
+            {
+                "entity_type": "comment",
+                "card_uid": "card-1",
+                "comment_uid": "comment-1",
+                "file_id": "file-1",
+            },
+            "/cards/card-1/comments/comment-1/files/file-1",
+            "/cards/card-1/comments/comment-1/files/file-1/content",
+        ),
+        (
+            {
+                "entity_type": "custom_property",
+                "card_uid": "card-1",
+                "custom_property_uid": "property-1",
+                "file_id": "file-1",
+            },
+            "/cards/card-1/custom-properties/property-1/files/file-1",
+            "/cards/card-1/custom-properties/property-1/files/file-1/content",
+        ),
+    ],
+)
+def test_documented_restricted_access_content_routes_use_safe_download(
+    payload, metadata_path, documented_content_path
+):
+    tool = resolve_tool("files.download")
+    source = resolve_download_source(payload)
+
+    assert tool.runtime_behavior.custom_executor.__name__ == "execute_file_download"
+    assert source.endpoint_path == metadata_path
+    assert documented_content_path == f"{metadata_path}/content"
 
 
 def test_build_request_for_custom_directories_catalog_record_search():

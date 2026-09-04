@@ -405,14 +405,11 @@ def install_completion(
     script_path = completion_script_path(normalized)
     source = generate_completion_source(command, normalized)
     current_config, config_signature, config_mode = _read_edit_state(edit_path)
-    desired_config, legacy_migrated = _desired_config(
-        current_config, script_path, normalized
-    )
+    desired_config, legacy_migrated = _desired_config(current_config, script_path, normalized)
     script_parent_secure = (
         script_path.parent.is_dir()
         and not script_path.parent.is_symlink()
-        and _existing_mode(script_path.parent, PRIVATE_DIRECTORY_MODE)
-        == PRIVATE_DIRECTORY_MODE
+        and _existing_mode(script_path.parent, PRIVATE_DIRECTORY_MODE) == PRIVATE_DIRECTORY_MODE
     )
     directory_changed = not script_parent_secure
     if not dry_run:

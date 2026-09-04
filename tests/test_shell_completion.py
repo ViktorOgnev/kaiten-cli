@@ -93,9 +93,7 @@ def test_zsh_install_migrates_legacy_block_and_is_idempotent(
     assert script.stat().st_ino == script_inode
 
 
-def test_completion_install_dry_run_does_not_write(
-    runner, completion_env: Path, tmp_path: Path
-):
+def test_completion_install_dry_run_does_not_write(runner, completion_env: Path, tmp_path: Path):
     config = tmp_path / ".zshrc"
 
     result = runner.invoke(
@@ -367,7 +365,7 @@ def test_generated_zsh_registration_is_visible_to_compinit(
             shutil.which("zsh") or "zsh",
             "-f",
             "-c",
-            f'autoload -Uz compinit; compinit -d {shlex_quote(tmp_path / "zcompdump")}; '
+            f"autoload -Uz compinit; compinit -d {shlex_quote(tmp_path / 'zcompdump')}; "
             f'. {shlex_quote(config)}; print -r -- "${{_comps[kaiten]-missing}}"',
         ],
         text=True,
@@ -402,7 +400,7 @@ def test_generated_bash_registration_returns_real_candidates(
     wrapper.write_text(
         "#!/bin/sh\n"
         f"PYTHONPATH={shlex.quote(str(root / 'src'))} "
-        f"exec {shlex.quote(sys.executable)} -m kaiten_cli \"$@\"\n",
+        f'exec {shlex.quote(sys.executable)} -m kaiten_cli "$@"\n',
         encoding="utf-8",
     )
     wrapper.chmod(0o755)
@@ -414,7 +412,7 @@ def test_generated_bash_registration_returns_real_candidates(
             "--noprofile",
             "--norc",
             "-c",
-            f'. {shlex.quote(str(config))}; '
+            f". {shlex.quote(str(config))}; "
             "COMP_WORDS=(kaiten cards ''); COMP_CWORD=2; "
             "_kaiten_completion kaiten; printf '%s\\n' \"${COMPREPLY[@]}\"",
         ],

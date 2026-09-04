@@ -6,8 +6,9 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
-from kaiten_cli.errors import ApiError, CliError
+from kaiten_cli.errors import ApiError, CliError, ValidationError
 from kaiten_cli.runtime.client import KaitenClient
+from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
 DEFAULT_BATCH_WORKERS = 2
 MAX_BATCH_WORKERS = 6
@@ -49,10 +50,14 @@ async def fetch_card_collection_batch(
     cache_policy: str = "request_scope",
     path_for_card: Callable[[int], str],
     query_for_card: Callable[[int], dict[str, Any] | None] | None = None,
+    page_size: int | None = None,
+    max_pages: int | None = None,
     result_field: str,
     transform_items: Callable[[list[Any]], list[Any] | Any],
     worker_label: str,
 ) -> dict[str, Any]:
+    if (page_size is None) != (max_pages is None):
+        raise ValidationError("Batch pagination requires both page_size and max_pages.")
     unique_ids = unique_card_ids(card_ids)
     queue: asyncio.Queue[tuple[int, int]] = asyncio.Queue()
     for index, card_id in enumerate(unique_ids):
@@ -79,12 +84,21 @@ async def fetch_card_collection_batch(
                 except asyncio.QueueEmpty:
                     break
                 try:
-                    result = await client.get(
-                        path_for_card(card_id),
-                        params=query_for_card(card_id) if query_for_card is not None else None,
-                        timeout=timeout,
-                    )
-                    items = result if isinstance(result, list) else []
+                    path = path_for_card(card_id)
+                    query = query_for_card(card_id) if query_for_card is not None else None
+                    if page_size is None and max_pages is None:
+                        result = await client.get(path, params=query, timeout=timeout)
+                        items = result if isinstance(result, list) else []
+                    else:
+                        items = await fetch_all_offset_pages(
+                            client,
+                            path,
+                            params=query,
+                            page_size=page_size,
+                            max_pages=max_pages,
+                            timeout=timeout,
+                            reporter=reporter,
+                        )
                     ordered_items[index] = {
                         "card_id": card_id,
                         result_field: transform_items(items),

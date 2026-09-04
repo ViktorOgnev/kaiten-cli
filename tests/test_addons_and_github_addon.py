@@ -766,7 +766,9 @@ async def test_writes_keep_going_when_the_space_lookup_fails(monkeypatch):
     patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
 
     tool = resolve_tool("github-addon.pulls.attach")
-    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()})
+    )
 
     # A write is verified by the server: a wrong UUID is rejected with 403, so
     # there is no silently wrong outcome to protect against.

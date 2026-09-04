@@ -48,7 +48,7 @@ dev = [
     "kaiten-cli[test]",
     "build>=1.2",
     "pip-audit>=2.9",
-    "ruff>=0.15.0",
+    "ruff==0.15.0",
 ]
 
 [project.scripts]

@@ -183,7 +183,7 @@ TOOLS = (
             (
                 "When the UUID was derived, holds no data and the space cannot be asked, the "
                 "command fails instead of returning an empty list that could mean either "
-                "\"nothing attached\" or \"wrong addon\"."
+                '"nothing attached" or "wrong addon".'
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "

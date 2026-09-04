@@ -5,14 +5,20 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.runtime.support.batch import DEFAULT_BATCH_WORKERS, fetch_card_entity_batch
+from kaiten_cli.runtime.support.pagination import (
+    API_MAX_PAGE_SIZE,
+    MAX_COLLECTION_MAX_PAGES,
+    fetch_all_offset_pages,
+)
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
-MAX_CARD_PAGES = 50
-MAX_CARD_PAGE_SIZE = 100
+DEFAULT_CARD_MAX_PAGES = 50
+MAX_CARD_PAGES = MAX_COLLECTION_MAX_PAGES
+MAX_CARD_PAGE_SIZE = API_MAX_PAGE_SIZE
 
 
 def _card_query_params(args: dict[str, Any]) -> dict[str, Any]:
-    page_size = min(args.get("page_size", MAX_CARD_PAGE_SIZE), MAX_CARD_PAGE_SIZE)
+    page_size = args.get("page_size", MAX_CARD_PAGE_SIZE)
     params: dict[str, Any] = {"relations": args.get("relations", "none")}
     string_keys = (
         "query",
@@ -69,24 +75,20 @@ def _card_query_params(args: dict[str, Any]) -> dict[str, Any]:
 async def _fetch_cards(
     client, params: dict[str, Any], *, page_size: int, max_pages: int, timeout: float
 ) -> list[Any]:
-    all_cards: list[Any] = []
-    for page in range(max_pages):
-        page_params = dict(params)
-        page_params["limit"] = page_size
-        page_params["offset"] = page * page_size
-        result = await client.get("/cards", params=page_params, timeout=timeout)
-        if not result:
-            break
-        all_cards.extend(result)
-        if len(result) < page_size:
-            break
-    return all_cards
+    return await fetch_all_offset_pages(
+        client,
+        "/cards",
+        params=params,
+        page_size=page_size,
+        max_pages=max_pages,
+        timeout=timeout,
+    )
 
 
 async def fetch_all_cards(client, args: dict[str, Any], *, timeout: float) -> list[Any]:
     """Fetch cards with bounded pagination and low-load defaults."""
-    page_size = min(args.get("page_size", MAX_CARD_PAGE_SIZE), MAX_CARD_PAGE_SIZE)
-    max_pages = min(args.get("max_pages", MAX_CARD_PAGES), MAX_CARD_PAGES)
+    page_size = args.get("page_size", MAX_CARD_PAGE_SIZE)
+    max_pages = args.get("max_pages", DEFAULT_CARD_MAX_PAGES)
     selection = args.get("selection")
 
     base_params = _card_query_params(args)

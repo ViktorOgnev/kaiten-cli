@@ -28,7 +28,11 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "card_relations", "Связи карточек", "Parent/child/planned relations between cards."
     ),
     ModuleDocSpec("external_links", "Внешние ссылки", "External links attached to cards."),
-    ModuleDocSpec("files", "Файлы карточек", "Файлы и вложения карточек."),
+    ModuleDocSpec(
+        "files",
+        "Файлы карточек",
+        "Файлы, вложения и beta Restricted Access Files карточек.",
+    ),
     ModuleDocSpec("subscribers", "Подписчики", "Подписки на карточки и колонки."),
     ModuleDocSpec("spaces", "Пространства", "Spaces and top-level workspace reads."),
     ModuleDocSpec("boards", "Доски", "Boards and board-level operations."),
@@ -53,9 +57,7 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Дашборды",
         "Experimental dashboards, collaborators, widgets and compute jobs.",
     ),
-    ModuleDocSpec(
-        "iterations", "Итерации", "Beta iterations, iteration cards and card history."
-    ),
+    ModuleDocSpec("iterations", "Итерации", "Beta iterations, iteration cards and card history."),
     ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
     ModuleDocSpec(
         "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."

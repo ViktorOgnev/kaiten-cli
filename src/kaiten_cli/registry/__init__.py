@@ -232,6 +232,8 @@ def describe(identifier: str) -> dict:
                 "type": definition.get("type"),
                 "type_display": format_schema_type(definition),
                 "enum": definition.get("enum"),
+                "minimum": definition.get("minimum"),
+                "maximum": definition.get("maximum"),
                 "description": definition.get("description", ""),
             }
             for name, definition in properties.items()

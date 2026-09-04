@@ -5,6 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.runtime.support.batch import DEFAULT_BATCH_WORKERS, fetch_card_collection_batch
+from kaiten_cli.runtime.support.pagination import (
+    API_MAX_PAGE_SIZE,
+    DEFAULT_COLLECTION_MAX_PAGES,
+)
 from kaiten_cli.runtime.transforms import compact_response, select_fields
 
 
@@ -19,6 +23,8 @@ async def fetch_time_logs_batch(
     token: str,
     card_ids: list[int],
     workers: int = DEFAULT_BATCH_WORKERS,
+    page_size: int = API_MAX_PAGE_SIZE,
+    max_pages: int = DEFAULT_COLLECTION_MAX_PAGES,
     for_date: str | None = None,
     personal: bool | None = None,
     compact: bool = False,
@@ -47,6 +53,8 @@ async def fetch_time_logs_batch(
         cache_policy=cache_policy,
         path_for_card=lambda card_id: f"/cards/{card_id}/time-logs",
         query_for_card=query_for_card,
+        page_size=page_size,
+        max_pages=max_pages,
         result_field="time_logs",
         transform_items=lambda items: _shape_time_log_items(items, compact=compact, fields=fields),
         worker_label="batch-time-logs",

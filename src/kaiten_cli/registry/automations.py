@@ -11,22 +11,40 @@ TOOLS = (
     make_tool(
         canonical_name="automations.list",
         mcp_alias="kaiten_list_automations",
-        description="List all automations for a Kaiten space.",
+        description="List one page of automations for a Kaiten space.",
         input_schema={
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
             },
             "required": ["space_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/spaces/{space_id}/automations", path_fields=("space_id",)
+            method="GET",
+            path_template="/spaces/{space_id}/automations",
+            path_fields=("space_id",),
+            query_fields=("limit", "offset"),
         ),
+        response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
             ExampleSpec(
                 command="kaiten --json automations list --space-id 1",
                 description="List space automations.",
             ),
+        ),
+        usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
         ),
     ),
     make_tool(

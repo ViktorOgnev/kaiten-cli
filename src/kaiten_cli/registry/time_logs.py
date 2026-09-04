@@ -62,7 +62,7 @@ TOOLS = (
     make_tool(
         canonical_name="time-logs.list",
         mcp_alias="kaiten_list_card_time_logs",
-        description="List time logs for a card.",
+        description="List one page of time logs for a card.",
         input_schema={
             "type": "object",
             "properties": {
@@ -71,6 +71,17 @@ TOOLS = (
                 "personal": {
                     "type": "boolean",
                     "description": "Return only the current user's time logs.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100).",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset.",
                 },
                 "compact": {
                     "type": "boolean",
@@ -87,10 +98,13 @@ TOOLS = (
             method="GET",
             path_template="/cards/{card_id}/time-logs",
             path_fields=("card_id",),
-            query_fields=("for_date", "personal"),
+            query_fields=("for_date", "personal", "limit", "offset"),
         ),
         response_policy=ResponsePolicy(
-            compact_supported=True, fields_supported=True, result_kind="list"
+            compact_supported=True,
+            fields_supported=True,
+            default_limit=50,
+            result_kind="list",
         ),
         examples=(
             ExampleSpec(
@@ -99,6 +113,7 @@ TOOLS = (
             ),
         ),
         usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
             "This is a per-card read and becomes expensive when repeated across large card populations.",
             "For analytics snapshots and work-log investigations, prefer time-logs.batch-list over one-card-at-a-time loops.",
         ),
@@ -119,6 +134,18 @@ TOOLS = (
                 "workers": {
                     "type": "integer",
                     "description": "Parallel workers (default 2, max 6)",
+                },
+                "page_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Time logs per request (default 100, max 100).",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Safety limit per card (default 100, max 1000).",
                 },
                 "for_date": {
                     "type": "string",
@@ -158,6 +185,7 @@ TOOLS = (
         ),
         usage_notes=(
             "The command returns items, errors, and meta so partial per-card failures stay visible without aborting the whole batch.",
+            "Each card is paginated to completion; a full max_pages boundary becomes a per-card error instead of a partial time-log list.",
             "Use this bulk path for work-log analytics and snapshot builds instead of repeating time-logs.list for every card.",
         ),
     ),

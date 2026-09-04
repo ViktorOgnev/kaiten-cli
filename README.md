@@ -179,7 +179,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.28"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.1.29"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -257,7 +257,7 @@ python -m kaiten_cli --help
 - автоматическая проверка набора псевдонимов по сохранённому эталону;
 - полная проверка на реальном API с явным включением и обязательной очисткой тестовых данных.
 
-## Дашборды, итерации и private files
+## Дашборды, итерации и Restricted Access Files
 
 Дашборды доступны как experimental-контракт: старые инсталляции Kaiten могут
 вернуть `404` или `405`. CLI поддерживает CRUD, копирование, роли
@@ -271,17 +271,31 @@ kaiten --json dashboard-widgets list --dashboard-id <dashboard_uuid> --fields id
 kaiten --json dashboard-compute-jobs get --dashboard-id <dashboard_uuid> --job-id <job_id>
 ```
 
-Iterations API и private files помечены как beta. Итерации требуют поддержки в
-тарифе. Private files используют UUID сущностей и multipart `POST`; классическая
-команда `files upload` по-прежнему использует прежний публичный `PUT`-контракт.
+Iterations API и Restricted Access Files помечены как beta. Итерации требуют
+поддержки в тарифе. Restricted Access Files используют UUID сущностей и
+multipart `POST`. Исторические пространства команд `private-*-files` сохранены,
+чтобы не ломать существующие сценарии.
 
 ```bash
 kaiten --json iterations list --space-uid <space_uuid> --status planned,active --with-data cards --compact
 kaiten --json iteration-cards list --space-uid <space_uuid> --iteration-id <iteration_uuid>
 kaiten --json card-iterations-history list --card-uid <card_uuid>
 kaiten --json private-card-files upload --card-uid <card_uuid> --file ./report.pdf
-kaiten --json files download --entity-type card --card-uid <card_uuid> --file-id <private_file_uuid>
+kaiten --json private-card-files get --card-uid <card_uuid> --file-id <restricted_file_uuid>
+kaiten --json private-card-files update --card-uid <card_uuid> --file-id <restricted_file_uuid> --name "report-final.pdf"
+kaiten --json files download --entity-type card --card-uid <card_uuid> --file-id <restricted_file_uuid>
 ```
+
+`get` возвращает метаданные вместе с краткоживущей подписанной ссылкой; такой
+URL нельзя сохранять или кэшировать. `files download` получает свежую ссылку
+непосредственно перед скачиванием, не выводит её и не передаёт bearer-токен
+Kaiten домену файлового хранилища. Та же схема поддерживается для файлов
+комментариев и пользовательских свойств.
+
+Классическая команда `files upload` использует прежний публичный `PUT`-контракт.
+Если в компании запрещены legacy-загрузки через Public API, Kaiten отвечает
+`403` с кодом `PUBLIC_API_LEGACY_FILE_UPLOAD_DISABLED`; в этом случае следует
+использовать `private-card-files upload` и UUID карточки.
 
 Для полного экспорта пользователей компании используется bounded pagination:
 
@@ -318,7 +332,9 @@ kaiten --json files download --entity-type card --card-id 123 --file-id <file_ui
 kaiten --json files download --url "https://hq.kaiten.ru/api/documents/<document_uid>/files/<file_uid>" --output ./downloads/
 ```
 
-Команда `files upload` загружает локальный файл в карточку и отправляет `multipart/form-data` с полем `file` в публичный метод API Kaiten для файлов карточки.
+Команда `files upload` загружает локальный файл в карточку и отправляет
+`multipart/form-data` с полем `file` в legacy-метод API Kaiten. Для новых
+интеграций используйте Restricted Access Files, как показано выше.
 
 ```bash
 kaiten --json files upload --card-id 123 --file ./report.json
@@ -425,7 +441,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **411** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **417** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -438,7 +454,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Блокировки | `blockers` | 12 | [Раздел](COMMAND_REFERENCE.md#module-blockers) |
 | Связи карточек | `card_relations` | 10 | [Раздел](COMMAND_REFERENCE.md#module-card-relations) |
 | Внешние ссылки | `external_links` | 4 | [Раздел](COMMAND_REFERENCE.md#module-external-links) |
-| Файлы карточек | `files` | 12 | [Раздел](COMMAND_REFERENCE.md#module-files) |
+| Файлы карточек | `files` | 18 | [Раздел](COMMAND_REFERENCE.md#module-files) |
 | Подписчики | `subscribers` | 6 | [Раздел](COMMAND_REFERENCE.md#module-subscribers) |
 | Пространства | `spaces` | 6 | [Раздел](COMMAND_REFERENCE.md#module-spaces) |
 | Доски | `boards` | 6 | [Раздел](COMMAND_REFERENCE.md#module-boards) |
@@ -464,7 +480,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **35** | **411** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **35** | **417** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
@@ -602,12 +618,27 @@ CLI поддерживает три способа передачи входны
 
 Команды `describe <tool>` и `search-tools <query>` показывают эти метаданные. Их рекомендуется проверять перед запуском ресурсоёмких команд.
 
+### Пагинация публичного API с октября 2026 года
+
+Для списочных маршрутов, ограниченных Kaiten максимумом в 100 записей, обычные команды `*.list` возвращают одну страницу. CLI явно отправляет безопасный `limit` по умолчанию; следующие страницы запрашиваются через `--offset`. Допустимы `limit=1..100` и `offset>=0`, а недопустимые значения отклоняются до HTTP-запроса.
+
+Агрегированные `cards.list-all`, `comments.batch-list`, `card-children.batch-list` и `time-logs.batch-list` сами обходят страницы. Если защитный `max_pages` исчерпан на полной странице, они завершаются с ошибкой вместо возврата незаметно обрезанного результата.
+
+`custom-properties list --include-values` сохранён только как миграционная подсказка: `false` игнорируется, а `true` возвращает ошибку с направлением в `custom-properties select-values list` и `custom-properties catalog-values list`. Параметр никогда не отправляется в API.
+
+С 1 ноября 2026 года `boards.get` не гарантирует поле `cards` и не догружает его скрытым запросом. Активные карточки доски следует получать отдельно:
+
+```bash
+kaiten --json cards list-all --board-id 10 --condition 1
+```
+
+См. [объявление Kaiten об изменениях публичного API](https://faq-ru.kaiten.site/izmeneniya-v-publichnom-api-kaiten-s-1-oktyabrya-2026-goda).
+
 ## Дерево сущностей
 
 `tree.get` и `tree.children.list` относятся к типу `aggregated`: они собирают локальный каталог пространств, документов и групп документов, а затем строят дерево.
 
-- `/spaces` читается одним запросом.
-- `/documents` и `/document-groups` читаются внутренней пагинацией по `limit=500` с `offset=0,500,1000...` до первой короткой страницы.
+- `/spaces`, `/documents` и `/document-groups` читаются внутренней пагинацией по `limit=100` с `offset=0,100,200...` до первой короткой страницы.
 - Пользователю не нужно и нельзя передавать `limit`, `offset`, `page-size` или `max-pages` для `tree.get`: публичные параметры остаются `root_uid` и `depth`.
 - Если внутренний защитный предел достигнут на полной странице, CLI завершает работу с ошибкой и не возвращает незаметно обрезанное дерево.
 - Видимые сущности с отсутствующим или недоступным `parent_entity_uid` показываются на верхнем уровне полного дерева.

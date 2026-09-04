@@ -11,11 +11,22 @@ TOOLS = (
     make_tool(
         canonical_name="spaces.list",
         mcp_alias="kaiten_list_spaces",
-        description="List all Kaiten spaces. Returns array of space objects with id, title, description, access type.",
+        description="List one page of Kaiten spaces with explicit limit/offset pagination.",
         input_schema={
             "type": "object",
             "properties": {
                 "archived": {"type": "boolean", "description": "Include archived spaces"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (default 50, max 100)",
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Pagination offset",
+                },
                 "fields": {
                     "type": "string",
                     "description": "Comma-separated field names to keep in the response. Example: 'id,title'",
@@ -30,10 +41,10 @@ TOOLS = (
         operation=OperationSpec(
             method="GET",
             path_template="/spaces",
-            query_fields=("archived",),
+            query_fields=("archived", "limit", "offset"),
         ),
         response_policy=ResponsePolicy(
-            compact_supported=True, fields_supported=True, result_kind="list"
+            compact_supported=True, fields_supported=True, default_limit=50, result_kind="list"
         ),
         examples=(
             ExampleSpec(
@@ -44,6 +55,10 @@ TOOLS = (
                 command="kaiten --json spaces list --compact --fields id,title",
                 description="List spaces with a narrow response surface.",
             ),
+        ),
+        usage_notes=(
+            "This direct command returns one page; increase offset to read subsequent pages.",
+            "Use tree.get or tree.children.list when a complete hierarchy is required.",
         ),
     ),
     make_tool(
