@@ -104,6 +104,7 @@ class ExecutionStats:
     disk_cache_misses: int = 0
     disk_cache_expired: int = 0
     disk_cache_bypasses: int = 0
+    pagination_compatibility: list[dict[str, Any]] = field(default_factory=list)
     _groups: dict[tuple[str, str, str], ExecutionGroupStats] = field(
         default_factory=dict, init=False
     )
@@ -177,6 +178,19 @@ class ExecutionStats:
             self.disk_cache_bypasses += 1
             group.disk_cache_bypasses += 1
 
+    def record_pagination_compatibility(
+        self, *, path: str, mode: str, reason: str, rows: int
+    ) -> None:
+        """Record payload-free compatibility decisions for command traces."""
+        self.pagination_compatibility.append(
+            {
+                "path_family": path_family_for(path),
+                "mode": mode,
+                "reason": reason,
+                "rows": rows,
+            }
+        )
+
     def cache_hits(self) -> dict[str, int]:
         return {
             "request": self.request_cache_hits,
@@ -220,6 +234,10 @@ class ExecutionStats:
             "cache_bypasses": self.cache_bypasses(),
             "groups": self.groups_payload(),
         }
+        if self.pagination_compatibility:
+            payload["pagination_compatibility"] = [
+                dict(event) for event in self.pagination_compatibility
+            ]
         if command_duration_ms is not None:
             payload["command_duration_ms"] = round(command_duration_ms, 2)
         return payload

@@ -5,6 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.runtime.support.pagination import (
+    LEGACY_OVERSIZED_FIRST_PAGE,
+    LEGACY_REPEATED_FIRST_PAGE,
+    REPEATED_PAGE_AFTER_PROGRESS,
+    OffsetPageGuard,
+    report_legacy_pagination,
+)
 
 
 COMPANY_USERS_MAX_PAGE_SIZE = 100
@@ -50,6 +57,7 @@ async def execute_company_users_list_all(
     base_query = dict(query or {})
     base_query.setdefault("for_members_section", True)
     users: list[Any] = []
+    guard = OffsetPageGuard(page_size=page_size)
 
     if reporter:
         reporter(
@@ -64,6 +72,30 @@ async def execute_company_users_list_all(
             "offset": page_index * page_size,
         }
         page = _page_items(await client.get(path, params=page_query, timeout=timeout))
+        page_state = guard.observe(page, page_index=page_index)
+        if page_state == LEGACY_OVERSIZED_FIRST_PAGE:
+            report_legacy_pagination(
+                client,
+                path=path,
+                reason=page_state,
+                rows=len(page),
+                reporter=reporter,
+            )
+            return page
+        if page_state == LEGACY_REPEATED_FIRST_PAGE:
+            report_legacy_pagination(
+                client,
+                path=path,
+                reason=page_state,
+                rows=len(users),
+                reporter=reporter,
+            )
+            return users
+        if page_state == REPEATED_PAGE_AFTER_PROGRESS:
+            raise ValidationError(
+                "Company users pagination repeated a previously received page after progress; "
+                "refusing to return a possibly duplicated or truncated result."
+            )
         users.extend(page)
         if len(page) < page_size:
             return users

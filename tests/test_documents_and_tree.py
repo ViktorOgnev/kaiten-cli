@@ -8,7 +8,7 @@ from httpx import Response
 
 from kaiten_cli.app import cli
 from kaiten_cli.errors import ConfigError
-from kaiten_cli.runtime.executor import build_request, execute_tool
+from kaiten_cli.runtime.executor import build_request, execute_tool, execute_tool_with_diagnostics
 from kaiten_cli.runtime.input import merge_inputs
 from kaiten_cli.runtime.support.tree import fetch_paginated_entities
 from kaiten_cli.registry import resolve_tool
@@ -467,6 +467,58 @@ async def test_execute_tree_get_fetches_documents_and_groups_after_first_page(mo
     assert any(item["uid"] == "space-101" for item in result)
     assert any(child["uid"] == "doc-101" for child in children)
     assert any(child["uid"] == "group-101" for child in children)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_execute_tree_get_accepts_legacy_unpaginated_spaces_and_traces_mode(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    spaces_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/spaces",
+        params={"limit": "100", "offset": "0"},
+    ).mock(
+        return_value=Response(
+            200,
+            json=[
+                {
+                    "id": idx,
+                    "uid": f"space-{idx}",
+                    "title": f"Space {idx:03d}",
+                    "parent_entity_uid": None,
+                }
+                for idx in range(101)
+            ],
+        )
+    )
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/documents",
+        params={"limit": "100", "offset": "0"},
+    ).mock(return_value=Response(200, json=[]))
+    respx.get(
+        "https://sandbox.kaiten.ru/api/latest/document-groups",
+        params={"limit": "100", "offset": "0"},
+    ).mock(return_value=Response(200, json=[]))
+    reports: list[str] = []
+    tool = resolve_tool("tree.get")
+
+    result, stats = await execute_tool_with_diagnostics(
+        tool,
+        merge_inputs(tool, {"depth": 0}),
+        reporter=reports.append,
+    )
+
+    assert len(result) == 101
+    assert spaces_route.call_count == 1
+    assert any("mode=legacy_unpaginated" in report for report in reports)
+    assert stats.to_payload()["pagination_compatibility"] == [
+        {
+            "path_family": "/spaces",
+            "mode": "legacy_unpaginated",
+            "reason": "oversized_first_page",
+            "rows": 101,
+        }
+    ]
 
 
 @pytest.mark.asyncio

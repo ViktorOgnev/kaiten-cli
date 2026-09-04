@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 from kaiten_cli.errors import ConfigError, ValidationError
@@ -11,6 +12,48 @@ from kaiten_cli.errors import ConfigError, ValidationError
 API_MAX_PAGE_SIZE = 100
 DEFAULT_COLLECTION_MAX_PAGES = 100
 MAX_COLLECTION_MAX_PAGES = 1000
+LEGACY_PAGINATION_MODE = "legacy_unpaginated"
+LEGACY_OVERSIZED_FIRST_PAGE = "oversized_first_page"
+LEGACY_REPEATED_FIRST_PAGE = "repeated_first_page"
+REPEATED_PAGE_AFTER_PROGRESS = "repeated_page_after_progress"
+
+
+@dataclass(slots=True)
+class OffsetPageGuard:
+    """Classify legacy unpaginated responses and unsafe page repetition."""
+
+    page_size: int
+    pages: list[list[Any]] = field(default_factory=list)
+
+    def observe(self, page: list[Any], *, page_index: int) -> str | None:
+        if page_index == 0 and len(page) > self.page_size:
+            return LEGACY_OVERSIZED_FIRST_PAGE
+        if page_index == 1 and self.pages and page == self.pages[0]:
+            return LEGACY_REPEATED_FIRST_PAGE
+        if any(page == previous for previous in self.pages):
+            return REPEATED_PAGE_AFTER_PROGRESS
+        self.pages.append(page)
+        return None
+
+
+def report_legacy_pagination(
+    client,
+    *,
+    path: str,
+    reason: str,
+    rows: int,
+    reporter=None,
+) -> None:
+    """Expose a legacy-mode decision through verbose output and command traces."""
+    message = f"pagination: path={path} mode={LEGACY_PAGINATION_MODE} reason={reason} rows={rows}"
+    if reporter is not None:
+        reporter(message)
+
+    context = getattr(client, "execution_context", None)
+    stats = getattr(context, "stats", None)
+    record = getattr(stats, "record_pagination_compatibility", None)
+    if callable(record):
+        record(path=path, mode=LEGACY_PAGINATION_MODE, reason=reason, rows=rows)
 
 
 def validate_page_bounds(
@@ -53,6 +96,7 @@ async def fetch_all_offset_pages(
     validate_page_bounds(page_size=page_size, max_pages=max_pages)
     base_params = dict(params or {})
     rows: list[Any] = []
+    guard = OffsetPageGuard(page_size=page_size)
 
     if reporter is not None:
         reporter(f"pagination: path={path} page_size={page_size} max_pages={max_pages}")
@@ -69,6 +113,30 @@ async def fetch_all_offset_pages(
             if extract_items is not None
             else list_page_items(response, path=path)
         )
+        page_state = guard.observe(page, page_index=page_index)
+        if page_state == LEGACY_OVERSIZED_FIRST_PAGE:
+            report_legacy_pagination(
+                client,
+                path=path,
+                reason=page_state,
+                rows=len(page),
+                reporter=reporter,
+            )
+            return page
+        if page_state == LEGACY_REPEATED_FIRST_PAGE:
+            report_legacy_pagination(
+                client,
+                path=path,
+                reason=page_state,
+                rows=len(rows),
+                reporter=reporter,
+            )
+            return rows
+        if page_state == REPEATED_PAGE_AFTER_PROGRESS:
+            raise ConfigError(
+                f"{path} pagination repeated a previously received page after progress; "
+                "refusing to return a possibly duplicated or truncated result."
+            )
         rows.extend(page)
         if len(page) < page_size:
             return rows
