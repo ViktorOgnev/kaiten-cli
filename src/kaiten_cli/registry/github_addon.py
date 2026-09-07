@@ -38,14 +38,28 @@ ADDON_UID_PATH_NOTE = (
 )
 UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
-    "stores a random one. When a derived UUID finds no data row the command asks the card's "
-    "space which addons it has and retries with the registered UUID, so an empty answer is not "
-    "silently an answer about the wrong addon."
+    "stores a random one. When a derived UUID finds no data row the command reads the card, "
+    "whose response lists the addons available to it across every space of its board, and "
+    "retries with the registered UUID. That listing is built from read access and keeps "
+    "archived addons, while a write is authorized against update access without them, so "
+    "resolving successfully still does not promise the write will be allowed."
 )
 UID_FALLBACK_COST_NOTE = (
-    "That fallback costs two extra reads (the card and its space addons) for every card that "
-    "has no data row, so in a loop resolve the UUID once with space-addons.list and pass "
-    "--addon-uid explicitly."
+    "The lookup costs exactly one extra read per card - the card itself - and nothing more: "
+    "the space listing is not consulted, because it is filtered by space read access and "
+    "therefore cannot prove which spaces a board really has. Nothing is amortized across "
+    "cards, so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
+)
+STRICT_WRITE_NOTE = (
+    "A write replaces the whole key, so the command refuses to proceed when the stored addon "
+    "data is not an object or the key is not a plain list of objects: rewriting it would "
+    "silently drop what the CLI does not understand. Inspect it with card-addon-data get."
+)
+AMBIGUOUS_ADDON_NOTE = (
+    "A mount path is not an identity - two addons can be served from different hosts under the "
+    "same path. When more than one addon of the card's board matches, the command refuses to "
+    "choose and asks for --addon-uid, because writing to the wrong one would put GitHub "
+    "attachments into unrelated addon data."
 )
 RACE_NOTE = (
     "The shared row has no version or ETag: a simultaneous change from the addon UI or another "
@@ -179,11 +193,15 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
-                "When the UUID was derived, holds no data and the space cannot be asked, the "
-                "command fails instead of returning an empty list that could mean either "
-                '"nothing attached" or "wrong addon".'
+                "A derived UUID that holds no data is only trusted once the card itself has "
+                "answered which addons it may use. When it did and none matches, the empty list "
+                "is a real answer; when the card could not be asked, the command fails and asks "
+                "for --addon-uid rather than return an empty list that might describe the wrong "
+                "addon. A write in that state is refused outright, because the server accepts a "
+                "PATCH for any addon the card may use and a wrong guess would not bounce."
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
@@ -228,6 +246,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             REPO_IDENTITY_NOTE,
@@ -238,6 +257,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -270,6 +290,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pull-id or --number; --owner and --repo narrow the match when the same "
@@ -278,6 +299,7 @@ TOOLS = (
             AMBIGUOUS_SELECTOR_NOTE,
             "A selector that matches nothing leaves the stored data untouched.",
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -328,6 +350,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -337,6 +360,7 @@ TOOLS = (
             REPO_IDENTITY_NOTE,
             DEDUP_NOTE_BY_PSEUDO_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -372,6 +396,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --pseudo-id or --branch-name; --owner and --repo narrow the match when the "
@@ -379,6 +404,7 @@ TOOLS = (
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -429,6 +455,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -437,6 +464,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_SHA,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -468,10 +496,12 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             "--sha is required and matched in full; short shas do not match stored entries.",
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -522,6 +552,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             REST_JSON_NOTE,
             (
@@ -530,6 +561,7 @@ TOOLS = (
             ),
             DEDUP_NOTE_BY_ID,
             SHARED_WRITE_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),
@@ -562,6 +594,7 @@ TOOLS = (
         usage_notes=(
             ADDON_UID_PATH_NOTE,
             UID_FALLBACK_NOTE,
+            AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
                 "Provide --issue-id or --number; --owner and --repo narrow the match when the same "
@@ -569,6 +602,7 @@ TOOLS = (
             ),
             AMBIGUOUS_SELECTOR_NOTE,
             EMPTY_KEY_NOTE,
+            STRICT_WRITE_NOTE,
             RACE_NOTE,
             DRY_RUN_NOTE,
         ),

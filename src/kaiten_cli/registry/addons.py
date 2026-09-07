@@ -316,6 +316,11 @@ TOOLS = (
                 "and re-read before retrying."
             ),
             (
+                "This is also the repair path: the github-addon commands refuse to rewrite a key "
+                "whose stored value is not a plain list of objects, and this command can set it "
+                "back to a shape they accept."
+            ),
+            (
                 "For the GitHub addon prefer the github-addon commands: they keep the exact widget "
                 "payload shape and dedup attachments instead of overwriting the whole key."
             ),
