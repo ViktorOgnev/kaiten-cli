@@ -104,7 +104,7 @@ def _mock_addon_lookup(
 
 
 def _mock_card_without_addons() -> None:
-    """A card whose board has no available addons: the server embeds no spaces."""
+    """A card response without addon registrations, including hidden ones."""
 
     respx.get(CARD_URL).mock(
         return_value=Response(200, json={"id": 10, "board_id": 7, "board": {"id": 7}})
@@ -775,6 +775,63 @@ async def test_unverifiable_empty_read_fails_instead_of_answering_nothing(monkey
     assert "--addon-uid" in str(error.value)
 
 
+@pytest.mark.parametrize(
+    "visible_spaces",
+    [
+        None,
+        [{"id": 5, "addons": []}],
+        [
+            {
+                "id": 5,
+                "addons": [_github_addon("11112222-3333-4444-8555-666677778888", "/another-addon")],
+            }
+        ],
+    ],
+    ids=["spaces-absent", "addons-empty", "addon-nonmatching"],
+)
+@respx.mock
+async def test_hidden_addon_requires_an_explicit_uid_to_read_attachments(
+    monkeypatch, visible_spaces
+):
+    """The board is shared into spaces 5 and 9. This caller reads the card via
+    space 5 without addons.read, so the GitHub registration in hidden space 9
+    is absent from the card response even though its stored data is readable.
+    """
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    board = {"id": 7}
+    if visible_spaces is not None:
+        board["spaces"] = visible_spaces
+    card_route = respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "board_id": 7, "board": board})
+    )
+    rows = _rows({"attachedPulls": [_addon_pull()]})
+    rows[0]["addon_uid"] = registered_uid
+    registered_route = respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
+        return_value=Response(200, json=rows)
+    )
+    spaces_route = respx.get(f"{API}/spaces")
+    space_addons_route = respx.get(SPACE_ADDONS_URL)
+
+    tool = resolve_tool("github-addon.pulls.list")
+    with pytest.raises(ValidationError, match="--addon-uid"):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert not registered_route.called
+    result = await execute_tool(
+        tool, merge_inputs(tool, {"card_id": 10, "addon_uid": registered_uid})
+    )
+
+    assert result == [_addon_pull()]
+    assert card_route.call_count == 1
+    assert registered_route.call_count == 1
+    assert not spaces_route.called
+    assert not space_addons_route.called
+
+
 @respx.mock
 async def test_confirmed_empty_read_is_an_answer(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
@@ -788,24 +845,53 @@ async def test_confirmed_empty_read_is_an_answer(monkeypatch):
     assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
 
 
+@pytest.mark.parametrize("action", ["attach", "detach"])
+@pytest.mark.parametrize(
+    "card_response",
+    [
+        None,
+        {"id": 10, "board": {"id": 7}},
+        {"id": 10, "board": {"id": 7, "spaces": [{"id": 5, "addons": []}]}},
+        {
+            "id": 10,
+            "board": {
+                "id": 7,
+                "spaces": [{"id": 5, "addons": [_github_addon(path="/another-addon")]}],
+            },
+        },
+    ],
+    ids=["card-denied", "spaces-absent", "addons-empty", "addon-nonmatching"],
+)
 @respx.mock
-async def test_writes_refuse_an_unconfirmed_uid(monkeypatch):
+async def test_writes_refuse_an_unconfirmed_uid(monkeypatch, action, card_response):
     """The server accepts a PATCH for any addon the card may use, so a wrong
     guess does not bounce - it lands in another addon's data."""
 
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    respx.get(CARD_URL).mock(return_value=Response(403, json={"message": "no access"}))
+    respx.get(CARD_URL).mock(
+        return_value=(
+            Response(403, json={"message": "no access"})
+            if card_response is None
+            else Response(200, json=card_response)
+        )
+    )
     patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+    spaces_route = respx.get(f"{API}/spaces")
+    space_addons_route = respx.get(SPACE_ADDONS_URL)
 
-    tool = resolve_tool("github-addon.pulls.attach")
+    tool = resolve_tool(f"github-addon.pulls.{action}")
+    selector = {"pull_json": _rest_pull()} if action == "attach" else {"number": 42}
 
     with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, **selector}))
 
     assert "nothing safe to write to" in str(error.value)
+    assert "--addon-uid" in str(error.value)
     assert not patch_route.called
+    assert not spaces_route.called
+    assert not space_addons_route.called
 
 
 @respx.mock
@@ -1133,7 +1219,7 @@ def test_verbose_reports_a_missing_addon_data_row(runner):
 
 
 @respx.mock
-async def test_card_reporting_no_addon_is_a_real_empty_answer(monkeypatch):
+async def test_card_reporting_no_addon_is_not_a_confirmed_empty_answer(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
@@ -1141,8 +1227,9 @@ async def test_card_reporting_no_addon_is_a_real_empty_answer(monkeypatch):
 
     tool = resolve_tool("github-addon.pulls.list")
 
-    # The card itself lists the addons it may use, so "none of them" is an answer.
-    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+    # Registrations may be filtered out while the shared addon data is readable.
+    with pytest.raises(ValidationError, match="--addon-uid"):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
 
 
 @respx.mock
@@ -1158,7 +1245,8 @@ async def test_attach_says_why_when_the_card_has_no_such_addon(monkeypatch):
     with pytest.raises(ValidationError) as error:
         await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
 
-    assert "nothing to write to" in str(error.value)
+    assert "nothing safe to write to" in str(error.value)
+    assert "--addon-uid" in str(error.value)
     assert not patch_route.called
 
 
@@ -1419,12 +1507,13 @@ async def test_the_space_listing_is_never_read(monkeypatch):
 
     tool = resolve_tool("github-addon.pulls.list")
 
-    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+    with pytest.raises(ValidationError, match="--addon-uid"):
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
     assert not spaces_route.called
 
 
 @respx.mock
-async def test_a_card_reporting_no_addons_answers_instead_of_guessing(monkeypatch):
+async def test_a_card_reporting_no_addons_refuses_to_guess_a_write_target(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
@@ -1436,7 +1525,8 @@ async def test_a_card_reporting_no_addons_answers_instead_of_guessing(monkeypatc
     with pytest.raises(ValidationError) as error:
         await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
 
-    assert "nothing to write to" in str(error.value)
+    assert "nothing safe to write to" in str(error.value)
+    assert "--addon-uid" in str(error.value)
     assert not patch_route.called
 
 

@@ -132,9 +132,8 @@ def _addon_uids_in(addons: Any, normalized_path: str) -> tuple[list[str], int]:
     Returning all of them lets the caller refuse to guess.
 
     An addon that matched the path but whose id is outside the route contract is
-    counted, not dropped: we cannot address it, but "we did not understand this
-    registration" is a different fact from "there is no such addon", and only the
-    second one is an answer.
+    counted, not dropped: we cannot address it, and it must not be mistaken for
+    a confirmed addon UID.
     """
 
     found: list[str] = []
@@ -175,20 +174,17 @@ class AddonResolution:
     """What the lookup established about the card's addon."""
 
     uid: str | None
-    # True when the answer is authoritative: either an addon was found, or the
-    # card itself told us which addons it has and none of them is this one.
-    # False means "could not establish", which is not an answer.
+    # Only a matching registration confirms a UID. A card's filtered addon
+    # listing cannot establish that no readable data exists under another UID.
     authoritative: bool
 
 
 def _card_board_spaces(card: dict[str, Any]) -> list[dict[str, Any]] | None:
     """The board's spaces embedded in a card response, or None when absent.
 
-    `Card.readById` attaches `board.spaces.addons` only when the card actually
-    has addons available to this user, filtered to exactly those addons. So the
-    embedded listing answers "which addon may this card use", and its absence
-    means "no addons at all here, or an older server" - which is why the absence
-    sends us to the space listing rather than straight to an answer.
+    The server filters addon registrations by card-read access in each space.
+    Missing embedded registrations do not prove that addon data is unreadable:
+    the addons-data endpoint only requires card access through any one space.
     """
 
     board = card.get("board")
@@ -218,10 +214,11 @@ async def resolve_addon_uid(
 ) -> AddonResolution:
     """Establish which addon registration at `url_path` this card may use.
 
-    One card read answers it, and nothing else can. `GET /cards/{id}` is served
-    with `withAddonsData`, so the response embeds `board.spaces[].addons` - the
-    addons available for this card across every space of its board, computed by
-    the server itself. Its absence is the same computation returning nothing.
+    One card read can identify a registration through `board.spaces[].addons`.
+    That listing is filtered by card-read access in each space, while reading
+    addon data only requires access to the card through any one space. An addon
+    installed in another, inaccessible space may therefore have readable data
+    even though its registration is omitted from the card response.
 
     There is deliberately no reconstruction from `GET /spaces`: that listing is
     filtered by space read access, so it can neither prove that a board's spaces
@@ -242,14 +239,9 @@ async def resolve_addon_uid(
 
     embedded = _card_board_spaces(card)
     if embedded is None:
-        # The server attaches the listing only when the card has at least one
-        # available addon, so its absence is that query returning nothing. The
-        # set is built from card read access, which is broader than the update
-        # access a write is authorized against, so an empty read-side answer
-        # means the write side is empty too.
         if reporter:
-            reporter("addon lookup: card reports no available addons at all")
-        return AddonResolution(None, authoritative=True)
+            reporter("addon lookup: card response has no registrations; addon UID is unresolved")
+        return AddonResolution(None, authoritative=False)
 
     pooled, rejected = _uids_from_card(embedded, normalized)
     uid = _single_addon_uid(pooled, url_path, "This card's board")
@@ -258,10 +250,8 @@ async def resolve_addon_uid(
             f"addon lookup: card reported {len(pooled)} usable and {rejected} "
             f"unusable addon(s) at {url_path}"
         )
-    # A listing without a match is a real answer: the card has no such addon, so
-    # it cannot have attachments under one. Unless something there matched the
-    # path and we could not address it.
-    return AddonResolution(uid, authoritative=uid is not None or rejected == 0)
+    # No match in this filtered listing does not prove that no attachments exist.
+    return AddonResolution(uid, authoritative=uid is not None)
 
 
 def shared_row(rows: Any) -> dict[str, Any] | None:
@@ -717,20 +707,13 @@ async def _read_attached(
         )
         confirmed = resolution.authoritative
         if for_write and resolution.uid is None:
-            if resolution.authoritative:
-                # Writing to the derived UID would be rejected by the server
-                # anyway; say why instead of forwarding a bare permission error.
-                raise ValidationError(
-                    f"No addon mounted at {url_path} is available for this card, so there is "
-                    "nothing to write to. Install it in the card's space "
-                    "(space-addons.install) or pass --addon-uid if it is registered elsewhere."
-                )
             # An unconfirmed UID must never be written to. The server can accept
             # a PATCH for any addon the card may use, so a wrong guess does not
             # bounce - it lands in another addon's data.
             raise ValidationError(
                 f"Cannot establish which addon at {url_path} this card uses, so there is "
-                "nothing safe to write to: the card could not be asked. Pass --addon-uid "
+                "nothing safe to write to: its registration could not be confirmed from "
+                "the card response. Pass --addon-uid "
                 "(see space-addons.list or company-addons.list) and retry."
             )
         if resolution.uid is not None and resolution.uid != addon_uid:
@@ -786,13 +769,13 @@ def _make_list_executor(entity: GithubEntity):
         state = await _read_attached(client, payload, path, entity, timeout, reporter)
         if not state.row_found and not state.uid_confirmed:
             # An empty list here would be indistinguishable from "we read the
-            # wrong addon", and a read cannot be verified by the server the way
-            # a write is. Refuse to answer instead of answering "nothing".
+            # wrong addon". The card response may omit a registration whose data
+            # is still readable, so refuse to report that nothing is attached.
             raise ValidationError(
                 f"Cannot establish whether {state.addon_uid} is this card's GitHub addon: the "
-                "UUID was derived from --addon-url-path, it holds no data, and the search "
-                "around the card could not be completed - a space, the space listing or an "
-                "addon registration could not be read. Pass --addon-uid (see space-addons.list "
+                "UUID was derived from --addon-url-path, it holds no data, and the card "
+                "response did not identify its registration. That response may omit an addon "
+                "whose data is still readable. Pass --addon-uid (see space-addons.list "
                 "or company-addons.list) and retry."
             )
         if reporter and not state.row_found:

@@ -39,16 +39,20 @@ ADDON_UID_PATH_NOTE = (
 UID_FALLBACK_NOTE = (
     "Derivation only reproduces the real UUID on an on-premises installation; elsewhere Kaiten "
     "stores a random one. When a derived UUID finds no data row the command reads the card, "
-    "whose response lists the addons available to it across every space of its board, and "
-    "retries with the registered UUID. That listing is built from read access and keeps "
-    "archived addons, while a write is authorized against update access without them, so "
-    "resolving successfully still does not promise the write will be allowed."
+    "looks for a registration in board.spaces[].addons and retries with the registered UUID. "
+    "That listing depends on card.read in each space, while addon-data reads only need card "
+    "access through any space of its board. No match, including a missing board.spaces, "
+    "therefore does not prove there is no readable addon data: list fails asking for "
+    "--addon-uid and writes refuse to proceed. An explicit UUID or a positively resolved "
+    "registration still permits an actual empty addon-data response. A write also needs "
+    "update access, so resolving successfully does not promise it will be allowed."
 )
 UID_FALLBACK_COST_NOTE = (
-    "The lookup costs exactly one extra read per card - the card itself - and nothing more: "
-    "the space listing is not consulted, because it is filtered by space read access and "
-    "therefore cannot prove which spaces a board really has. Nothing is amortized across "
-    "cards, so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
+    "The registration lookup costs one extra read per card - the card itself. Data is read "
+    "again if a different UUID is found. The space listing is not consulted, because it is "
+    "filtered by space read access and cannot prove which spaces a board really has. Nothing "
+    "is amortized across cards, so in a loop resolve the UUID once with space-addons.list "
+    "and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
     "A write replaces the whole key, so the command refuses to proceed when the stored addon "
@@ -196,16 +200,15 @@ TOOLS = (
             AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
-                "A derived UUID that holds no data is only trusted once the card itself has "
-                "answered which addons it may use. When it did and none matches, the empty list "
-                "is a real answer; when the card could not be asked, the command fails and asks "
-                "for --addon-uid rather than return an empty list that might describe the wrong "
-                "addon. A write in that state is refused outright, because the server accepts a "
-                "PATCH for any addon the card may use and a wrong guess would not bounce."
+                "When the card cannot be read or its matching addon id cannot address the API "
+                "route, the command fails and asks for --addon-uid. An empty response under an "
+                "unconfirmed derived UUID could describe the wrong addon. Writes refuse to use "
+                "such a guess, because the server accepts a PATCH for any addon the card may "
+                "use and a wrong guess would not necessarily bounce."
             ),
             (
-                "Returns the stored attachedPulls entries; an uninstalled addon or a card without "
-                "attachments both yield an empty list."
+                "Returns the stored attachedPulls entries. An empty response under an explicit "
+                "UUID or a positively resolved addon registration yields an empty list."
             ),
             (
                 "Card PR references can also live in external links; check external-links.list too "
