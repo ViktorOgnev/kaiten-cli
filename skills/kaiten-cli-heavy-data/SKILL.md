@@ -127,10 +127,9 @@ Notes:
 - A card can also reference a PR through `external-links list`. Read both when the
   question is "every PR this card references".
 - Resolve the addon UUID once with `space-addons list` and pass `--addon-uid` in
-  the loop. Without it every card costs one extra read, and a card whose board
-  has no addons costs a walk over the tenant's whole space listing on top of
-  that. Nothing amortizes: the card read is per card, and a write clears the
-  cache scope for the whole profile.
+  the loop. Without it every card costs one extra read - the card itself.
+  Nothing amortizes: the card read is per card, and a write clears the cache
+  scope for the whole profile.
 - A card whose addon cannot be resolved fails the call instead of reporting an
   empty list, so handle that error rather than counting it as "no attachments".
 

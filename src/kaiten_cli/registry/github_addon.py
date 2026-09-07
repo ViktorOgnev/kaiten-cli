@@ -45,11 +45,10 @@ UID_FALLBACK_NOTE = (
     "resolving successfully still does not promise the write will be allowed."
 )
 UID_FALLBACK_COST_NOTE = (
-    "The lookup costs one extra read per card - the card itself. A card whose board has no "
-    "addons at all carries no such data, and then the whole space listing of the tenant is "
-    "walked instead: that is the normal shape of the not-installed case, not an exception, "
-    "and it can be hundreds of spaces in one response. Nothing is amortized across cards, so "
-    "in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
+    "The lookup costs exactly one extra read per card - the card itself - and nothing more: "
+    "the space listing is not consulted, because it is filtered by space read access and "
+    "therefore cannot prove which spaces a board really has. Nothing is amortized across "
+    "cards, so in a loop resolve the UUID once with space-addons.list and pass --addon-uid."
 )
 STRICT_WRITE_NOTE = (
     "A write replaces the whole key, so the command refuses to proceed when the stored addon "
@@ -197,11 +196,12 @@ TOOLS = (
             AMBIGUOUS_ADDON_NOTE,
             UID_FALLBACK_COST_NOTE,
             (
-                "A derived UUID that holds no data is only trusted once the search around the "
-                "card actually completed. When it did and found nothing, the addon is not there "
-                "and the empty list is a real answer; when it could not complete, the command "
-                "fails and asks for --addon-uid rather than return an empty list that might "
-                "describe the wrong addon."
+                "A derived UUID that holds no data is only trusted once the card itself has "
+                "answered which addons it may use. When it did and none matches, the empty list "
+                "is a real answer; when the card could not be asked, the command fails and asks "
+                "for --addon-uid rather than return an empty list that might describe the wrong "
+                "addon. A write in that state is refused outright, because the server accepts a "
+                "PATCH for any addon the card may use and a wrong guess would not bounce."
             ),
             (
                 "Returns the stored attachedPulls entries; an uninstalled addon or a card without "

@@ -103,10 +103,12 @@ def _mock_addon_lookup(
     )
 
 
-def _mock_legacy_card() -> None:
-    """A card response without the embedded board spaces, as an older server sends."""
+def _mock_card_without_addons() -> None:
+    """A card whose board has no available addons: the server embeds no spaces."""
 
-    respx.get(CARD_URL).mock(return_value=Response(200, json={"id": 10, "board_id": 7}))
+    respx.get(CARD_URL).mock(
+        return_value=Response(200, json={"id": 10, "board_id": 7, "board": {"id": 7}})
+    )
 
 
 def _rows(data: dict | None, *, private: dict | None = None) -> list[dict]:
@@ -787,7 +789,10 @@ async def test_confirmed_empty_read_is_an_answer(monkeypatch):
 
 
 @respx.mock
-async def test_writes_keep_going_when_the_space_lookup_fails(monkeypatch):
+async def test_writes_refuse_an_unconfirmed_uid(monkeypatch):
+    """The server accepts a PATCH for any addon the card may use, so a wrong
+    guess does not bounce - it lands in another addon's data."""
+
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
@@ -795,15 +800,12 @@ async def test_writes_keep_going_when_the_space_lookup_fails(monkeypatch):
     patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
 
     tool = resolve_tool("github-addon.pulls.attach")
-    result = await execute_tool(
-        tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()})
-    )
 
-    # A write is verified by the server: a wrong UUID is rejected with 403, so
-    # there is no silently wrong outcome to protect against.
-    assert result["status"] == "attached"
-    assert result["addon_uid_confirmed"] is False
-    assert patch_route.called
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    assert "nothing safe to write to" in str(error.value)
+    assert not patch_route.called
 
 
 @respx.mock
@@ -1131,30 +1133,6 @@ def test_verbose_reports_a_missing_addon_data_row(runner):
 
 
 @respx.mock
-async def test_addon_is_found_in_another_space_of_the_same_board(monkeypatch):
-    """A board can sit in several spaces, and the server checks all of them."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    # The card's own space has no GitHub addon; the board is also in space 9.
-    _mock_addon_lookup(
-        [],
-        board_spaces=[5, 9],
-        other_space_addons={9: [_github_addon(registered_uid)]},
-    )
-    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
-        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert [item["number"] for item in result] == [42]
-
-
-@respx.mock
 async def test_card_reporting_no_addon_is_a_real_empty_answer(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
@@ -1287,77 +1265,6 @@ async def test_card_read_alone_resolves_the_addon(monkeypatch):
 
 
 @respx.mock
-async def test_an_unreadable_space_does_not_end_the_search(monkeypatch):
-    """The space the caller cannot read is exactly why the other spaces matter."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(403, json={"message": "no access"}))
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(
-            200, json=[{"id": 5, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
-        )
-    )
-    space_9 = respx.get(f"{API}/spaces/9/addons").mock(
-        return_value=Response(200, json=[_github_addon(registered_uid)])
-    )
-    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
-        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert space_9.called
-    assert [item["number"] for item in result] == [42]
-
-
-@respx.mock
-async def test_legacy_card_falls_back_to_the_space_listing(monkeypatch):
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
-    )
-    respx.get(SPACE_ADDONS_URL).mock(
-        return_value=Response(200, json=[_github_addon(registered_uid)])
-    )
-    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
-        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    assert [i["number"] for i in await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))] == [
-        42
-    ]
-
-
-@respx.mock
-async def test_malformed_space_listing_does_not_crash_the_command(monkeypatch):
-    """The pagination guard raises ConfigError; this read is best effort."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(return_value=Response(200, json={"message": "not a list"}))
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert "--addon-uid" in str(error.value)
-
-
-@respx.mock
 async def test_missing_board_id_skips_the_space_listing(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
@@ -1372,40 +1279,6 @@ async def test_missing_board_id_skips_the_space_listing(monkeypatch):
         await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
 
     assert not spaces_route.called
-
-
-@respx.mock
-async def test_space_listing_is_read_with_pagination_and_archived_spaces(monkeypatch):
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    respx.get(CARD_URL).mock(
-        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-    # The board is only reachable through an archived space on the second page.
-    first_page = [{"id": 100 + i, "boards": []} for i in range(100)]
-    spaces_route = respx.get(f"{API}/spaces").mock(
-        side_effect=[
-            Response(200, json=first_page),
-            Response(200, json=[{"id": 9, "archived": True, "boards": [{"id": 7}]}]),
-            Response(200, json=[]),
-        ]
-    )
-    respx.get(f"{API}/spaces/9/addons").mock(
-        return_value=Response(200, json=[_github_addon(registered_uid)])
-    )
-    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
-        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert [item["number"] for item in result] == [42]
-    assert spaces_route.calls[0].request.url.params["archived"] == "true"
-    assert spaces_route.calls[0].request.url.params["limit"] == "100"
 
 
 @respx.mock
@@ -1459,87 +1332,6 @@ async def test_attach_refuses_before_writing_to_an_ambiguous_addon(monkeypatch):
 
     # The whole point: never PATCH GitHub data into some other addon's row.
     assert not patch_route.called
-
-
-@respx.mock
-async def test_ambiguity_across_board_spaces_is_refused(monkeypatch):
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    respx.get(CARD_URL).mock(
-        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(
-            200,
-            json=[
-                {"id": 5, "boards": [{"id": 7}]},
-                {"id": 8, "boards": [{"id": 7}]},
-                {"id": 9, "boards": [{"id": 7}]},
-            ],
-        )
-    )
-    respx.get(f"{API}/spaces/8/addons").mock(
-        return_value=Response(
-            200,
-            json=[
-                {
-                    "id": "9f8e7d6c-5b4a-4392-8817-665544332211",
-                    "iframe_initial_url": "https://a.example/github",
-                }
-            ],
-        )
-    )
-    respx.get(f"{API}/spaces/9/addons").mock(
-        return_value=Response(
-            200,
-            json=[
-                {
-                    "id": "11112222-3333-4444-8555-666677778888",
-                    "iframe_initial_url": "https://b.example/github",
-                }
-            ],
-        )
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert "board 7" in str(error.value)
-
-
-@respx.mock
-async def test_the_same_addon_in_several_board_spaces_is_one_candidate(monkeypatch):
-    """A board shared across spaces normally reports the same addon in each."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    respx.get(CARD_URL).mock(
-        return_value=Response(200, json={"id": 10, "space_id": 5, "board_id": 7})
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(
-            200, json=[{"id": 8, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
-        )
-    )
-    for space in (8, 9):
-        respx.get(f"{API}/spaces/{space}/addons").mock(
-            return_value=Response(200, json=[_github_addon(registered_uid)])
-        )
-    respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
-        return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-    result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert [item["number"] for item in result] == [42]
 
 
 @respx.mock
@@ -1598,90 +1390,6 @@ async def test_list_still_reads_through_a_malformed_container(monkeypatch):
 
 
 @respx.mock
-async def test_a_complete_walk_without_the_addon_is_an_answer(monkeypatch):
-    """A board whose spaces hold no addons at all gets no embedded listing."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    # Everything was read and the addon is simply not there.
-    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
-
-
-@respx.mock
-async def test_attach_after_a_complete_walk_explains_instead_of_patching(monkeypatch):
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
-
-    tool = resolve_tool("github-addon.pulls.attach")
-
-    # Without the completeness signal this used to PATCH the derived UUID and
-    # surface a bare 403 from the server.
-    with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
-
-    assert "nothing to write to" in str(error.value)
-    assert not patch_route.called
-
-
-@respx.mock
-async def test_a_partial_walk_is_still_not_an_answer(monkeypatch):
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(
-            200, json=[{"id": 5, "boards": [{"id": 7}]}, {"id": 9, "boards": [{"id": 7}]}]
-        )
-    )
-    respx.get(SPACE_ADDONS_URL).mock(return_value=Response(200, json=[]))
-    respx.get(f"{API}/spaces/9/addons").mock(return_value=Response(403, json={"message": "nope"}))
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert "--addon-uid" in str(error.value)
-
-
-@respx.mock
-async def test_board_missing_from_the_space_listing_is_not_an_answer(monkeypatch):
-    """Every board is in some space, so finding none means the search failed."""
-
-    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
-    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
-    _mock_legacy_card()
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 99}]}])
-    )
-
-    tool = resolve_tool("github-addon.pulls.list")
-
-    with pytest.raises(ValidationError) as error:
-        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
-
-    assert "--addon-uid" in str(error.value)
-
-
-@respx.mock
 async def test_an_unaddressable_addon_id_is_not_an_answer(monkeypatch):
     """We matched the path but cannot address the addon; that is not "absent"."""
 
@@ -1700,19 +1408,110 @@ async def test_an_unaddressable_addon_id_is_not_an_answer(monkeypatch):
 
 
 @respx.mock
-async def test_empty_embedded_spaces_fall_back_instead_of_answering(monkeypatch):
+async def test_the_space_listing_is_never_read(monkeypatch):
+    """`GET /spaces` cannot prove a board's spaces are all visible, so it is gone."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_card_without_addons()
+    spaces_route = respx.get(f"{API}/spaces")
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    assert await execute_tool(tool, merge_inputs(tool, {"card_id": 10})) == []
+    assert not spaces_route.called
+
+
+@respx.mock
+async def test_a_card_reporting_no_addons_answers_instead_of_guessing(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    _mock_card_without_addons()
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    assert "nothing to write to" in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_a_card_without_a_board_object_is_not_an_answer(monkeypatch):
+    """Without the board we cannot tell "no addons" from "no answer"."""
+
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(return_value=Response(200, json={"id": 10, "board_id": 7}))
+
+    tool = resolve_tool("github-addon.pulls.list")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
+
+    assert "--addon-uid" in str(error.value)
+
+
+@respx.mock
+async def test_two_addons_in_different_board_spaces_are_refused(monkeypatch):
+    monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
+    monkeypatch.setenv("KAITEN_TOKEN", "test-token")
+    first = "9f8e7d6c-5b4a-4392-8817-665544332211"
+    second = "11112222-3333-4444-8555-666677778888"
+    respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
+    respx.get(CARD_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "id": 10,
+                "board_id": 7,
+                "board": {
+                    "id": 7,
+                    "spaces": [
+                        {"id": 5, "addons": [_github_addon(first)]},
+                        {"id": 9, "addons": [_github_addon(second)]},
+                    ],
+                },
+            },
+        )
+    )
+    patch_route = respx.patch(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json={}))
+
+    tool = resolve_tool("github-addon.pulls.attach")
+
+    with pytest.raises(ValidationError) as error:
+        await execute_tool(tool, merge_inputs(tool, {"card_id": 10, "pull_json": _rest_pull()}))
+
+    assert first in str(error.value) and second in str(error.value)
+    assert not patch_route.called
+
+
+@respx.mock
+async def test_the_same_addon_in_two_board_spaces_is_one_candidate(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
     registered_uid = "9f8e7d6c-5b4a-4392-8817-665544332211"
     respx.get(CARD_ADDON_DATA_URL).mock(return_value=Response(200, json=[]))
     respx.get(CARD_URL).mock(
-        return_value=Response(200, json={"id": 10, "board_id": 7, "board": {"id": 7, "spaces": []}})
-    )
-    respx.get(f"{API}/spaces").mock(
-        return_value=Response(200, json=[{"id": 5, "boards": [{"id": 7}]}])
-    )
-    respx.get(SPACE_ADDONS_URL).mock(
-        return_value=Response(200, json=[_github_addon(registered_uid)])
+        return_value=Response(
+            200,
+            json={
+                "id": 10,
+                "board_id": 7,
+                "board": {
+                    "id": 7,
+                    "spaces": [
+                        {"id": 5, "addons": [_github_addon(registered_uid)]},
+                        {"id": 9, "addons": [_github_addon(registered_uid)]},
+                    ],
+                },
+            },
+        )
     )
     respx.get(f"{API}/cards/10/addons-data/{registered_uid}").mock(
         return_value=Response(200, json=_rows({"attachedPulls": [_addon_pull()]}))
@@ -1721,5 +1520,4 @@ async def test_empty_embedded_spaces_fall_back_instead_of_answering(monkeypatch)
     tool = resolve_tool("github-addon.pulls.list")
     result = await execute_tool(tool, merge_inputs(tool, {"card_id": 10}))
 
-    # An empty listing is the server not populating it, not "no spaces".
     assert [item["number"] for item in result] == [42]
