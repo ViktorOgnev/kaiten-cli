@@ -217,6 +217,7 @@ def describe(identifier: str) -> dict:
         "cache_guidance": cache_guidance_for(tool),
         "path_template": tool.operation.path_template,
         "input_modes": ["options", "from_file", "stdin_json"],
+        "input_schema": tool.input_schema,
         "response_policy": {
             "compact_supported": tool.response_policy.compact_supported,
             "fields_supported": tool.response_policy.fields_supported,

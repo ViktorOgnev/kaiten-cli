@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kaiten_cli.models import ToolSpec, format_schema_type  # noqa: E402
+from kaiten_cli.schema_docs import schema_rows  # noqa: E402
 from kaiten_cli.registry import cache_guidance_for, iter_tools  # noqa: E402
 from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract  # noqa: E402
 from kaiten_cli.registry.module_docs import MODULE_SPECS, ModuleDocSpec  # noqa: E402
@@ -117,12 +118,23 @@ def _format_enum(values) -> str:
 
 
 def _format_constraints(definition: dict) -> str:
-    constraints = []
-    if definition.get("minimum") is not None:
-        constraints.append(f">= {definition['minimum']}")
-    if definition.get("maximum") is not None:
-        constraints.append(f"<= {definition['maximum']}")
-    return ", ".join(constraints) or "—"
+    return (
+        ", ".join(
+            f"{key}={definition[key]}"
+            for key in (
+                "minimum",
+                "maximum",
+                "exclusiveMinimum",
+                "exclusiveMaximum",
+                "minLength",
+                "maxLength",
+                "minItems",
+                "maxItems",
+            )
+            if key in definition
+        )
+        or "—"
+    )
 
 
 def _render_argument_table(tool: ToolSpec) -> str:
@@ -149,6 +161,39 @@ def _render_argument_table(tool: ToolSpec) -> str:
             )
             + " |"
         )
+    nested = [
+        (path, definition, required)
+        for path, definition, required in schema_rows(tool.input_schema)
+        if "." in path or "<" in path or "[]" in path
+    ]
+    if nested:
+        lines.extend(
+            [
+                "",
+                "**Nested schemas** (unknown extension fields are preserved)",
+                "",
+                "| Field / variant | Type | Required | Description / constraints |",
+                "|---|---|---|---|",
+            ]
+        )
+        for path, definition, required in nested:
+            detail = definition.get("description", "")
+            if definition.get("enum"):
+                detail += " Values: " + str(definition["enum"])
+            for key in (
+                "minimum",
+                "maximum",
+                "minItems",
+                "maxItems",
+                "minLength",
+                "maxLength",
+                "x-documentation-constraints",
+            ):
+                if key in definition:
+                    detail += f" {key}: {definition[key]}"
+            lines.append(
+                f"| `{path}` | {_escape_table(format_schema_type(definition))} | {_yes_no(required)} | {_escape_table(detail)} |"
+            )
     return "\n".join(lines)
 
 

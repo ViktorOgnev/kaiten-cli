@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.registry.automation_schema import automation_properties
+from kaiten_cli.runtime.automation_validation import validate_automation
 from kaiten_cli.runtime.behaviors import automation_copy_request
 
 
@@ -22,11 +24,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100)",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
             },
             "required": ["space_id"],
         },
@@ -55,26 +53,19 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
-                "name": {"type": "string", "description": "Automation name"},
-                "trigger": {"type": "object", "description": "Trigger configuration"},
-                "actions": {
-                    "type": "array",
-                    "items": {"type": "object"},
-                    "description": "Action configurations",
-                },
-                "conditions": {"type": "object", "description": "Conditions configuration"},
+                "name": {"type": "string", "maxLength": 256, "description": "Automation name"},
                 "type": {
                     "type": "string",
-                    "enum": ["on_action", "on_date", "on_demand", "on_workflow"],
-                    "description": "Automation type",
+                    "description": "Automation type: on_action, on_date, on_demand. Other server-specific types are passed through.",
                 },
                 "sort_order": {"type": "number", "description": "Sort position"},
                 "source_automation_id": {
                     "type": "string",
                     "description": "Automation ID to clone from",
                 },
+                **automation_properties(),
             },
-            "required": ["space_id", "name", "trigger", "actions"],
+            "required": ["space_id"],
         },
         operation=OperationSpec(
             method="POST",
@@ -90,10 +81,23 @@ TOOLS = (
                 "source_automation_id",
             ),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_automation),
+        usage_notes=(
+            "on_workflow, source_automation_id, get and copy are retained extensions, not documented Public API guarantees.",
+            "Omitting type preserves legacy validation and does not insert a default into the request.",
+        ),
         examples=(
             ExampleSpec(
                 command='kaiten --json automations create --space-id 1 --name Auto --type on_action --trigger \'{"type":"card_created"}\' --actions \'[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]\'',
                 description="Create an automation using the known live-valid add_assignee payload shape.",
+            ),
+            ExampleSpec(
+                command='kaiten --json automations create --space-id 1 --type on_demand --name Complete --actions \'[{"type":"complete_checklists","created":"2026-01-01T00:00:00+00:00","data":{}}]\'',
+                description="Create a button automation without a trigger.",
+            ),
+            ExampleSpec(
+                command='kaiten --json automations create --space-id 1 --type on_date --trigger \'{"type":"due_date_on_date","data":{"variant":"time_left_before_date","timezone":"UTC","offset":2,"offset_unit":"day"}}\' --actions \'[{"type":"change_asap","created":"2026-01-01T00:00:00+00:00","data":{"asap":true}}]\'',
+                description="Create a date automation without a name.",
             ),
         ),
     ),
@@ -130,20 +134,14 @@ TOOLS = (
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "automation_id": {"type": "string", "description": "Automation ID (UUID)"},
-                "name": {"type": "string", "description": "New automation name"},
-                "trigger": {"type": "object", "description": "New trigger configuration"},
-                "actions": {
-                    "type": "array",
-                    "items": {"type": "object"},
-                    "description": "New action configurations",
-                },
-                "conditions": {"type": "object", "description": "New conditions configuration"},
+                "name": {"type": "string", "maxLength": 256, "description": "New automation name"},
                 "status": {
                     "type": "string",
                     "enum": ["active", "disabled"],
                     "description": "Automation status",
                 },
                 "sort_order": {"type": "number", "description": "Sort position"},
+                **automation_properties(),
             },
             "required": ["space_id", "automation_id"],
         },
@@ -153,6 +151,7 @@ TOOLS = (
             path_fields=("space_id", "automation_id"),
             body_fields=("name", "trigger", "actions", "conditions", "status", "sort_order"),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_automation),
         examples=(
             ExampleSpec(
                 command="kaiten --json automations update --space-id 1 --automation-id auto-1 --status disabled",
@@ -269,9 +268,7 @@ TOOLS = (
         description="Get a specific company workflow by ID.",
         input_schema={
             "type": "object",
-            "properties": {
-                "workflow_id": {"type": "string", "description": "Workflow ID (UUID)"},
-            },
+            "properties": {"workflow_id": {"type": "string", "description": "Workflow ID (UUID)"}},
             "required": ["workflow_id"],
         },
         operation=OperationSpec(
@@ -327,9 +324,7 @@ TOOLS = (
         description="Delete a company workflow.",
         input_schema={
             "type": "object",
-            "properties": {
-                "workflow_id": {"type": "string", "description": "Workflow ID (UUID)"},
-            },
+            "properties": {"workflow_id": {"type": "string", "description": "Workflow ID (UUID)"}},
             "required": ["workflow_id"],
         },
         operation=OperationSpec(

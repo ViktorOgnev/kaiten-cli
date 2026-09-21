@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import (
     payload_body_request,
     reject_custom_property_include_values,
@@ -38,10 +39,7 @@ TOOLS = (
             "properties": {
                 "include_values": {
                     "type": "boolean",
-                    "description": (
-                        "Deprecated compatibility input. false is ignored; true is rejected. "
-                        "Use select-values.list or catalog-values.list instead."
-                    ),
+                    "description": "Deprecated compatibility input. false is ignored; true is rejected. Use select-values.list or catalog-values.list instead.",
                 },
                 "include_author": {"type": "boolean", "description": "Include author user object"},
                 "types": {"type": "string", "description": "Comma-separated type names to filter"},
@@ -65,11 +63,16 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
+                "compact": {
+                    "type": "boolean",
+                    "description": "Returns the minimum set of parameters of custom properties",
                 },
+                "load_by_ids": {
+                    "type": "boolean",
+                    "description": "Returns custom properties by ids if ids parameter is presented",
+                },
+                "ids": {"type": "array", "description": "Array of custom property ids"},
             },
         },
         operation=OperationSpec(
@@ -85,6 +88,9 @@ TOOLS = (
                 "board_id",
                 "limit",
                 "offset",
+                "compact",
+                "load_by_ids",
+                "ids",
             ),
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
@@ -112,9 +118,7 @@ TOOLS = (
         description="Get a custom property by ID.",
         input_schema={
             "type": "object",
-            "properties": {
-                "property_id": {"type": "integer", "description": "Property ID"},
-            },
+            "properties": {"property_id": {"type": "integer", "description": "Property ID"}},
             "required": ["property_id"],
         },
         operation=OperationSpec(
@@ -159,31 +163,254 @@ TOOLS = (
                     ],
                     "description": "Property type",
                 },
-                "show_on_facade": {"type": "boolean", "description": "Show on card facade"},
-                "multi_select": {"type": "boolean", "description": "Enable multi-select"},
-                "colorful": {"type": "boolean", "description": "Enable colors for select values"},
-                "multiline": {"type": "boolean", "description": "Multiline text field"},
-                "values_creatable_by_users": {
+                "show_on_facade": {
                     "type": "boolean",
+                    "description": "Show on card facade",
+                    "default": False,
+                },
+                "multi_select": {
+                    "type": ["boolean", "null"],
+                    "description": "Enable multi-select",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines is select property used as multi select",
+                        },
+                        {"type": "null", "description": "Empty multi select value"},
+                    ],
+                },
+                "colorful": {
+                    "type": ["boolean", "null"],
+                    "description": "Enable colors for select values",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines should select color when creating new select value.",
+                        },
+                        {"type": "null", "description": "Empty colorful value"},
+                    ],
+                },
+                "multiline": {
+                    "type": "boolean",
+                    "description": "Multiline text field",
+                    "default": False,
+                },
+                "values_creatable_by_users": {
+                    "type": ["boolean", "null"],
                     "description": "Allow regular users to create values",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines if users with writer role are able to create new select property values.",
+                        },
+                        {"type": "null", "description": "Empty values_creatable_by_users value"},
+                    ],
                 },
                 "values_type": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "enum": ["number", "text"],
                     "description": "Values type (required for collective_score)",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "null",
+                            "description": "Empty for any type except collective value",
+                        },
+                        {"enum": ["number", "text"], "description": "Type of values"},
+                    ],
                 },
                 "vote_variant": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "enum": ["rating", "scale", "emoji_set"],
                     "description": "Vote variant (required for vote/collective_vote)",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "null",
+                            "description": "Empty vote variant - for custom properties not of type vote and collective vote",
+                        },
+                        {
+                            "enum": ["rating", "scale", "emoji_set"],
+                            "description": "Type of vote or collective vote custom properties",
+                        },
+                    ],
                 },
-                "color": {"type": "integer", "description": "Color index"},
+                "color": {
+                    "type": ["integer", "null"],
+                    "description": "Color index",
+                    "x-documentation-alternatives": [
+                        {"type": ["integer"], "description": "Color of catalog custom property"},
+                        {"type": "null", "description": "Catalog custom property without color"},
+                    ],
+                },
                 "data": {
                     "type": "object",
                     "description": "Type-specific data; required for vote/collective_vote and some other typed properties",
+                    "properties": {
+                        "restrictions": {
+                            "type": "object",
+                            "properties": {
+                                "min": {
+                                    "description": "Minimum allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Minimum allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty minimum value"},
+                                    ],
+                                },
+                                "max": {
+                                    "description": "Maximum allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Maximum allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                                "minLength": {
+                                    "minimum": 1,
+                                    "description": "Minimum length allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "minimum": 1,
+                                            "description": "Minimum length allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty minimum length"},
+                                    ],
+                                },
+                                "maxLength": {
+                                    "minimum": 1,
+                                    "description": "Minimum length allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "minimum": 1,
+                                            "description": "Minimum length allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty maximum length"},
+                                    ],
+                                },
+                                "maxFilesCount": {
+                                    "description": "Maximum allowed files count",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Maximum allowed files count",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                                "filesExtensions": {
+                                    "description": "Allowed files extensions",
+                                    "type": ["string", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "string",
+                                            "description": "Allowed files extensions",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                            },
+                            "description": "Restrictions on input values",
+                            "x-documentation-alternatives": [
+                                {"required": ["min"]},
+                                {"required": ["max"]},
+                                {"required": ["minLength"]},
+                                {"required": ["maxLength"]},
+                                {"required": ["maxFilesCount"]},
+                                {"required": ["filesExtensions"]},
+                            ],
+                        },
+                        "formula": {
+                            "type": "string",
+                            "description": "Formula content",
+                            "minLength": 1,
+                        },
+                        "emoji": {
+                            "type": "string",
+                            "description": "Emoji for vote property of variant rating",
+                            "minLength": 1,
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "Count of emojis for vote property",
+                            "minimum": 2,
+                            "maximum": 10,
+                        },
+                        "emojis": {
+                            "type": "array",
+                            "description": "List of emojis for vote property of variant emoji_set",
+                            "items": {"type": "string", "minLength": 1},
+                        },
+                        "min": {
+                            "type": "integer",
+                            "description": "Min value for vote property of variant scale",
+                        },
+                        "max": {
+                            "type": "integer",
+                            "description": "Max value for vote property of variant scale",
+                        },
+                        "calculation_method": {
+                            "enum": ["average", "sum"],
+                            "description": "Calculation method for vote property of variant scale",
+                            "type": "string",
+                        },
+                    },
+                    "x-documentation-alternatives": [
+                        {"required": ["restrictions"]},
+                        {"required": ["formula"]},
+                        {"required": ["emoji", "count"]},
+                        {"required": ["emojis"]},
+                        {"required": ["min", "max", "calculation_method"]},
+                    ],
+                },
+                "formula": {"type": "string", "description": "Formula for calculation"},
+                "formula_source_card": {
+                    "type": "object",
+                    "description": "Card data from which are used to calculate the formula",
+                },
+                "fields_settings": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Field name",
+                                    "minLength": 1,
+                                },
+                                "required": {
+                                    "type": "boolean",
+                                    "description": "Determines is field is required",
+                                },
+                                "deleted": {
+                                    "type": "boolean",
+                                    "description": "Determines is field is deleted",
+                                    "default": False,
+                                },
+                                "sortOrder": {
+                                    "type": "number",
+                                    "minimum": 1,
+                                    "description": "Minimum sort order of field",
+                                },
+                            },
+                            "x-documentation-additionalProperties": False,
+                        }
+                    },
+                    "x-documentation-additionalProperties": False,
                 },
             },
-            "required": ["name", "type"],
+            "required": [],
         },
         operation=OperationSpec(
             method="POST",
@@ -200,8 +427,12 @@ TOOLS = (
                 "vote_variant",
                 "color",
                 "data",
+                "formula",
+                "formula_source_card",
+                "fields_settings",
             ),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_public_request),
         examples=(
             ExampleSpec(
                 command="kaiten --json custom-properties create --name Status --type select",
@@ -228,23 +459,256 @@ TOOLS = (
                     "enum": ["active", "inactive"],
                     "description": "Status",
                 },
-                "show_on_facade": {"type": "boolean", "description": "Show on card facade"},
-                "multi_select": {"type": "boolean", "description": "Multi-select mode"},
-                "colorful": {"type": "boolean", "description": "Enable colors"},
-                "multiline": {"type": "boolean", "description": "Multiline mode"},
-                "values_creatable_by_users": {
+                "show_on_facade": {
                     "type": "boolean",
+                    "description": "Show on card facade",
+                    "default": False,
+                },
+                "multi_select": {
+                    "type": ["boolean", "null"],
+                    "description": "Multi-select mode",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines is select property used as multi select",
+                        },
+                        {"type": "null", "description": "Empty multi select value"},
+                    ],
+                },
+                "colorful": {
+                    "type": ["boolean", "null"],
+                    "description": "Enable colors",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines should select color when creating new select value.",
+                        },
+                        {"type": "null", "description": "Empty colorful value"},
+                    ],
+                },
+                "multiline": {"type": "boolean", "description": "Multiline mode", "default": False},
+                "values_creatable_by_users": {
+                    "type": ["boolean", "null"],
                     "description": "Allow users to create values",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["boolean"],
+                            "description": "Used for select properties. Determines if users with writer roles are able to create new select property values.",
+                        },
+                        {"type": "null", "description": "Empty values_creatable_by_users value"},
+                    ],
                 },
                 "is_used_as_progress": {
                     "type": "boolean",
                     "description": "Use this formula property as progress",
+                    "default": False,
                 },
-                "color": {"type": "integer", "description": "Color index"},
-                "data": {"type": "object", "description": "Type-specific data"},
-                "fields_settings": {
+                "color": {
+                    "type": ["integer", "null"],
+                    "description": "Color index",
+                    "x-documentation-alternatives": [
+                        {"type": ["integer"], "description": "Color of catalog custom property"},
+                        {"type": "null", "description": "Catalog custom property without color"},
+                    ],
+                },
+                "data": {
                     "type": "object",
+                    "description": "Type-specific data",
+                    "properties": {
+                        "restrictions": {
+                            "type": "object",
+                            "properties": {
+                                "min": {
+                                    "description": "Minimum allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Minimum allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty minimum value"},
+                                    ],
+                                },
+                                "max": {
+                                    "description": "Maximum allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Maximum allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                                "minLength": {
+                                    "minimum": 1,
+                                    "description": "Minimum length allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "minimum": 1,
+                                            "description": "Minimum length allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty minimum length"},
+                                    ],
+                                },
+                                "maxLength": {
+                                    "minimum": 1,
+                                    "description": "Minimum length allowed on input value",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "minimum": 1,
+                                            "description": "Minimum length allowed on input value",
+                                        },
+                                        {"type": "null", "description": "Empty maximum length"},
+                                    ],
+                                },
+                                "maxFilesCount": {
+                                    "description": "Maximum allowed files count",
+                                    "type": ["number", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "number",
+                                            "description": "Maximum allowed files count",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                                "filesExtensions": {
+                                    "description": "Allowed files extensions",
+                                    "type": ["string", "null"],
+                                    "x-documentation-alternatives": [
+                                        {
+                                            "type": "string",
+                                            "description": "Allowed files extensions",
+                                        },
+                                        {"type": "null", "description": "Empty maximum value"},
+                                    ],
+                                },
+                            },
+                            "description": "Restrictions on input values",
+                            "x-documentation-alternatives": [
+                                {"required": ["min"]},
+                                {"required": ["max"]},
+                                {"required": ["minLength"]},
+                                {"required": ["maxLength"]},
+                                {"required": ["maxFilesCount"]},
+                                {"required": ["filesExtensions"]},
+                            ],
+                        },
+                        "formula": {
+                            "type": "string",
+                            "description": "Formula content",
+                            "minLength": 1,
+                        },
+                        "emoji": {
+                            "type": "string",
+                            "description": "Emoji for vote property of variant rating",
+                            "minLength": 1,
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "Count of emojis for vote property",
+                            "minimum": 2,
+                            "maximum": 10,
+                        },
+                        "emojis": {
+                            "type": "array",
+                            "description": "List of emojis for vote property of variant emoji_set",
+                            "items": {"type": "string", "minLength": 1},
+                        },
+                        "min": {
+                            "type": "number",
+                            "description": "Min value for vote property of variant scale",
+                        },
+                        "max": {
+                            "type": "number",
+                            "description": "Max value for vote property of variant scale",
+                        },
+                        "calculation_method": {
+                            "enum": ["average", "sum"],
+                            "description": "Calculation method for vote property of variant scale",
+                            "type": "string",
+                        },
+                    },
+                    "x-documentation-alternatives": [
+                        {"required": ["restrictions"]},
+                        {"required": ["formula"]},
+                        {"required": ["emoji", "count"]},
+                        {"required": ["emojis"]},
+                        {"required": ["min", "max", "calculation_method"]},
+                    ],
+                },
+                "fields_settings": {
+                    "type": ["object", "null"],
                     "description": "Catalog fields configuration",
+                    "minProperties": 1,
+                    "patternProperties": {
+                        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Field name",
+                                    "minLength": 1,
+                                },
+                                "required": {
+                                    "type": "boolean",
+                                    "description": "Determines is field is required",
+                                },
+                                "deleted": {
+                                    "type": "boolean",
+                                    "description": "Determines is field is deleted",
+                                    "default": False,
+                                },
+                                "sortOrder": {
+                                    "type": "number",
+                                    "minimum": 1,
+                                    "description": "Minimum sort order of field",
+                                },
+                            },
+                            "x-documentation-additionalProperties": False,
+                        }
+                    },
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "object",
+                            "minProperties": 1,
+                            "additionalProperties": False,
+                            "patternProperties": {
+                                "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "description": "Field name",
+                                            "minLength": 1,
+                                        },
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Determines is field is required",
+                                        },
+                                        "deleted": {
+                                            "type": "boolean",
+                                            "description": "Determines is field is deleted",
+                                            "default": False,
+                                        },
+                                        "sortOrder": {
+                                            "type": "number",
+                                            "minimum": 1,
+                                            "description": "Minimum sort order of field",
+                                        },
+                                    },
+                                    "additionalProperties": False,
+                                }
+                            },
+                        },
+                        {"type": "null"},
+                    ],
+                    "x-documentation-additionalProperties": False,
                 },
             },
             "required": ["property_id"],
@@ -281,9 +745,7 @@ TOOLS = (
         description="Delete a custom property.",
         input_schema={
             "type": "object",
-            "properties": {
-                "property_id": {"type": "integer", "description": "Property ID"},
-            },
+            "properties": {"property_id": {"type": "integer", "description": "Property ID"}},
             "required": ["property_id"],
         },
         operation=OperationSpec(
@@ -313,7 +775,10 @@ TOOLS = (
                     "enum": ["id", "sort_order", "match_query_priority"],
                     "description": "Sort order mode",
                 },
-                "conditions": {"type": "string", "description": "Comma-separated conditions"},
+                "conditions": {
+                    "type": ["string", "array"],
+                    "description": "Comma-separated conditions",
+                },
                 "v2_select_search": {"type": "boolean", "description": "Use v2 search mode"},
                 "limit": {
                     "type": "integer",
@@ -321,10 +786,10 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
+                "ids": {
+                    "type": "array",
+                    "description": "Array of ids to filter by. Works only if v2_select_search param is true",
                 },
             },
             "required": ["property_id"],
@@ -333,7 +798,15 @@ TOOLS = (
             method="GET",
             path_template="/company/custom-properties/{property_id}/select-values",
             path_fields=("property_id",),
-            query_fields=("query", "order_by", "conditions", "v2_select_search", "limit", "offset"),
+            query_fields=(
+                "query",
+                "order_by",
+                "conditions",
+                "v2_select_search",
+                "limit",
+                "offset",
+                "ids",
+            ),
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
@@ -376,7 +849,20 @@ TOOLS = (
             "properties": {
                 "property_id": {"type": "integer", "description": "Property ID"},
                 "value": {"type": "string", "description": "Select value text"},
-                "color": {"type": "integer", "description": "Color index"},
+                "color": {
+                    "type": ["integer", "null"],
+                    "description": "Color index",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["integer"],
+                            "description": "Color of custom property select value",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Custom property select value without color",
+                        },
+                    ],
+                },
                 "sort_order": {"type": "number", "description": "Sort order (float)"},
             },
             "required": ["property_id", "value"],
@@ -409,8 +895,25 @@ TOOLS = (
                     "enum": ["active", "inactive"],
                     "description": "Value status",
                 },
-                "color": {"type": "integer", "description": "Color index"},
+                "color": {
+                    "type": ["integer", "null"],
+                    "description": "Color index",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["integer"],
+                            "description": "Color of custom property select value",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Custom property select value without color",
+                        },
+                    ],
+                },
                 "sort_order": {"type": "number", "description": "Sort order (float)"},
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Custom property select value delete condition",
+                },
             },
             "required": ["property_id", "value_id"],
         },
@@ -418,7 +921,7 @@ TOOLS = (
             method="PATCH",
             path_template="/company/custom-properties/{property_id}/select-values/{value_id}",
             path_fields=("property_id", "value_id"),
-            body_fields=("value", "condition", "color", "sort_order"),
+            body_fields=("value", "condition", "color", "sort_order", "deleted"),
         ),
         examples=(
             ExampleSpec(
@@ -481,7 +984,11 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "property_id": {"type": "integer", "description": "Property ID"},
-                "tree_entity_uid": {"type": "string", "description": "Tree entity UID"},
+                "tree_entity_uid": {
+                    "type": "string",
+                    "description": "Tree entity UID",
+                    "format": "uuid",
+                },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -546,11 +1053,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
             },
             "required": ["property_id"],
         },
@@ -652,6 +1155,10 @@ TOOLS = (
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
                 },
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Custom property catalog value delete condition",
+                },
             },
             "required": ["property_id", "value_id"],
         },
@@ -659,7 +1166,7 @@ TOOLS = (
             method="PATCH",
             path_template="/company/custom-properties/{property_id}/catalog-values/{value_id}",
             path_fields=("property_id", "value_id"),
-            body_fields=("name", "value", "condition", "payload"),
+            body_fields=("name", "value", "condition", "payload", "deleted"),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -761,7 +1268,19 @@ TOOLS = (
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "property_id": {"type": "integer", "description": "Property ID"},
                 "value_id": {"type": "integer", "description": "Score value ID"},
-                "value": {"type": ["string", "number", "object"], "description": "Score value."},
+                "value": {
+                    "type": ["string", "number", "object", "null"],
+                    "description": "Score value.",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "description": "Value of card collective score custom property",
+                            "minLength": 1,
+                            "maxLength": 512,
+                        },
+                        {"type": "null", "description": "Empty value"},
+                    ],
+                },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -822,16 +1341,28 @@ TOOLS = (
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
                 },
+                "emoji_vote": {
+                    "type": "string",
+                    "description": "Value of card collective vote of type emoji_set",
+                    "minLength": 1,
+                    "maxLength": 12,
+                },
+                "number_vote": {
+                    "type": "integer",
+                    "description": "Value of card collective vote of type scale or rating",
+                },
             },
-            "required": ["card_id", "property_id", "value"],
+            "required": ["card_id", "property_id"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/cards/{card_id}/custom-properties/{property_id}/collective-vote-values",
             path_fields=("card_id", "property_id"),
-            body_fields=("value", "payload"),
+            body_fields=("value", "payload", "emoji_vote", "number_vote"),
         ),
-        runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
+        runtime_behavior=RuntimeBehavior(
+            request_shaper=payload_body_request, payload_validator=validate_public_request
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json custom-properties collective-vote-values create --card-id 10 --property-id 5 --value 1",
@@ -854,6 +1385,20 @@ TOOLS = (
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
                 },
+                "number_vote": {
+                    "description": "Value of card collective vote of type scale or rating",
+                    "type": ["number", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "number",
+                            "description": "Value of card collective vote of type scale or rating",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Empty value of card collective vote of type scale or rating",
+                        },
+                    ],
+                },
             },
             "required": ["card_id", "property_id", "value_id"],
         },
@@ -861,7 +1406,7 @@ TOOLS = (
             method="PATCH",
             path_template="/cards/{card_id}/custom-properties/{property_id}/collective-vote-values/{value_id}",
             path_fields=("card_id", "property_id", "value_id"),
-            body_fields=("value", "payload"),
+            body_fields=("value", "payload", "number_vote"),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -881,6 +1426,12 @@ TOOLS = (
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "property_id": {"type": "integer", "description": "Property ID"},
                 "value_id": {"type": "integer", "description": "Vote value ID"},
+                "emoji_vote": {
+                    "type": "string",
+                    "description": " removed emoji_vote",
+                    "minLength": 1,
+                    "maxLength": 12,
+                },
             },
             "required": ["card_id", "property_id", "value_id"],
         },
@@ -888,6 +1439,7 @@ TOOLS = (
             method="DELETE",
             path_template="/cards/{card_id}/custom-properties/{property_id}/collective-vote-values/{value_id}",
             path_fields=("card_id", "property_id", "value_id"),
+            body_fields=("emoji_vote",),
         ),
         examples=(
             ExampleSpec(

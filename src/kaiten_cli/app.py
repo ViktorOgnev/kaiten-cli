@@ -405,6 +405,28 @@ def _render_describe_text(description: dict[str, Any]) -> str:
     else:
         lines.append("  No tool-specific arguments.")
 
+    from kaiten_cli.schema_docs import schema_rows
+
+    nested = [
+        (path, definition, required)
+        for path, definition, required in schema_rows(description.get("input_schema", {}))
+        if "." in path or "<" in path or "[]" in path
+    ]
+    if nested:
+        lines.extend(["", "Nested schemas (unknown extension fields are preserved):"])
+        for path, definition, required in nested:
+            kinds = definition.get("type", "any")
+            kinds = "|".join(kinds) if isinstance(kinds, list) else kinds
+            enum = _format_enum(definition.get("enum"))
+            limits = ", ".join(
+                f"{key}={definition[key]}"
+                for key in ("minItems", "maxItems", "minLength", "maxLength")
+                if key in definition
+            )
+            lines.append(
+                f"  {path} ({kinds}, {'required' if required else 'optional'}{enum}{', ' + limits if limits else ''}): {definition.get('description', '')}"
+            )
+
     examples = description.get("examples") or []
     if examples:
         lines.extend(["", "Examples:"])
@@ -693,14 +715,14 @@ def _command_params(tool: ToolSpec) -> list[click.Parameter]:
         if "boolean" in allowed_types and schema.get("enum") is None:
             params.append(
                 click.Option(
-                    [f"{option_name}/--no-{field_name.replace('_', '-')}"],
+                    [f"{option_name}/--no-{field_name.replace('_', '-')}", field_name],
                     default=None,
                     help=description,
                 )
             )
             continue
         option = click.Option(
-            [option_name],
+            [option_name, field_name],
             type=_click_type_for(schema),
             default=None,
             required=False,

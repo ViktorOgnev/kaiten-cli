@@ -66,13 +66,31 @@ TOOLS = (
         description="Create a SCIM user.",
         input_schema={
             "type": "object",
-            "properties": {"payload": SCIM_PAYLOAD},
-            "required": ["payload"],
+            "properties": {
+                "payload": {
+                    "type": "object",
+                    "description": "SCIM JSON payload. Sent as the request body.",
+                },
+                "userName": {"type": "string", "description": "SCIM user name."},
+                "name": {
+                    "type": "object",
+                    "properties": {
+                        "givenName": {"type": "string"},
+                        "familyName": {"type": "string"},
+                    },
+                    "description": "SCIM structured name.",
+                },
+                "emails": {
+                    "type": ["array", "object"],
+                    "description": "SCIM emails. The portal labels this object but renders unnamed nested fields; array form is retained for SCIM compatibility.",
+                },
+            },
+            "required": [],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/scim/v2/Users",
-            body_fields=("payload",),
+            body_fields=("payload", "userName", "name", "emails"),
             api_base_path="",
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
@@ -91,15 +109,30 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "user_id": {"type": "string", "description": "SCIM user ID."},
-                "payload": SCIM_PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "SCIM JSON payload. Sent as the request body.",
+                },
+                "Operations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "op": {"type": "string"},
+                            "path": {"type": "string"},
+                            "value": {},
+                        },
+                    },
+                    "description": "SCIM PATCH operations. Unknown server-specific paths are preserved.",
+                },
             },
-            "required": ["user_id", "payload"],
+            "required": ["user_id"],
         },
         operation=OperationSpec(
             method="PATCH",
             path_template="/scim/v2/Users/{user_id}",
             path_fields=("user_id",),
-            body_fields=("payload",),
+            body_fields=("payload", "Operations"),
             api_base_path="",
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
@@ -162,13 +195,19 @@ TOOLS = (
         description="Create a SCIM group.",
         input_schema={
             "type": "object",
-            "properties": {"payload": SCIM_PAYLOAD},
-            "required": ["payload"],
+            "properties": {
+                "payload": {
+                    "type": "object",
+                    "description": "SCIM JSON payload. Sent as the request body.",
+                },
+                "displayName": {"type": "string", "description": "SCIM group display name."},
+            },
+            "required": [],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/scim/v2/Groups",
-            body_fields=("payload",),
+            body_fields=("payload", "displayName"),
             api_base_path="",
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
@@ -187,15 +226,30 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "group_id": {"type": "string", "description": "SCIM group ID."},
-                "payload": SCIM_PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "SCIM JSON payload. Sent as the request body.",
+                },
+                "Operations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "op": {"type": "string"},
+                            "path": {"type": "string"},
+                            "value": {},
+                        },
+                    },
+                    "description": "SCIM PATCH operations. Unknown server-specific paths are preserved.",
+                },
             },
-            "required": ["group_id", "payload"],
+            "required": ["group_id"],
         },
         operation=OperationSpec(
             method="PATCH",
             path_template="/scim/v2/Groups/{group_id}",
             path_fields=("group_id",),
-            body_fields=("payload",),
+            body_fields=("payload", "Operations"),
             api_base_path="",
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),

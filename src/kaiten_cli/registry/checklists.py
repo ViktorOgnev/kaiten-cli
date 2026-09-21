@@ -6,6 +6,7 @@ from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, Runtim
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import (
     checklist_item_compat_request,
+    checklist_relocation_request,
     execute_checklist_items_list,
     execute_checklists_list,
 )
@@ -47,9 +48,7 @@ TOOLS = (
         description="List all checklists on a Kaiten card.",
         input_schema={
             "type": "object",
-            "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
-            },
+            "properties": {"card_id": {"type": "integer", "description": "Card ID"}},
             "required": ["card_id"],
         },
         operation=OperationSpec(
@@ -113,20 +112,38 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {
-                    "type": "integer",
-                    "description": "Card ID",
-                },
+                "card_id": {"type": "integer", "description": "Card ID"},
                 "name": {"type": "string", "description": "Checklist name"},
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "items_source_checklist_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Checklist id to copy list items from",
+                },
+                "exclude_item_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "If source id is presented, these ids will be used to not include list items in created checklist",
+                },
+                "source_share_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Share checklist id",
+                },
             },
-            "required": ["card_id", "name"],
+            "required": ["card_id"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/cards/{card_id}/checklists",
             path_fields=("card_id",),
-            body_fields=("name", "sort_order"),
+            body_fields=(
+                "name",
+                "sort_order",
+                "items_source_checklist_id",
+                "exclude_item_ids",
+                "source_share_id",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -142,13 +159,14 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "card_id": {
-                    "type": "integer",
-                    "description": "Card ID",
-                },
+                "card_id": {"type": "integer", "description": "Card ID"},
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "name": {"type": "string", "description": "Checklist name"},
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "target_card_id": {
+                    "type": "integer",
+                    "description": "Destination identifier sent in the request body; the source identifier remains in the URL.",
+                },
             },
             "required": ["card_id", "checklist_id"],
         },
@@ -158,6 +176,7 @@ TOOLS = (
             path_fields=("card_id", "checklist_id"),
             body_fields=("name", "sort_order"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=checklist_relocation_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json checklists update --card-id 10 --checklist-id 20 --name "Ready for QA"',
@@ -238,7 +257,23 @@ TOOLS = (
                 "checked": {"type": "boolean", "description": "Whether the item is checked"},
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "user_id": {"type": "integer", "description": "Assigned user ID"},
-                "due_date": {"type": "string", "description": "Due date (ISO 8601 format)"},
+                "due_date": {
+                    "type": ["string", "null"],
+                    "description": "Due date (ISO 8601 format)",
+                    "format": "date-time",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Due date of checklist item in format YYYY-MM-DD, for example 2025-12-24",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Due date of checklist item in format YYYY-MM-DD, for example 2025-12-24",
+                        },
+                    ],
+                },
+                "responsible_id": {"type": "integer", "description": "Responsible user id"},
             },
             "required": ["checklist_id", "text"],
         },
@@ -246,7 +281,7 @@ TOOLS = (
             method="POST",
             path_template="/checklists/{checklist_id}/items",
             path_fields=("checklist_id",),
-            body_fields=("text", "checked", "sort_order", "user_id", "due_date"),
+            body_fields=("text", "checked", "sort_order", "user_id", "due_date", "responsible_id"),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=checklist_item_compat_request),
         examples=(
@@ -274,11 +309,45 @@ TOOLS = (
                 },
                 "checklist_id": {"type": "integer", "description": "Checklist ID"},
                 "item_id": {"type": "integer", "description": "Checklist item ID"},
-                "text": {"type": "string", "description": "Item text"},
+                "text": {
+                    "type": ["string", "null"],
+                    "description": "Item text",
+                    "x-documentation-alternatives": [
+                        {"type": "string", "maxLength": 4096, "description": "Content of item"},
+                        {"type": "null", "description": "Content of item"},
+                    ],
+                },
                 "checked": {"type": "boolean", "description": "Whether the item is checked"},
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "user_id": {"type": "integer", "description": "Assigned user ID"},
-                "due_date": {"type": "string", "description": "Due date (ISO 8601 format)"},
+                "due_date": {
+                    "type": ["string", "null"],
+                    "description": "Due date (ISO 8601 format)",
+                    "format": "date-time",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Due date of checklist item in format YYYY-MM-DD, for example 2025-12-24",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Due date of checklist item in format YYYY-MM-DD, for example 2025-12-24",
+                        },
+                    ],
+                },
+                "responsible_id": {
+                    "description": "Responsible user id",
+                    "type": ["number", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "number", "description": "Responsible user id"},
+                        {"type": "null", "description": "Remove responsible user"},
+                    ],
+                },
+                "target_checklist_id": {
+                    "type": "integer",
+                    "description": "Destination identifier sent in the request body; the source identifier remains in the URL.",
+                },
             },
             "required": ["checklist_id", "item_id"],
         },
@@ -286,7 +355,7 @@ TOOLS = (
             method="PATCH",
             path_template="/checklists/{checklist_id}/items/{item_id}",
             path_fields=("checklist_id", "item_id"),
-            body_fields=("text", "checked", "sort_order", "user_id", "due_date"),
+            body_fields=("text", "checked", "sort_order", "user_id", "due_date", "responsible_id"),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=checklist_item_compat_request),
         examples=(
@@ -360,7 +429,7 @@ TOOLS = (
                 "name": {"type": "string", "description": "Template checklist name."},
                 "sort_order": {"type": "number", "description": "Sort order."},
             },
-            "required": ["space_uid", "name"],
+            "required": ["space_uid"],
         },
         operation=OperationSpec(
             method="POST",
@@ -389,6 +458,10 @@ TOOLS = (
                 },
                 "name": {"type": "string", "description": "Template checklist name."},
                 "sort_order": {"type": "number", "description": "Sort order."},
+                "target_space_uid": {
+                    "type": "string",
+                    "description": "Destination identifier sent in the request body; the source identifier remains in the URL.",
+                },
             },
             "required": ["space_uid", "template_checklist_uid"],
         },
@@ -398,6 +471,7 @@ TOOLS = (
             path_fields=("space_uid", "template_checklist_uid"),
             body_fields=("name", "sort_order"),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=checklist_relocation_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json space-template-checklists update --space-uid space-uuid --template-checklist-uid tmpl-uuid --name "Ready"',

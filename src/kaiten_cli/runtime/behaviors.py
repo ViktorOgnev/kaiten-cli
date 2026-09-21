@@ -109,12 +109,24 @@ def checklist_item_compat_request(
 ) -> tuple[str, Query, Body]:
     card_id = payload.get("card_id")
     if card_id is None:
-        return path, query, body
+        return checklist_relocation_request(tool, payload, path, query, body)
     checklist_id = payload["checklist_id"]
     compatibility_path = f"/cards/{card_id}/checklists/{checklist_id}/items"
     if "item_id" in payload:
         compatibility_path += f"/{payload['item_id']}"
-    return compatibility_path, query, body
+    return checklist_relocation_request(tool, payload, compatibility_path, query, body)
+
+
+def checklist_relocation_request(tool, payload, path, query, body):
+    shaped = dict(body or {})
+    for source, target in (
+        ("target_card_id", "card_id"),
+        ("target_checklist_id", "checklist_id"),
+        ("target_space_uid", "space_uid"),
+    ):
+        if source in payload:
+            shaped[target] = payload[source]
+    return path, query, shaped or None
 
 
 def column_subscriber_default_type_request(

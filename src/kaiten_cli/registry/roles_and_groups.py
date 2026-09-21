@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
 from kaiten_cli.runtime.support.company_users import (
     COMPANY_USERS_DEFAULT_MAX_PAGES,
@@ -31,14 +32,18 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100)",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields.",
+                },
+                "include_inherited_access": {
+                    "type": "boolean",
+                    "description": "The result includes users with inherited access",
+                },
+                "inactive": {
+                    "type": "boolean",
+                    "description": "The result includes only inactive in company members",
                 },
             },
             "required": ["space_id"],
@@ -47,7 +52,7 @@ TOOLS = (
             method="GET",
             path_template="/spaces/{space_id}/users",
             path_fields=("space_id",),
-            query_fields=("limit", "offset"),
+            query_fields=("limit", "offset", "include_inherited_access", "inactive"),
         ),
         response_policy=ResponsePolicy(
             compact_supported=True, default_limit=50, result_kind="list"
@@ -101,15 +106,23 @@ TOOLS = (
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "user_id": {"type": "integer", "description": "User ID to add"},
                 "role_id": {"type": "string", "description": "Role ID (UUID) to assign"},
+                "email": {"type": "string", "description": "User email address"},
+                "guest": {
+                    "type": "boolean",
+                    "description": "Set true to invite the user as a guest",
+                },
+                "operator_comment": {"type": "string", "description": "Operator's comment"},
+                "send_email": {"type": "boolean", "description": "Whether to send email or not"},
             },
-            "required": ["space_id", "user_id"],
+            "required": ["space_id"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/spaces/{space_id}/users",
             path_fields=("space_id",),
-            body_fields=("user_id", "role_id"),
+            body_fields=("user_id", "role_id", "email", "guest", "operator_comment", "send_email"),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_public_request),
         examples=(
             ExampleSpec(
                 command="kaiten --json space-users add --space-id 1 --user-id 7",
@@ -127,6 +140,16 @@ TOOLS = (
                 "space_id": {"type": "integer", "description": "Space ID"},
                 "user_id": {"type": "integer", "description": "User ID to update"},
                 "role_id": {"type": "string", "description": "New role ID (UUID)"},
+                "notifications_enabled": {
+                    "type": "boolean",
+                    "description": "Enabled or disable notifications for space events",
+                },
+                "space_group_id": {
+                    "description": "Space group id",
+                    "type": ["number", "null"],
+                    "x-documentation-alternatives": [{"type": "number"}, {"type": "null"}],
+                },
+                "settings": {"type": "object", "description": "Space user settings"},
             },
             "required": ["space_id", "user_id"],
         },
@@ -134,7 +157,7 @@ TOOLS = (
             method="PATCH",
             path_template="/spaces/{space_id}/users/{user_id}",
             path_fields=("space_id", "user_id"),
-            body_fields=("role_id",),
+            body_fields=("role_id", "notifications_enabled", "space_group_id", "settings"),
         ),
         examples=(
             ExampleSpec(
@@ -181,10 +204,7 @@ TOOLS = (
                     "type": "boolean",
                     "description": "Use the administrative Members section response shape (default true).",
                 },
-                "query": {
-                    "type": "string",
-                    "description": "Search by email or full name.",
-                },
+                "query": {"type": "string", "description": "Search by email or full name."},
                 "limit": {
                     "type": "integer",
                     "minimum": 1,
@@ -217,17 +237,10 @@ TOOLS = (
                 },
                 "temporarily_inactive_status": {
                     "type": "string",
-                    "enum": [
-                        "all_users",
-                        "only_temporarily_inactive_users",
-                        "only_active_users",
-                    ],
+                    "enum": ["all_users", "only_temporarily_inactive_users", "only_active_users"],
                     "description": "Filter by temporary deactivation status.",
                 },
-                "group_ids": {
-                    "type": "array",
-                    "description": "JSON array of company group IDs.",
-                },
+                "group_ids": {"type": "array", "description": "JSON array of company group IDs."},
                 "permissions": {
                     "type": "array",
                     "description": "JSON array of company permission criteria.",
@@ -239,6 +252,23 @@ TOOLS = (
                 "fields": {
                     "type": "string",
                     "description": "Comma-separated field names to return per user.",
+                },
+                "invitesOnly": {"type": "boolean", "description": "Filter to return only invites"},
+                "withTransferAccessStatus": {
+                    "type": "boolean",
+                    "description": "Data about the user rights transfer process is added",
+                },
+                "owner_only": {
+                    "type": "boolean",
+                    "description": "When this flag is enabled the company owner is returned",
+                },
+                "only_paid": {
+                    "type": "boolean",
+                    "description": "Only users with paid access are returned",
+                },
+                "only_virtual": {
+                    "type": "boolean",
+                    "description": "Only virtual users are returned and result of the request is displayed page by page (See limit and offset params).",
                 },
             },
         },
@@ -257,6 +287,11 @@ TOOLS = (
                 "temporarily_inactive_status",
                 "group_ids",
                 "permissions",
+                "invitesOnly",
+                "withTransferAccessStatus",
+                "owner_only",
+                "only_paid",
+                "only_virtual",
             ),
         ),
         response_policy=ResponsePolicy(
@@ -403,6 +438,14 @@ TOOLS = (
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
                 },
+                "apps_permissions": {
+                    "type": "integer",
+                    "description": "User access.\n 0 - no access,\n 1 - full access to Kaiten, access to service desk denied.\n 2 - guest access to Kaiten, access to service desk denied.\n 4 - access only to service desk.\n 5 - full access to Kaiten and service desk.\n 6 - guest access to Kaiten, access to service desk",
+                },
+                "temporarily_inactive": {
+                    "type": "boolean",
+                    "description": "Temporarily inactive: user is still in company, but can't sign in and doesn't need a license",
+                },
             },
             "required": ["user_id"],
         },
@@ -410,7 +453,13 @@ TOOLS = (
             method="PATCH",
             path_template="/company/users/{user_id}",
             path_fields=("user_id",),
-            body_fields=("full_name", "email", "payload"),
+            body_fields=(
+                "full_name",
+                "email",
+                "payload",
+                "apps_permissions",
+                "temporarily_inactive",
+            ),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -543,11 +592,17 @@ TOOLS = (
         description="Delete a user role.",
         input_schema={
             "type": "object",
-            "properties": {"role_id": {"type": "integer", "description": "User role ID"}},
+            "properties": {
+                "role_id": {"type": "integer", "description": "User role ID"},
+                "replace_role_id": {"type": "integer", "description": "Role id to replace deleted"},
+            },
             "required": ["role_id"],
         },
         operation=OperationSpec(
-            method="DELETE", path_template="/user-roles/{role_id}", path_fields=("role_id",)
+            method="DELETE",
+            path_template="/user-roles/{role_id}",
+            path_fields=("role_id",),
+            body_fields=("replace_role_id",),
         ),
         examples=(
             ExampleSpec(
@@ -566,10 +621,33 @@ TOOLS = (
                 "query": {"type": "string", "description": "Search query"},
                 "limit": {"type": "integer", "description": "Max results to return"},
                 "offset": {"type": "integer", "description": "Offset for pagination"},
+                "with_tree_entities": {
+                    "type": "boolean",
+                    "description": "Add tree entities for each group",
+                },
+                "with_users_count": {
+                    "type": "boolean",
+                    "description": "Add users count for each group",
+                },
+                "with_sync_group_attribute": {
+                    "type": "boolean",
+                    "description": "Add sync attribute for each group",
+                },
+                "condition": {"description": "1 - active, 2 - inactive", "type": "string"},
             },
         },
         operation=OperationSpec(
-            method="GET", path_template="/company/groups", query_fields=("query", "limit", "offset")
+            method="GET",
+            path_template="/company/groups",
+            query_fields=(
+                "query",
+                "limit",
+                "offset",
+                "with_tree_entities",
+                "with_users_count",
+                "with_sync_group_attribute",
+                "condition",
+            ),
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
@@ -587,11 +665,18 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "name": {"type": "string", "description": "Group name"},
+                "permissions": {"type": "integer", "description": "Group permissions"},
+                "add_to_cards_and_spaces_enabled": {
+                    "type": "boolean",
+                    "description": "Should add cards and spaces",
+                },
             },
             "required": ["name"],
         },
         operation=OperationSpec(
-            method="POST", path_template="/company/groups", body_fields=("name",)
+            method="POST",
+            path_template="/company/groups",
+            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
         ),
         examples=(
             ExampleSpec(
@@ -606,9 +691,7 @@ TOOLS = (
         description="Get a company group by UID.",
         input_schema={
             "type": "object",
-            "properties": {
-                "group_uid": {"type": "string", "description": "Group UID"},
-            },
+            "properties": {"group_uid": {"type": "string", "description": "Group UID"}},
             "required": ["group_uid"],
         },
         operation=OperationSpec(
@@ -630,6 +713,11 @@ TOOLS = (
             "properties": {
                 "group_uid": {"type": "string", "description": "Group UID"},
                 "name": {"type": "string", "description": "New group name"},
+                "permissions": {"type": "integer", "description": "Group permissions(bit mask)"},
+                "add_to_cards_and_spaces_enabled": {
+                    "type": "boolean",
+                    "description": "Ability to add all users of the group to cards, placed in group spaces. Ability to filter logs by group in «Timesheets»",
+                },
             },
             "required": ["group_uid"],
         },
@@ -637,7 +725,7 @@ TOOLS = (
             method="PATCH",
             path_template="/company/groups/{group_uid}",
             path_fields=("group_uid",),
-            body_fields=("name",),
+            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
         ),
         examples=(
             ExampleSpec(
@@ -652,9 +740,7 @@ TOOLS = (
         description="Delete a company group in Kaiten.",
         input_schema={
             "type": "object",
-            "properties": {
-                "group_uid": {"type": "string", "description": "Group UID"},
-            },
+            "properties": {"group_uid": {"type": "string", "description": "Group UID"}},
             "required": ["group_uid"],
         },
         operation=OperationSpec(
@@ -681,11 +767,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100)",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields.",
@@ -721,6 +803,25 @@ TOOLS = (
             "properties": {
                 "group_uid": {"type": "string", "description": "Group UID"},
                 "user_id": {"type": "integer", "description": "User ID to add"},
+                "request_id": {
+                    "type": "string",
+                    "description": "Request id if addition to the group is answer for access request",
+                },
+                "operator_comment": {
+                    "minLength": 1,
+                    "maxLength": 1024,
+                    "description": "Operator's comment if addition to the group is answer for access request",
+                    "type": ["string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1024,
+                            "description": "Operator's comment if addition to the group is answer for access request",
+                        },
+                        {"type": "null"},
+                    ],
+                },
             },
             "required": ["group_uid", "user_id"],
         },
@@ -728,7 +829,7 @@ TOOLS = (
             method="POST",
             path_template="/groups/{group_uid}/users",
             path_fields=("group_uid",),
-            body_fields=("user_id",),
+            body_fields=("user_id", "request_id", "operator_comment"),
         ),
         examples=(
             ExampleSpec(
@@ -866,8 +967,16 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "group_uid": {"type": "string", "description": "Group UID"},
-                "entity_uid": {"type": "string", "description": "Tree entity UID"},
-                "role_ids": {"type": "array", "description": "Tree entity role IDs."},
+                "entity_uid": {
+                    "type": "string",
+                    "description": "Tree entity UID",
+                    "format": "uuid",
+                },
+                "role_ids": {
+                    "type": "array",
+                    "description": "Tree entity role IDs.",
+                    "items": {"type": "string", "format": "uuid"},
+                },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -898,7 +1007,11 @@ TOOLS = (
             "properties": {
                 "group_uid": {"type": "string", "description": "Group UID"},
                 "entity_uid": {"type": "string", "description": "Tree entity UID"},
-                "role_ids": {"type": "array", "description": "Tree entity role IDs."},
+                "role_ids": {
+                    "type": "array",
+                    "description": "Tree entity role IDs.",
+                    "items": {"type": "string", "format": "uuid"},
+                },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -974,9 +1087,7 @@ TOOLS = (
         description="Get a role by ID.",
         input_schema={
             "type": "object",
-            "properties": {
-                "role_id": {"type": "string", "description": "Role ID (UUID)"},
-            },
+            "properties": {"role_id": {"type": "string", "description": "Role ID (UUID)"}},
             "required": ["role_id"],
         },
         operation=OperationSpec(

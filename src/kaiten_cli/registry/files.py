@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import CACHE_POLICY_NONE, ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.support.files import (
     execute_file_download,
     execute_file_upload,
@@ -92,10 +93,7 @@ TOOLS = (
                     "type": "string",
                     "description": "Preferred local filename when --output is a directory or omitted.",
                 },
-                "overwrite": {
-                    "type": "boolean",
-                    "description": "Replace an existing output file.",
-                },
+                "overwrite": {"type": "boolean", "description": "Replace an existing output file."},
                 "continue": {
                     "type": "boolean",
                     "description": "Resume an existing .part file with HTTP Range. Enabled by default.",
@@ -169,9 +167,7 @@ TOOLS = (
         description="List all file attachments on a Kaiten card.",
         input_schema={
             "type": "object",
-            "properties": {
-                "card_id": {"type": "integer", "description": "Card ID."},
-            },
+            "properties": {"card_id": {"type": "integer", "description": "Card ID."}},
             "required": ["card_id"],
         },
         operation=OperationSpec(
@@ -248,7 +244,10 @@ TOOLS = (
             "required": ["card_id", "file"],
         },
         operation=OperationSpec(
-            method="PUT", path_template="/cards/{card_id}/files", path_fields=("card_id",)
+            method="PUT",
+            path_template="/cards/{card_id}/files",
+            path_fields=("card_id",),
+            body_fields=(),
         ),
         runtime_behavior=RuntimeBehavior(
             execution_mode="custom",
@@ -388,6 +387,14 @@ TOOLS = (
             "properties": {
                 "card_uid": {"type": "string", "description": "Card UUID."},
                 "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "redirect": {
+                    "type": "boolean",
+                    "description": "If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata",
+                },
+                "download": {
+                    "type": "boolean",
+                    "description": "If true, the signed file URL serves the file with Content-Disposition: attachment",
+                },
             },
             "required": ["card_uid", "file_id"],
         },
@@ -395,8 +402,11 @@ TOOLS = (
             method="GET",
             path_template="/cards/{card_uid}/files/{file_id}",
             path_fields=("card_uid", "file_id"),
+            query_fields=("redirect", "download"),
         ),
-        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        runtime_behavior=RuntimeBehavior(
+            cache_policy=CACHE_POLICY_NONE, payload_validator=validate_public_request
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json private-card-files get --card-uid <card_uid> --file-id <file_uid>",
@@ -505,6 +515,14 @@ TOOLS = (
                     "description": "Comment UUID, or `new` before the comment is created.",
                 },
                 "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "redirect": {
+                    "type": "boolean",
+                    "description": "If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata",
+                },
+                "download": {
+                    "type": "boolean",
+                    "description": "If true, the signed file URL serves the file with Content-Disposition: attachment",
+                },
             },
             "required": ["card_uid", "comment_uid", "file_id"],
         },
@@ -512,8 +530,11 @@ TOOLS = (
             method="GET",
             path_template="/cards/{card_uid}/comments/{comment_uid}/files/{file_id}",
             path_fields=("card_uid", "comment_uid", "file_id"),
+            query_fields=("redirect", "download"),
         ),
-        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        runtime_behavior=RuntimeBehavior(
+            cache_policy=CACHE_POLICY_NONE, payload_validator=validate_public_request
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json private-comment-files get --card-uid <card_uid> --comment-uid <comment_uid> --file-id <file_uid>",
@@ -628,6 +649,14 @@ TOOLS = (
                 "card_uid": {"type": "string", "description": "Card UUID."},
                 "property_uid": {"type": "string", "description": "Custom property UUID."},
                 "file_id": {"type": "string", "description": "Restricted Access file UUID."},
+                "redirect": {
+                    "type": "boolean",
+                    "description": "If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata",
+                },
+                "download": {
+                    "type": "boolean",
+                    "description": "If true, the signed file URL serves the file with Content-Disposition: attachment",
+                },
             },
             "required": ["card_uid", "property_uid", "file_id"],
         },
@@ -635,8 +664,11 @@ TOOLS = (
             method="GET",
             path_template=("/cards/{card_uid}/custom-properties/{property_uid}/files/{file_id}"),
             path_fields=("card_uid", "property_uid", "file_id"),
+            query_fields=("redirect", "download"),
         ),
-        runtime_behavior=RuntimeBehavior(cache_policy=CACHE_POLICY_NONE),
+        runtime_behavior=RuntimeBehavior(
+            cache_policy=CACHE_POLICY_NONE, payload_validator=validate_public_request
+        ),
         examples=(
             ExampleSpec(
                 command="kaiten --json private-custom-property-files get --card-uid <card_uid> --property-uid <property_uid> --file-id <file_uid>",

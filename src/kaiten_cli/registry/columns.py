@@ -13,9 +13,7 @@ TOOLS = (
         description="List columns on a Kaiten board. Column types: 1=queue, 2=in_progress, 3=done. Response includes: wip_limit, wip_limit_type (1=cards count, 2=size sum), last_moved_warning_after_days, archive_after_days, card_hide_after_days.",
         input_schema={
             "type": "object",
-            "properties": {
-                "board_id": {"type": "integer", "description": "Board ID"},
-            },
+            "properties": {"board_id": {"type": "integer", "description": "Board ID"}},
             "required": ["board_id"],
         },
         operation=OperationSpec(
@@ -52,14 +50,69 @@ TOOLS = (
                     "description": "Number of sub-columns to split into",
                 },
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "external_id": {
+                    "maxLength": 1024,
+                    "description": "Any external id you want to assign to column. Not exposed in web interface",
+                    "type": ["number", "string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                    ],
+                },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "archive_after_days": {
+                    "type": "integer",
+                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                },
+                "card_hide_after_days": {
+                    "type": ["integer", "null"],
+                    "description": "Hide cards not moved for the last N days",
+                },
+                "rules": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order",
+                },
             },
-            "required": ["board_id", "title", "type"],
+            "required": ["board_id", "title"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/boards/{board_id}/columns",
             path_fields=("board_id",),
-            body_fields=("title", "type", "wip_limit", "wip_limit_type", "col_count", "sort_order"),
+            body_fields=(
+                "title",
+                "type",
+                "wip_limit",
+                "wip_limit_type",
+                "col_count",
+                "sort_order",
+                "external_id",
+                "last_moved_warning_after_days",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_minutes",
+                "archive_after_days",
+                "card_hide_after_days",
+                "rules",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -79,7 +132,20 @@ TOOLS = (
                 "column_id": {"type": "integer", "description": "Column ID"},
                 "title": {"type": "string", "description": "New title"},
                 "type": {"type": "integer", "enum": [1, 2, 3], "description": "Column type"},
-                "wip_limit": {"type": "integer", "description": "WIP limit"},
+                "wip_limit": {
+                    "type": ["integer", "null"],
+                    "description": "WIP limit",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "integer",
+                            "description": "Work in progress recommended limit for column",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Empty work in progress recommended limit for column",
+                        },
+                    ],
+                },
                 "wip_limit_type": {
                     "type": "integer",
                     "description": "WIP limit type (1=cards count, 2=size sum)",
@@ -89,6 +155,71 @@ TOOLS = (
                     "description": "Number of sub-columns to split into",
                 },
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "external_id": {
+                    "maxLength": 1024,
+                    "description": "Any external id you want to assign to column. Not exposed in web interface",
+                    "type": ["number", "string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                    ],
+                },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "archive_after_days": {
+                    "type": "integer",
+                    "description": "Specify amount of days after which cards will be automatically archived. Works only for columns with type **done**",
+                },
+                "card_hide_after_days": {
+                    "type": ["integer", "null"],
+                    "description": "Hide cards not moved for the last N days",
+                },
+                "rules": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order",
+                },
+                "default_tags": {"type": ["string", "null"], "description": "Default tags"},
+                "prev_column_id": {
+                    "description": "Column ID to move column before",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Column ID to move column before"},
+                        {
+                            "type": "null",
+                            "description": "Indicates that column should be moved to the beginning",
+                        },
+                    ],
+                },
+                "next_column_id": {
+                    "description": "Column ID to move column after",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Column ID to move column after"},
+                        {
+                            "type": "null",
+                            "description": "Indicates that column should be moved to the end",
+                        },
+                    ],
+                },
+                "pause_sla": {"type": "boolean"},
             },
             "required": ["board_id", "column_id"],
         },
@@ -96,7 +227,25 @@ TOOLS = (
             method="PATCH",
             path_template="/boards/{board_id}/columns/{column_id}",
             path_fields=("board_id", "column_id"),
-            body_fields=("title", "type", "wip_limit", "wip_limit_type", "col_count", "sort_order"),
+            body_fields=(
+                "title",
+                "type",
+                "wip_limit",
+                "wip_limit_type",
+                "col_count",
+                "sort_order",
+                "external_id",
+                "last_moved_warning_after_days",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_minutes",
+                "archive_after_days",
+                "card_hide_after_days",
+                "rules",
+                "default_tags",
+                "prev_column_id",
+                "next_column_id",
+                "pause_sla",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -114,6 +263,10 @@ TOOLS = (
             "properties": {
                 "board_id": {"type": "integer", "description": "Board ID"},
                 "column_id": {"type": "integer", "description": "Column ID"},
+                "force": {
+                    "type": "boolean",
+                    "description": "Remove cascade (all related data will be gone)",
+                },
             },
             "required": ["board_id", "column_id"],
         },
@@ -121,6 +274,7 @@ TOOLS = (
             method="DELETE",
             path_template="/boards/{board_id}/columns/{column_id}",
             path_fields=("board_id", "column_id"),
+            body_fields=("force",),
         ),
         examples=(
             ExampleSpec(
@@ -135,9 +289,7 @@ TOOLS = (
         description="List all subcolumns of a Kaiten column.",
         input_schema={
             "type": "object",
-            "properties": {
-                "column_id": {"type": "integer", "description": "Column ID"},
-            },
+            "properties": {"column_id": {"type": "integer", "description": "Column ID"}},
             "required": ["column_id"],
         },
         operation=OperationSpec(
@@ -167,6 +319,52 @@ TOOLS = (
                     "type": "integer",
                     "description": "Number of sub-columns to split into",
                 },
+                "external_id": {
+                    "maxLength": 1024,
+                    "description": "Any external id you want to assign to column. Not exposed in web interface",
+                    "type": ["number", "string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                    ],
+                },
+                "type": {
+                    "enum": [1, 2, 3],
+                    "description": "1 - queue, 2 – in progress, 3 – done",
+                    "type": "integer",
+                },
+                "archive_after_days": {
+                    "type": "integer",
+                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                },
+                "card_hide_after_days": {
+                    "type": ["integer", "null"],
+                    "description": "Hide cards not moved for the last N days",
+                },
+                "rules": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order",
+                },
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
             },
             "required": ["column_id", "title"],
         },
@@ -174,7 +372,20 @@ TOOLS = (
             method="POST",
             path_template="/columns/{column_id}/subcolumns",
             path_fields=("column_id",),
-            body_fields=("title", "sort_order", "wip_limit", "col_count"),
+            body_fields=(
+                "title",
+                "sort_order",
+                "wip_limit",
+                "col_count",
+                "external_id",
+                "type",
+                "archive_after_days",
+                "card_hide_after_days",
+                "rules",
+                "last_moved_warning_after_minutes",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_days",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -199,6 +410,76 @@ TOOLS = (
                     "type": "integer",
                     "description": "Number of sub-columns to split into",
                 },
+                "external_id": {
+                    "maxLength": 1024,
+                    "description": "Any external id you want to assign to column. Not exposed in web interface",
+                    "type": ["number", "string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to column. Not exposed in web interface",
+                        },
+                    ],
+                },
+                "type": {
+                    "enum": [1, 2, 3],
+                    "description": "1 - queue, 2 – in progress, 3 – done",
+                    "type": "integer",
+                },
+                "archive_after_days": {
+                    "type": "integer",
+                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                },
+                "card_hide_after_days": {
+                    "type": ["integer", "null"],
+                    "description": "Hide cards not moved for the last N days",
+                },
+                "rules": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order",
+                },
+                "default_tags": {"type": ["string", "null"], "description": "Default tags"},
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "prev_column_id": {
+                    "description": "Column ID to move column before",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Column ID to move column before"},
+                        {
+                            "type": "null",
+                            "description": "Indicates that column should be moved to the beginning",
+                        },
+                    ],
+                },
+                "next_column_id": {
+                    "description": "Column ID to move column after",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Column ID to move column after"},
+                        {
+                            "type": "null",
+                            "description": "Indicates that column should be moved to the end",
+                        },
+                    ],
+                },
+                "pause_sla": {"type": "boolean"},
             },
             "required": ["column_id", "subcolumn_id"],
         },
@@ -206,7 +487,24 @@ TOOLS = (
             method="PATCH",
             path_template="/columns/{column_id}/subcolumns/{subcolumn_id}",
             path_fields=("column_id", "subcolumn_id"),
-            body_fields=("title", "sort_order", "wip_limit", "col_count"),
+            body_fields=(
+                "title",
+                "sort_order",
+                "wip_limit",
+                "col_count",
+                "external_id",
+                "type",
+                "archive_after_days",
+                "card_hide_after_days",
+                "rules",
+                "default_tags",
+                "last_moved_warning_after_minutes",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_days",
+                "prev_column_id",
+                "next_column_id",
+                "pause_sla",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -224,6 +522,10 @@ TOOLS = (
             "properties": {
                 "column_id": {"type": "integer", "description": "Column ID"},
                 "subcolumn_id": {"type": "integer", "description": "Subcolumn ID"},
+                "force": {
+                    "type": "boolean",
+                    "description": "Remove cascade (all related data will be gone)",
+                },
             },
             "required": ["column_id", "subcolumn_id"],
         },
@@ -231,6 +533,7 @@ TOOLS = (
             method="DELETE",
             path_template="/columns/{column_id}/subcolumns/{subcolumn_id}",
             path_fields=("column_id", "subcolumn_id"),
+            body_fields=("force",),
         ),
         examples=(
             ExampleSpec(

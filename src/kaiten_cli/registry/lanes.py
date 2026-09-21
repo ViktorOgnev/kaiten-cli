@@ -15,11 +15,18 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "board_id": {"type": "integer", "description": "Board ID"},
+                "condition": {
+                    "description": "1 - live, 2 - archived, 3 - deleted",
+                    "type": "string",
+                },
             },
             "required": ["board_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/boards/{board_id}/lanes", path_fields=("board_id",)
+            method="GET",
+            path_template="/boards/{board_id}/lanes",
+            path_fields=("board_id",),
+            query_fields=("condition",),
         ),
         examples=(
             ExampleSpec(
@@ -48,6 +55,18 @@ TOOLS = (
                     "type": "integer",
                     "description": "Default card type ID for new cards in this lane",
                 },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
             },
             "required": ["board_id", "title"],
         },
@@ -62,6 +81,9 @@ TOOLS = (
                 "wip_limit",
                 "wip_limit_type",
                 "default_card_type_id",
+                "last_moved_warning_after_days",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_minutes",
             ),
         ),
         examples=(
@@ -83,13 +105,26 @@ TOOLS = (
                 "title": {"type": "string", "description": "New title"},
                 "sort_order": {"type": "number", "description": "Sort order"},
                 "row_count": {"type": "integer", "description": "Number of sub-rows to split into"},
-                "wip_limit": {"type": "integer", "description": "WIP limit"},
+                "wip_limit": {
+                    "type": ["integer", "null"],
+                    "description": "WIP limit",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "integer",
+                            "description": "Work in progress recommended limit for lane",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Empty work in progress recommended limit for lane",
+                        },
+                    ],
+                },
                 "wip_limit_type": {
                     "type": "integer",
                     "description": "WIP limit type (1=cards count, 2=size sum)",
                 },
                 "default_card_type_id": {
-                    "type": "integer",
+                    "type": ["integer", "null"],
                     "description": "Default card type ID for new cards in this lane",
                 },
                 "condition": {
@@ -97,6 +132,19 @@ TOOLS = (
                     "enum": [1, 2],
                     "description": "1=active, 2=archived",
                 },
+                "last_moved_warning_after_days": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_hours": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "last_moved_warning_after_minutes": {
+                    "type": "integer",
+                    "description": "Warning appears on stale cards",
+                },
+                "default_tags": {"type": ["string", "null"], "description": "Default tags"},
             },
             "required": ["board_id", "lane_id"],
         },
@@ -112,6 +160,10 @@ TOOLS = (
                 "wip_limit_type",
                 "default_card_type_id",
                 "condition",
+                "last_moved_warning_after_days",
+                "last_moved_warning_after_hours",
+                "last_moved_warning_after_minutes",
+                "default_tags",
             ),
         ),
         examples=(
@@ -130,6 +182,10 @@ TOOLS = (
             "properties": {
                 "board_id": {"type": "integer", "description": "Board ID"},
                 "lane_id": {"type": "integer", "description": "Lane ID"},
+                "force": {
+                    "type": "boolean",
+                    "description": "Remove cascade (all related data will be gone)",
+                },
             },
             "required": ["board_id", "lane_id"],
         },
@@ -137,6 +193,7 @@ TOOLS = (
             method="DELETE",
             path_template="/boards/{board_id}/lanes/{lane_id}",
             path_fields=("board_id", "lane_id"),
+            body_fields=("force",),
         ),
         examples=(
             ExampleSpec(

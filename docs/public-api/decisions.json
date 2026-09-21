@@ -1,0 +1,366 @@
+[
+  {
+    "url": "https://developers.kaiten.ru/card-checklist-items/update-checklist-item",
+    "tool": "checklist-items.update",
+    "expected_issue": {
+      "field": "body.checklist_id",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "target_checklist_id maps to body.checklist_id; checklist_id identifies the source URL."
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklists/update-checklist",
+    "tool": "checklists.update",
+    "expected_issue": {
+      "field": "body.card_id",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "target_card_id maps to body.card_id; card_id identifies the source URL."
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-children/add-children",
+    "tool": "card-children.add",
+    "expected_issue": {
+      "field": "body.card_id",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "child_card_id maps to body.card_id; card_id identifies the parent URL."
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/add-comment",
+    "tool": "comments.create",
+    "expected_issue": {
+      "field": "body.files[]",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "Legacy unrestricted multipart comment attachments are deprecated. Use private-comment-files.upload; do not reinterpret files[] as JSON file data."
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/update-comment",
+    "tool": "comments.update",
+    "expected_issue": {
+      "field": "body.files[]",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "Legacy unrestricted multipart comment attachments are deprecated. Use private-comment-files.upload; do not reinterpret files[] as JSON file data."
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-files/attach-file-to-card",
+    "tool": "files.upload",
+    "expected_issue": {
+      "field": "body.file",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "The custom executor reads the local file and sends multipart/form-data, not a JSON body."
+  },
+  {
+    "url": "https://developers.kaiten.ru/checklist-items/update-checklist-item",
+    "tool": "checklist-items.update",
+    "expected_issue": {
+      "field": "body.checklist_id",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "target_checklist_id maps to body.checklist_id; checklist_id identifies the source URL."
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/create-new-column",
+    "tool": "columns.create",
+    "expected_issue": {
+      "field": "body.months_to_hide_cards",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/update-column",
+    "tool": "columns.update",
+    "expected_issue": {
+      "field": "body.months_to_hide_cards",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/get-list-of-custom-directories",
+    "tool": "custom-directories.list",
+    "expected_issue": {
+      "field": "query.limit",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/get-list-of-custom-directories",
+    "tool": "custom-directories.list",
+    "expected_issue": {
+      "field": "query.offset",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-cards-linked-to-record",
+    "tool": "custom-directory-records.cards.list",
+    "expected_issue": {
+      "field": "query.limit",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-cards-linked-to-record",
+    "tool": "custom-directory-records.cards.list",
+    "expected_issue": {
+      "field": "query.offset",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-list-of-records",
+    "tool": "custom-directory-records.list",
+    "expected_issue": {
+      "field": "query.limit",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-list-of-records",
+    "tool": "custom-directory-records.list",
+    "expected_issue": {
+      "field": "query.offset",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/get-list-of-properties",
+    "tool": "custom-properties.list",
+    "expected_issue": {
+      "field": "query.include_values",
+      "issue": "wire_mapping"
+    },
+    "status": "documented_conflict",
+    "reason": "The property list page still advertises include_values, while the existing Public API cutover contract removes embedded values. false is ignored; true points to select-values/catalog-values commands."
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/retrieve-list-of-documents",
+    "tool": "documents.list",
+    "expected_issue": {
+      "field": "query.fields",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "search_fields maps to query.fields. fields remains the local response projection."
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/retrieve-list-of-iterations",
+    "tool": "iterations.list",
+    "expected_issue": {
+      "field": "query.limit",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/retrieve-list-of-iterations",
+    "tool": "iterations.list",
+    "expected_issue": {
+      "field": "query.offset",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/get-groups",
+    "tool": "scim.groups.list",
+    "expected_issue": {
+      "field": "query.startIndex",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/get-groups",
+    "tool": "scim.groups.list",
+    "expected_issue": {
+      "field": "query.count",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/get-users",
+    "tool": "scim.users.list",
+    "expected_issue": {
+      "field": "query.startIndex",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/get-users",
+    "tool": "scim.users.list",
+    "expected_issue": {
+      "field": "query.count",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist/update-space-template-checklist",
+    "tool": "space-template-checklists.update",
+    "expected_issue": {
+      "field": "body.space_uid",
+      "issue": "wire_mapping"
+    },
+    "status": "compatible_mapping",
+    "reason": "target_space_uid maps to body.space_uid; space_uid identifies the source URL."
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/create-new-subcolumn",
+    "tool": "subcolumns.create",
+    "expected_issue": {
+      "field": "body.months_to_hide_cards",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/update-subcolumn",
+    "tool": "subcolumns.update",
+    "expected_issue": {
+      "field": "body.months_to_hide_cards",
+      "issue": "missing"
+    },
+    "status": "deprecated",
+    "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+  },
+  {
+    "url": "https://developers.kaiten.ru/tree-entities/get-list-of-entities",
+    "tool": "tree-entities.list",
+    "expected_issue": {
+      "field": "query.limit",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  },
+  {
+    "url": "https://developers.kaiten.ru/tree-entities/get-list-of-entities",
+    "tool": "tree-entities.list",
+    "expected_issue": {
+      "field": "query.offset",
+      "issue": "type",
+      "documented": [
+        "number"
+      ],
+      "cli": [
+        "integer"
+      ]
+    },
+    "status": "documented_conflict",
+    "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+  }
+]

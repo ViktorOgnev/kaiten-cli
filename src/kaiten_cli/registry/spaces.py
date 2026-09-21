@@ -22,11 +22,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100)",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
                 "fields": {
                     "type": "string",
                     "description": "Comma-separated field names to keep in the response. Example: 'id,title'",
@@ -113,19 +109,47 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "Space title"},
+                "title": {
+                    "type": ["string", "number"],
+                    "description": "Space title",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256,
+                            "description": "Space title",
+                        },
+                        {"type": "number"},
+                    ],
+                },
                 "description": {"type": "string", "description": "Space description"},
                 "access": {
                     "type": "string",
                     "enum": ["for_everyone", "by_invite"],
                     "description": "Access type (default: for_everyone)",
                 },
-                "external_id": {"type": "string", "description": "External ID"},
+                "external_id": {
+                    "type": ["string", "number", "null"],
+                    "description": "External ID",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to space. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to space. Not exposed in web interface",
+                        },
+                    ],
+                },
                 "parent_entity_uid": {
                     "type": "string",
                     "description": "Parent entity UID for nesting spaces",
                 },
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "for_everyone_access_role_id": {"type": "string"},
+                "work_calendar_id": {"type": "string", "format": "uuid"},
             },
             "required": ["title"],
         },
@@ -139,6 +163,8 @@ TOOLS = (
                 "external_id",
                 "parent_entity_uid",
                 "sort_order",
+                "for_everyone_access_role_id",
+                "work_calendar_id",
             ),
         ),
         examples=(
@@ -155,19 +181,51 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "space_id": {"type": "integer", "description": "Space ID"},
-                "title": {"type": "string", "description": "New title"},
+                "title": {
+                    "type": ["string", "number"],
+                    "description": "New title",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256,
+                            "description": "Space title",
+                        },
+                        {"type": "number"},
+                    ],
+                },
                 "description": {"type": "string", "description": "New description"},
                 "access": {
                     "type": "string",
                     "enum": ["for_everyone", "by_invite"],
                     "description": "Access type",
                 },
-                "external_id": {"type": "string", "description": "External ID"},
+                "external_id": {
+                    "type": ["string", "number", "null"],
+                    "description": "External ID",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to space. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to space. Not exposed in web interface",
+                        },
+                    ],
+                },
                 "parent_entity_uid": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Parent entity UID for nesting spaces",
                 },
                 "sort_order": {"type": "number", "description": "Sort order"},
+                "hidden_card_type_uids": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "uuid"},
+                    "description": "List of hidden card type uids.",
+                },
+                "settings": {"type": "object"},
             },
             "required": ["space_id"],
         },
@@ -182,6 +240,8 @@ TOOLS = (
                 "external_id",
                 "parent_entity_uid",
                 "sort_order",
+                "hidden_card_type_uids",
+                "settings",
             ),
         ),
         examples=(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import execute_blockers_get
 
 
@@ -18,7 +19,7 @@ TOOLS = (
                 "card_id": {
                     "type": "integer",
                     "description": "ID of the card whose blockers to list.",
-                },
+                }
             },
             "required": ["card_id"],
         },
@@ -99,6 +100,28 @@ TOOLS = (
                 "card_id": {"type": "integer", "description": "ID of the card."},
                 "blocker_id": {"type": "integer", "description": "ID of the blocker to update."},
                 "reason": {"type": "string", "description": "New reason for the blocker."},
+                "blocker_card_id": {"type": "integer", "description": "Blocker card ID"},
+                "due_date": {
+                    "format": "date-time",
+                    "description": "Block deadline. ISO 8601 format",
+                    "type": ["string", "null"],
+                    "x-documentation-alternatives": [
+                        {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Block deadline. ISO 8601 format",
+                        },
+                        {"type": "null", "description": "Empty due date"},
+                    ],
+                },
+                "due_date_time_present": {
+                    "description": "Is time present",
+                    "type": ["boolean", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "boolean", "description": "Is time present"},
+                        {"type": "null", "description": "Empty time present"},
+                    ],
+                },
             },
             "required": ["card_id", "blocker_id"],
         },
@@ -106,7 +129,7 @@ TOOLS = (
             method="PATCH",
             path_template="/cards/{card_id}/blockers/{blocker_id}",
             path_fields=("card_id", "blocker_id"),
-            body_fields=("reason",),
+            body_fields=("reason", "blocker_card_id", "due_date", "due_date_time_present"),
         ),
         examples=(
             ExampleSpec(
@@ -162,15 +185,22 @@ TOOLS = (
             "properties": {
                 "blocker_id": {"type": "integer", "description": "Blocker ID."},
                 "category_uuid": {"type": "string", "description": "Category UUID."},
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Block category's name",
+                },
             },
-            "required": ["blocker_id", "category_uuid"],
+            "required": ["blocker_id"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/blockers/{blocker_id}/categories",
             path_fields=("blocker_id",),
-            body_fields=("category_uuid",),
+            body_fields=("category_uuid", "name"),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_public_request),
         examples=(
             ExampleSpec(
                 command="kaiten --json blocker-categories add --blocker-id 20 --category-uuid cat-uuid",

@@ -39,17 +39,21 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "include_fields": {
-                    "type": "boolean",
-                    "description": "Include directory field definitions.",
-                },
-                "include_author": {"type": "boolean", "description": "Include author user object."},
+                "include_fields": {"type": "boolean", "description": "Include directory fields"},
+                "include_author": {"type": "boolean", "description": "Include author user object"},
                 "include_records_count": {
                     "type": "boolean",
-                    "description": "Include records_count.",
+                    "description": "Include records_count in each directory",
                 },
-                "query": {"type": "string", "description": "Search by directory name."},
-                "conditions": CONDITIONS,
+                "query": {
+                    "type": "string",
+                    "description": "Search by directory name (case-insensitive)",
+                },
+                "conditions": {
+                    "type": "array",
+                    "description": "Filter by condition values: active | inactive | removed",
+                    "items": {"type": "string"},
+                },
                 "limit": {
                     "type": "integer",
                     "description": "Max results, capped by Kaiten at 200.",
@@ -120,10 +124,14 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "Directory name."},
+                "name": {"type": "string", "description": "Custom directory name"},
                 "description": {
                     "type": ["string", "null"],
-                    "description": "Directory description.",
+                    "description": "No description",
+                    "x-documentation-alternatives": [
+                        {"type": "null", "description": "No description"},
+                        {"type": "string", "description": "Custom directory description"},
+                    ],
                 },
                 "settings": {
                     "type": "object",
@@ -131,16 +139,115 @@ TOOLS = (
                 },
                 "fields": {
                     "type": "array",
-                    "description": "Initial directory fields, when supported by the API.",
+                    "description": "Directory fields definition",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256,
+                                "description": "Field name",
+                            },
+                            "type": {
+                                "enum": [
+                                    "string",
+                                    "number",
+                                    "date",
+                                    "email",
+                                    "url",
+                                    "phone",
+                                    "checkbox",
+                                    "select",
+                                    "user",
+                                    "catalog",
+                                    "directory_link",
+                                    "file",
+                                ],
+                                "description": "Field type",
+                                "type": "string",
+                            },
+                            "required": {
+                                "type": "boolean",
+                                "default": False,
+                                "description": "Required field flag",
+                            },
+                            "sort_order": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Field position",
+                            },
+                            "custom_property_uid": {
+                                "description": "Empty custom property reference",
+                                "format": "uuid",
+                                "type": ["null", "string"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "null",
+                                        "description": "Empty custom property reference",
+                                    },
+                                    {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "Custom property UID (required for select/user/catalog fields)",
+                                    },
+                                ],
+                            },
+                            "linked_directory_id": {
+                                "description": "Empty linked directory reference",
+                                "format": "uuid",
+                                "type": ["null", "string"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "null",
+                                        "description": "Empty linked directory reference",
+                                    },
+                                    {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "Linked custom directory ID (required for directory_link fields)",
+                                    },
+                                ],
+                            },
+                        },
+                        "required": ["name", "type"],
+                    },
                 },
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
+                "multi_select": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "When enabled, directory records can store multiple values per field",
+                },
+                "allow_editing": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "When enabled, directory records can be edited from cards without custom properties permission",
+                },
+                "display_field_index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Index of the field to use as a display field. If omitted, the first field is used.",
+                },
             },
             "required": ["name"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/company/custom-directories",
-            body_fields=("name", "description", "settings", "fields", "payload"),
+            body_fields=(
+                "name",
+                "description",
+                "settings",
+                "fields",
+                "payload",
+                "multi_select",
+                "allow_editing",
+                "display_field_index",
+            ),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -158,19 +265,114 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "name": {"type": "string", "description": "Directory name."},
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "name": {"type": "string", "description": "Custom directory name"},
                 "description": {
                     "type": ["string", "null"],
-                    "description": "Directory description.",
+                    "description": "No description",
+                    "x-documentation-alternatives": [
+                        {"type": "null", "description": "No description"},
+                        {"type": "string", "description": "Custom directory description"},
+                    ],
                 },
                 "settings": {"type": "object", "description": "Directory settings."},
                 "condition": {
                     "type": "string",
                     "enum": ["active", "inactive", "removed"],
-                    "description": "Directory condition.",
+                    "description": "Custom directory condition",
                 },
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
+                "multi_select": {
+                    "type": "boolean",
+                    "description": "When enabled, directory records can store multiple values per field",
+                },
+                "allow_editing": {
+                    "type": "boolean",
+                    "description": "When enabled, directory records can be edited from cards without custom properties permission",
+                },
+                "fields": {
+                    "type": "array",
+                    "description": "Full fields list. Fields omitted from this array are soft-deleted (condition=removed).",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Field ID (for updating an existing field)",
+                            },
+                            "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256,
+                                "description": "Field name",
+                            },
+                            "type": {
+                                "enum": [
+                                    "string",
+                                    "number",
+                                    "date",
+                                    "email",
+                                    "url",
+                                    "phone",
+                                    "checkbox",
+                                    "select",
+                                    "user",
+                                    "catalog",
+                                    "directory_link",
+                                    "file",
+                                ],
+                                "description": "Field type",
+                                "type": "string",
+                            },
+                            "required": {"type": "boolean", "description": "Required field flag"},
+                            "is_display": {
+                                "type": "boolean",
+                                "description": "Display field flag (only one field should have is_display=true)",
+                            },
+                            "sort_order": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Field position",
+                            },
+                            "custom_property_uid": {
+                                "description": "Empty custom property reference",
+                                "format": "uuid",
+                                "type": ["null", "string"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "null",
+                                        "description": "Empty custom property reference",
+                                    },
+                                    {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "Custom property UID (required for select/user/catalog fields)",
+                                    },
+                                ],
+                            },
+                            "linked_directory_id": {
+                                "description": "Empty linked directory reference",
+                                "format": "uuid",
+                                "type": ["null", "string"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "null",
+                                        "description": "Empty linked directory reference",
+                                    },
+                                    {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "Linked custom directory ID (required for directory_link fields)",
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
             },
             "required": ["directory_id"],
         },
@@ -178,7 +380,16 @@ TOOLS = (
             method="PATCH",
             path_template="/company/custom-directories/{directory_id}",
             path_fields=("directory_id",),
-            body_fields=("name", "description", "settings", "condition", "payload"),
+            body_fields=(
+                "name",
+                "description",
+                "settings",
+                "condition",
+                "payload",
+                "multi_select",
+                "allow_editing",
+                "fields",
+            ),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -218,9 +429,13 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "include_author": {"type": "boolean", "description": "Include author user object."},
-                "conditions": CONDITIONS,
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "include_author": {"type": "boolean", "description": "Include author user object"},
+                "conditions": {
+                    "type": "array",
+                    "description": "Filter by condition values: active | inactive | removed",
+                    "items": {"type": "string"},
+                },
             },
             "required": ["directory_id"],
         },
@@ -268,20 +483,28 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "name": {"type": "string", "description": "Field name."},
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "name": {"type": "string", "description": "Field name"},
                 "type": {
                     "type": "string",
                     "description": "Field type, for example string, email, phone, or catalog.",
                 },
-                "required": {"type": "boolean", "description": "Whether the field is required."},
+                "required": {
+                    "type": "boolean",
+                    "description": "Required field flag",
+                    "default": False,
+                },
                 "is_display": {
                     "type": "boolean",
-                    "description": "Whether the field is used as display value.",
+                    "description": "Display field flag",
+                    "default": False,
                 },
-                "sort_order": {"type": "number", "description": "Field sort order."},
+                "sort_order": {"type": ["number", "integer"], "description": "Field position"},
                 "settings": {"type": "object", "description": "Type-specific field settings."},
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
             },
             "required": ["directory_id", "name", "type"],
         },
@@ -315,22 +538,22 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "field_id": FIELD_ID,
-                "name": {"type": "string", "description": "Field name."},
-                "required": {"type": "boolean", "description": "Whether the field is required."},
-                "is_display": {
-                    "type": "boolean",
-                    "description": "Whether the field is used as display value.",
-                },
-                "sort_order": {"type": "number", "description": "Field sort order."},
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "field_id": {"type": "string", "description": "Custom directory field ID (UUID)."},
+                "name": {"type": "string", "description": "Field name"},
+                "required": {"type": "boolean", "description": "Required field flag"},
+                "is_display": {"type": "boolean", "description": "Display field flag"},
+                "sort_order": {"type": ["number", "integer"], "description": "Field position"},
                 "condition": {
                     "type": "string",
                     "enum": ["active", "inactive", "removed"],
-                    "description": "Field condition.",
+                    "description": "Custom directory field condition",
                 },
                 "settings": {"type": "object", "description": "Type-specific field settings."},
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
             },
             "required": ["directory_id", "field_id"],
         },
@@ -386,27 +609,30 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "query": {"type": "string", "description": "Quick search by record display value."},
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "query": {"type": "string", "description": "Quick search by record display value"},
                 "profile": {
                     "type": "string",
                     "enum": ["none", "summary", "details", "full"],
-                    "description": "Controls included relations.",
+                    "description": "Controls included relations in response",
+                    "x-documentation-constraints": "none | summary | details | full",
                 },
                 "include_values": {
                     "type": "boolean",
-                    "description": "Legacy flag to include values array.",
+                    "description": "Legacy: include values array",
                 },
-                "include_author": {"type": "boolean", "description": "Include author user object."},
-                "conditions": CONDITIONS,
-                "filters": {
-                    "type": "object",
-                    "description": "Advanced field-based filters as JSON.",
+                "include_author": {"type": "boolean", "description": "Include author user object"},
+                "conditions": {
+                    "type": "array",
+                    "description": "Filter by condition values: active | inactive | removed",
+                    "items": {"type": "string"},
                 },
+                "filters": {"type": "object", "description": "Advanced field-based filters (JSON)"},
                 "filter_operator": {
                     "type": "string",
                     "enum": ["and", "or"],
-                    "description": "Boolean operator for filters.",
+                    "description": "Boolean operator for filters (default: and)",
+                    "x-documentation-constraints": "and | or",
                 },
                 "limit": {
                     "type": "integer",
@@ -449,12 +675,16 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "record_id": RECORD_ID,
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "record_id": {
+                    "type": "string",
+                    "description": "Custom directory record ID (UUID).",
+                },
                 "profile": {
                     "type": "string",
                     "enum": ["none", "summary", "details", "full"],
-                    "description": "Controls included relations.",
+                    "description": "Controls included relations in response",
+                    "x-documentation-constraints": "none | summary | details | full",
                 },
             },
             "required": ["directory_id", "record_id"],
@@ -480,12 +710,20 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
                 "values": {
                     "type": ["object", "array"],
-                    "description": "Field values for the record.",
+                    "description": "Values map where keys are custom directory field IDs. Each value is either an object (single-value) or an array of objects (multi-select).",
                 },
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
+                "response_profile": {
+                    "type": "string",
+                    "description": "Controls response size. Use `none` to return `{ id }` only.",
+                    "x-documentation-constraints": "none | summary | details | full",
+                },
             },
             "required": ["directory_id", "values"],
         },
@@ -494,6 +732,7 @@ TOOLS = (
             path_template="/company/custom-directories/{directory_id}/records",
             path_fields=("directory_id",),
             body_fields=("values", "payload"),
+            query_fields=("response_profile",),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -511,18 +750,29 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "record_id": RECORD_ID,
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "record_id": {
+                    "type": "string",
+                    "description": "Custom directory record ID (UUID).",
+                },
                 "values": {
                     "type": ["object", "array"],
-                    "description": "Field values for the record.",
+                    "description": "Values map where keys are custom directory field IDs. Each value is either an object (single-value) or an array of objects (multi-select).",
                 },
                 "condition": {
                     "type": "string",
                     "enum": ["active", "inactive", "removed"],
-                    "description": "Record condition.",
+                    "description": "Custom directory record condition",
                 },
-                "payload": PAYLOAD,
+                "payload": {
+                    "type": "object",
+                    "description": "Extra JSON body fields from the Kaiten API docs. Merged into the request body.",
+                },
+                "response_profile": {
+                    "type": "string",
+                    "description": "Controls response size. Use `none` to return `{ id }` only.",
+                    "x-documentation-constraints": "none | summary | details | full",
+                },
             },
             "required": ["directory_id", "record_id"],
         },
@@ -531,6 +781,7 @@ TOOLS = (
             path_template="/company/custom-directories/{directory_id}/records/{record_id}",
             path_fields=("directory_id", "record_id"),
             body_fields=("values", "condition", "payload"),
+            query_fields=("response_profile",),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
         examples=(
@@ -570,9 +821,12 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "directory_id": DIRECTORY_ID,
-                "record_id": RECORD_ID,
-                "filter": {"type": "string", "description": "Base64-encoded JSON card filter."},
+                "directory_id": {"type": "string", "description": "Custom directory ID (UUID)."},
+                "record_id": {
+                    "type": "string",
+                    "description": "Custom directory record ID (UUID).",
+                },
+                "filter": {"type": "string", "description": "Base64-encoded JSON card filter"},
                 "limit": {
                     "type": "integer",
                     "description": "Max results, capped by Kaiten at 100.",

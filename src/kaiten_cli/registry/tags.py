@@ -52,10 +52,24 @@ TOOLS = (
                     "type": "string",
                     "description": "Tag name (1-255 chars, must be unique within the company)",
                 },
+                "ids": {"type": "string", "description": "List of comma separated ids to sort by"},
+                "query": {"type": "string", "description": "Filter by name"},
+                "space_id": {"type": "integer", "description": "Filter by space id"},
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum amount of tags",
+                    "x-documentation-constraints": "Default: 100\n Max: 100",
+                },
+                "offset": {"type": "integer", "description": "Number of records to skip"},
             },
             "required": ["name"],
         },
-        operation=OperationSpec(method="POST", path_template="/tags", body_fields=("name",)),
+        operation=OperationSpec(
+            method="POST",
+            path_template="/tags",
+            body_fields=("name",),
+            query_fields=("ids", "query", "space_id", "limit", "offset"),
+        ),
         examples=(
             ExampleSpec(
                 command='kaiten --json tags create --name "backend"',
@@ -95,9 +109,7 @@ TOOLS = (
         description="Delete a Kaiten tag. Requires company tag management permission. May be blocked if an async operation is in progress.",
         input_schema={
             "type": "object",
-            "properties": {
-                "tag_id": {"type": "integer", "description": "Tag ID"},
-            },
+            "properties": {"tag_id": {"type": "integer", "description": "Tag ID"}},
             "required": ["tag_id"],
         },
         operation=OperationSpec(

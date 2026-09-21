@@ -112,8 +112,12 @@ cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | Card ID. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset. |
+| `type` | `string` | no | — | — | sd-owner - returns a list of company users with access to service-desk. virtual-users - returns a list of company virtual users. |
+| `search` | `string` | no | — | — | Filter by full_name, email or username |
+| `orderBy` | `string` | no | — | — | The field to sort by |
+| `role` | `integer` | no | — | — | Filter by role |
 
 **Examples**
 
@@ -356,6 +360,32 @@ cards
 | `condition` | `integer` | no | `1`, `2` | — | Criteria condition: 1=active, 2=archived. |
 | `attributes` | `object` | yes | — | — | Attributes to change on matching cards. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `order_by` | `object` | no | — | — | Sorting parameters |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `attributes.board_id` | integer | no | Board ID |
+| `attributes.column_id` | integer | no | Column ID |
+| `attributes.lane_id` | integer | no | Lane ID |
+| `attributes.owner_id` | integer | no | Owner ID |
+| `attributes.type_id` | integer | no | Card type ID |
+| `attributes.condition` | integer | no | 1 - live, 2 - archived Values: [1, 2] |
+| `attributes.title` | number\|string | no | Title minLength: 1 maxLength: 1024 |
+| `attributes.asap` | boolean | no | ASAP marker |
+| `attributes.due_date` | string\|null | no | Deadline. ISO 8601 format |
+| `attributes.due_date_time_present` | boolean | no | Flag indicating that deadline is specified up to hours and minutes |
+| `attributes.sort_order` | number | no | Position in the cell (board_id, column_id, lane_id) |
+| `attributes.description` | number\|string\|null | no | Description for card maxLength: 32768 |
+| `attributes.expires_later` | boolean | no | Fixed deadline or not. Date dependant flag in terms of Kanban |
+| `attributes.size_text` | number\|string\|null | no | Size. Example of acceptable values: '1', '23.45', '.5', 'S', '3 M', 'L', 'XL', etc... maxLength: 267 |
+| `attributes.service_id` | integer\|null | no | Service ID |
+| `attributes.blocked` | boolean | no | Send false to release all blocks related to this card |
+| `attributes.external_id` | number\|string\|null | no | Any external id you want to assign to card. Not exposed in web interface maxLength: 1024 |
+| `order_by.field_type` | string | no | Field type to sort by Values: ['cp', 'size', 'created', 'due_date', 'title'] |
+| `order_by.id` | integer | no | Field id to sort by |
+| `order_by.direction` | string | no | Sorting direction Values: ['asc', 'desc'] |
 
 **Examples**
 
@@ -394,19 +424,19 @@ cards
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `title` | `string` | yes | — | — | Card title (1-1024 chars) |
+| `title` | `string|number` | yes | — | — | Card title (1-1024 chars) |
 | `board_id` | `integer` | yes | — | — | Target board ID |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
 | `column_id` | `integer` | no | — | — | Target column ID |
 | `lane_id` | `integer` | no | — | — | Target lane ID |
-| `description` | `string` | no | — | — | Card description (max 32768) |
+| `description` | `string|number|null` | no | — | — | Card description (max 32768) |
 | `due_date` | `string|null` | no | — | — | Deadline (ISO 8601) |
 | `asap` | `boolean` | no | — | — | ASAP marker |
-| `size_text` | `string` | no | — | — | Size (e.g. S, M, L, 1, 23.45) |
+| `size_text` | `string|number|null` | no | — | — | Size (e.g. S, M, L, 1, 23.45) |
 | `owner_id` | `integer` | no | — | — | Owner user ID |
 | `type_id` | `integer` | no | — | — | Card type ID |
-| `external_id` | `string` | no | — | — | External ID (max 1024) |
+| `external_id` | `string|number|null` | no | — | — | External ID (max 1024) |
 | `sort_order` | `number` | no | — | — | Position in cell |
 | `position` | `integer` | no | `1`, `2` | — | 1=first, 2=last in cell |
 | `properties` | `object` | no | — | — | Custom properties as {id_N: value} |
@@ -422,6 +452,9 @@ cards
 | `child_card_ids` | `array` | no | — | — | Child card IDs to link (max 1) |
 | `parent_card_ids` | `array` | no | — | — | Parent card IDs to link (max 1) |
 | `project_id` | `string` | no | — | — | Project UUID to attach card to |
+| `owner_email` | `string` | no | — | — | Owner email address. Only works if email belongs to company user |
+| `service_id` | `integer|null` | no | — | — | Service ID |
+| `text_format_type_id` | `integer` | no | `1`, `2`, `3` | — | 1 - markdown (default), 2 – html, 3 - jira wiki format |
 
 **Examples**
 
@@ -504,6 +537,7 @@ cards
 | `markdown` | `boolean` | no | — | — | Save the card as Markdown instead of returning JSON. |
 | `output` | `string` | no | — | — | Markdown output file or directory. Defaults to the current working directory. |
 | `overwrite` | `boolean` | no | — | — | Replace an existing Markdown output file. |
+| `broken_api` | `boolean` | no | — | — | Backward compatibility flag for user-type custom properties. true (default until 2026-04-01): returns user UID strings. false: returns user integer IDs. Recommended: use broken_api=false for new integrations. |
 
 **Examples**
 
@@ -598,11 +632,14 @@ cards
 | `include_search_preview` | `boolean` | no | — | — | Include search preview objects for version=2 |
 | `visible` | `string` | no | — | — | JSON-encoded visibility filter |
 | `archived` | `boolean` | no | — | — | Include archived |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 | `relations` | `string` | no | — | — | Comma-separated relations to include (members,type,custom_properties,...) or 'none' to exclude all. Default: include all. |
 | `fields` | `string` | no | — | — | Comma-separated field names to return per card. Strips everything else. Example: 'id,title,created,last_moved_to_done_at' |
+| `order_space_id` | `integer` | no | — | — | Order by space id |
+| `organizations_ids` | `string` | no | — | — | Search by organizations filter, comma separated |
+| `broken_api` | `boolean` | no | — | — | Backward compatibility flag for user-type custom properties. true (default until 2026-04-01): returns user UID strings. false: returns user integer IDs. Recommended: use broken_api=false for new integrations. |
 
 **Examples**
 
@@ -689,14 +726,17 @@ cards
 | `include_search_preview` | `boolean` | no | — | — | Include search preview objects for version=2 |
 | `visible` | `string` | no | — | — | JSON-encoded visibility filter |
 | `archived` | `boolean` | no | — | — | Include archived |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (default true for bulk) |
 | `relations` | `string` | no | — | — | Relations to include or 'none' to exclude all nested objects (default 'none' for bulk). |
 | `fields` | `string` | no | — | — | Comma-separated field names to return per card after pagination. |
+| `order_space_id` | `integer` | no | — | — | Order by space id |
+| `organizations_ids` | `string` | no | — | — | Search by organizations filter, comma separated |
+| `broken_api` | `boolean` | no | — | — | Backward compatibility flag for user-type custom properties. true (default until 2026-04-01): returns user UID strings. false: returns user integer IDs. Recommended: use broken_api=false for new integrations. |
 | `selection` | `string` | no | `all`, `active_only`, `archived_only` | — | Normalized bulk selection: all, active_only, or archived_only. |
-| `page_size` | `integer` | no | — | >= 1, <= 100 | Cards per page (default 100, max 100) |
-| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit on pages to fetch (default 50, max 1000) |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Cards per page (default 100, max 100) |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Safety limit on pages to fetch (default 50, max 1000) |
 
 **Examples**
 
@@ -832,8 +872,8 @@ cards
 | `card_id` | `integer|string` | yes | — | — | Card ID or key |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title,state' |
-| `title` | `string` | no | — | — | New title |
-| `description` | `string|null` | no | — | — | New description |
+| `title` | `string|number` | no | — | — | New title |
+| `description` | `string|null|number` | no | — | — | New description |
 | `board_id` | `integer` | no | — | — | Move to board |
 | `column_id` | `integer` | no | — | — | Move to column |
 | `lane_id` | `integer` | no | — | — | Move to lane |
@@ -843,9 +883,9 @@ cards
 | `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
 | `due_date` | `string|null` | no | — | — | Deadline (ISO 8601 or null) |
 | `asap` | `boolean` | no | — | — | ASAP marker |
-| `size_text` | `string|null` | no | — | — | Size |
+| `size_text` | `string|null|number` | no | — | — | Size |
 | `blocked` | `boolean` | no | — | — | Set to false to unblock |
-| `external_id` | `string|null` | no | — | — | External ID |
+| `external_id` | `string|null|number` | no | — | — | External ID |
 | `properties` | `object` | no | — | — | Custom properties as {id_N: value} |
 | `sprint_id` | `integer|null` | no | — | — | Sprint ID (null to remove) |
 | `planned_start` | `string|null` | no | — | — | Planned start date (ISO 8601) |
@@ -855,9 +895,14 @@ cards
 | `locked` | `string|null` | no | — | — | Lock identifier (null to unlock) |
 | `due_date_time_present` | `boolean` | no | — | — | True if due_date includes time component |
 | `expires_later` | `boolean` | no | — | — | Expires later flag |
-| `estimate_workload` | `integer` | no | — | — | Estimated workload in minutes (resource planning) |
+| `estimate_workload` | `integer|number` | no | — | — | Estimated workload in minutes (resource planning) |
 | `child_card_ids` | `array` | no | — | — | Child card IDs to link |
 | `parent_card_ids` | `array` | no | — | — | Parent card IDs to link |
+| `service_id` | `integer|null` | no | — | — | Service ID |
+| `text_format_type_id` | `integer` | no | `1`, `2`, `3` | — | 1 - markdown (default), 2 – html, 3 - jira wiki format |
+| `sd_new_comment` | `boolean` | no | — | — | Has unseen Service Desk request author comments |
+| `owner_email` | `string` | no | — | — | Owner email address |
+| `prev_card_id` | `integer` | no | — | — | Specifies optional ID of the card that was previous one and will be positioned after the current card after repositioning |
 
 **Examples**
 
@@ -913,8 +958,8 @@ comments
 |---|---|---|---|---|---|
 | `card_ids` | `array` | yes | — | — | Card IDs to inspect |
 | `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
-| `page_size` | `integer` | no | — | >= 1, <= 100 | Comments per request (default 100, max 100). |
-| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Comments per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Safety limit per card (default 100, max 1000). |
 | `compact` | `boolean` | no | — | — | Strip heavy fields from comment payloads |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep for each comment |
 
@@ -1036,8 +1081,8 @@ comments
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | ID of the card whose comments to list. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset. |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects). |
 
 **Examples**
@@ -1081,7 +1126,7 @@ comments
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | ID of the card. |
 | `comment_id` | `integer` | yes | — | — | ID of the comment to update. |
-| `text` | `string` | yes | — | — | New comment text. For format=html send HTML content. |
+| `text` | `string` | no | — | — | New comment text. For format=html send HTML content. |
 | `format` | `string` | no | `markdown`, `html` | — | Comment format. 'html' switches the request to HTML mode, 'markdown' switches back to markdown. |
 
 **Examples**
@@ -1256,6 +1301,7 @@ users
 | `member_id` | `integer` | yes | — | — | Card member ID from Kaiten. |
 | `role_id` | `string` | no | — | — | Role ID to assign. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `type` | `integer` | no | — | minimum=2, maximum=2 | Make user responsible for card |
 
 **Examples**
 
@@ -1378,6 +1424,23 @@ _No tool-specific arguments._
 | `full_name` | `string` | no | — | — | Full name. |
 | `email` | `string` | no | — | — | Email. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `username` | `string` | no | — | — | Username for mentions and login |
+| `initials` | `string` | no | — | minLength=2, maxLength=2 | Initials |
+| `avatar_type` | `integer` | no | `1`, `2`, `3` | — | 1 – gravatar, 2 – initials, 3 - uploaded |
+| `password` | `string` | no | — | minLength=6 | New password |
+| `old_password` | `string|null` | no | — | minLength=6 | Old password |
+| `lng` | `string` | no | — | — | Language |
+| `default_space_id` | `integer|null` | no | — | — | Default space |
+| `theme` | `string` | no | `light`, `dark`, `auto` | — | light - light color theme, dark - dark color theme, auto - color theme based on OS settings |
+| `email_frequency` | `integer` | no | `1`, `2` | — | 1 - never, 2 – instantly |
+| `timezone` | `string` | no | — | — | Time zone |
+| `subject_by` | `integer` | no | `1`, `2` | — | 1 - id and title, 2 – action |
+| `email_settings` | `object` | no | — | — | Email settings |
+| `telegram_settings` | `object` | no | — | — | Telegram settings |
+| `slack_settings` | `object` | no | — | — | Slack settings |
+| `notification_enabled_channels` | `array` | no | — | — | List of enabled channels for notifications |
+| `notification_settings` | `object` | no | — | — | Channel lists where notifications for specified events should be sent |
+| `ui_version` | `integer` | no | `1`, `2` | — | 1 - old ui. 2 - new ui |
 
 **Examples**
 
@@ -1434,8 +1497,8 @@ timesheet
 |---|---|---|---|---|---|
 | `card_ids` | `array` | yes | — | — | Card IDs to inspect |
 | `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
-| `page_size` | `integer` | no | — | >= 1, <= 100 | Time logs per request (default 100, max 100). |
-| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Time logs per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Safety limit per card (default 100, max 1000). |
 | `for_date` | `string` | no | — | — | Optional YYYY-MM-DD filter passed to each per-card request. |
 | `personal` | `boolean` | no | — | — | Only include the current user's time logs. |
 | `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads |
@@ -1562,8 +1625,8 @@ timesheet
 | `card_id` | `integer` | yes | — | — | ID of the card. |
 | `for_date` | `string` | no | — | — | Filter by date (YYYY-MM-DD). |
 | `personal` | `boolean` | no | — | — | Return only the current user's time logs. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset. |
 | `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads. |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep for each time log. |
 
@@ -1657,6 +1720,22 @@ timesheet
 | `offset` | `integer` | no | — | — | Pagination offset. |
 | `compact` | `boolean` | no | — | — | Strip heavy nested fields from time-log payloads. |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep for each time log. |
+| `from` | `string` | no | — | — | Date from, format YYYY-MM-DDExample: 2025-12-01 |
+| `to` | `string` | no | — | — | Date from, format YYYY-MM-DD Example: 2025-12-30 |
+| `tag_ids` | `string` | no | — | — | Tag ids, comma-separatedExample: 234,2342,6435 |
+| `user_ids` | `string` | no | — | — | User ids, comma-separated Example: 34,345,345345 |
+| `group_ids` | `string` | no | — | — | User group ids, comma-separated Example: 1,2,3 |
+| `space_ids` | `string` | no | — | — | Space ids, comma-separated Example: 453,238945,2 |
+| `board_ids` | `string` | no | — | — | Board ids, comma-separatedExample: 654,24,243 |
+| `column_ids` | `string` | no | — | — | Column ids, comma-separatedExample: 624,12,23 |
+| `card_ids` | `string` | no | — | — | Card ids, comma-separatedExample: 624,12,23 |
+| `visible_column_ids` | `string` | no | — | — | Visible column ids, comma-separated |
+| `condition` | `integer` | no | — | — | Number of records to skip |
+| `group_by` | `integer` | no | — | — | Options to group by. 0 - no groups, 1 - by user, 2 - by card |
+| `time_precision` | `integer` | no | — | — | Time precision for specified time_unit |
+| `time_unit` | `integer` | no | — | — | Time unit |
+| `with_daily_distribution` | `integer` | no | — | — | Returns data daily when grouped by user or card |
+| `only_general_sum` | `integer` | no | — | — | Returns general sum time spent |
 
 **Examples**
 
@@ -1826,6 +1905,11 @@ tags
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `name` | `string` | yes | — | — | Tag name (1-255 chars, must be unique within the company) |
+| `ids` | `string` | no | — | — | List of comma separated ids to sort by |
+| `query` | `string` | no | — | — | Filter by name |
+| `space_id` | `integer` | no | — | — | Filter by space id |
+| `limit` | `integer` | no | — | — | Maximum amount of tags |
+| `offset` | `integer` | no | — | — | Number of records to skip |
 
 **Examples**
 
@@ -2055,7 +2139,8 @@ space-template-checklists
 | `checked` | `boolean` | no | — | — | Whether the item is checked |
 | `sort_order` | `number` | no | — | — | Sort order |
 | `user_id` | `integer` | no | — | — | Assigned user ID |
-| `due_date` | `string` | no | — | — | Due date (ISO 8601 format) |
+| `due_date` | `string|null` | no | — | — | Due date (ISO 8601 format) |
+| `responsible_id` | `integer` | no | — | — | Responsible user id |
 
 **Examples**
 
@@ -2178,11 +2263,13 @@ space-template-checklists
 | `card_id` | `integer` | no | — | — | Optional card ID for the legacy nested route. |
 | `checklist_id` | `integer` | yes | — | — | Checklist ID |
 | `item_id` | `integer` | yes | — | — | Checklist item ID |
-| `text` | `string` | no | — | — | Item text |
+| `text` | `string|null` | no | — | — | Item text |
 | `checked` | `boolean` | no | — | — | Whether the item is checked |
 | `sort_order` | `number` | no | — | — | Sort order |
 | `user_id` | `integer` | no | — | — | Assigned user ID |
-| `due_date` | `string` | no | — | — | Due date (ISO 8601 format) |
+| `due_date` | `string|null` | no | — | — | Due date (ISO 8601 format) |
+| `responsible_id` | `number|null` | no | — | — | Responsible user id |
+| `target_checklist_id` | `integer` | no | — | — | Destination identifier sent in the request body; the source identifier remains in the URL. |
 
 **Examples**
 
@@ -2221,8 +2308,11 @@ space-template-checklists
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | Card ID |
-| `name` | `string` | yes | — | — | Checklist name |
+| `name` | `string` | no | — | — | Checklist name |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `items_source_checklist_id` | `integer` | no | — | minimum=1 | Checklist id to copy list items from |
+| `exclude_item_ids` | `array` | no | — | — | If source id is presented, these ids will be used to not include list items in created checklist |
+| `source_share_id` | `integer` | no | — | minimum=1 | Share checklist id |
 
 **Examples**
 
@@ -2381,6 +2471,7 @@ space-template-checklists
 | `checklist_id` | `integer` | yes | — | — | Checklist ID |
 | `name` | `string` | no | — | — | Checklist name |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `target_card_id` | `integer` | no | — | — | Destination identifier sent in the request body; the source identifier remains in the URL. |
 
 **Examples**
 
@@ -2538,7 +2629,7 @@ space-template-checklists
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_uid` | `string` | yes | — | — | Space UID. |
-| `name` | `string` | yes | — | — | Template checklist name. |
+| `name` | `string` | no | — | — | Template checklist name. |
 | `sort_order` | `number` | no | — | — | Sort order. |
 
 **Examples**
@@ -2655,6 +2746,7 @@ space-template-checklists
 | `template_checklist_uid` | `string` | yes | — | — | Template checklist UID. |
 | `name` | `string` | no | — | — | Template checklist name. |
 | `sort_order` | `number` | no | — | — | Sort order. |
+| `target_space_uid` | `string` | no | — | — | Destination identifier sent in the request body; the source identifier remains in the URL. |
 
 **Examples**
 
@@ -2718,7 +2810,8 @@ current-user-blockers
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `blocker_id` | `integer` | yes | — | — | Blocker ID. |
-| `category_uuid` | `string` | yes | — | — | Category UUID. |
+| `category_uuid` | `string` | no | — | — | Category UUID. |
+| `name` | `string` | no | — | minLength=1, maxLength=128 | Block category's name |
 
 **Examples**
 
@@ -3096,6 +3189,9 @@ _No tool-specific arguments._
 | `card_id` | `integer` | yes | — | — | ID of the card. |
 | `blocker_id` | `integer` | yes | — | — | ID of the blocker to update. |
 | `reason` | `string` | no | — | — | New reason for the blocker. |
+| `blocker_card_id` | `integer` | no | — | — | Blocker card ID |
+| `due_date` | `string|null` | no | — | — | Block deadline. ISO 8601 format |
+| `due_date_time_present` | `boolean|null` | no | — | — | Is time present |
 
 **Examples**
 
@@ -3230,8 +3326,8 @@ planned-relations
 |---|---|---|---|---|---|
 | `card_ids` | `array` | yes | — | — | Parent card IDs to inspect |
 | `workers` | `integer` | no | — | — | Parallel workers (default 2, max 6) |
-| `page_size` | `integer` | no | — | >= 1, <= 100 | Child cards per request (default 100, max 100). |
-| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety limit per card (default 100, max 1000). |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Child cards per request (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Safety limit per card (default 100, max 1000). |
 | `compact` | `boolean` | no | — | — | Strip heavy nested fields from child card payloads |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep for each child card |
 
@@ -3275,8 +3371,8 @@ planned-relations
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | ID of the parent card. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset. |
 
 **Examples**
 
@@ -3394,8 +3490,8 @@ planned-relations
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | ID of the child card. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100). |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100). |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset. |
 
 **Examples**
 
@@ -3605,7 +3701,7 @@ external-links
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | Card ID |
 | `url` | `string` | yes | — | — | URL of the external link |
-| `description` | `string` | no | — | — | Description of the external link |
+| `description` | `string|null` | no | — | — | Description of the external link |
 
 **Examples**
 
@@ -3720,7 +3816,7 @@ external-links
 | `card_id` | `integer` | yes | — | — | Card ID |
 | `link_id` | `integer` | yes | — | — | External link ID |
 | `url` | `string` | no | — | — | URL of the external link |
-| `description` | `string` | no | — | — | Description of the external link |
+| `description` | `string|null` | no | — | — | Description of the external link |
 
 **Examples**
 
@@ -4098,6 +4194,8 @@ private-custom-property-files
 |---|---|---|---|---|---|
 | `card_uid` | `string` | yes | — | — | Card UUID. |
 | `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `redirect` | `boolean` | no | — | — | If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata |
+| `download` | `boolean` | no | — | — | If true, the signed file URL serves the file with Content-Disposition: attachment |
 
 **Examples**
 
@@ -4261,6 +4359,8 @@ private-custom-property-files
 | `card_uid` | `string` | yes | — | — | Card UUID. |
 | `comment_uid` | `string` | yes | — | — | Comment UUID, or `new` before the comment is created. |
 | `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `redirect` | `boolean` | no | — | — | If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata |
+| `download` | `boolean` | no | — | — | If true, the signed file URL serves the file with Content-Disposition: attachment |
 
 **Examples**
 
@@ -4424,6 +4524,8 @@ private-custom-property-files
 | `card_uid` | `string` | yes | — | — | Card UUID. |
 | `property_uid` | `string` | yes | — | — | Custom property UUID. |
 | `file_id` | `string` | yes | — | — | Restricted Access file UUID. |
+| `redirect` | `boolean` | no | — | — | If true, the server responds with a 302 redirect to the signed file URL instead of the JSON metadata |
+| `download` | `boolean` | no | — | — | If true, the signed file URL serves the file with Content-Disposition: attachment |
 
 **Examples**
 
@@ -4851,12 +4953,14 @@ spaces
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `title` | `string` | yes | — | — | Space title |
+| `title` | `string|number` | yes | — | — | Space title |
 | `description` | `string` | no | — | — | Space description |
 | `access` | `string` | no | `for_everyone`, `by_invite` | — | Access type (default: for_everyone) |
-| `external_id` | `string` | no | — | — | External ID |
+| `external_id` | `string|number|null` | no | — | — | External ID |
 | `parent_entity_uid` | `string` | no | — | — | Parent entity UID for nesting spaces |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `for_everyone_access_role_id` | `string` | no | — | — | — |
+| `work_calendar_id` | `string` | no | — | — | — |
 
 **Examples**
 
@@ -4968,8 +5072,8 @@ spaces
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `archived` | `boolean` | no | — | — | Include archived spaces |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `fields` | `string` | no | — | — | Comma-separated field names to keep in the response. Example: 'id,title' |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields (avatars, nested user objects) |
 
@@ -5012,12 +5116,14 @@ spaces
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `title` | `string` | no | — | — | New title |
+| `title` | `string|number` | no | — | — | New title |
 | `description` | `string` | no | — | — | New description |
 | `access` | `string` | no | `for_everyone`, `by_invite` | — | Access type |
-| `external_id` | `string` | no | — | — | External ID |
-| `parent_entity_uid` | `string` | no | — | — | Parent entity UID for nesting spaces |
+| `external_id` | `string|number|null` | no | — | — | External ID |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent entity UID for nesting spaces |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `hidden_card_type_uids` | `array` | no | — | — | List of hidden card type uids. |
+| `settings` | `object` | no | — | — | — |
 
 **Examples**
 
@@ -5072,13 +5178,43 @@ boards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `title` | `string` | yes | — | — | Board title |
-| `description` | `string` | no | — | — | Board description |
-| `external_id` | `string` | no | — | — | External ID |
-| `top` | `number` | no | — | — | Top position (px) |
-| `left` | `number` | no | — | — | Left position (px) |
+| `title` | `string|number` | yes | — | — | Board title |
+| `description` | `string|null` | no | — | — | Board description |
+| `external_id` | `string|number|null` | no | — | — | External ID |
+| `top` | `number|integer` | no | — | — | Top position (px) |
+| `left` | `number|integer` | no | — | — | Left position (px) |
 | `sort_order` | `number` | no | — | — | Sort order |
 | `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards |
+| `columns` | `array` | no | — | — | Board columns.<br>If not passed, a default column will be created.<br>If an empty array is passed, an error will be returned.<br>Previously created boards without columns will not be included in responses, except for requests by ID, until they have at least one column and one track. |
+| `lanes` | `array` | no | — | — | Board lanes.<br>If not passed, a default lane will be created.<br>If an empty array is passed, an error will be returned and the board will not be created.<br>Previously created boards without lanes will not be included in responses, except for requests by ID, until they have at least one column and one lane. |
+| `first_image_is_cover` | `boolean` | no | — | — | Automatically mark first uploaded card's image as card's cover |
+| `reset_lane_spent_time` | `boolean` | no | — | — | Reset lane spent time when card changed lane |
+| `automove_cards` | `boolean` | no | — | — | Automatically move cards depending on their children state |
+| `backward_moves_enabled` | `boolean` | no | — | — | Allow automatic backward movement for summary boards |
+| `auto_assign_enabled` | `boolean` | no | — | — | Automatically assign the author as a member (or responsible if the first member) when a card is moved to the column with type "in progress" or "done" |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `columns[]` | object | no | — |
+| `columns[].title` | string | yes | Title minLength: 0 maxLength: 128 |
+| `columns[].sort_order` | number | no | Position |
+| `columns[].type` | integer | yes | 1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] |
+| `columns[].wip_limit` | integer | no | Work in progress recommended limit for column |
+| `columns[].col_count` | integer | no | Width |
+| `columns[].archive_after_days` | integer | no | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `columns[].months_to_hide_cards` | integer\|null | no | [Deprecated] Hide cards not moved for the last N months |
+| `columns[].card_hide_after_days` | integer\|null | no | Hide cards not moved for the last N days |
+| `columns[].rules` | integer | no | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order minimum: 0 |
+| `columns[].external_id` | number\|string\|null | no | Any external id you want to assign to column. Not exposed in web interface maxLength: 1024 |
+| `columns[].default_tags` | string\|null | no | Default tags |
+| `lanes[]` | object | no | — |
+| `lanes[].title` | string | yes | Title minLength: 0 maxLength: 128 |
+| `lanes[].sort_order` | number | no | Position |
+| `lanes[].wip_limit` | integer | no | Work in progress recommended limit for lane |
+| `lanes[].row_count` | integer | no | Height |
+| `lanes[].default_tags` | string\|null | no | Default tags |
 
 **Examples**
 
@@ -5285,13 +5421,37 @@ boards
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
 | `board_id` | `integer` | yes | — | — | Board ID |
-| `title` | `string` | no | — | — | New title |
-| `description` | `string` | no | — | — | New description |
-| `external_id` | `string` | no | — | — | External ID |
-| `top` | `number` | no | — | — | Top position (px) |
-| `left` | `number` | no | — | — | Left position (px) |
+| `title` | `string|number` | no | — | — | New title |
+| `description` | `string|null` | no | — | — | New description |
+| `external_id` | `string|number|null` | no | — | — | External ID |
+| `top` | `number|integer` | no | — | — | Top position (px) |
+| `left` | `number|integer` | no | — | — | Left position (px) |
 | `sort_order` | `number` | no | — | — | Sort order |
 | `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards |
+| `type` | `integer` | no | `1`, `5` | — | 1 - place on space with coordinates (top, left), 5 - attach to space as sidebar |
+| `cell_wip_limits` | `array` | no | — | — | JSON containing wip limits rules for cells |
+| `default_tags` | `string|null` | no | — | — | Default tags |
+| `first_image_is_cover` | `boolean` | no | — | — | Automatically mark first uploaded card's image as card's cover |
+| `reset_lane_spent_time` | `boolean` | no | — | — | Reset lane spent time when card changed lane |
+| `automove_cards` | `boolean` | no | — | — | Automatically move cards depending on their children state |
+| `backward_moves_enabled` | `boolean` | no | — | — | Allow automatic backward movement for summary boards |
+| `move_parents_to_done` | `boolean` | no | — | — | Automatically move parent cards to done when their children cards on this board is done |
+| `hide_done_policies` | `boolean` | no | — | — | Hide done checklist policies |
+| `hide_done_policies_in_done_column` | `boolean` | no | — | — | Hide done checklist policies only in done column |
+| `move_from_space_id` | `integer` | no | — | — | Move board from space |
+| `auto_assign_enabled` | `boolean` | no | — | — | Automatically assign the author as a member (or responsible if the first member) when a card is moved to the column with type "in progress" or "done" |
+| `card_properties` | `array|null` | no | — | — | Suggested to fill card properties |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `card_properties[]` | object | no | — |
+| `card_properties[].key` | string | no | — |
+| `card_properties[].required` | boolean | no | — |
+| `card_properties[].laneIds` | array\|null | no | — |
+| `card_properties[].columnIds` | array\|null | no | — |
+| `card_properties[].cardTypeIds` | array\|null | no | — |
 
 **Examples**
 
@@ -5350,11 +5510,18 @@ subcolumns
 |---|---|---|---|---|---|
 | `board_id` | `integer` | yes | — | — | Board ID |
 | `title` | `string` | yes | — | — | Column title |
-| `type` | `integer` | yes | `1`, `2`, `3` | — | Column type: 1=queue, 2=in_progress, 3=done |
+| `type` | `integer` | no | `1`, `2`, `3` | — | Column type: 1=queue, 2=in_progress, 3=done |
 | `wip_limit` | `integer` | no | — | — | WIP limit |
 | `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
+| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
+| `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
 
 **Examples**
 
@@ -5393,6 +5560,7 @@ subcolumns
 |---|---|---|---|---|---|
 | `board_id` | `integer` | yes | — | — | Board ID |
 | `column_id` | `integer` | yes | — | — | Column ID |
+| `force` | `boolean` | no | — | — | Remove cascade (all related data will be gone) |
 
 **Examples**
 
@@ -5470,10 +5638,21 @@ subcolumns
 | `column_id` | `integer` | yes | — | — | Column ID |
 | `title` | `string` | no | — | — | New title |
 | `type` | `integer` | no | `1`, `2`, `3` | — | Column type |
-| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit` | `integer|null` | no | — | — | WIP limit |
 | `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 | `sort_order` | `number` | no | — | — | Sort order |
+| `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
+| `archive_after_days` | `integer` | no | — | — | Specify amount of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
+| `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
+| `default_tags` | `string|null` | no | — | — | Default tags |
+| `prev_column_id` | `integer|null` | no | — | — | Column ID to move column before |
+| `next_column_id` | `integer|null` | no | — | — | Column ID to move column after |
+| `pause_sla` | `boolean` | no | — | — | — |
 
 **Examples**
 
@@ -5515,6 +5694,14 @@ subcolumns
 | `sort_order` | `number` | no | — | — | Sort order |
 | `wip_limit` | `integer` | no | — | — | WIP limit |
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
+| `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
+| `type` | `integer` | no | `1`, `2`, `3` | — | 1 - queue, 2 – in progress, 3 – done |
+| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
+| `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
 
 **Examples**
 
@@ -5553,6 +5740,7 @@ subcolumns
 |---|---|---|---|---|---|
 | `column_id` | `integer` | yes | — | — | Column ID |
 | `subcolumn_id` | `integer` | yes | — | — | Subcolumn ID |
+| `force` | `boolean` | no | — | — | Remove cascade (all related data will be gone) |
 
 **Examples**
 
@@ -5632,6 +5820,18 @@ subcolumns
 | `sort_order` | `number` | no | — | — | Sort order |
 | `wip_limit` | `integer` | no | — | — | WIP limit |
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
+| `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
+| `type` | `integer` | no | `1`, `2`, `3` | — | 1 - queue, 2 – in progress, 3 – done |
+| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
+| `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
+| `default_tags` | `string|null` | no | — | — | Default tags |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
+| `prev_column_id` | `integer|null` | no | — | — | Column ID to move column before |
+| `next_column_id` | `integer|null` | no | — | — | Column ID to move column after |
+| `pause_sla` | `boolean` | no | — | — | — |
 
 **Examples**
 
@@ -5690,6 +5890,9 @@ lanes
 | `wip_limit` | `integer` | no | — | — | WIP limit |
 | `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
 | `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards in this lane |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
 
 **Examples**
 
@@ -5728,6 +5931,7 @@ lanes
 |---|---|---|---|---|---|
 | `board_id` | `integer` | yes | — | — | Board ID |
 | `lane_id` | `integer` | yes | — | — | Lane ID |
+| `force` | `boolean` | no | — | — | Remove cascade (all related data will be gone) |
 
 **Examples**
 
@@ -5765,6 +5969,7 @@ lanes
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `board_id` | `integer` | yes | — | — | Board ID |
+| `condition` | `string` | no | — | — | 1 - live, 2 - archived, 3 - deleted |
 
 **Examples**
 
@@ -5806,10 +6011,14 @@ lanes
 | `title` | `string` | no | — | — | New title |
 | `sort_order` | `number` | no | — | — | Sort order |
 | `row_count` | `integer` | no | — | — | Number of sub-rows to split into |
-| `wip_limit` | `integer` | no | — | — | WIP limit |
+| `wip_limit` | `integer|null` | no | — | — | WIP limit |
 | `wip_limit_type` | `integer` | no | — | — | WIP limit type (1=cards count, 2=size sum) |
-| `default_card_type_id` | `integer` | no | — | — | Default card type ID for new cards in this lane |
+| `default_card_type_id` | `integer|null` | no | — | — | Default card type ID for new cards in this lane |
 | `condition` | `integer` | no | `1`, `2` | — | 1=active, 2=archived |
+| `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
+| `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
+| `default_tags` | `string|null` | no | — | — | Default tags |
 
 **Examples**
 
@@ -5870,6 +6079,19 @@ card-types.tree-entities
 | `letter` | `string` | yes | — | — | Single letter or emoji |
 | `color` | `integer` | yes | — | — | Color (2-25) |
 | `description_template` | `string` | no | — | — | Template for card description |
+| `properties` | `object` | no | — | — | Properties of the card suggested for filling - old format, deprecated, use card_properties instead |
+| `card_properties` | `array` | no | — | — | Array of card properties that will be suggested for filling in cards of this type |
+| `suggest_fields` | `boolean` | no | — | — | If true, cards of this type will be offered to display additional fields based on statistics |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `card_properties[]` | object | no | — |
+| `card_properties[].regular_property` | string\|null | no | Key of the regular property Values: ['size', 'due_date', 'tags', 'timeline', 'description'] |
+| `card_properties[].property_uid` | string\|null | no | UID of the custom property |
+| `card_properties[].sort_order` | number | no | Order of the property in the card |
+| `card_properties[].required` | boolean | no | If true, this property will be required to fill in the card |
 
 **Examples**
 
@@ -5907,7 +6129,7 @@ card-types.tree-entities
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `type_id` | `integer` | yes | — | — | Card type ID to delete |
-| `replace_type_id` | `integer` | yes | — | — | Replacement card type ID |
+| `replace_type_id` | `integer|number` | yes | — | — | Replacement card type ID |
 | `has_to_replace_in_automation` | `boolean` | no | — | — | Replace this type in automations. |
 | `has_to_replace_in_restriction` | `boolean` | no | — | — | Replace this type in restrictions. |
 | `has_to_replace_in_workflow` | `boolean` | no | — | — | Replace this type in workflows. |
@@ -6142,6 +6364,20 @@ card-types.tree-entities
 | `letter` | `string` | no | — | — | New letter |
 | `color` | `integer` | no | — | — | New color (2-25) |
 | `description_template` | `string` | no | — | — | Description template |
+| `properties` | `object` | no | — | — | Properties of the card suggested for filling - old format, deprecated, use card_properties instead |
+| `card_properties` | `array` | no | — | — | Array of card properties that will be suggested for filling in cards of this type |
+| `suggest_fields` | `boolean` | no | — | — | If true, cards of this type will be offered to display additional fields based on statistics |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `card_properties[]` | object | no | — |
+| `card_properties[].regular_property` | string\|null | no | Key of the regular property Values: ['size', 'due_date', 'tags', 'timeline', 'description'] |
+| `card_properties[].property_uid` | string\|null | no | UID of the custom property |
+| `card_properties[].sort_order` | number | no | Order of the property in the card |
+| `card_properties[].required` | boolean | no | If true, this property will be required to fill in the card |
+| `card_properties[].type_uid` | string | no | UID of the card type |
 
 **Examples**
 
@@ -6208,11 +6444,26 @@ custom-directory-records.cards
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `name` | `string` | yes | — | — | Directory name. |
-| `description` | `string|null` | no | — | — | Directory description. |
+| `name` | `string` | yes | — | — | Custom directory name |
+| `description` | `string|null` | no | — | — | No description |
 | `settings` | `object` | no | — | — | Directory settings, for example multi_select or allow_editing. |
-| `fields` | `array` | no | — | — | Initial directory fields, when supported by the API. |
+| `fields` | `array` | no | — | — | Directory fields definition |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| `multi_select` | `boolean` | no | — | — | When enabled, directory records can store multiple values per field |
+| `allow_editing` | `boolean` | no | — | — | When enabled, directory records can be edited from cards without custom properties permission |
+| `display_field_index` | `integer` | no | — | minimum=0 | Index of the field to use as a display field. If omitted, the first field is used. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `fields[]` | object | no | — |
+| `fields[].name` | string | yes | Field name minLength: 1 maxLength: 256 |
+| `fields[].type` | string | yes | Field type Values: ['string', 'number', 'date', 'email', 'url', 'phone', 'checkbox', 'select', 'user', 'catalog', 'directory_link', 'file'] |
+| `fields[].required` | boolean | no | Required field flag |
+| `fields[].sort_order` | integer | no | Field position minimum: 0 |
+| `fields[].custom_property_uid` | null\|string | no | Empty custom property reference |
+| `fields[].linked_directory_id` | null\|string | no | Empty linked directory reference |
 
 **Examples**
 
@@ -6350,11 +6601,11 @@ custom-directory-records.cards
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `include_fields` | `boolean` | no | — | — | Include directory field definitions. |
-| `include_author` | `boolean` | no | — | — | Include author user object. |
-| `include_records_count` | `boolean` | no | — | — | Include records_count. |
-| `query` | `string` | no | — | — | Search by directory name. |
-| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `include_fields` | `boolean` | no | — | — | Include directory fields |
+| `include_author` | `boolean` | no | — | — | Include author user object |
+| `include_records_count` | `boolean` | no | — | — | Include records_count in each directory |
+| `query` | `string` | no | — | — | Search by directory name (case-insensitive) |
+| `conditions` | `array` | no | — | — | Filter by condition values: active \| inactive \| removed |
 | `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 200. |
 | `offset` | `integer` | no | — | — | Pagination offset. |
 
@@ -6402,11 +6653,28 @@ custom-directory-records.cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
-| `name` | `string` | no | — | — | Directory name. |
-| `description` | `string|null` | no | — | — | Directory description. |
+| `name` | `string` | no | — | — | Custom directory name |
+| `description` | `string|null` | no | — | — | No description |
 | `settings` | `object` | no | — | — | Directory settings. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Directory condition. |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Custom directory condition |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| `multi_select` | `boolean` | no | — | — | When enabled, directory records can store multiple values per field |
+| `allow_editing` | `boolean` | no | — | — | When enabled, directory records can be edited from cards without custom properties permission |
+| `fields` | `array` | no | — | — | Full fields list. Fields omitted from this array are soft-deleted (condition=removed). |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `fields[]` | object | no | — |
+| `fields[].id` | string | no | Field ID (for updating an existing field) |
+| `fields[].name` | string | no | Field name minLength: 1 maxLength: 256 |
+| `fields[].type` | string | no | Field type Values: ['string', 'number', 'date', 'email', 'url', 'phone', 'checkbox', 'select', 'user', 'catalog', 'directory_link', 'file'] |
+| `fields[].required` | boolean | no | Required field flag |
+| `fields[].is_display` | boolean | no | Display field flag (only one field should have is_display=true) |
+| `fields[].sort_order` | integer | no | Field position minimum: 0 |
+| `fields[].custom_property_uid` | null\|string | no | Empty custom property reference |
+| `fields[].linked_directory_id` | null\|string | no | Empty linked directory reference |
 
 **Examples**
 
@@ -6452,11 +6720,11 @@ custom-directory-records.cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
-| `name` | `string` | yes | — | — | Field name. |
+| `name` | `string` | yes | — | — | Field name |
 | `type` | `string` | yes | — | — | Field type, for example string, email, phone, or catalog. |
-| `required` | `boolean` | no | — | — | Whether the field is required. |
-| `is_display` | `boolean` | no | — | — | Whether the field is used as display value. |
-| `sort_order` | `number` | no | — | — | Field sort order. |
+| `required` | `boolean` | no | — | — | Required field flag |
+| `is_display` | `boolean` | no | — | — | Display field flag |
+| `sort_order` | `number|integer` | no | — | — | Field position |
 | `settings` | `object` | no | — | — | Type-specific field settings. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
@@ -6596,8 +6864,8 @@ custom-directory-records.cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
-| `include_author` | `boolean` | no | — | — | Include author user object. |
-| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
+| `include_author` | `boolean` | no | — | — | Include author user object |
+| `conditions` | `array` | no | — | — | Filter by condition values: active \| inactive \| removed |
 
 **Examples**
 
@@ -6644,11 +6912,11 @@ custom-directory-records.cards
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
 | `field_id` | `string` | yes | — | — | Custom directory field ID (UUID). |
-| `name` | `string` | no | — | — | Field name. |
-| `required` | `boolean` | no | — | — | Whether the field is required. |
-| `is_display` | `boolean` | no | — | — | Whether the field is used as display value. |
-| `sort_order` | `number` | no | — | — | Field sort order. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Field condition. |
+| `name` | `string` | no | — | — | Field name |
+| `required` | `boolean` | no | — | — | Required field flag |
+| `is_display` | `boolean` | no | — | — | Display field flag |
+| `sort_order` | `number|integer` | no | — | — | Field position |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Custom directory field condition |
 | `settings` | `object` | no | — | — | Type-specific field settings. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
 
@@ -6697,7 +6965,7 @@ custom-directory-records.cards
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
 | `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
-| `filter` | `string` | no | — | — | Base64-encoded JSON card filter. |
+| `filter` | `string` | no | — | — | Base64-encoded JSON card filter |
 | `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 100. |
 | `offset` | `integer` | no | — | — | Pagination offset. |
 
@@ -6745,8 +7013,9 @@ custom-directory-records.cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
-| `values` | `object|array` | yes | — | — | Field values for the record. |
+| `values` | `object|array` | yes | — | — | Values map where keys are custom directory field IDs. Each value is either an object (single-value) or an array of objects (multi-select). |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| `response_profile` | `string` | no | — | — | Controls response size. Use `none` to return `{ id }` only. |
 
 **Examples**
 
@@ -6839,7 +7108,7 @@ custom-directory-records.cards
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
 | `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
-| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations. |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations in response |
 
 **Examples**
 
@@ -6885,13 +7154,13 @@ custom-directory-records.cards
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
-| `query` | `string` | no | — | — | Quick search by record display value. |
-| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations. |
-| `include_values` | `boolean` | no | — | — | Legacy flag to include values array. |
-| `include_author` | `boolean` | no | — | — | Include author user object. |
-| `conditions` | `array` | no | — | — | Condition filters, for example ["active", "inactive", "removed"]. |
-| `filters` | `object` | no | — | — | Advanced field-based filters as JSON. |
-| `filter_operator` | `string` | no | `and`, `or` | — | Boolean operator for filters. |
+| `query` | `string` | no | — | — | Quick search by record display value |
+| `profile` | `string` | no | `none`, `summary`, `details`, `full` | — | Controls included relations in response |
+| `include_values` | `boolean` | no | — | — | Legacy: include values array |
+| `include_author` | `boolean` | no | — | — | Include author user object |
+| `conditions` | `array` | no | — | — | Filter by condition values: active \| inactive \| removed |
+| `filters` | `object` | no | — | — | Advanced field-based filters (JSON) |
+| `filter_operator` | `string` | no | `and`, `or` | — | Boolean operator for filters (default: and) |
 | `limit` | `integer` | no | — | — | Max results, capped by Kaiten at 100. |
 | `offset` | `integer` | no | — | — | Pagination offset. |
 
@@ -6940,9 +7209,10 @@ custom-directory-records.cards
 |---|---|---|---|---|---|
 | `directory_id` | `string` | yes | — | — | Custom directory ID (UUID). |
 | `record_id` | `string` | yes | — | — | Custom directory record ID (UUID). |
-| `values` | `object|array` | no | — | — | Field values for the record. |
-| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Record condition. |
+| `values` | `object|array` | no | — | — | Values map where keys are custom directory field IDs. Each value is either an object (single-value) or an array of objects (multi-select). |
+| `condition` | `string` | no | `active`, `inactive`, `removed` | — | Custom directory record condition |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. Merged into the request body. |
+| `response_profile` | `string` | no | — | — | Controls response size. Use `none` to return `{ id }` only. |
 
 **Examples**
 
@@ -7165,8 +7435,8 @@ custom-properties.tree-entities
 | `property_id` | `integer` | yes | — | — | Property ID |
 | `query` | `string` | no | — | — | Text search filter by catalog values |
 | `conditions` | `string` | no | — | — | Condition filter: active or inactive |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 
 **Examples**
 
@@ -7215,6 +7485,7 @@ custom-properties.tree-entities
 | `value` | `object` | no | — | — | Catalog value fields keyed by field UID. |
 | `condition` | `string` | no | `active`, `inactive` | — | Value condition |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `deleted` | `boolean` | no | — | — | Custom property catalog value delete condition |
 
 **Examples**
 
@@ -7338,7 +7609,7 @@ custom-properties.tree-entities
 | `card_id` | `integer` | yes | — | — | Card ID |
 | `property_id` | `integer` | yes | — | — | Property ID |
 | `value_id` | `integer` | yes | — | — | Score value ID |
-| `value` | `string|number|object` | no | — | — | Score value. |
+| `value` | `string|number|object|null` | no | — | — | Score value. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 
 **Examples**
@@ -7378,8 +7649,10 @@ custom-properties.tree-entities
 |---|---|---|---|---|---|
 | `card_id` | `integer` | yes | — | — | Card ID |
 | `property_id` | `integer` | yes | — | — | Property ID |
-| `value` | `string|number|object` | yes | — | — | Vote value. |
+| `value` | `string|number|object` | no | — | — | Vote value. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `emoji_vote` | `string` | no | — | minLength=1, maxLength=12 | Value of card collective vote of type emoji_set |
+| `number_vote` | `integer` | no | — | — | Value of card collective vote of type scale or rating |
 
 **Examples**
 
@@ -7419,6 +7692,7 @@ custom-properties.tree-entities
 | `card_id` | `integer` | yes | — | — | Card ID |
 | `property_id` | `integer` | yes | — | — | Property ID |
 | `value_id` | `integer` | yes | — | — | Vote value ID |
+| `emoji_vote` | `string` | no | — | minLength=1, maxLength=12 |  removed emoji_vote |
 
 **Examples**
 
@@ -7498,6 +7772,7 @@ custom-properties.tree-entities
 | `value_id` | `integer` | yes | — | — | Vote value ID |
 | `value` | `string|number|object` | no | — | — | Vote value. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `number_vote` | `number|null` | no | — | — | Value of card collective vote of type scale or rating |
 
 **Examples**
 
@@ -7534,17 +7809,43 @@ custom-properties.tree-entities
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `name` | `string` | yes | — | — | Property name (1-255 chars) |
-| `type` | `string` | yes | `string`, `number`, `date`, `email`, `checkbox`, `select`, `formula`, `url`, `collective_score`, `vote`, `collective_vote`, `catalog`, `phone`, `user`, `attachment` | — | Property type |
+| `name` | `string` | no | — | — | Property name (1-255 chars) |
+| `type` | `string` | no | `string`, `number`, `date`, `email`, `checkbox`, `select`, `formula`, `url`, `collective_score`, `vote`, `collective_vote`, `catalog`, `phone`, `user`, `attachment` | — | Property type |
 | `show_on_facade` | `boolean` | no | — | — | Show on card facade |
-| `multi_select` | `boolean` | no | — | — | Enable multi-select |
-| `colorful` | `boolean` | no | — | — | Enable colors for select values |
+| `multi_select` | `boolean|null` | no | — | — | Enable multi-select |
+| `colorful` | `boolean|null` | no | — | — | Enable colors for select values |
 | `multiline` | `boolean` | no | — | — | Multiline text field |
-| `values_creatable_by_users` | `boolean` | no | — | — | Allow regular users to create values |
-| `values_type` | `string` | no | `number`, `text` | — | Values type (required for collective_score) |
-| `vote_variant` | `string` | no | `rating`, `scale`, `emoji_set` | — | Vote variant (required for vote/collective_vote) |
-| `color` | `integer` | no | — | — | Color index |
+| `values_creatable_by_users` | `boolean|null` | no | — | — | Allow regular users to create values |
+| `values_type` | `string|null` | no | `number`, `text` | — | Values type (required for collective_score) |
+| `vote_variant` | `string|null` | no | `rating`, `scale`, `emoji_set` | — | Vote variant (required for vote/collective_vote) |
+| `color` | `integer|null` | no | — | — | Color index |
 | `data` | `object` | no | — | — | Type-specific data; required for vote/collective_vote and some other typed properties |
+| `formula` | `string` | no | — | — | Formula for calculation |
+| `formula_source_card` | `object` | no | — | — | Card data from which are used to calculate the formula |
+| `fields_settings` | `object` | no | — | — | — |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `data.restrictions` | object | no | Restrictions on input values |
+| `data.restrictions.min` | number\|null | no | Minimum allowed on input value |
+| `data.restrictions.max` | number\|null | no | Maximum allowed on input value |
+| `data.restrictions.minLength` | number\|null | no | Minimum length allowed on input value minimum: 1 |
+| `data.restrictions.maxLength` | number\|null | no | Minimum length allowed on input value minimum: 1 |
+| `data.restrictions.maxFilesCount` | number\|null | no | Maximum allowed files count |
+| `data.restrictions.filesExtensions` | string\|null | no | Allowed files extensions |
+| `data.formula` | string | no | Formula content minLength: 1 |
+| `data.emoji` | string | no | Emoji for vote property of variant rating minLength: 1 |
+| `data.count` | integer | no | Count of emojis for vote property minimum: 2 maximum: 10 |
+| `data.emojis` | array | no | List of emojis for vote property of variant emoji_set |
+| `data.min` | integer | no | Min value for vote property of variant scale |
+| `data.max` | integer | no | Max value for vote property of variant scale |
+| `data.calculation_method` | string | no | Calculation method for vote property of variant scale Values: ['average', 'sum'] |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].name` | string | no | Field name minLength: 1 |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].required` | boolean | no | Determines is field is required |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].deleted` | boolean | no | Determines is field is deleted |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].sortOrder` | number | no | Minimum sort order of field minimum: 1 |
 
 **Examples**
 
@@ -7679,8 +7980,11 @@ custom-properties.tree-entities
 | `order_by` | `string` | no | — | — | Sort column |
 | `order_direction` | `string` | no | — | — | Sort direction (asc or desc) |
 | `board_id` | `integer` | no | — | — | Filter properties available on a specific board |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Returns the minimum set of parameters of custom properties |
+| `load_by_ids` | `boolean` | no | — | — | Returns custom properties by ids if ids parameter is presented |
+| `ids` | `array` | no | — | — | Array of custom property ids |
 
 **Examples**
 
@@ -7726,7 +8030,7 @@ custom-properties.tree-entities
 |---|---|---|---|---|---|
 | `property_id` | `integer` | yes | — | — | Property ID |
 | `value` | `string` | yes | — | — | Select value text |
-| `color` | `integer` | no | — | — | Color index |
+| `color` | `integer|null` | no | — | — | Color index |
 | `sort_order` | `number` | no | — | — | Sort order (float) |
 
 **Examples**
@@ -7843,10 +8147,11 @@ custom-properties.tree-entities
 | `property_id` | `integer` | yes | — | — | Property ID |
 | `query` | `string` | no | — | — | Search filter by value text |
 | `order_by` | `string` | no | `id`, `sort_order`, `match_query_priority` | — | Sort order mode |
-| `conditions` | `string` | no | — | — | Comma-separated conditions |
+| `conditions` | `string|array` | no | — | — | Comma-separated conditions |
 | `v2_select_search` | `boolean` | no | — | — | Use v2 search mode |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
+| `ids` | `array` | no | — | — | Array of ids to filter by. Works only if v2_select_search param is true |
 
 **Examples**
 
@@ -7887,8 +8192,9 @@ custom-properties.tree-entities
 | `value_id` | `integer` | yes | — | — | Select value ID |
 | `value` | `string` | no | — | — | New value text |
 | `condition` | `string` | no | `active`, `inactive` | — | Value status |
-| `color` | `integer` | no | — | — | Color index |
+| `color` | `integer|null` | no | — | — | Color index |
 | `sort_order` | `number` | no | — | — | Sort order (float) |
+| `deleted` | `boolean` | no | — | — | Custom property select value delete condition |
 
 **Examples**
 
@@ -8043,14 +8349,37 @@ custom-properties.tree-entities
 | `name` | `string` | no | — | — | New name |
 | `condition` | `string` | no | `active`, `inactive` | — | Status |
 | `show_on_facade` | `boolean` | no | — | — | Show on card facade |
-| `multi_select` | `boolean` | no | — | — | Multi-select mode |
-| `colorful` | `boolean` | no | — | — | Enable colors |
+| `multi_select` | `boolean|null` | no | — | — | Multi-select mode |
+| `colorful` | `boolean|null` | no | — | — | Enable colors |
 | `multiline` | `boolean` | no | — | — | Multiline mode |
-| `values_creatable_by_users` | `boolean` | no | — | — | Allow users to create values |
+| `values_creatable_by_users` | `boolean|null` | no | — | — | Allow users to create values |
 | `is_used_as_progress` | `boolean` | no | — | — | Use this formula property as progress |
-| `color` | `integer` | no | — | — | Color index |
+| `color` | `integer|null` | no | — | — | Color index |
 | `data` | `object` | no | — | — | Type-specific data |
-| `fields_settings` | `object` | no | — | — | Catalog fields configuration |
+| `fields_settings` | `object|null` | no | — | — | Catalog fields configuration |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `data.restrictions` | object | no | Restrictions on input values |
+| `data.restrictions.min` | number\|null | no | Minimum allowed on input value |
+| `data.restrictions.max` | number\|null | no | Maximum allowed on input value |
+| `data.restrictions.minLength` | number\|null | no | Minimum length allowed on input value minimum: 1 |
+| `data.restrictions.maxLength` | number\|null | no | Minimum length allowed on input value minimum: 1 |
+| `data.restrictions.maxFilesCount` | number\|null | no | Maximum allowed files count |
+| `data.restrictions.filesExtensions` | string\|null | no | Allowed files extensions |
+| `data.formula` | string | no | Formula content minLength: 1 |
+| `data.emoji` | string | no | Emoji for vote property of variant rating minLength: 1 |
+| `data.count` | integer | no | Count of emojis for vote property minimum: 2 maximum: 10 |
+| `data.emojis` | array | no | List of emojis for vote property of variant emoji_set |
+| `data.min` | number | no | Min value for vote property of variant scale |
+| `data.max` | number | no | Max value for vote property of variant scale |
+| `data.calculation_method` | string | no | Calculation method for vote property of variant scale Values: ['average', 'sum'] |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].name` | string | no | Field name minLength: 1 |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].required` | boolean | no | Determines is field is required |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].deleted` | boolean | no | Determines is field is deleted |
+| `fields_settings[key matching ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$].sortOrder` | number | no | Minimum sort order of field minimum: 1 |
 
 **Examples**
 
@@ -8199,8 +8528,10 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `title` | `string` | yes | — | — | Group title |
-| `parent_entity_uid` | `string` | no | — | — | Parent group UID for nesting |
-| `sort_order` | `integer` | no | — | — | Sort order (auto-generated if not provided) |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent group UID for nesting |
+| `sort_order` | `integer|number` | no | — | — | Sort order (auto-generated if not provided) |
+| `for_everyone_access_role_id` | `string|null` | no | — | — | Role id for everyone access |
+| `key` | `string|null` | no | — | maxLength=256 | Unique document group key within company |
 
 **Examples**
 
@@ -8324,8 +8655,12 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `query` | `string` | no | — | — | Search filter |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default: 50, max: 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default: 50, max: 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
+| `version` | `integer` | no | — | — | Search version. Default: 1. Use version=2 to search via OpenSearch and enable the new response format with result and position fields |
+| `condition` | `integer` | no | — | — | Filter condition. Used with version=2 |
+| `start_position` | `string` | no | — | — | Search cursor for version=2 pagination. Pass the position value from the previous version=2 response |
+| `role` | `integer` | no | — | — | Filter by minimum user role. 1 — reader, 2 — writer, 3 — admin |
 
 **Examples**
 
@@ -8368,6 +8703,19 @@ documents
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Document group UID |
 | `title` | `string` | no | — | — | New group title |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent tree entity uid. Used to move document group in the tree |
+| `sort_order` | `number` | no | — | minimum=0, exclusiveMinimum=0 | Sort order |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | Document group access type |
+| `for_everyone_access_role_id` | `string|null` | no | — | — | Role id for everyone access |
+| `hostname` | `string|null` | no | — | maxLength=30 | Custom hostname for public site. Can contain only letters, numbers and «-», length 2–30 symbols, cannot end with «-» |
+| `redirect_url` | `string|null` | no | — | — | Redirect URL |
+| `key` | `string|null` | no | — | maxLength=256 | Unique document group key within company. Cannot be changed once set |
+| `icon_type` | `string|null` | no | `material_icon`, `None` | — | Icon type |
+| `icon_value` | `string|null` | no | — | — | Icon value (icon name for material_icon type) |
+| `icon_color` | `integer|null` | no | — | — | Icon color |
+| `hidden_on_public_site` | `boolean` | no | — | — | Hide document group on public site |
+| `news_feed` | `boolean` | no | — | — | Mark document group as news feed. Requires hostname to be set on this folder or one of its parent folders |
+| `index_document_uid` | `string|null` | no | — | — | UID of the document to use as the home page for this folder. Requires hostname to be set on this folder. Document must be within the document group tree, not archived and not hidden on public site |
 
 **Examples**
 
@@ -8409,6 +8757,7 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `schema_id` | `integer` | yes | — | — | Document schema ID. |
+| `format` | `string` | no | — | — | Response format. Default: draft-06. |
 
 **Examples**
 
@@ -8445,12 +8794,15 @@ documents
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `title` | `string` | yes | — | — | Document title |
+| `title` | `string` | no | — | — | Document title |
 | `text` | `string` | no | — | — | Markdown content converted to ProseMirror. |
 | `data` | `object` | no | — | — | Raw ProseMirror JSON. |
-| `parent_entity_uid` | `string` | no | — | — | Parent document group UID |
-| `sort_order` | `integer` | no | — | — | Sort order (auto-generated if not provided) |
-| `key` | `string` | no | — | — | Unique key identifier |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent document group UID |
+| `sort_order` | `integer|number` | no | — | — | Sort order (auto-generated if not provided) |
+| `key` | `string|null` | no | — | — | Unique key identifier |
+| `for_everyone_access_role_id` | `string` | no | — | — | — |
+| `clone_uid` | `string` | no | — | — | Document uid to copy |
+| `clone_version` | `number` | no | — | — | Document version to copy |
 
 **Examples**
 
@@ -8572,8 +8924,8 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `query` | `string` | no | — | — | Search filter |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default: 50, max: 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default: 50, max: 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `version` | `integer` | no | — | — | Search version. Use 2 for OpenSearch result/position response. |
 | `condition` | `integer` | no | — | — | Filter condition for version=2 |
 | `search_fields` | `string` | no | — | — | Comma-separated API search fields for version=2. Sent as Kaiten query parameter 'fields'. |
@@ -8622,9 +8974,33 @@ documents
 | `title` | `string` | no | — | — | New document title |
 | `text` | `string` | no | — | — | Markdown content converted to ProseMirror. |
 | `data` | `object` | no | — | — | Raw ProseMirror JSON. |
-| `parent_entity_uid` | `string` | no | — | — | New parent group UID |
-| `sort_order` | `integer` | no | — | — | Sort order |
-| `key` | `string` | no | — | — | Unique key identifier |
+| `parent_entity_uid` | `string|null` | no | — | — | New parent group UID |
+| `sort_order` | `integer|number` | no | — | — | Sort order |
+| `key` | `string|null` | no | — | — | Unique key identifier |
+| `publish_date` | `string|null` | no | — | — | Deadline. ISO 8601 format |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | — |
+| `for_everyone_access_role_id` | `string` | no | — | — | — |
+| `public` | `boolean` | no | — | — | — |
+| `redirect_url` | `string|null` | no | — | — | — |
+| `hidden_on_public_site` | `boolean` | no | — | — | — |
+| `settings` | `object` | no | — | — | Server-side shallow merge: only the key(s) sent are changed, other existing settings are preserved. Sending a key with value null removes it (for keys whose schema allows null). |
+| `backup_version` | `number` | no | — | — | — |
+| `published_version` | `number|null|string` | no | — | — | Version to publish on public site: a number, null, or current. |
+| `icon_type` | `string|null` | no | `emoji`, `material_icon` | — | Type of icon |
+| `icon_value` | `string|null` | no | — | maxLength=100 | Icon value (emoji character or material icon name) |
+| `icon_color` | `integer|null` | no | — | minimum=1, maximum=17 | Icon color index (1-17) |
+| `notification_period_start` | `string|null` | no | — | — | Notification period start date |
+| `notification_period_end` | `string|null` | no | — | — | Notification period end date |
+| `slug` | `string|null` | no | — | minLength=3, maxLength=128 | Human-readable URL slug. Lowercase latin letters, digits and hyphens only. Must be unique within the public site subtree |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `settings.content_width` | string | no | Setting this to "wide" is only available for companies in the documents-ui-settings rollout; other companies get a 403 (code doc_2) if they try. Setting it to "default" is always allowed. Values: ['default', 'wide'] |
+| `published_version<oneOf[0]>` | number | no | Version to publish on public site |
+| `published_version<oneOf[1]>` | null | no | No spicific version to publish on public site, current version will be published |
+| `published_version<oneOf[2]>` | string | no |  Values: ['current'] |
 
 **Examples**
 
@@ -9381,6 +9757,7 @@ iterations
 | `card_uid` | `string` | yes | — | — | Card UUID. |
 | `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | — | Comma-separated field names to return. |
+| `with_details` | `boolean` | no | — | — | Default: false. Set to true to include iteration metadata and event authors and exclude removed iterations. Requires iteration.read in addition to access to the card. Omit or set to false to keep the original response. |
 
 **Examples**
 
@@ -9461,7 +9838,7 @@ iterations
 |---|---|---|---|---|---|
 | `space_uid` | `string` | yes | — | — | Space UUID. |
 | `iteration_id` | `string` | yes | — | — | Iteration UUID. |
-| `status` | `string` | no | `active`, `removed` | — | Relation status filter. |
+| `status` | `string` | no | `active`, `removed` | — | Filter iteration card records by status: active or removed. If omitted, returns both active and removed records |
 | `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
@@ -9544,9 +9921,9 @@ iterations
 |---|---|---|---|---|---|
 | `space_uid` | `string` | yes | — | — | Space UUID. |
 | `title` | `string` | yes | — | — | Iteration title. |
-| `goal` | `string` | no | — | — | Iteration goal. |
-| `start_date` | `string` | no | — | — | ISO 8601 start date. |
-| `finish_date` | `string` | no | — | — | ISO 8601 finish date. |
+| `goal` | `string|null` | no | — | — | Iteration goal. |
+| `start_date` | `string|null` | no | — | — | ISO 8601 start date. |
+| `finish_date` | `string|null` | no | — | — | ISO 8601 finish date. |
 
 **Examples**
 
@@ -9586,7 +9963,7 @@ iterations
 |---|---|---|---|---|---|
 | `space_uid` | `string` | yes | — | — | Space UUID. |
 | `iteration_id` | `string` | yes | — | — | Iteration UUID. |
-| `new_iteration_id` | `string` | no | — | — | Target planned/active iteration for cards before deletion. |
+| `new_iteration_id` | `string|null` | no | — | — | Target planned/active iteration for cards before deletion. |
 
 **Examples**
 
@@ -9667,11 +10044,11 @@ iterations
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_uid` | `string` | yes | — | — | Space UUID. |
-| `status` | `string` | no | — | — | Comma-separated statuses: planned, active, closed. |
-| `with_data` | `string` | no | `cards` | — | Include related cards. |
+| `status` | `string` | no | — | — | Filter by iteration status. Comma separated list of: planned, active, closed, removed |
+| `with_data` | `string` | no | `cards` | — | Include related data. Comma separated list of: cards. Iterations with the status 'removed' do not contain cards. |
 | `limit` | `integer` | no | — | — | Maximum iterations to return (server cap 100). |
 | `offset` | `integer` | no | — | — | Pagination offset. |
-| `order` | `string` | no | `asc`, `desc` | — | Result order. |
+| `order` | `string` | no | `asc`, `desc` | — | Sort order by creation date: asc or desc. Default: asc. |
 | `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
 | `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
@@ -9714,12 +10091,12 @@ iterations
 | `space_uid` | `string` | yes | — | — | Space UUID. |
 | `iteration_id` | `string` | yes | — | — | Iteration UUID. |
 | `title` | `string` | no | — | — | New title. |
-| `goal` | `string` | no | — | — | New goal. |
+| `goal` | `string|null` | no | — | — | New goal. |
 | `status` | `string` | no | `planned`, `active`, `closed` | — | Next iteration status. |
-| `start_date` | `string` | no | — | — | ISO 8601 start date. |
-| `finish_date` | `string` | no | — | — | ISO 8601 finish date. |
-| `actual_finish_date` | `string` | no | — | — | ISO 8601 actual finish date when closing. |
-| `new_iteration_id` | `string` | no | — | — | Target planned/active iteration for remaining cards. |
+| `start_date` | `string|null` | no | — | — | ISO 8601 start date. |
+| `finish_date` | `string|null` | no | — | — | ISO 8601 finish date. |
+| `actual_finish_date` | `string|null` | no | — | — | ISO 8601 actual finish date when closing. |
+| `new_iteration_id` | `string|null` | no | — | — | Target planned/active iteration for remaining cards. |
 
 **Examples**
 
@@ -10204,17 +10581,592 @@ workflows
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `name` | `string` | yes | — | — | Automation name |
-| `trigger` | `object` | yes | — | — | Trigger configuration |
-| `actions` | `array` | yes | — | — | Action configurations |
-| `conditions` | `object` | no | — | — | Conditions configuration |
-| `type` | `string` | no | `on_action`, `on_date`, `on_demand`, `on_workflow` | — | Automation type |
+| `name` | `string` | no | — | maxLength=256 | Automation name |
+| `type` | `string` | no | — | — | Automation type: on_action, on_date, on_demand. Other server-specific types are passed through. |
 | `sort_order` | `number` | no | — | — | Sort position |
 | `source_automation_id` | `string` | no | — | — | Automation ID to clone from |
+| `trigger` | `object` | no | — | — | Trigger configuration. Known variants are checked; server extensions are preserved. |
+| `actions` | `array` | no | — | minItems=1, maxItems=10 | Ordered automation actions (1–10). Known variants are checked; server extensions are preserved. |
+| `conditions` | `object` | no | — | — | Recursive and/or groups: {clause, conditions: [groups or typed conditions]}. Empty object means no conditions. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `trigger.type` | string | no | — |
+| `trigger.hasToFireOnCardCreation` | boolean | no | — |
+| `trigger.data` | object | no | — |
+| `trigger<card_created>` | object | no | — |
+| `trigger<card_created>.type` | string | yes |  x-documentation-constraints: card_created |
+| `trigger<card_created>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: true |
+| `trigger<card_created>.data` | object | no | Data not need for this type |
+| `trigger<card_moved_in_path>` | object | no | — |
+| `trigger<card_moved_in_path>.type` | string | yes |  x-documentation-constraints: card_moved_in_path |
+| `trigger<card_moved_in_path>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_moved_in_path>.data` | object | no | Data not need for this type |
+| `trigger<card_type_changed>` | object | no | — |
+| `trigger<card_type_changed>.type` | string | yes |  x-documentation-constraints: card_type_changed |
+| `trigger<card_type_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_type_changed>.data` | object | no | Data not need for this type |
+| `trigger<card_user_added>` | object | no | — |
+| `trigger<card_user_added>.type` | string | yes |  x-documentation-constraints: card_user_added |
+| `trigger<card_user_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_user_added>.data` | object | yes | Data needed for this type |
+| `trigger<card_user_added>.data.userIds` | array | yes | Users ids. the trigger should take into account users from the list  |
+| `trigger<responsible_added>` | object | no | — |
+| `trigger<responsible_added>.type` | string | yes |  x-documentation-constraints: responsible_added |
+| `trigger<responsible_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<responsible_added>.data` | object | yes | Data needed for this type |
+| `trigger<responsible_added>.data.userIds` | array | yes | Users ids. the trigger should take into account users from the list  |
+| `trigger<checklists_completed>` | object | no | — |
+| `trigger<checklists_completed>.type` | string | yes |  x-documentation-constraints: checklists_completed |
+| `trigger<checklists_completed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<checklists_completed>.data` | object | no | Data not need for this type |
+| `trigger<checklist_item_checked>` | object | no | — |
+| `trigger<checklist_item_checked>.type` | string | yes |  x-documentation-constraints: checklist_item_checked |
+| `trigger<checklist_item_checked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<checklist_item_checked>.data` | object | no | Data not need for this type |
+| `trigger<comment_posted>` | object | no | — |
+| `trigger<comment_posted>.type` | string | yes |  x-documentation-constraints: comment_posted |
+| `trigger<comment_posted>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<comment_posted>.data` | object | no | Data not need for this type |
+| `trigger<tag_added>` | object | no | — |
+| `trigger<tag_added>.type` | string | yes |  x-documentation-constraints: tag_added |
+| `trigger<tag_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<tag_added>.data` | object | no | Data not need for this type |
+| `trigger<tag_removed>` | object | no | — |
+| `trigger<tag_removed>.type` | string | yes |  x-documentation-constraints: tag_removed |
+| `trigger<tag_removed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<tag_removed>.data` | object | no | Data not need for this type |
+| `trigger<card_state_changed>` | object | no | — |
+| `trigger<card_state_changed>.type` | string | yes |  x-documentation-constraints: card_state_changed |
+| `trigger<card_state_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_state_changed>.data` | object | no | Data not need for this type |
+| `trigger<custom_property_changed>` | object | no | — |
+| `trigger<custom_property_changed>.type` | string | yes | — |
+| `trigger<custom_property_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<custom_property_changed>.data` | object | no | Data not need for this type |
+| `trigger<due_date_changed>` | object | no | — |
+| `trigger<due_date_changed>.type` | string | yes |  x-documentation-constraints: due_date_changed |
+| `trigger<due_date_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<due_date_changed>.data` | object | no | Data not need for this type |
+| `trigger<child_cards_state_changed>` | object | no | — |
+| `trigger<child_cards_state_changed>.type` | string | yes |  x-documentation-constraints: child_cards_state_changed |
+| `trigger<child_cards_state_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<child_cards_state_changed>.data` | object | no | Data not need for this type |
+| `trigger<blocked>` | object | no | — |
+| `trigger<blocked>.type` | string | yes |  x-documentation-constraints: blocked |
+| `trigger<blocked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<blocked>.data` | object | no | Data not need for this type |
+| `trigger<unblocked>` | object | no | — |
+| `trigger<unblocked>.type` | string | yes |  x-documentation-constraints: unblocked |
+| `trigger<unblocked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<unblocked>.data` | object | no | Data not need for this type |
+| `trigger<blocker_added>` | object | no | — |
+| `trigger<blocker_added>.type` | string | yes |  x-documentation-constraints: blocker_added |
+| `trigger<blocker_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<blocker_added>.data` | object | no | Data not need for this type |
+| `trigger<due_date_on_date>` | object | no | — |
+| `trigger<due_date_on_date>.type` | string | yes |  x-documentation-constraints: due_date_on_date |
+| `trigger<due_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<due_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<due_date_on_date>.data.variant` | string | yes | "date_moment_came" - the date has come,<br> "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<due_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<due_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<due_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<due_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<checklist_item_due_date_on_date>` | object | no | — |
+| `trigger<checklist_item_due_date_on_date>.type` | string | yes |  x-documentation-constraints: checklist_item_due_date_on_date |
+| `trigger<checklist_item_due_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<checklist_item_due_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<checklist_item_due_date_on_date>.data.variant` | string | yes | "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<checklist_item_due_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<checklist_item_due_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<checklist_item_due_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<checklist_item_due_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<custom_property_date_on_date>` | object | no | — |
+| `trigger<custom_property_date_on_date>.type` | string | yes |  x-documentation-constraints: custom_property_date_on_date |
+| `trigger<custom_property_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<custom_property_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<custom_property_date_on_date>.data.variant` | string | yes | "date_moment_came" - the date has come,<br> "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<custom_property_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<custom_property_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<custom_property_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<custom_property_date_on_date>.data.propertyId` | integer | yes | Property id |
+| `trigger<custom_property_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `actions[]` | object | no | — |
+| `actions[]<add_assignee>` | object | no | Make responsible |
+| `actions[]<add_assignee>.type` | string | yes |  x-documentation-constraints: add_assignee |
+| `actions[]<add_assignee>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_assignee>.data` | object | yes | — |
+| `actions[]<add_assignee>.data.userId` | integer | no | User id . 0- card owner |
+| `actions[]<add_assignee>.data.userIds` | array | no | User ids . Empty array - random space user |
+| `actions[]<remove_assignee>` | object | no | Remove responsible |
+| `actions[]<remove_assignee>.type` | string | yes |  x-documentation-constraints: remove_assignee |
+| `actions[]<remove_assignee>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_assignee>.data` | object | yes | Send empty data if you need to assigned at the time of the action |
+| `actions[]<remove_assignee>.data.userId` | integer | no | User id to remove. |
+| `actions[]<move_to_path>` | object | no | Move card to |
+| `actions[]<move_to_path>.type` | string | yes |  x-documentation-constraints: move_to_path |
+| `actions[]<move_to_path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<move_to_path>.data` | object | yes | Data  needed for this type |
+| `actions[]<move_to_path>.data.spaceId` | integer | yes | New card space |
+| `actions[]<move_to_path>.data.columnId` | integer | yes | New card column |
+| `actions[]<move_to_path>.data.boardId` | integer | yes | New card board |
+| `actions[]<move_to_path>.data.laneId` | integer | yes | New card lane |
+| `actions[]<move_on_board>` | object | no | Move a card within the board |
+| `actions[]<move_on_board>.type` | string | yes |  x-documentation-constraints: move_on_board |
+| `actions[]<move_on_board>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<move_on_board>.data` | object | yes | Data needed for this type |
+| `actions[]<move_on_board>.data.direction` | string | yes | top, bottom - in same column, next - next column, previous - previous column Values: ['top', 'bottom', 'next', 'previous'] x-documentation-constraints: ['top', 'bottom', 'next', 'previous'] |
+| `actions[]<add_tag>` | object | no | Add tags |
+| `actions[]<add_tag>.type` | string | yes |  x-documentation-constraints: add_tag |
+| `actions[]<add_tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_tag>.data` | object | yes | Data needed for this type |
+| `actions[]<add_tag>.data.tagNames` | array | yes | Tag names to add |
+| `actions[]<remove_tags>` | object | no | Remove tags |
+| `actions[]<remove_tags>.type` | string | yes |  x-documentation-constraints: remove_tags |
+| `actions[]<remove_tags>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_tags>.data` | object | yes | Data needed for this type |
+| `actions[]<remove_tags>.data.tagIds` | array | yes | Tag ids to remove, empty array - remove all |
+| `actions[]<add_card_users>` | object | no | Add card members |
+| `actions[]<add_card_users>.type` | string | yes |  x-documentation-constraints: add_card_users |
+| `actions[]<add_card_users>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_card_users>.data` | object | yes | Data needed for this type |
+| `actions[]<add_card_users>.data.userIds` | array | no | User ids to add. don`t send any data for event author |
+| `actions[]<add_property>` | object | no | Add property |
+| `actions[]<add_property>.type` | string | yes |  x-documentation-constraints: add_property |
+| `actions[]<add_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_property>.data` | object | yes | Data needed for this type |
+| `actions[]<add_property>.data.propertyId` | integer | yes | Property id to add |
+| `actions[]<add_property>.data.value` | number\|string\|object\|array | yes |  property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string  |
+| `actions[]<add_property>.data.value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] |
+| `actions[]<add_property>.data.value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_property>.data.value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_property>.data.value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_property>.data.value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_property>.data.value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_property>.data.value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_property>.data.value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_property>.data.value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<add_child_card>` | object | no | Create child card |
+| `actions[]<add_child_card>.type` | string | yes |  x-documentation-constraints: add_child_card |
+| `actions[]<add_child_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_child_card>.data` | object | yes | Data needed for this type |
+| `actions[]<add_child_card>.data.title` | string | yes | Card title |
+| `actions[]<add_child_card>.data.spaceId` | integer\|null | no | New card space. null - create on parent card path |
+| `actions[]<add_child_card>.data.columnId` | integer\|null | no | New card column.  null - create on parent card path |
+| `actions[]<add_child_card>.data.boardId` | integer\|null | no | New card board.  null - create on parent card path |
+| `actions[]<add_child_card>.data.laneId` | integer\|null | no | New card lane.  null - create on parent card path |
+| `actions[]<add_child_card>.data.parentFields` | array | no | Inherit card fields. Variants:<br> members - card members,<br> external_links - card external links,<br> due_date - card due date,<br> type - card type,<br> size - card size,<br> description - card description,<br> tags - card tags,<br> files - card files<br> responsible - card responsible,<br> timeline - card timeline<br> estimate_workload - card workload<br> properties - inherit all card custom properties,<br>  customProperty_{custom_property_id} - custom property . Example: customProperty_97" x-documentation-constraints: ['members', 'external_links', 'due_date', 'type', 'size', 'description', 'tags', 'files', 'responsible', 'timeline', 'estimate_workload', 'properties', 'customProperty_{custom_property_id}'] |
+| `actions[]<add_child_card>.data.typeId` | integer | no | Add type |
+| `actions[]<add_child_card>.data.size` | string | no | Add size |
+| `actions[]<add_child_card>.data.dueDate` | object | no | Add due date |
+| `actions[]<add_child_card>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_child_card>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_child_card>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_child_card>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_child_card>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_child_card>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_child_card>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_child_card>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_child_card>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_child_card>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_child_card>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_child_card>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_child_card>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_child_card>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_child_card>.data.timezone` | string | no | Timezone. Work with "due_date" Example: "America/Boa_Vista" |
+| `actions[]<add_child_card>.data.tagNames` | array | no | Add tags |
+| `actions[]<add_child_card>.data.membersData` | object | no | Add members |
+| `actions[]<add_child_card>.data.membersData.variant` | string | yes | updater - add event author as member<br> select_user - add selected users Values: ['updater', 'select_user'] x-documentation-constraints: ['updater', 'select_user'] |
+| `actions[]<add_child_card>.data.membersData.userIds` | array | no | User ids to add |
+| `actions[]<add_child_card>.data.description` | string | no | Add card description x-documentation-constraints: maxLength": 32768 |
+| `actions[]<add_child_card>.data.responsibleData` | object | no | Add card responsible |
+| `actions[]<add_child_card>.data.responsibleData.variant` | string | yes | updater - add event author as responsible<br> select_user - add selected user<br> card_owner_related - inherit card responsible<br> random_space_user - add random space user as responsible,<br> random_user_from_list - add random user from list Values: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] x-documentation-constraints: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] |
+| `actions[]<add_child_card>.data.responsibleData.userIds` | array | no | User id to choose from  |
+| `actions[]<add_child_card>.data.responsibleData.userId` | integer | no | User id to add |
+| `actions[]<add_child_card>.data.workload` | number\|null | no | Set workload |
+| `actions[]<add_child_card>.data.linksData` | object | no | Add external links. Object keys must be uuid x-documentation-constraints: no |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$]` | object | no | Link data |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].url` | string | yes | Link url x-documentation-constraints: url format |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].uid` | string | yes | Link uid |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].description` | string | yes | Link description maxLength: 512 x-documentation-constraints: maxLength: 512 |
+| `actions[]<add_child_card>.data.customProperties` | object | no | Add custom properties. Can contains several custom properties data |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<add_parent_card>` | object | no | Create parent card |
+| `actions[]<add_parent_card>.type` | string | yes |  x-documentation-constraints: add_parent_card |
+| `actions[]<add_parent_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_parent_card>.data` | object | yes | Data needed for this type |
+| `actions[]<add_parent_card>.data.title` | string | yes | Card title |
+| `actions[]<add_parent_card>.data.spaceId` | integer\|null | no | New card space. null - create on child card path |
+| `actions[]<add_parent_card>.data.columnId` | integer\|null | no | New card column.  null - create on child card path |
+| `actions[]<add_parent_card>.data.boardId` | integer\|null | no | New card board.  null - create on child card path |
+| `actions[]<add_parent_card>.data.laneId` | integer\|null | no | New card lane.  null - create on child card path |
+| `actions[]<add_parent_card>.data.parentFields` | array | no | Inherit card fields. Variants:<br> members - card members,<br> external_links - card external links,<br> due_date - card due date,<br> type - card type,<br> size - card size,<br> description - card description,<br> tags - card tags,<br> files - card files<br> responsible - card responsible,<br> timeline - card timeline<br> estimate_workload - card workload<br> properties - inherit all card custom properties,<br>  customProperty_{custom_property_id} - custom property . Example: customProperty_97" x-documentation-constraints: ['members', 'external_links', 'due_date', 'type', 'size', 'description', 'tags', 'files', 'responsible', 'timeline', 'estimate_workload', 'properties', 'customProperty_{custom_property_id}'] |
+| `actions[]<add_parent_card>.data.typeId` | integer | no | Add type |
+| `actions[]<add_parent_card>.data.size` | string | no | Add size |
+| `actions[]<add_parent_card>.data.dueDate` | object | no | Add due date |
+| `actions[]<add_parent_card>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_parent_card>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_parent_card>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_parent_card>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_parent_card>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_parent_card>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_parent_card>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_parent_card>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_parent_card>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_parent_card>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_parent_card>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_parent_card>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_parent_card>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.timezone` | string | no | Timezone. Work with "due_date" Example: "America/Boa_Vista" |
+| `actions[]<add_parent_card>.data.tagNames` | array | no | Add tags |
+| `actions[]<add_parent_card>.data.membersData` | object | no | Add members |
+| `actions[]<add_parent_card>.data.membersData.variant` | string | yes | updater - add event author as member<br> select_user - add selected users Values: ['updater', 'select_user'] x-documentation-constraints: ['updater', 'select_user'] |
+| `actions[]<add_parent_card>.data.membersData.userIds` | array | no | User ids to add |
+| `actions[]<add_parent_card>.data.description` | string | no | Add card description x-documentation-constraints: maxLength": 32768 |
+| `actions[]<add_parent_card>.data.responsibleData` | object | no | Add card responsible |
+| `actions[]<add_parent_card>.data.responsibleData.variant` | string | yes | updater - add event author as responsible<br> select_user - add selected user<br> card_owner_related - inherit card responsible<br> random_space_user - add random space user as responsible,<br> random_user_from_list - add random user from list Values: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] x-documentation-constraints: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] |
+| `actions[]<add_parent_card>.data.responsibleData.userIds` | array | no | User id to choose from  |
+| `actions[]<add_parent_card>.data.responsibleData.userId` | integer | no | User id to add |
+| `actions[]<add_parent_card>.data.workload` | number\|null | no | Set workload |
+| `actions[]<add_parent_card>.data.linksData` | object | no | Add external links. Object keys must be uuid x-documentation-constraints: no |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$]` | object | no | Link data |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].url` | string | yes | Link url x-documentation-constraints: url format |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].uid` | string | yes | Link uid |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].description` | string | yes | Link description maxLength: 512 x-documentation-constraints: maxLength: 512 |
+| `actions[]<add_parent_card>.data.customProperties` | object | no | Add custom properties. Can contains several custom properties data |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<connect_parent_card>` | object | no | Add parent card |
+| `actions[]<connect_parent_card>.type` | string | yes |  x-documentation-constraints: connect_parent_card |
+| `actions[]<connect_parent_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<connect_parent_card>.data` | object | yes | Data needed for this type |
+| `actions[]<connect_parent_card>.data.cardId` | integer | yes | Parent card id |
+| `actions[]<remove_card_users>` | object | no | Remove card members |
+| `actions[]<remove_card_users>.type` | string | yes |  x-documentation-constraints: remove_card_users |
+| `actions[]<remove_card_users>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_card_users>.data` | object | yes | Data needed for this type |
+| `actions[]<remove_card_users>.data.userIds` | array | yes | User ids to remove |
+| `actions[]<remove_card_users>.data.withResponsible` | boolean | yes |  Should remove responsible |
+| `actions[]<change_asap>` | object | no | Change ASAP |
+| `actions[]<change_asap>.type` | string | yes |  x-documentation-constraints: change_asap |
+| `actions[]<change_asap>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_asap>.data` | object | yes | Data needed for this type |
+| `actions[]<change_asap>.data.asap` | boolean | yes | Asap flag |
+| `actions[]<add_user_groups>` | object | no | Add user groups in card |
+| `actions[]<add_user_groups>.type` | string | yes |  x-documentation-constraints: add_user_groups |
+| `actions[]<add_user_groups>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_user_groups>.data` | object | yes | Data needed for this type |
+| `actions[]<add_user_groups>.data.groupIds` | array | yes | Group ids |
+| `actions[]<add_size>` | object | no | Add size |
+| `actions[]<add_size>.type` | string | yes |  x-documentation-constraints: add_size |
+| `actions[]<add_size>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_size>.data` | object | yes | Data needed for this type |
+| `actions[]<add_size>.data.size` | string | yes | Add size |
+| `actions[]<add_due_date>` | object | no | Set due date |
+| `actions[]<add_due_date>.type` | string | yes |  x-documentation-constraints: add_due_date |
+| `actions[]<add_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_due_date>.data` | object | yes | Data needed for this type |
+| `actions[]<add_due_date>.data.dueDate` | object | yes | Add due date |
+| `actions[]<add_due_date>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_due_date>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_due_date>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_due_date>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_due_date>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_due_date>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_due_date>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_due_date>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_due_date>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_due_date>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_due_date>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_due_date>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_due_date>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_due_date>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_due_date>.data.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<remove_due_date>` | object | no | Remove due date |
+| `actions[]<remove_due_date>.type` | string | yes |  x-documentation-constraints: remove_due_date |
+| `actions[]<remove_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_due_date>.data` | object | yes | Empty object |
+| `actions[]<complete_checklists>` | object | no | Complete all checklists in card |
+| `actions[]<complete_checklists>.type` | string | yes |  x-documentation-constraints: complete_checklists |
+| `actions[]<complete_checklists>.created` | string | no | Created timestamp .ISO 8601 format |
+| `actions[]<complete_checklists>.data` | object | yes | Empty object |
+| `actions[]<sort_cards>` | object | no | Sort cards |
+| `actions[]<sort_cards>.type` | string | yes |  x-documentation-constraints: sort_cards |
+| `actions[]<sort_cards>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<sort_cards>.data` | object | yes | Data needed for this type |
+| `actions[]<sort_cards>.data.sortDirection` | string | yes | Sorting direction Values: ['asc', 'desc'] x-documentation-constraints: ['asc', 'desc'] |
+| `actions[]<sort_cards>.data.sortWithinColumn` | boolean | yes | The cards will sorted within entire column |
+| `actions[]<sort_cards>.data.sortProperty` | string | yes | Sort by property <br>  variants: <br>   "created" - by creating date <br>   "title" - by title<br>   "due_date" - by due date<br>   "size" -by size<br>   "cp_{custom_property_id}" - by custom property x-documentation-constraints: ['created', 'title', 'due_date', 'due_date', 'cp_{custom_property_id}'] |
+| `actions[]<add_comment>` | object | no | Add comment |
+| `actions[]<add_comment>.type` | string | yes |  x-documentation-constraints: add_comment |
+| `actions[]<add_comment>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_comment>.data` | object | yes | Data needed for this type |
+| `actions[]<add_comment>.data.text` | string | yes | comment text |
+| `actions[]<card_add_sla>` | object | no | Add SLA |
+| `actions[]<card_add_sla>.type` | string | yes |  x-documentation-constraints: card_add_sla |
+| `actions[]<card_add_sla>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<card_add_sla>.data` | object | yes | Data needed for this type |
+| `actions[]<card_add_sla>.data.slaIds` | array | yes | Sla uuids to add |
+| `actions[]<card_remove_sla>` | object | no | Remove SLA |
+| `actions[]<card_remove_sla>.type` | string | yes |  x-documentation-constraints: card_remove_sla |
+| `actions[]<card_remove_sla>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<card_remove_sla>.data` | object | yes | Data needed for this type |
+| `actions[]<card_remove_sla>.data.slaIds` | array | yes | Sla uuids to remove, empty array for all |
+| `actions[]<archive>` | object | no | Archive card |
+| `actions[]<archive>.type` | string | yes |  x-documentation-constraints: archive |
+| `actions[]<archive>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<archive>.data` | object | yes | Empty object |
+| `actions[]<change_custom_property_value>` | object | no | Change property value |
+| `actions[]<change_custom_property_value>.type` | string | yes |  x-documentation-constraints: change_custom_property_value |
+| `actions[]<change_custom_property_value>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_custom_property_value>.data` | object | yes | Data needed for this type |
+| `actions[]<change_custom_property_value>.data.value` | number | yes | Change value by |
+| `actions[]<change_custom_property_value>.data.propertyId` | integer | yes | Property id to change |
+| `actions[]<change_custom_property_value>.data.changeVariant` | string | yes | increase - increment value, decrease - decrease value  Values: ['increase', 'decrease'] x-documentation-constraints: ['increase', 'decrease'] |
+| `actions[]<property_add_to_child_card>` | object | no | Change property value |
+| `actions[]<property_add_to_child_card>.type` | string | yes |  x-documentation-constraints: property_add_to_child_card |
+| `actions[]<property_add_to_child_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<property_add_to_child_card>.data` | object | yes | Data needed for this type |
+| `actions[]<property_add_to_child_card>.data.childLevel` | string | yes | Apply for child level Values: ['first'] x-documentation-constraints: ['first'] |
+| `actions[]<property_add_to_child_card>.data.customProperties` | object | yes | Add custom properties. Can contains several custom properties data |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<change_type>` | object | no | Change card type |
+| `actions[]<change_type>.type` | string | yes |  x-documentation-constraints: change_type |
+| `actions[]<change_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_type>.data` | object | yes | Data needed for this type |
+| `actions[]<change_type>.data.typeId` | integer | yes | New type id |
+| `actions[]<change_service>` | object | no | Attach or change service |
+| `actions[]<change_service>.type` | string | yes |  x-documentation-constraints: change_service |
+| `actions[]<change_service>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_service>.data` | object | yes | Data needed for this type |
+| `actions[]<change_service>.data.serviceId` | integer | yes | New service id |
+| `conditions.clause` | string | no |  Values: ['and', 'or'] |
+| `conditions.conditions` | array | no | — |
+| `conditions<tag>` | object | no | Checks for card tags |
+| `conditions<tag>.type` | string | yes |  x-documentation-constraints: tag |
+| `conditions<tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<tag>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<tag>.data` | object | yes | Data  needed for this type |
+| `conditions<tag>.data.tagIds` | array | yes | Tags Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<target_tag>` | object | no | When tag added or deleted from card. Check for tag |
+| `conditions<target_tag>.type` | string | yes |  x-documentation-constraints: target_tag |
+| `conditions<target_tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<target_tag>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<target_tag>.data` | object | yes | Data  needed for this type |
+| `conditions<target_tag>.data.tagIds` | array | yes | Tags Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<card_type>` | object | no | Checks for card type |
+| `conditions<card_type>.type` | string | yes |  x-documentation-constraints: card_type |
+| `conditions<card_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_type>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<card_type>.data` | object | yes | Data  needed for this type |
+| `conditions<card_type>.data.typeIds` | array | yes | Type Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<new_card_type>` | object | no | Checks for new card type when card type changed |
+| `conditions<new_card_type>.type` | string | yes |  x-documentation-constraints: new_card_type |
+| `conditions<new_card_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_card_type>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<new_card_type>.data` | object | yes | Data  needed for this type |
+| `conditions<new_card_type>.data.typeIds` | array | yes | Type Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<updater>` | object | no | Checks for author, who initiated event |
+| `conditions<updater>.type` | string | yes |  x-documentation-constraints: updater |
+| `conditions<updater>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<updater>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of<br> in_role - is in role from list<br> not_in_role - is not in role from list<br> in_groups - is in groups<br> not_in_groups - is not in groups<br> in_company - have access to company<br> not_ in_company - have not access to the company Values: ['eq', 'ne', 'contains', 'not_contains', 'in_role', 'not_in_role', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains', 'in_role', 'not_in_role', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company'] |
+| `conditions<updater>.data` | object | no | Send empty object if data not required |
+| `conditions<updater>.data.userIds` | array | no | userIds x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<updater>.data.roles` | array | no | Role names x-documentation-constraints: [<br> card_owner,<br> responsible,<br>card_member<br>] |
+| `conditions<updater>.data.groupIds` | array | no | Group ids |
+| `conditions<path>` | object | no | Checks for card path |
+| `conditions<path>.type` | string | yes |  x-documentation-constraints: path |
+| `conditions<path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<path>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<path>.data` | object | yes | Data  needed for this type |
+| `conditions<path>.data.boardId` | integer | yes | Board id |
+| `conditions<path>.data.columnId` | integer\|null | yes | Column id. null - for any |
+| `conditions<path>.data.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<new_path>` | object | no | Checks for new card path, when card moved |
+| `conditions<new_path>.type` | string | yes |  x-documentation-constraints: new_path |
+| `conditions<new_path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_path>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<new_path>.data` | object | yes | Data  needed for this type |
+| `conditions<new_path>.data.boardId` | integer | yes | Board id |
+| `conditions<new_path>.data.columnId` | integer\|null | yes | Column id. null - for any |
+| `conditions<new_path>.data.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<card_state>` | object | no | Checks for card states. queue, in progress, done |
+| `conditions<card_state>.type` | string | yes |  x-documentation-constraints: card_state |
+| `conditions<card_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_state>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<card_state>.data` | object | yes | Data  needed for this type |
+| `conditions<card_state>.data.cardStates` | integer | yes |  1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] x-documentation-constraints: [1, 2, 3] |
+| `conditions<new_card_state>` | object | no | Checks for card states, when card state changed. queue, in progress, done |
+| `conditions<new_card_state>.type` | string | yes |  x-documentation-constraints: new_card_state |
+| `conditions<new_card_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_card_state>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<new_card_state>.data` | object | yes | Data  needed for this type |
+| `conditions<new_card_state>.data.cardStates` | integer | yes |  1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] x-documentation-constraints: [1, 2, 3] |
+| `conditions<comment>` | object | no | Checks for comment text |
+| `conditions<comment>.type` | string | yes |  x-documentation-constraints: comment |
+| `conditions<comment>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<comment>.operator` | string | yes |  start_with - start with <br> contains - contains Values: ['start_with', 'contains'] x-documentation-constraints: ['start_with', 'contains'] |
+| `conditions<comment>.data` | object | yes | Data  needed for this type |
+| `conditions<comment>.data.command` | string | yes | Text for check |
+| `conditions<target_custom_property>` | object | no | Checks for changed property |
+| `conditions<target_custom_property>.type` | string | yes |  x-documentation-constraints: target_custom_property |
+| `conditions<target_custom_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<target_custom_property>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<target_custom_property>.data` | object | yes | Data  needed for this type |
+| `conditions<target_custom_property>.data.value` | string\|number\|array | yes | number with numbers types, array - for select, catalog, users,<br>rest types-string |
+| `conditions<target_custom_property>.data.propertyIds` | array | yes | Property id x-documentation-constraints: maxLength - 1 |
+| `conditions<target_custom_property>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<target_custom_property>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
+| `conditions<custom_property>` | object | no | Checks for custom property |
+| `conditions<custom_property>.type` | string | yes |  x-documentation-constraints: custom_property |
+| `conditions<custom_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<custom_property>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<custom_property>.data` | object | yes | Data  needed for this type |
+| `conditions<custom_property>.data.value` | string\|number\|array | yes | number with numbers types, array - for select, catalog, users,<br>rest types-string |
+| `conditions<custom_property>.data.propertyIds` | array | yes | Property id x-documentation-constraints: maxLength - 1 |
+| `conditions<custom_property>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<custom_property>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
+| `conditions<due_date>` | object | no | Checks for due date |
+| `conditions<due_date>.type` | string | yes |  x-documentation-constraints: due_date |
+| `conditions<due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<due_date>.operator` | string | yes |  eq - is<br> ne-is not<br> is_less - is before<br> is_more - is after<br> is_between - is between<br> any - any.<br> Only work for "set" data comparator, otherwise only eq allowed Values: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] x-documentation-constraints: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] |
+| `conditions<due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<due_date>.data.date` | string | no | ISO 8601 format |
+| `conditions<due_date>.data.dateVariant` | string | no |  exact - exact date,<br> current - event date,<br> within_a_week - date within_a_week<br> within_a_month - date within_a_month,<br> custom - set deviation for is_less, is_more operators,<br>  set period for is_between operator Values: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] x-documentation-constraints: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] |
+| `conditions<due_date>.data.comparator` | string | yes | Check due date set or not Values: ['set', 'cleared'] x-documentation-constraints: ['set', 'cleared'] |
+| `conditions<due_date>.data.deviation` | string | no | plus - after event, minus - before event Values: ['plus', 'minus'] x-documentation-constraints: ['plus', 'minus'] |
+| `conditions<due_date>.data.dateUnit` | string | no | Deviation date units Values: ['days', 'weeks', 'months'] x-documentation-constraints: ['days', 'weeks', 'months'] |
+| `conditions<due_date>.data.dateValue0` | number | no | First deviation number |
+| `conditions<due_date>.data.dateValue1` | number | no | Second deviation number |
+| `conditions<new_due_date>` | object | no | Checks for new due date, when it changed |
+| `conditions<new_due_date>.type` | string | yes |  x-documentation-constraints: new_due_date |
+| `conditions<new_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_due_date>.operator` | string | yes |  eq - is<br> ne-is not<br> is_less - is before<br> is_more - is after<br> is_between - is between<br> any - any.<br> Only work for "set", "changed" data comparator, otherwise only eq allowed Values: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] x-documentation-constraints: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] |
+| `conditions<new_due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<new_due_date>.data.date` | string | no | ISO 8601 format |
+| `conditions<new_due_date>.data.dateVariant` | string | no |  exact - exact date,<br> current - event date,<br> within_a_week - date within_a_week<br> within_a_month - date within_a_month,<br> custom - set deviation for is_less, is_more operators,<br>  set period for is_between operator Values: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] x-documentation-constraints: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] |
+| `conditions<new_due_date>.data.comparator` | string | yes | Check due date Values: ['set', 'cleared', 'changed'] x-documentation-constraints: ['set', 'cleared', 'changed'] |
+| `conditions<new_due_date>.data.deviation` | string | no | plus - after event, minus - before event Values: ['plus', 'minus'] x-documentation-constraints: ['plus', 'minus'] |
+| `conditions<new_due_date>.data.dateUnit` | string | no | Deviation date units Values: ['days', 'weeks', 'months'] x-documentation-constraints: ['days', 'weeks', 'months'] |
+| `conditions<new_due_date>.data.dateValue0` | number | no | First deviation number |
+| `conditions<new_due_date>.data.dateValue1` | number | no | Second deviation number |
+| `conditions<new_child_cards_state>` | object | no | Checks for child card when their states changed |
+| `conditions<new_child_cards_state>.type` | string | yes |  x-documentation-constraints: new_child_cards_state |
+| `conditions<new_child_cards_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_child_cards_state>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<new_child_cards_state>.data` | object | yes | Data  needed for this type |
+| `conditions<new_child_cards_state>.data.childCardsStates` | array | yes |  x-documentation-constraints: [<br> all_child_cards_done,<br> all_child_cards_in_queue,<br> child_cards_count_changed,<br> child_cards_count_increased,<br> child_cards_count_decreased,<br> child_cards_path_changed<br>]<br>MaxLength - 1 |
+| `conditions<new_child_cards_state>.data.childrenPathEntryOperator` | string | no | all - all cards, one of - at least one card.<br>Check, when all cards or at least one will move to Values: ['all', 'one_of'] x-documentation-constraints: ['all', 'one_of'] |
+| `conditions<new_child_cards_state>.data.path` | object | no | Target path data |
+| `conditions<new_child_cards_state>.data.path.boardId` | integer | yes | Board id |
+| `conditions<new_child_cards_state>.data.path.columnId` | integer | yes | Column id |
+| `conditions<new_child_cards_state>.data.path.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<new_child_cards_state>.data.path.spaceId` | integer | yes | Space id |
+| `conditions<new_child_cards_state>.data.childCardsAdditionalConditions` | array | no | Additional child card conditions<br>Explain available conditions and its attributes |
+| `conditions<child_cards_state>` | object | no | Checks for child card states |
+| `conditions<child_cards_state>.type` | string | yes |  x-documentation-constraints: child_cards_state |
+| `conditions<child_cards_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<child_cards_state>.operator` | string | yes |  eq - is<br> ne- is not Values: ['eq', 'ne'] x-documentation-constraints: ['eq', 'ne'] |
+| `conditions<child_cards_state>.data` | object | yes | Data  needed for this type |
+| `conditions<child_cards_state>.data.childCardsStates` | array | yes |  x-documentation-constraints: [<br> all_child_cards_done,<br> all_child_cards_in_queue,<br>]<br>MaxLength - 1 |
+| `conditions<checklist_item_text>` | object | no | Checks for checklist item text |
+| `conditions<checklist_item_text>.type` | string | yes |  x-documentation-constraints: checklist_item_text |
+| `conditions<checklist_item_text>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_text>.operator` | string | yes |  start_with - start with <br> contains - contains Values: ['start_with', 'contains'] x-documentation-constraints: ['start_with', 'contains'] |
+| `conditions<checklist_item_text>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_text>.data.text` | string | yes | Text for check |
+| `conditions<checklist_item_due_date>` | object | no | Checks for checklist item due date |
+| `conditions<checklist_item_due_date>.type` | string | yes |  x-documentation-constraints: checklist_item_due_date |
+| `conditions<checklist_item_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_due_date>.operator` | string | yes |  exceeded - exceeded <br> not_exceeded - not exceeded Values: ['exceeded', 'not_exceeded'] x-documentation-constraints: ['exceeded', 'not_exceeded'] |
+| `conditions<checklist_item_due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_due_date>.data.timezone` | string | yes | Timezone. Example: "Africa/Abidjan" |
+| `conditions<checklist_item_checked_state>` | object | no | Is checklist item checked |
+| `conditions<checklist_item_checked_state>.type` | string | yes |  x-documentation-constraints: checklist_item_checked_state |
+| `conditions<checklist_item_checked_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_checked_state>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<checklist_item_checked_state>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_checked_state>.data.checked` | boolean | yes | Checked flag |
+| `conditions<card_is_request>` | object | no | Is card a request |
+| `conditions<card_is_request>.type` | string | yes |  x-documentation-constraints: card_is_request |
+| `conditions<card_is_request>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_is_request>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<card_is_request>.data` | object | yes | Empty data |
+| `conditions<card_author>` | object | no | Checks for request author.<br>Only works in conjunction with condition type card_is_request |
+| `conditions<card_author>.type` | string | yes |  x-documentation-constraints: card_author |
+| `conditions<card_author>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_author>.operator` | string | yes |  in_organisations - belongs to one of organizations Values: ['in_organisations'] x-documentation-constraints: ['in_organisations'] |
+| `conditions<card_author>.data` | object | yes | Data  needed for this type |
+| `conditions<card_author>.data.organizationUids` | array | yes | Organization uuids |
+| `conditions<block_status>` | object | no | Checks for card block status |
+| `conditions<block_status>.type` | string | yes |  x-documentation-constraints: block_status |
+| `conditions<block_status>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<block_status>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<block_status>.data` | object | yes | Data  needed for this type |
+| `conditions<block_status>.data.blocked` | boolean | yes | Card blocked flag |
+| `conditions<relations>` | object | no | Checks for card relations |
+| `conditions<relations>.type` | string | yes |  x-documentation-constraints: relations |
+| `conditions<relations>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<relations>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<relations>.data` | object | yes | Data  needed for this type |
+| `conditions<relations>.data.parentsComparator` | string | yes | absent - no parents card, present - has parents cards, ignore - ignore parents cards Values: ['absent', 'present', 'ignore'] x-documentation-constraints: ['absent', 'present', 'ignore'] |
+| `conditions<relations>.data.childComparator` | string | yes | absent - no parents card, present - has parents cards, ignore - ignore parents cards Values: ['absent', 'present', 'ignore'] x-documentation-constraints: ['absent', 'present', 'ignore'] |
+| `conditions<service>` | object | no | Checks for card linked services  |
+| `conditions<service>.type` | string | yes |  x-documentation-constraints: service |
+| `conditions<service>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<service>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<service>.data` | object | yes | Data  needed for this type |
+| `conditions<service>.data.serviceIds` | array | yes | serviceIds x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<size>` | object | no | Checks for card size value  |
+| `conditions<size>.type` | string | yes | Matches value 'size' x-documentation-constraints: size |
+| `conditions<size>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<size>.operator` | string | yes | The only available comparator x-documentation-constraints: eq |
+| `conditions<size>.data` | object | yes | Data  needed for this type |
+| `conditions<size>.data.size` | string\|number | yes | Size value (in case comparator is "has_value") |
+| `conditions<size>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<size>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
 
 **Examples**
 
 - Create an automation using the known live-valid add_assignee payload shape.: `kaiten --json automations create --space-id 1 --name Auto --type on_action --trigger '{"type":"card_created"}' --actions '[{"type":"add_assignee","created":"2026-01-01T00:00:00+00:00","data":{"variant":"specific","userId":42}}]'`
+- Create a button automation without a trigger.: `kaiten --json automations create --space-id 1 --type on_demand --name Complete --actions '[{"type":"complete_checklists","created":"2026-01-01T00:00:00+00:00","data":{}}]'`
+- Create a date automation without a name.: `kaiten --json automations create --space-id 1 --type on_date --trigger '{"type":"due_date_on_date","data":{"variant":"time_left_before_date","timezone":"UTC","offset":2,"offset_unit":"day"}}' --actions '[{"type":"change_asap","created":"2026-01-01T00:00:00+00:00","data":{"asap":true}}]'`
 
 **Notes**
 
@@ -10223,6 +11175,8 @@ workflows
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- on_workflow, source_automation_id, get and copy are retained extensions, not documented Public API guarantees.
+- Omitting type preserves legacy validation and does not insert a default into the request.
 - Live contract: `live_passed`; expected statuses: —
 - Live note: Automation creation passes on sandbox when the payload matches the known live-valid add_assignee shape derived from kaiten-mcp e2e.
 
@@ -10330,8 +11284,8 @@ workflows
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 
 **Examples**
 
@@ -10371,12 +11325,585 @@ workflows
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
 | `automation_id` | `string` | yes | — | — | Automation ID (UUID) |
-| `name` | `string` | no | — | — | New automation name |
-| `trigger` | `object` | no | — | — | New trigger configuration |
-| `actions` | `array` | no | — | — | New action configurations |
-| `conditions` | `object` | no | — | — | New conditions configuration |
+| `name` | `string` | no | — | maxLength=256 | New automation name |
 | `status` | `string` | no | `active`, `disabled` | — | Automation status |
 | `sort_order` | `number` | no | — | — | Sort position |
+| `trigger` | `object` | no | — | — | Trigger configuration. Known variants are checked; server extensions are preserved. |
+| `actions` | `array` | no | — | minItems=1, maxItems=10 | Ordered automation actions (1–10). Known variants are checked; server extensions are preserved. |
+| `conditions` | `object` | no | — | — | Recursive and/or groups: {clause, conditions: [groups or typed conditions]}. Empty object means no conditions. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `trigger.type` | string | no | — |
+| `trigger.hasToFireOnCardCreation` | boolean | no | — |
+| `trigger.data` | object | no | — |
+| `trigger<card_created>` | object | no | — |
+| `trigger<card_created>.type` | string | yes |  x-documentation-constraints: card_created |
+| `trigger<card_created>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: true |
+| `trigger<card_created>.data` | object | no | Data not need for this type |
+| `trigger<card_moved_in_path>` | object | no | — |
+| `trigger<card_moved_in_path>.type` | string | yes |  x-documentation-constraints: card_moved_in_path |
+| `trigger<card_moved_in_path>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_moved_in_path>.data` | object | no | Data not need for this type |
+| `trigger<card_type_changed>` | object | no | — |
+| `trigger<card_type_changed>.type` | string | yes |  x-documentation-constraints: card_type_changed |
+| `trigger<card_type_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_type_changed>.data` | object | no | Data not need for this type |
+| `trigger<card_user_added>` | object | no | — |
+| `trigger<card_user_added>.type` | string | yes |  x-documentation-constraints: card_user_added |
+| `trigger<card_user_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_user_added>.data` | object | yes | Data needed for this type |
+| `trigger<card_user_added>.data.userIds` | array | yes | Users ids. the trigger should take into account users from the list  |
+| `trigger<responsible_added>` | object | no | — |
+| `trigger<responsible_added>.type` | string | yes |  x-documentation-constraints: responsible_added |
+| `trigger<responsible_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<responsible_added>.data` | object | yes | Data needed for this type |
+| `trigger<responsible_added>.data.userIds` | array | yes | Users ids. the trigger should take into account users from the list  |
+| `trigger<checklists_completed>` | object | no | — |
+| `trigger<checklists_completed>.type` | string | yes |  x-documentation-constraints: checklists_completed |
+| `trigger<checklists_completed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<checklists_completed>.data` | object | no | Data not need for this type |
+| `trigger<checklist_item_checked>` | object | no | — |
+| `trigger<checklist_item_checked>.type` | string | yes |  x-documentation-constraints: checklist_item_checked |
+| `trigger<checklist_item_checked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<checklist_item_checked>.data` | object | no | Data not need for this type |
+| `trigger<comment_posted>` | object | no | — |
+| `trigger<comment_posted>.type` | string | yes |  x-documentation-constraints: comment_posted |
+| `trigger<comment_posted>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<comment_posted>.data` | object | no | Data not need for this type |
+| `trigger<tag_added>` | object | no | — |
+| `trigger<tag_added>.type` | string | yes |  x-documentation-constraints: tag_added |
+| `trigger<tag_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<tag_added>.data` | object | no | Data not need for this type |
+| `trigger<tag_removed>` | object | no | — |
+| `trigger<tag_removed>.type` | string | yes |  x-documentation-constraints: tag_removed |
+| `trigger<tag_removed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<tag_removed>.data` | object | no | Data not need for this type |
+| `trigger<card_state_changed>` | object | no | — |
+| `trigger<card_state_changed>.type` | string | yes |  x-documentation-constraints: card_state_changed |
+| `trigger<card_state_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<card_state_changed>.data` | object | no | Data not need for this type |
+| `trigger<custom_property_changed>` | object | no | — |
+| `trigger<custom_property_changed>.type` | string | yes | — |
+| `trigger<custom_property_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<custom_property_changed>.data` | object | no | Data not need for this type |
+| `trigger<due_date_changed>` | object | no | — |
+| `trigger<due_date_changed>.type` | string | yes |  x-documentation-constraints: due_date_changed |
+| `trigger<due_date_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<due_date_changed>.data` | object | no | Data not need for this type |
+| `trigger<child_cards_state_changed>` | object | no | — |
+| `trigger<child_cards_state_changed>.type` | string | yes |  x-documentation-constraints: child_cards_state_changed |
+| `trigger<child_cards_state_changed>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<child_cards_state_changed>.data` | object | no | Data not need for this type |
+| `trigger<blocked>` | object | no | — |
+| `trigger<blocked>.type` | string | yes |  x-documentation-constraints: blocked |
+| `trigger<blocked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<blocked>.data` | object | no | Data not need for this type |
+| `trigger<unblocked>` | object | no | — |
+| `trigger<unblocked>.type` | string | yes |  x-documentation-constraints: unblocked |
+| `trigger<unblocked>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<unblocked>.data` | object | no | Data not need for this type |
+| `trigger<blocker_added>` | object | no | — |
+| `trigger<blocker_added>.type` | string | yes |  x-documentation-constraints: blocker_added |
+| `trigger<blocker_added>.hasToFireOnCardCreation` | boolean | no |  x-documentation-constraints: false |
+| `trigger<blocker_added>.data` | object | no | Data not need for this type |
+| `trigger<due_date_on_date>` | object | no | — |
+| `trigger<due_date_on_date>.type` | string | yes |  x-documentation-constraints: due_date_on_date |
+| `trigger<due_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<due_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<due_date_on_date>.data.variant` | string | yes | "date_moment_came" - the date has come,<br> "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<due_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<due_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<due_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<due_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<checklist_item_due_date_on_date>` | object | no | — |
+| `trigger<checklist_item_due_date_on_date>.type` | string | yes |  x-documentation-constraints: checklist_item_due_date_on_date |
+| `trigger<checklist_item_due_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<checklist_item_due_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<checklist_item_due_date_on_date>.data.variant` | string | yes | "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<checklist_item_due_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<checklist_item_due_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<checklist_item_due_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<checklist_item_due_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<custom_property_date_on_date>` | object | no | — |
+| `trigger<custom_property_date_on_date>.type` | string | yes |  x-documentation-constraints: custom_property_date_on_date |
+| `trigger<custom_property_date_on_date>.data` | object | yes | Data needed for this type |
+| `trigger<custom_property_date_on_date>.data.timezone` | string | yes |  Example: "UTC"  |
+| `trigger<custom_property_date_on_date>.data.variant` | string | yes | "date_moment_came" - the date has come,<br> "date_day_came" - the day of date has come,<br> "time_left_before_date" - left before the date,<br> "time_passed_after_date" - After the date has passed Values: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] x-documentation-constraints: ['date_moment_came', 'date_day_came', 'time_left_before_date', 'time_passed_after_date'] |
+| `trigger<custom_property_date_on_date>.data.offset` | number | no | define deviation from date |
+| `trigger<custom_property_date_on_date>.data.offset_units` | string | no | define deviation units Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `trigger<custom_property_date_on_date>.data.exact_time` | string | no | for variants: <br> "time_left_before_date",<br> "time_passed_after_date"<br> "date_day_came".<br>Set if you need exact time. Example: Example: "21:00" |
+| `trigger<custom_property_date_on_date>.data.propertyId` | integer | yes | Property id |
+| `trigger<custom_property_date_on_date>.data.offset_unit` | string | no | Unit spelling used by the official date automation request example. Values: ['hour', 'day'] x-documentation-constraints: ['hour', 'day'] |
+| `actions[]` | object | no | — |
+| `actions[]<add_assignee>` | object | no | Make responsible |
+| `actions[]<add_assignee>.type` | string | yes |  x-documentation-constraints: add_assignee |
+| `actions[]<add_assignee>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_assignee>.data` | object | yes | — |
+| `actions[]<add_assignee>.data.userId` | integer | no | User id . 0- card owner |
+| `actions[]<add_assignee>.data.userIds` | array | no | User ids . Empty array - random space user |
+| `actions[]<remove_assignee>` | object | no | Remove responsible |
+| `actions[]<remove_assignee>.type` | string | yes |  x-documentation-constraints: remove_assignee |
+| `actions[]<remove_assignee>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_assignee>.data` | object | yes | Send empty data if you need to assigned at the time of the action |
+| `actions[]<remove_assignee>.data.userId` | integer | no | User id to remove. |
+| `actions[]<move_to_path>` | object | no | Move card to |
+| `actions[]<move_to_path>.type` | string | yes |  x-documentation-constraints: move_to_path |
+| `actions[]<move_to_path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<move_to_path>.data` | object | yes | Data  needed for this type |
+| `actions[]<move_to_path>.data.spaceId` | integer | yes | New card space |
+| `actions[]<move_to_path>.data.columnId` | integer | yes | New card column |
+| `actions[]<move_to_path>.data.boardId` | integer | yes | New card board |
+| `actions[]<move_to_path>.data.laneId` | integer | yes | New card lane |
+| `actions[]<move_on_board>` | object | no | Move a card within the board |
+| `actions[]<move_on_board>.type` | string | yes |  x-documentation-constraints: move_on_board |
+| `actions[]<move_on_board>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<move_on_board>.data` | object | yes | Data needed for this type |
+| `actions[]<move_on_board>.data.direction` | string | yes | top, bottom - in same column, next - next column, previous - previous column Values: ['top', 'bottom', 'next', 'previous'] x-documentation-constraints: ['top', 'bottom', 'next', 'previous'] |
+| `actions[]<add_tag>` | object | no | Add tags |
+| `actions[]<add_tag>.type` | string | yes |  x-documentation-constraints: add_tag |
+| `actions[]<add_tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_tag>.data` | object | yes | Data needed for this type |
+| `actions[]<add_tag>.data.tagNames` | array | yes | Tag names to add |
+| `actions[]<remove_tags>` | object | no | Remove tags |
+| `actions[]<remove_tags>.type` | string | yes |  x-documentation-constraints: remove_tags |
+| `actions[]<remove_tags>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_tags>.data` | object | yes | Data needed for this type |
+| `actions[]<remove_tags>.data.tagIds` | array | yes | Tag ids to remove, empty array - remove all |
+| `actions[]<add_card_users>` | object | no | Add card members |
+| `actions[]<add_card_users>.type` | string | yes |  x-documentation-constraints: add_card_users |
+| `actions[]<add_card_users>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_card_users>.data` | object | yes | Data needed for this type |
+| `actions[]<add_card_users>.data.userIds` | array | no | User ids to add. don`t send any data for event author |
+| `actions[]<add_property>` | object | no | Add property |
+| `actions[]<add_property>.type` | string | yes |  x-documentation-constraints: add_property |
+| `actions[]<add_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_property>.data` | object | yes | Data needed for this type |
+| `actions[]<add_property>.data.propertyId` | integer | yes | Property id to add |
+| `actions[]<add_property>.data.value` | number\|string\|object\|array | yes |  property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string  |
+| `actions[]<add_property>.data.value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] |
+| `actions[]<add_property>.data.value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_property>.data.value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_property>.data.value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_property>.data.value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_property>.data.value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_property>.data.value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_property>.data.value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_property>.data.value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<add_child_card>` | object | no | Create child card |
+| `actions[]<add_child_card>.type` | string | yes |  x-documentation-constraints: add_child_card |
+| `actions[]<add_child_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_child_card>.data` | object | yes | Data needed for this type |
+| `actions[]<add_child_card>.data.title` | string | yes | Card title |
+| `actions[]<add_child_card>.data.spaceId` | integer\|null | no | New card space. null - create on parent card path |
+| `actions[]<add_child_card>.data.columnId` | integer\|null | no | New card column.  null - create on parent card path |
+| `actions[]<add_child_card>.data.boardId` | integer\|null | no | New card board.  null - create on parent card path |
+| `actions[]<add_child_card>.data.laneId` | integer\|null | no | New card lane.  null - create on parent card path |
+| `actions[]<add_child_card>.data.parentFields` | array | no | Inherit card fields. Variants:<br> members - card members,<br> external_links - card external links,<br> due_date - card due date,<br> type - card type,<br> size - card size,<br> description - card description,<br> tags - card tags,<br> files - card files<br> responsible - card responsible,<br> timeline - card timeline<br> estimate_workload - card workload<br> properties - inherit all card custom properties,<br>  customProperty_{custom_property_id} - custom property . Example: customProperty_97" x-documentation-constraints: ['members', 'external_links', 'due_date', 'type', 'size', 'description', 'tags', 'files', 'responsible', 'timeline', 'estimate_workload', 'properties', 'customProperty_{custom_property_id}'] |
+| `actions[]<add_child_card>.data.typeId` | integer | no | Add type |
+| `actions[]<add_child_card>.data.size` | string | no | Add size |
+| `actions[]<add_child_card>.data.dueDate` | object | no | Add due date |
+| `actions[]<add_child_card>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_child_card>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_child_card>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_child_card>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_child_card>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_child_card>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_child_card>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_child_card>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_child_card>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_child_card>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_child_card>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_child_card>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_child_card>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_child_card>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_child_card>.data.timezone` | string | no | Timezone. Work with "due_date" Example: "America/Boa_Vista" |
+| `actions[]<add_child_card>.data.tagNames` | array | no | Add tags |
+| `actions[]<add_child_card>.data.membersData` | object | no | Add members |
+| `actions[]<add_child_card>.data.membersData.variant` | string | yes | updater - add event author as member<br> select_user - add selected users Values: ['updater', 'select_user'] x-documentation-constraints: ['updater', 'select_user'] |
+| `actions[]<add_child_card>.data.membersData.userIds` | array | no | User ids to add |
+| `actions[]<add_child_card>.data.description` | string | no | Add card description x-documentation-constraints: maxLength": 32768 |
+| `actions[]<add_child_card>.data.responsibleData` | object | no | Add card responsible |
+| `actions[]<add_child_card>.data.responsibleData.variant` | string | yes | updater - add event author as responsible<br> select_user - add selected user<br> card_owner_related - inherit card responsible<br> random_space_user - add random space user as responsible,<br> random_user_from_list - add random user from list Values: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] x-documentation-constraints: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] |
+| `actions[]<add_child_card>.data.responsibleData.userIds` | array | no | User id to choose from  |
+| `actions[]<add_child_card>.data.responsibleData.userId` | integer | no | User id to add |
+| `actions[]<add_child_card>.data.workload` | number\|null | no | Set workload |
+| `actions[]<add_child_card>.data.linksData` | object | no | Add external links. Object keys must be uuid x-documentation-constraints: no |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$]` | object | no | Link data |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].url` | string | yes | Link url x-documentation-constraints: url format |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].uid` | string | yes | Link uid |
+| `actions[]<add_child_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].description` | string | yes | Link description maxLength: 512 x-documentation-constraints: maxLength: 512 |
+| `actions[]<add_child_card>.data.customProperties` | object | no | Add custom properties. Can contains several custom properties data |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<add_parent_card>` | object | no | Create parent card |
+| `actions[]<add_parent_card>.type` | string | yes |  x-documentation-constraints: add_parent_card |
+| `actions[]<add_parent_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_parent_card>.data` | object | yes | Data needed for this type |
+| `actions[]<add_parent_card>.data.title` | string | yes | Card title |
+| `actions[]<add_parent_card>.data.spaceId` | integer\|null | no | New card space. null - create on child card path |
+| `actions[]<add_parent_card>.data.columnId` | integer\|null | no | New card column.  null - create on child card path |
+| `actions[]<add_parent_card>.data.boardId` | integer\|null | no | New card board.  null - create on child card path |
+| `actions[]<add_parent_card>.data.laneId` | integer\|null | no | New card lane.  null - create on child card path |
+| `actions[]<add_parent_card>.data.parentFields` | array | no | Inherit card fields. Variants:<br> members - card members,<br> external_links - card external links,<br> due_date - card due date,<br> type - card type,<br> size - card size,<br> description - card description,<br> tags - card tags,<br> files - card files<br> responsible - card responsible,<br> timeline - card timeline<br> estimate_workload - card workload<br> properties - inherit all card custom properties,<br>  customProperty_{custom_property_id} - custom property . Example: customProperty_97" x-documentation-constraints: ['members', 'external_links', 'due_date', 'type', 'size', 'description', 'tags', 'files', 'responsible', 'timeline', 'estimate_workload', 'properties', 'customProperty_{custom_property_id}'] |
+| `actions[]<add_parent_card>.data.typeId` | integer | no | Add type |
+| `actions[]<add_parent_card>.data.size` | string | no | Add size |
+| `actions[]<add_parent_card>.data.dueDate` | object | no | Add due date |
+| `actions[]<add_parent_card>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_parent_card>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_parent_card>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_parent_card>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_parent_card>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_parent_card>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_parent_card>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_parent_card>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_parent_card>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_parent_card>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_parent_card>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_parent_card>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_parent_card>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.timezone` | string | no | Timezone. Work with "due_date" Example: "America/Boa_Vista" |
+| `actions[]<add_parent_card>.data.tagNames` | array | no | Add tags |
+| `actions[]<add_parent_card>.data.membersData` | object | no | Add members |
+| `actions[]<add_parent_card>.data.membersData.variant` | string | yes | updater - add event author as member<br> select_user - add selected users Values: ['updater', 'select_user'] x-documentation-constraints: ['updater', 'select_user'] |
+| `actions[]<add_parent_card>.data.membersData.userIds` | array | no | User ids to add |
+| `actions[]<add_parent_card>.data.description` | string | no | Add card description x-documentation-constraints: maxLength": 32768 |
+| `actions[]<add_parent_card>.data.responsibleData` | object | no | Add card responsible |
+| `actions[]<add_parent_card>.data.responsibleData.variant` | string | yes | updater - add event author as responsible<br> select_user - add selected user<br> card_owner_related - inherit card responsible<br> random_space_user - add random space user as responsible,<br> random_user_from_list - add random user from list Values: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] x-documentation-constraints: ['updater', 'select_user', 'card_owner_related', ' random_space_user', 'random_user_from_list'] |
+| `actions[]<add_parent_card>.data.responsibleData.userIds` | array | no | User id to choose from  |
+| `actions[]<add_parent_card>.data.responsibleData.userId` | integer | no | User id to add |
+| `actions[]<add_parent_card>.data.workload` | number\|null | no | Set workload |
+| `actions[]<add_parent_card>.data.linksData` | object | no | Add external links. Object keys must be uuid x-documentation-constraints: no |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$]` | object | no | Link data |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].url` | string | yes | Link url x-documentation-constraints: url format |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].uid` | string | yes | Link uid |
+| `actions[]<add_parent_card>.data.linksData[key matching ^[0-9a-fA-F-]{36}$].description` | string | yes | Link description maxLength: 512 x-documentation-constraints: maxLength: 512 |
+| `actions[]<add_parent_card>.data.customProperties` | object | no | Add custom properties. Can contains several custom properties data |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<add_parent_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<connect_parent_card>` | object | no | Add parent card |
+| `actions[]<connect_parent_card>.type` | string | yes |  x-documentation-constraints: connect_parent_card |
+| `actions[]<connect_parent_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<connect_parent_card>.data` | object | yes | Data needed for this type |
+| `actions[]<connect_parent_card>.data.cardId` | integer | yes | Parent card id |
+| `actions[]<remove_card_users>` | object | no | Remove card members |
+| `actions[]<remove_card_users>.type` | string | yes |  x-documentation-constraints: remove_card_users |
+| `actions[]<remove_card_users>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_card_users>.data` | object | yes | Data needed for this type |
+| `actions[]<remove_card_users>.data.userIds` | array | yes | User ids to remove |
+| `actions[]<remove_card_users>.data.withResponsible` | boolean | yes |  Should remove responsible |
+| `actions[]<change_asap>` | object | no | Change ASAP |
+| `actions[]<change_asap>.type` | string | yes |  x-documentation-constraints: change_asap |
+| `actions[]<change_asap>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_asap>.data` | object | yes | Data needed for this type |
+| `actions[]<change_asap>.data.asap` | boolean | yes | Asap flag |
+| `actions[]<add_user_groups>` | object | no | Add user groups in card |
+| `actions[]<add_user_groups>.type` | string | yes |  x-documentation-constraints: add_user_groups |
+| `actions[]<add_user_groups>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_user_groups>.data` | object | yes | Data needed for this type |
+| `actions[]<add_user_groups>.data.groupIds` | array | yes | Group ids |
+| `actions[]<add_size>` | object | no | Add size |
+| `actions[]<add_size>.type` | string | yes |  x-documentation-constraints: add_size |
+| `actions[]<add_size>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_size>.data` | object | yes | Data needed for this type |
+| `actions[]<add_size>.data.size` | string | yes | Add size |
+| `actions[]<add_due_date>` | object | no | Set due date |
+| `actions[]<add_due_date>.type` | string | yes |  x-documentation-constraints: add_due_date |
+| `actions[]<add_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_due_date>.data` | object | yes | Data needed for this type |
+| `actions[]<add_due_date>.data.dueDate` | object | yes | Add due date |
+| `actions[]<add_due_date>.data.dueDate.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<add_due_date>.data.dueDate.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<add_due_date>.data.dueDate.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<add_due_date>.data.dueDate.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<add_due_date>.data.dueDate.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<add_due_date>.data.dueDate.asap` | boolean | no | Asap flag |
+| `actions[]<add_due_date>.data.dueDate.due_date_remind_at` | string | no | For exact time. Reminder date. ISO 8601 format |
+| `actions[]<add_due_date>.data.dueDate.due_date_time_present` | boolean | no | For both modes. Set true if need to set time |
+| `actions[]<add_due_date>.data.dueDate.due_date` | string | no | Due date. ISO 8601 format |
+| `actions[]<add_due_date>.data.dueDate.expires_later` | boolean | no | Expires later flag |
+| `actions[]<add_due_date>.data.dueDate.hours` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_due_date>.data.dueDate.minutes` | integer | no | Work only with due_date_time_present set to true |
+| `actions[]<add_due_date>.data.dueDate.reminder_value` | integer | no | Relative reminder value. <br> Work only with "reminder_unit" |
+| `actions[]<add_due_date>.data.dueDate.reminder_unit` | string | no | Relative reminder offset units. <br> Work only with "reminder_value" Values: ['days, hours', 'minutes'] x-documentation-constraints: ['days, hours', 'minutes'] |
+| `actions[]<add_due_date>.data.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<remove_due_date>` | object | no | Remove due date |
+| `actions[]<remove_due_date>.type` | string | yes |  x-documentation-constraints: remove_due_date |
+| `actions[]<remove_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<remove_due_date>.data` | object | yes | Empty object |
+| `actions[]<complete_checklists>` | object | no | Complete all checklists in card |
+| `actions[]<complete_checklists>.type` | string | yes |  x-documentation-constraints: complete_checklists |
+| `actions[]<complete_checklists>.created` | string | no | Created timestamp .ISO 8601 format |
+| `actions[]<complete_checklists>.data` | object | yes | Empty object |
+| `actions[]<sort_cards>` | object | no | Sort cards |
+| `actions[]<sort_cards>.type` | string | yes |  x-documentation-constraints: sort_cards |
+| `actions[]<sort_cards>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<sort_cards>.data` | object | yes | Data needed for this type |
+| `actions[]<sort_cards>.data.sortDirection` | string | yes | Sorting direction Values: ['asc', 'desc'] x-documentation-constraints: ['asc', 'desc'] |
+| `actions[]<sort_cards>.data.sortWithinColumn` | boolean | yes | The cards will sorted within entire column |
+| `actions[]<sort_cards>.data.sortProperty` | string | yes | Sort by property <br>  variants: <br>   "created" - by creating date <br>   "title" - by title<br>   "due_date" - by due date<br>   "size" -by size<br>   "cp_{custom_property_id}" - by custom property x-documentation-constraints: ['created', 'title', 'due_date', 'due_date', 'cp_{custom_property_id}'] |
+| `actions[]<add_comment>` | object | no | Add comment |
+| `actions[]<add_comment>.type` | string | yes |  x-documentation-constraints: add_comment |
+| `actions[]<add_comment>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<add_comment>.data` | object | yes | Data needed for this type |
+| `actions[]<add_comment>.data.text` | string | yes | comment text |
+| `actions[]<card_add_sla>` | object | no | Add SLA |
+| `actions[]<card_add_sla>.type` | string | yes |  x-documentation-constraints: card_add_sla |
+| `actions[]<card_add_sla>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<card_add_sla>.data` | object | yes | Data needed for this type |
+| `actions[]<card_add_sla>.data.slaIds` | array | yes | Sla uuids to add |
+| `actions[]<card_remove_sla>` | object | no | Remove SLA |
+| `actions[]<card_remove_sla>.type` | string | yes |  x-documentation-constraints: card_remove_sla |
+| `actions[]<card_remove_sla>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<card_remove_sla>.data` | object | yes | Data needed for this type |
+| `actions[]<card_remove_sla>.data.slaIds` | array | yes | Sla uuids to remove, empty array for all |
+| `actions[]<archive>` | object | no | Archive card |
+| `actions[]<archive>.type` | string | yes |  x-documentation-constraints: archive |
+| `actions[]<archive>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<archive>.data` | object | yes | Empty object |
+| `actions[]<change_custom_property_value>` | object | no | Change property value |
+| `actions[]<change_custom_property_value>.type` | string | yes |  x-documentation-constraints: change_custom_property_value |
+| `actions[]<change_custom_property_value>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_custom_property_value>.data` | object | yes | Data needed for this type |
+| `actions[]<change_custom_property_value>.data.value` | number | yes | Change value by |
+| `actions[]<change_custom_property_value>.data.propertyId` | integer | yes | Property id to change |
+| `actions[]<change_custom_property_value>.data.changeVariant` | string | yes | increase - increment value, decrease - decrease value  Values: ['increase', 'decrease'] x-documentation-constraints: ['increase', 'decrease'] |
+| `actions[]<property_add_to_child_card>` | object | no | Change property value |
+| `actions[]<property_add_to_child_card>.type` | string | yes |  x-documentation-constraints: property_add_to_child_card |
+| `actions[]<property_add_to_child_card>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<property_add_to_child_card>.data` | object | yes | Data needed for this type |
+| `actions[]<property_add_to_child_card>.data.childLevel` | string | yes | Apply for child level Values: ['first'] x-documentation-constraints: ['first'] |
+| `actions[]<property_add_to_child_card>.data.customProperties` | object | yes | Add custom properties. Can contains several custom properties data |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$]` | object | no | "Custom property data. Format customProperty_{custom_property_id}.<br>Example: customProperty_97 |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].id` | integer | yes | Property id |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value` | string\|object\|array | yes | Property value, for date type - object,<br> users type - array of user uid,<br> select type - array of select options,<br> rest - string |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.apply_date_mode` | integer | yes | 1 - relative time, 2 -exact time Values: [1, 2] x-documentation-constraints: [1, 2] |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_days_offset` | number | no | Offset days after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_hours_offset` | number | no | Offset hours after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.relative_minutes_offset` | number | no | Offset minutes after event |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.offset_unit` | string | no | Relative offset unit Values: ['days', 'hours', 'minutes'] |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.time` | string | no | Set if need to set time. Example: "20:00:00" |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.timezone` | string | yes | Timezone. Example: "America/Boa_Vista" |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.tzOffset` | integer | yes | Offset timezone from UTC in minutes |
+| `actions[]<property_add_to_child_card>.data.customProperties[key matching ^customProperty_[0-9]+$].value.date` | string | no |  Example: "2023-09-13" |
+| `actions[]<change_type>` | object | no | Change card type |
+| `actions[]<change_type>.type` | string | yes |  x-documentation-constraints: change_type |
+| `actions[]<change_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_type>.data` | object | yes | Data needed for this type |
+| `actions[]<change_type>.data.typeId` | integer | yes | New type id |
+| `actions[]<change_service>` | object | no | Attach or change service |
+| `actions[]<change_service>.type` | string | yes |  x-documentation-constraints: change_service |
+| `actions[]<change_service>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `actions[]<change_service>.data` | object | yes | Data needed for this type |
+| `actions[]<change_service>.data.serviceId` | integer | yes | New service id |
+| `conditions.clause` | string | no |  Values: ['and', 'or'] |
+| `conditions.conditions` | array | no | — |
+| `conditions<tag>` | object | no | Checks for card tags |
+| `conditions<tag>.type` | string | yes |  x-documentation-constraints: tag |
+| `conditions<tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<tag>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<tag>.data` | object | yes | Data  needed for this type |
+| `conditions<tag>.data.tagIds` | array | yes | Tags Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<target_tag>` | object | no | When tag added or deleted from card. Check for tag |
+| `conditions<target_tag>.type` | string | yes |  x-documentation-constraints: target_tag |
+| `conditions<target_tag>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<target_tag>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<target_tag>.data` | object | yes | Data  needed for this type |
+| `conditions<target_tag>.data.tagIds` | array | yes | Tags Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<card_type>` | object | no | Checks for card type |
+| `conditions<card_type>.type` | string | yes |  x-documentation-constraints: card_type |
+| `conditions<card_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_type>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<card_type>.data` | object | yes | Data  needed for this type |
+| `conditions<card_type>.data.typeIds` | array | yes | Type Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<new_card_type>` | object | no | Checks for new card type when card type changed |
+| `conditions<new_card_type>.type` | string | yes |  x-documentation-constraints: new_card_type |
+| `conditions<new_card_type>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_card_type>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<new_card_type>.data` | object | yes | Data  needed for this type |
+| `conditions<new_card_type>.data.typeIds` | array | yes | Type Ids. x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<updater>` | object | no | Checks for author, who initiated event |
+| `conditions<updater>.type` | string | yes |  x-documentation-constraints: updater |
+| `conditions<updater>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<updater>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of<br> in_role - is in role from list<br> not_in_role - is not in role from list<br> in_groups - is in groups<br> not_in_groups - is not in groups<br> in_company - have access to company<br> not_ in_company - have not access to the company Values: ['eq', 'ne', 'contains', 'not_contains', 'in_role', 'not_in_role', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains', 'in_role', 'not_in_role', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company'] |
+| `conditions<updater>.data` | object | no | Send empty object if data not required |
+| `conditions<updater>.data.userIds` | array | no | userIds x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<updater>.data.roles` | array | no | Role names x-documentation-constraints: [<br> card_owner,<br> responsible,<br>card_member<br>] |
+| `conditions<updater>.data.groupIds` | array | no | Group ids |
+| `conditions<path>` | object | no | Checks for card path |
+| `conditions<path>.type` | string | yes |  x-documentation-constraints: path |
+| `conditions<path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<path>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<path>.data` | object | yes | Data  needed for this type |
+| `conditions<path>.data.boardId` | integer | yes | Board id |
+| `conditions<path>.data.columnId` | integer\|null | yes | Column id. null - for any |
+| `conditions<path>.data.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<new_path>` | object | no | Checks for new card path, when card moved |
+| `conditions<new_path>.type` | string | yes |  x-documentation-constraints: new_path |
+| `conditions<new_path>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_path>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<new_path>.data` | object | yes | Data  needed for this type |
+| `conditions<new_path>.data.boardId` | integer | yes | Board id |
+| `conditions<new_path>.data.columnId` | integer\|null | yes | Column id. null - for any |
+| `conditions<new_path>.data.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<card_state>` | object | no | Checks for card states. queue, in progress, done |
+| `conditions<card_state>.type` | string | yes |  x-documentation-constraints: card_state |
+| `conditions<card_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_state>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<card_state>.data` | object | yes | Data  needed for this type |
+| `conditions<card_state>.data.cardStates` | integer | yes |  1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] x-documentation-constraints: [1, 2, 3] |
+| `conditions<new_card_state>` | object | no | Checks for card states, when card state changed. queue, in progress, done |
+| `conditions<new_card_state>.type` | string | yes |  x-documentation-constraints: new_card_state |
+| `conditions<new_card_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_card_state>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<new_card_state>.data` | object | yes | Data  needed for this type |
+| `conditions<new_card_state>.data.cardStates` | integer | yes |  1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] x-documentation-constraints: [1, 2, 3] |
+| `conditions<comment>` | object | no | Checks for comment text |
+| `conditions<comment>.type` | string | yes |  x-documentation-constraints: comment |
+| `conditions<comment>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<comment>.operator` | string | yes |  start_with - start with <br> contains - contains Values: ['start_with', 'contains'] x-documentation-constraints: ['start_with', 'contains'] |
+| `conditions<comment>.data` | object | yes | Data  needed for this type |
+| `conditions<comment>.data.command` | string | yes | Text for check |
+| `conditions<target_custom_property>` | object | no | Checks for changed property |
+| `conditions<target_custom_property>.type` | string | yes |  x-documentation-constraints: target_custom_property |
+| `conditions<target_custom_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<target_custom_property>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<target_custom_property>.data` | object | yes | Data  needed for this type |
+| `conditions<target_custom_property>.data.value` | string\|number\|array | yes | number with numbers types, array - for select, catalog, users,<br>rest types-string |
+| `conditions<target_custom_property>.data.propertyIds` | array | yes | Property id x-documentation-constraints: maxLength - 1 |
+| `conditions<target_custom_property>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<target_custom_property>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
+| `conditions<custom_property>` | object | no | Checks for custom property |
+| `conditions<custom_property>.type` | string | yes |  x-documentation-constraints: custom_property |
+| `conditions<custom_property>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<custom_property>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<custom_property>.data` | object | yes | Data  needed for this type |
+| `conditions<custom_property>.data.value` | string\|number\|array | yes | number with numbers types, array - for select, catalog, users,<br>rest types-string |
+| `conditions<custom_property>.data.propertyIds` | array | yes | Property id x-documentation-constraints: maxLength - 1 |
+| `conditions<custom_property>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<custom_property>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
+| `conditions<due_date>` | object | no | Checks for due date |
+| `conditions<due_date>.type` | string | yes |  x-documentation-constraints: due_date |
+| `conditions<due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<due_date>.operator` | string | yes |  eq - is<br> ne-is not<br> is_less - is before<br> is_more - is after<br> is_between - is between<br> any - any.<br> Only work for "set" data comparator, otherwise only eq allowed Values: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] x-documentation-constraints: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] |
+| `conditions<due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<due_date>.data.date` | string | no | ISO 8601 format |
+| `conditions<due_date>.data.dateVariant` | string | no |  exact - exact date,<br> current - event date,<br> within_a_week - date within_a_week<br> within_a_month - date within_a_month,<br> custom - set deviation for is_less, is_more operators,<br>  set period for is_between operator Values: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] x-documentation-constraints: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] |
+| `conditions<due_date>.data.comparator` | string | yes | Check due date set or not Values: ['set', 'cleared'] x-documentation-constraints: ['set', 'cleared'] |
+| `conditions<due_date>.data.deviation` | string | no | plus - after event, minus - before event Values: ['plus', 'minus'] x-documentation-constraints: ['plus', 'minus'] |
+| `conditions<due_date>.data.dateUnit` | string | no | Deviation date units Values: ['days', 'weeks', 'months'] x-documentation-constraints: ['days', 'weeks', 'months'] |
+| `conditions<due_date>.data.dateValue0` | number | no | First deviation number |
+| `conditions<due_date>.data.dateValue1` | number | no | Second deviation number |
+| `conditions<new_due_date>` | object | no | Checks for new due date, when it changed |
+| `conditions<new_due_date>.type` | string | yes |  x-documentation-constraints: new_due_date |
+| `conditions<new_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_due_date>.operator` | string | yes |  eq - is<br> ne-is not<br> is_less - is before<br> is_more - is after<br> is_between - is between<br> any - any.<br> Only work for "set", "changed" data comparator, otherwise only eq allowed Values: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] x-documentation-constraints: ['eq', 'ne', 'is_less', 'is_more', 'is_between', 'any'] |
+| `conditions<new_due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<new_due_date>.data.date` | string | no | ISO 8601 format |
+| `conditions<new_due_date>.data.dateVariant` | string | no |  exact - exact date,<br> current - event date,<br> within_a_week - date within_a_week<br> within_a_month - date within_a_month,<br> custom - set deviation for is_less, is_more operators,<br>  set period for is_between operator Values: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] x-documentation-constraints: ['exact', 'current', 'custom', 'within_a_week', 'within_a_month'] |
+| `conditions<new_due_date>.data.comparator` | string | yes | Check due date Values: ['set', 'cleared', 'changed'] x-documentation-constraints: ['set', 'cleared', 'changed'] |
+| `conditions<new_due_date>.data.deviation` | string | no | plus - after event, minus - before event Values: ['plus', 'minus'] x-documentation-constraints: ['plus', 'minus'] |
+| `conditions<new_due_date>.data.dateUnit` | string | no | Deviation date units Values: ['days', 'weeks', 'months'] x-documentation-constraints: ['days', 'weeks', 'months'] |
+| `conditions<new_due_date>.data.dateValue0` | number | no | First deviation number |
+| `conditions<new_due_date>.data.dateValue1` | number | no | Second deviation number |
+| `conditions<new_child_cards_state>` | object | no | Checks for child card when their states changed |
+| `conditions<new_child_cards_state>.type` | string | yes |  x-documentation-constraints: new_child_cards_state |
+| `conditions<new_child_cards_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<new_child_cards_state>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<new_child_cards_state>.data` | object | yes | Data  needed for this type |
+| `conditions<new_child_cards_state>.data.childCardsStates` | array | yes |  x-documentation-constraints: [<br> all_child_cards_done,<br> all_child_cards_in_queue,<br> child_cards_count_changed,<br> child_cards_count_increased,<br> child_cards_count_decreased,<br> child_cards_path_changed<br>]<br>MaxLength - 1 |
+| `conditions<new_child_cards_state>.data.childrenPathEntryOperator` | string | no | all - all cards, one of - at least one card.<br>Check, when all cards or at least one will move to Values: ['all', 'one_of'] x-documentation-constraints: ['all', 'one_of'] |
+| `conditions<new_child_cards_state>.data.path` | object | no | Target path data |
+| `conditions<new_child_cards_state>.data.path.boardId` | integer | yes | Board id |
+| `conditions<new_child_cards_state>.data.path.columnId` | integer | yes | Column id |
+| `conditions<new_child_cards_state>.data.path.laneId` | integer | yes | Lane id. null - for any |
+| `conditions<new_child_cards_state>.data.path.spaceId` | integer | yes | Space id |
+| `conditions<new_child_cards_state>.data.childCardsAdditionalConditions` | array | no | Additional child card conditions<br>Explain available conditions and its attributes |
+| `conditions<child_cards_state>` | object | no | Checks for child card states |
+| `conditions<child_cards_state>.type` | string | yes |  x-documentation-constraints: child_cards_state |
+| `conditions<child_cards_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<child_cards_state>.operator` | string | yes |  eq - is<br> ne- is not Values: ['eq', 'ne'] x-documentation-constraints: ['eq', 'ne'] |
+| `conditions<child_cards_state>.data` | object | yes | Data  needed for this type |
+| `conditions<child_cards_state>.data.childCardsStates` | array | yes |  x-documentation-constraints: [<br> all_child_cards_done,<br> all_child_cards_in_queue,<br>]<br>MaxLength - 1 |
+| `conditions<checklist_item_text>` | object | no | Checks for checklist item text |
+| `conditions<checklist_item_text>.type` | string | yes |  x-documentation-constraints: checklist_item_text |
+| `conditions<checklist_item_text>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_text>.operator` | string | yes |  start_with - start with <br> contains - contains Values: ['start_with', 'contains'] x-documentation-constraints: ['start_with', 'contains'] |
+| `conditions<checklist_item_text>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_text>.data.text` | string | yes | Text for check |
+| `conditions<checklist_item_due_date>` | object | no | Checks for checklist item due date |
+| `conditions<checklist_item_due_date>.type` | string | yes |  x-documentation-constraints: checklist_item_due_date |
+| `conditions<checklist_item_due_date>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_due_date>.operator` | string | yes |  exceeded - exceeded <br> not_exceeded - not exceeded Values: ['exceeded', 'not_exceeded'] x-documentation-constraints: ['exceeded', 'not_exceeded'] |
+| `conditions<checklist_item_due_date>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_due_date>.data.timezone` | string | yes | Timezone. Example: "Africa/Abidjan" |
+| `conditions<checklist_item_checked_state>` | object | no | Is checklist item checked |
+| `conditions<checklist_item_checked_state>.type` | string | yes |  x-documentation-constraints: checklist_item_checked_state |
+| `conditions<checklist_item_checked_state>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<checklist_item_checked_state>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<checklist_item_checked_state>.data` | object | yes | Data  needed for this type |
+| `conditions<checklist_item_checked_state>.data.checked` | boolean | yes | Checked flag |
+| `conditions<card_is_request>` | object | no | Is card a request |
+| `conditions<card_is_request>.type` | string | yes |  x-documentation-constraints: card_is_request |
+| `conditions<card_is_request>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_is_request>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<card_is_request>.data` | object | yes | Empty data |
+| `conditions<card_author>` | object | no | Checks for request author.<br>Only works in conjunction with condition type card_is_request |
+| `conditions<card_author>.type` | string | yes |  x-documentation-constraints: card_author |
+| `conditions<card_author>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<card_author>.operator` | string | yes |  in_organisations - belongs to one of organizations Values: ['in_organisations'] x-documentation-constraints: ['in_organisations'] |
+| `conditions<card_author>.data` | object | yes | Data  needed for this type |
+| `conditions<card_author>.data.organizationUids` | array | yes | Organization uuids |
+| `conditions<block_status>` | object | no | Checks for card block status |
+| `conditions<block_status>.type` | string | yes |  x-documentation-constraints: block_status |
+| `conditions<block_status>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<block_status>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<block_status>.data` | object | yes | Data  needed for this type |
+| `conditions<block_status>.data.blocked` | boolean | yes | Card blocked flag |
+| `conditions<relations>` | object | no | Checks for card relations |
+| `conditions<relations>.type` | string | yes |  x-documentation-constraints: relations |
+| `conditions<relations>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<relations>.operator` | string | yes |  eq - is Values: ['eq'] x-documentation-constraints: ['eq'] |
+| `conditions<relations>.data` | object | yes | Data  needed for this type |
+| `conditions<relations>.data.parentsComparator` | string | yes | absent - no parents card, present - has parents cards, ignore - ignore parents cards Values: ['absent', 'present', 'ignore'] x-documentation-constraints: ['absent', 'present', 'ignore'] |
+| `conditions<relations>.data.childComparator` | string | yes | absent - no parents card, present - has parents cards, ignore - ignore parents cards Values: ['absent', 'present', 'ignore'] x-documentation-constraints: ['absent', 'present', 'ignore'] |
+| `conditions<service>` | object | no | Checks for card linked services  |
+| `conditions<service>.type` | string | yes |  x-documentation-constraints: service |
+| `conditions<service>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<service>.operator` | string | yes |  eq - is <br> ne-is not<br> contains - is any of<br> not_contains - is not any of Values: ['eq', 'ne', 'contains', 'not_contains'] x-documentation-constraints: ['eq', 'ne', 'contains', 'not_contains'] |
+| `conditions<service>.data` | object | yes | Data  needed for this type |
+| `conditions<service>.data.serviceIds` | array | yes | serviceIds x-documentation-constraints: For eq, ne - operators maxLength - 1 |
+| `conditions<size>` | object | no | Checks for card size value  |
+| `conditions<size>.type` | string | yes | Matches value 'size' x-documentation-constraints: size |
+| `conditions<size>.created` | string | no |  Created timestamp .ISO 8601 format |
+| `conditions<size>.operator` | string | yes | The only available comparator x-documentation-constraints: eq |
+| `conditions<size>.data` | object | yes | Data  needed for this type |
+| `conditions<size>.data.size` | string\|number | yes | Size value (in case comparator is "has_value") |
+| `conditions<size>.data.comparator` | string | yes | Includes allowed comparator for each type |
+| `conditions<size>.data.comparisonVariant` | string | no | Comparison variant for specific comparators.<br>Required only for specific comparators |
 
 **Examples**
 
@@ -12326,6 +13853,8 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `name` | `string` | yes | — | — | Group name |
+| `permissions` | `integer` | no | — | — | Group permissions |
+| `add_to_cards_and_spaces_enabled` | `boolean` | no | — | — | Should add cards and spaces |
 
 **Examples**
 
@@ -12439,6 +13968,10 @@ user-roles
 | `query` | `string` | no | — | — | Search query |
 | `limit` | `integer` | no | — | — | Max results to return |
 | `offset` | `integer` | no | — | — | Offset for pagination |
+| `with_tree_entities` | `boolean` | no | — | — | Add tree entities for each group |
+| `with_users_count` | `boolean` | no | — | — | Add users count for each group |
+| `with_sync_group_attribute` | `boolean` | no | — | — | Add sync attribute for each group |
+| `condition` | `string` | no | — | — | 1 - active, 2 - inactive |
 
 **Examples**
 
@@ -12477,6 +14010,8 @@ user-roles
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Group UID |
 | `name` | `string` | no | — | — | New group name |
+| `permissions` | `integer` | no | — | — | Group permissions(bit mask) |
+| `add_to_cards_and_spaces_enabled` | `boolean` | no | — | — | Ability to add all users of the group to cards, placed in group spaces. Ability to filter logs by group in «Timesheets» |
 
 **Examples**
 
@@ -12515,8 +14050,8 @@ user-roles
 |---|---|---|---|---|---|
 | `for_members_section` | `boolean` | no | — | — | Use the administrative Members section response shape (default true). |
 | `query` | `string` | no | — | — | Search by email or full name. |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Maximum number of users to return (default 100). |
-| `offset` | `integer` | no | — | >= 0 | Number of users to skip (default 0). |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Maximum number of users to return (default 100). |
+| `offset` | `integer` | no | — | minimum=0 | Number of users to skip (default 0). |
 | `only_records_count` | `boolean` | no | — | — | Return only the filtered user count. |
 | `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | — | Filter by Kaiten access type. |
 | `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | — | Filter by Service Desk access. |
@@ -12526,6 +14061,11 @@ user-roles
 | `permissions` | `array` | no | — | — | JSON array of company permission criteria. |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 | `fields` | `string` | no | — | — | Comma-separated field names to return per user. |
+| `invitesOnly` | `boolean` | no | — | — | Filter to return only invites |
+| `withTransferAccessStatus` | `boolean` | no | — | — | Data about the user rights transfer process is added |
+| `owner_only` | `boolean` | no | — | — | When this flag is enabled the company owner is returned |
+| `only_paid` | `boolean` | no | — | — | Only users with paid access are returned |
+| `only_virtual` | `boolean` | no | — | — | Only virtual users are returned and result of the request is displayed page by page (See limit and offset params). |
 
 **Examples**
 
@@ -12566,8 +14106,8 @@ user-roles
 |---|---|---|---|---|---|
 | `for_members_section` | `boolean` | no | — | — | Use the administrative Members response shape (default true). |
 | `query` | `string` | no | — | — | Search by email or full name. |
-| `page_size` | `integer` | no | — | >= 1, <= 100 | Users per request (1..100, default 100). |
-| `max_pages` | `integer` | no | — | >= 1, <= 1000 | Safety cap for requests; a full final page causes an error instead of truncation (default 100). |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Users per request (1..100, default 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Safety cap for requests; a full final page causes an error instead of truncation (default 100). |
 | `access_type_permissions` | `string` | no | `member`, `guest`, `denied` | — | Filter by Kaiten access type. |
 | `sd_access_type` | `string` | no | `any`, `has_access`, `has_no_access` | — | Filter by Service Desk access. |
 | `take_licence` | `string` | no | `any`, `yes`, `no` | — | Filter by paid-license usage. |
@@ -12656,6 +14196,8 @@ user-roles
 | `full_name` | `string` | no | — | — | Full name |
 | `email` | `string` | no | — | — | Email |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
+| `apps_permissions` | `integer` | no | — | — | User access.<br> 0 - no access,<br> 1 - full access to Kaiten, access to service desk denied.<br> 2 - guest access to Kaiten, access to service desk denied.<br> 4 - access only to service desk.<br> 5 - full access to Kaiten and service desk.<br> 6 - guest access to Kaiten, access to service desk |
+| `temporarily_inactive` | `boolean` | no | — | — | Temporarily inactive: user is still in company, but can't sign in and doesn't need a license |
 
 **Examples**
 
@@ -12963,6 +14505,8 @@ user-roles
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Group UID |
 | `user_id` | `integer` | yes | — | — | User ID to add |
+| `request_id` | `string` | no | — | — | Request id if addition to the group is answer for access request |
+| `operator_comment` | `string|null` | no | — | minLength=1, maxLength=1024 | Operator's comment if addition to the group is answer for access request |
 
 **Examples**
 
@@ -13000,8 +14544,8 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Group UID |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
 
 **Examples**
@@ -13155,8 +14699,12 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `user_id` | `integer` | yes | — | — | User ID to add |
+| `user_id` | `integer` | no | — | — | User ID to add |
 | `role_id` | `string` | no | — | — | Role ID (UUID) to assign |
+| `email` | `string` | no | — | — | User email address |
+| `guest` | `boolean` | no | — | — | Set true to invite the user as a guest |
+| `operator_comment` | `string` | no | — | — | Operator's comment |
+| `send_email` | `boolean` | no | — | — | Whether to send email or not |
 
 **Examples**
 
@@ -13233,9 +14781,11 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `space_id` | `integer` | yes | — | — | Space ID |
-| `limit` | `integer` | no | — | >= 1, <= 100 | Max results (default 50, max 100) |
-| `offset` | `integer` | no | — | >= 0 | Pagination offset |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (default 50, max 100) |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
 | `compact` | `boolean` | no | — | — | Return compact response without heavy fields. |
+| `include_inherited_access` | `boolean` | no | — | — | The result includes users with inherited access |
+| `inactive` | `boolean` | no | — | — | The result includes only inactive in company members |
 
 **Examples**
 
@@ -13314,6 +14864,9 @@ user-roles
 | `space_id` | `integer` | yes | — | — | Space ID |
 | `user_id` | `integer` | yes | — | — | User ID to update |
 | `role_id` | `string` | no | — | — | New role ID (UUID) |
+| `notifications_enabled` | `boolean` | no | — | — | Enabled or disable notifications for space events |
+| `space_group_id` | `number|null` | no | — | — | Space group id |
+| `settings` | `object` | no | — | — | Space user settings |
 
 **Examples**
 
@@ -13390,6 +14943,7 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `role_id` | `integer` | yes | — | — | User role ID |
+| `replace_role_id` | `integer` | no | — | — | Role id to replace deleted |
 
 **Examples**
 
@@ -13562,7 +15116,8 @@ scim.users
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
+| `payload` | `object` | no | — | — | SCIM JSON payload. Sent as the request body. |
+| `displayName` | `string` | no | — | — | SCIM group display name. |
 
 **Examples**
 
@@ -13676,7 +15231,17 @@ scim.users
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `group_id` | `string` | yes | — | — | SCIM group ID. |
-| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
+| `payload` | `object` | no | — | — | SCIM JSON payload. Sent as the request body. |
+| `Operations` | `array` | no | — | — | SCIM PATCH operations. Unknown server-specific paths are preserved. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `Operations[]` | object | no | — |
+| `Operations[].op` | string | no | — |
+| `Operations[].path` | string | no | — |
+| `Operations[].value` | unknown | no | — |
 
 **Examples**
 
@@ -13713,7 +15278,17 @@ scim.users
 
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
-| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
+| `payload` | `object` | no | — | — | SCIM JSON payload. Sent as the request body. |
+| `userName` | `string` | no | — | — | SCIM user name. |
+| `name` | `object` | no | — | — | SCIM structured name. |
+| `emails` | `array|object` | no | — | — | SCIM emails. The portal labels this object but renders unnamed nested fields; array form is retained for SCIM compatibility. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `name.givenName` | string | no | — |
+| `name.familyName` | string | no | — |
 
 **Examples**
 
@@ -13827,7 +15402,17 @@ scim.users
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `user_id` | `string` | yes | — | — | SCIM user ID. |
-| `payload` | `object` | yes | — | — | SCIM JSON payload. Sent as the request body. |
+| `payload` | `object` | no | — | — | SCIM JSON payload. Sent as the request body. |
+| `Operations` | `array` | no | — | — | SCIM PATCH operations. Unknown server-specific paths are preserved. |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `Operations[]` | object | no | — |
+| `Operations[].op` | string | no | — |
+| `Operations[].path` | string | no | — |
+| `Operations[].value` | unknown | no | — |
 
 **Examples**
 
@@ -13899,6 +15484,9 @@ space-activity-all
 | `to` | `string` | no | — | — | End of date range filter |
 | `limit` | `integer` | no | — | — | Max results |
 | `offset` | `integer` | no | — | — | Pagination offset |
+| `author_id` | `integer` | no | — | — | Filter events by author user id.Example: 123 |
+| `author_uid` | `string` | no | — | — | Filter events by author user uid.Example: 27ca9e9f-d4fc-47dd-9d4b-35c7b6e3d105 |
+| `id` | `string` | no | — | — | Filter by audit log event id.Example: 8f977f36-0f13-4b5f-91ab-0df9d15c7ed8 |
 
 **Examples**
 
@@ -17057,6 +18645,8 @@ tree.children
 | `query` | `string` | no | — | — | Search query. |
 | `limit` | `integer` | no | — | — | Max results. |
 | `offset` | `integer` | no | — | — | Pagination offset. |
+| `parent_entity_uid` | `string` | no | — | — | Get entities that are nested in entity with desired uid |
+| `levels_count` | `number` | no | — | — | Max depth level |
 
 **Examples**
 

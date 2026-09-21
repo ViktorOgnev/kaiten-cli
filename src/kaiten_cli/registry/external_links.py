@@ -13,9 +13,7 @@ TOOLS = (
         description="List all external links on a Kaiten card.",
         input_schema={
             "type": "object",
-            "properties": {
-                "card_id": {"type": "integer", "description": "Card ID"},
-            },
+            "properties": {"card_id": {"type": "integer", "description": "Card ID"}},
             "required": ["card_id"],
         },
         operation=OperationSpec(
@@ -36,10 +34,18 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
-                "url": {"type": "string", "description": "URL of the external link"},
-                "description": {
+                "url": {
                     "type": "string",
+                    "description": "URL of the external link",
+                    "format": "url",
+                },
+                "description": {
+                    "type": ["string", "null"],
                     "description": "Description of the external link",
+                    "x-documentation-alternatives": [
+                        {"type": "string", "maxLength": 512, "description": "Description"},
+                        {"type": "null", "description": "Description"},
+                    ],
                 },
             },
             "required": ["card_id", "url"],
@@ -66,10 +72,18 @@ TOOLS = (
             "properties": {
                 "card_id": {"type": "integer", "description": "Card ID"},
                 "link_id": {"type": "integer", "description": "External link ID"},
-                "url": {"type": "string", "description": "URL of the external link"},
-                "description": {
+                "url": {
                     "type": "string",
+                    "description": "URL of the external link",
+                    "format": "url",
+                },
+                "description": {
+                    "type": ["string", "null"],
                     "description": "Description of the external link",
+                    "x-documentation-alternatives": [
+                        {"type": "string", "maxLength": 512, "description": "Description"},
+                        {"type": "null", "description": "Description"},
+                    ],
                 },
             },
             "required": ["card_id", "link_id"],

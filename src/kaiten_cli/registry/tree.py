@@ -77,10 +77,21 @@ TOOLS = (
                 "query": {"type": "string", "description": "Search query."},
                 "limit": {"type": "integer", "description": "Max results."},
                 "offset": {"type": "integer", "description": "Pagination offset."},
+                "parent_entity_uid": {
+                    "type": "string",
+                    "description": "Get entities that are nested in entity with desired uid",
+                },
+                "levels_count": {
+                    "type": "number",
+                    "description": "Max depth level",
+                    "x-documentation-constraints": "max: 2",
+                },
             },
         },
         operation=OperationSpec(
-            method="GET", path_template="/tree-entities", query_fields=("query", "limit", "offset")
+            method="GET",
+            path_template="/tree-entities",
+            query_fields=("query", "limit", "offset", "parent_entity_uid", "levels_count"),
         ),
         response_policy=ResponsePolicy(default_limit=50, result_kind="list"),
         examples=(
@@ -292,7 +303,7 @@ TOOLS = (
                 "parent_entity_uid": {
                     "type": "string",
                     "description": "Parent entity UID. Omit to list root-level entities.",
-                },
+                }
             },
         },
         operation=OperationSpec(method="GET", path_template="/tree/children"),

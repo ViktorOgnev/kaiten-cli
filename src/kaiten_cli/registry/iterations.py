@@ -51,12 +51,12 @@ TOOLS = (
                 "space_uid": {"type": "string", "description": "Space UUID."},
                 "status": {
                     "type": "string",
-                    "description": "Comma-separated statuses: planned, active, closed.",
+                    "description": "Filter by iteration status. Comma separated list of: planned, active, closed, removed",
                 },
                 "with_data": {
                     "type": "string",
                     "enum": ["cards"],
-                    "description": "Include related cards.",
+                    "description": "Include related data. Comma separated list of: cards. Iterations with the status 'removed' do not contain cards.",
                 },
                 "limit": {
                     "type": "integer",
@@ -66,9 +66,16 @@ TOOLS = (
                 "order": {
                     "type": "string",
                     "enum": ["asc", "desc"],
-                    "description": "Result order.",
+                    "description": "Sort order by creation date: asc or desc. Default: asc.",
                 },
-                **_shaping_properties(),
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact output without heavy nested fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return.",
+                },
             },
             "required": ["space_uid"],
         },
@@ -128,9 +135,17 @@ TOOLS = (
             "properties": {
                 "space_uid": {"type": "string", "description": "Space UUID."},
                 "title": {"type": "string", "description": "Iteration title."},
-                "goal": {"type": "string", "description": "Iteration goal."},
-                "start_date": {"type": "string", "description": "ISO 8601 start date."},
-                "finish_date": {"type": "string", "description": "ISO 8601 finish date."},
+                "goal": {"type": ["string", "null"], "description": "Iteration goal."},
+                "start_date": {
+                    "type": ["string", "null"],
+                    "description": "ISO 8601 start date.",
+                    "format": "date-time",
+                },
+                "finish_date": {
+                    "type": ["string", "null"],
+                    "description": "ISO 8601 finish date.",
+                    "format": "date-time",
+                },
             },
             "required": ["space_uid", "title"],
         },
@@ -158,20 +173,29 @@ TOOLS = (
                 "space_uid": {"type": "string", "description": "Space UUID."},
                 "iteration_id": {"type": "string", "description": "Iteration UUID."},
                 "title": {"type": "string", "description": "New title."},
-                "goal": {"type": "string", "description": "New goal."},
+                "goal": {"type": ["string", "null"], "description": "New goal."},
                 "status": {
                     "type": "string",
                     "enum": ["planned", "active", "closed"],
                     "description": "Next iteration status.",
                 },
-                "start_date": {"type": "string", "description": "ISO 8601 start date."},
-                "finish_date": {"type": "string", "description": "ISO 8601 finish date."},
+                "start_date": {
+                    "type": ["string", "null"],
+                    "description": "ISO 8601 start date.",
+                    "format": "date-time",
+                },
+                "finish_date": {
+                    "type": ["string", "null"],
+                    "description": "ISO 8601 finish date.",
+                    "format": "date-time",
+                },
                 "actual_finish_date": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "ISO 8601 actual finish date when closing.",
+                    "format": "date-time",
                 },
                 "new_iteration_id": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Target planned/active iteration for remaining cards.",
                 },
             },
@@ -213,7 +237,7 @@ TOOLS = (
                 "space_uid": {"type": "string", "description": "Space UUID."},
                 "iteration_id": {"type": "string", "description": "Iteration UUID."},
                 "new_iteration_id": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Target planned/active iteration for cards before deletion.",
                 },
             },
@@ -248,9 +272,16 @@ TOOLS = (
                 "status": {
                     "type": "string",
                     "enum": ["active", "removed"],
-                    "description": "Relation status filter.",
+                    "description": "Filter iteration card records by status: active or removed. If omitted, returns both active and removed records",
                 },
-                **_shaping_properties(),
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact output without heavy nested fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return.",
+                },
             },
             "required": ["space_uid", "iteration_id"],
         },
@@ -333,7 +364,18 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "card_uid": {"type": "string", "description": "Card UUID."},
-                **_shaping_properties(),
+                "compact": {
+                    "type": "boolean",
+                    "description": "Return compact output without heavy nested fields.",
+                },
+                "fields": {
+                    "type": "string",
+                    "description": "Comma-separated field names to return.",
+                },
+                "with_details": {
+                    "type": "boolean",
+                    "description": "Default: false. Set to true to include iteration metadata and event authors and exclude removed iterations. Requires iteration.read in addition to access to the card. Omit or set to false to keep the original response.",
+                },
             },
             "required": ["card_uid"],
         },
@@ -341,6 +383,7 @@ TOOLS = (
             method="GET",
             path_template="/cards/{card_uid}/iterations-history",
             path_fields=("card_uid",),
+            query_fields=("with_details",),
         ),
         response_policy=SHAPED_LIST,
         examples=(

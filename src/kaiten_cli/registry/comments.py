@@ -29,11 +29,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100).",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset.",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset."},
                 "compact": {
                     "type": "boolean",
                     "description": "Return compact response without heavy fields (avatars, nested user objects).",
@@ -137,6 +133,7 @@ TOOLS = (
                 "text": {
                     "type": "string",
                     "description": "Comment text. For format=html send HTML content.",
+                    "x-documentation-constraints": "minLength: 0\nmaxLength: 4096",
                 },
                 "format": {
                     "type": "string",
@@ -176,6 +173,7 @@ TOOLS = (
                 "text": {
                     "type": "string",
                     "description": "New comment text. For format=html send HTML content.",
+                    "x-documentation-constraints": "minLength: 0\nmaxLength: 4096",
                 },
                 "format": {
                     "type": "string",
@@ -183,7 +181,7 @@ TOOLS = (
                     "description": "Comment format. 'html' switches the request to HTML mode, 'markdown' switches back to markdown.",
                 },
             },
-            "required": ["card_id", "comment_id", "text"],
+            "required": ["card_id", "comment_id"],
         },
         operation=OperationSpec(
             method="PATCH",

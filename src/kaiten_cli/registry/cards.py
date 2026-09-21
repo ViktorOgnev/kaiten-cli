@@ -127,10 +127,7 @@ LIST_CARD_SCHEMA = {
             "type": "boolean",
             "description": "Include search preview objects for version=2",
         },
-        "visible": {
-            "type": "string",
-            "description": "JSON-encoded visibility filter",
-        },
+        "visible": {"type": "string", "description": "JSON-encoded visibility filter"},
         "archived": {"type": "boolean", "description": "Include archived"},
         "limit": {
             "type": "integer",
@@ -138,11 +135,7 @@ LIST_CARD_SCHEMA = {
             "maximum": 100,
             "description": "Max results (default 50, max 100)",
         },
-        "offset": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Pagination offset",
-        },
+        "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
         "compact": {
             "type": "boolean",
             "description": "Return compact response without heavy fields (avatars, nested user objects)",
@@ -155,6 +148,15 @@ LIST_CARD_SCHEMA = {
         "fields": {
             "type": "string",
             "description": "Comma-separated field names to return per card. Strips everything else. Example: 'id,title,created,last_moved_to_done_at'",
+        },
+        "order_space_id": {"type": "integer", "description": "Order by space id"},
+        "organizations_ids": {
+            "type": "string",
+            "description": "Search by organizations filter, comma separated",
+        },
+        "broken_api": {
+            "type": "boolean",
+            "description": "Backward compatibility flag for user-type custom properties. true (default until 2026-04-01): returns user UID strings. false: returns user integer IDs. Recommended: use broken_api=false for new integrations.",
         },
     },
 }
@@ -222,6 +224,9 @@ TOOLS = (
                 "limit",
                 "offset",
                 "relations",
+                "order_space_id",
+                "organizations_ids",
+                "broken_api",
             ),
         ),
         response_policy=ResponsePolicy(
@@ -273,11 +278,18 @@ TOOLS = (
                     "type": "boolean",
                     "description": "Replace an existing Markdown output file.",
                 },
+                "broken_api": {
+                    "type": "boolean",
+                    "description": "Backward compatibility flag for user-type custom properties. true (default until 2026-04-01): returns user UID strings. false: returns user integer IDs. Recommended: use broken_api=false for new integrations.",
+                },
             },
             "required": ["card_id"],
         },
         operation=OperationSpec(
-            method="GET", path_template="/cards/{card_id}", path_fields=("card_id",)
+            method="GET",
+            path_template="/cards/{card_id}",
+            path_fields=("card_id",),
+            query_fields=("broken_api",),
         ),
         response_policy=ResponsePolicy(
             compact_supported=True, fields_supported=True, result_kind="entity"
@@ -367,7 +379,7 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "Card title (1-1024 chars)"},
+                "title": {"type": ["string", "number"], "description": "Card title (1-1024 chars)"},
                 "board_id": {"type": "integer", "description": "Target board ID"},
                 "compact": {
                     "type": "boolean",
@@ -380,13 +392,56 @@ TOOLS = (
                 },
                 "column_id": {"type": "integer", "description": "Target column ID"},
                 "lane_id": {"type": "integer", "description": "Target lane ID"},
-                "description": {"type": "string", "description": "Card description (max 32768)"},
-                "due_date": {"type": ["string", "null"], "description": "Deadline (ISO 8601)"},
-                "asap": {"type": "boolean", "description": "ASAP marker"},
-                "size_text": {"type": "string", "description": "Size (e.g. S, M, L, 1, 23.45)"},
+                "description": {
+                    "type": ["string", "number", "null"],
+                    "description": "Card description (max 32768)",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 32768,
+                            "description": "Description for card",
+                        },
+                        {"type": "null", "description": "Empty card description"},
+                    ],
+                },
+                "due_date": {
+                    "type": ["string", "null"],
+                    "description": "Deadline (ISO 8601)",
+                    "x-documentation-alternatives": [
+                        {"type": "string", "description": "Deadline. ISO 8601 format"},
+                        {"type": "null", "description": "Empty due date"},
+                    ],
+                },
+                "asap": {"type": "boolean", "description": "ASAP marker", "default": False},
+                "size_text": {
+                    "type": ["string", "number", "null"],
+                    "description": "Size (e.g. S, M, L, 1, 23.45)",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 267,
+                            "description": "Size. Example of acceptable values: '1', '23.45', '.5', 'S', '3 M', 'L', 'XL', etc...",
+                        },
+                        {"type": "null", "description": "Empty size text"},
+                    ],
+                },
                 "owner_id": {"type": "integer", "description": "Owner user ID"},
                 "type_id": {"type": "integer", "description": "Card type ID"},
-                "external_id": {"type": "string", "description": "External ID (max 1024)"},
+                "external_id": {
+                    "type": ["string", "number", "null"],
+                    "description": "External ID (max 1024)",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to card. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to card. Not exposed in web interface",
+                        },
+                    ],
+                },
                 "sort_order": {"type": "number", "description": "Position in cell"},
                 "position": {
                     "type": "integer",
@@ -437,6 +492,23 @@ TOOLS = (
                     "description": "Parent card IDs to link (max 1)",
                 },
                 "project_id": {"type": "string", "description": "Project UUID to attach card to"},
+                "owner_email": {
+                    "type": "string",
+                    "description": "Owner email address. Only works if email belongs to company user",
+                },
+                "service_id": {
+                    "description": "Service ID",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Service ID"},
+                        {"type": "null", "description": "Empty service ID"},
+                    ],
+                },
+                "text_format_type_id": {
+                    "enum": [1, 2, 3],
+                    "description": "1 - markdown (default), 2 – html, 3 - jira wiki format",
+                    "type": "integer",
+                },
             },
             "required": ["title", "board_id"],
         },
@@ -470,6 +542,9 @@ TOOLS = (
                 "child_card_ids",
                 "parent_card_ids",
                 "project_id",
+                "owner_email",
+                "service_id",
+                "text_format_type_id",
             ),
         ),
         response_policy=ResponsePolicy(
@@ -503,8 +578,19 @@ TOOLS = (
                     "type": "string",
                     "description": "Comma-separated field names to keep in the response. Example: 'id,title,state'",
                 },
-                "title": {"type": "string", "description": "New title"},
-                "description": {"type": ["string", "null"], "description": "New description"},
+                "title": {"type": ["string", "number"], "description": "New title"},
+                "description": {
+                    "type": ["string", "null", "number"],
+                    "description": "New description",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 32768,
+                            "description": "Description for card",
+                        },
+                        {"type": "null", "description": "Empty card description"},
+                    ],
+                },
                 "board_id": {"type": "integer", "description": "Move to board"},
                 "column_id": {"type": "integer", "description": "Move to column"},
                 "lane_id": {"type": "integer", "description": "Move to lane"},
@@ -519,11 +605,40 @@ TOOLS = (
                 "due_date": {
                     "type": ["string", "null"],
                     "description": "Deadline (ISO 8601 or null)",
+                    "x-documentation-alternatives": [
+                        {"type": "string", "description": "Deadline. ISO 8601 format"},
+                        {"type": "null", "description": "Empty card description"},
+                    ],
                 },
-                "asap": {"type": "boolean", "description": "ASAP marker"},
-                "size_text": {"type": ["string", "null"], "description": "Size"},
+                "asap": {"type": "boolean", "description": "ASAP marker", "default": False},
+                "size_text": {
+                    "type": ["string", "null", "number"],
+                    "description": "Size",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 267,
+                            "description": "Size. Example of acceptable values: '1', '23.45', '.5', 'S', '3 M', 'L', 'XL', etc...",
+                        },
+                        {"type": "null", "description": "Empty size text"},
+                    ],
+                },
                 "blocked": {"type": "boolean", "description": "Set to false to unblock"},
-                "external_id": {"type": ["string", "null"], "description": "External ID"},
+                "external_id": {
+                    "type": ["string", "null", "number"],
+                    "description": "External ID",
+                    "x-documentation-alternatives": [
+                        {
+                            "type": ["number", "string"],
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to card. Not exposed in web interface",
+                        },
+                        {
+                            "type": "null",
+                            "description": "Any external id you want to assign to card. Not exposed in web interface",
+                        },
+                    ],
+                },
                 "properties": {
                     "type": "object",
                     "description": "Custom properties as {id_N: value}",
@@ -559,7 +674,7 @@ TOOLS = (
                 },
                 "expires_later": {"type": "boolean", "description": "Expires later flag"},
                 "estimate_workload": {
-                    "type": "integer",
+                    "type": ["integer", "number"],
                     "description": "Estimated workload in minutes (resource planning)",
                 },
                 "child_card_ids": {
@@ -571,6 +686,28 @@ TOOLS = (
                     "type": "array",
                     "items": {"type": "integer"},
                     "description": "Parent card IDs to link",
+                },
+                "service_id": {
+                    "description": "Service ID",
+                    "type": ["integer", "null"],
+                    "x-documentation-alternatives": [
+                        {"type": "integer", "description": "Service ID"},
+                        {"type": "null", "description": "Empty service ID"},
+                    ],
+                },
+                "text_format_type_id": {
+                    "enum": [1, 2, 3],
+                    "description": "1 - markdown (default), 2 – html, 3 - jira wiki format",
+                    "type": "integer",
+                },
+                "sd_new_comment": {
+                    "type": "boolean",
+                    "description": "Has unseen Service Desk request author comments",
+                },
+                "owner_email": {"type": "string", "description": "Owner email address"},
+                "prev_card_id": {
+                    "type": "integer",
+                    "description": "Specifies optional ID of the card that was previous one and will be positioned after the current card after repositioning",
                 },
             },
             "required": ["card_id"],
@@ -606,6 +743,11 @@ TOOLS = (
                 "estimate_workload",
                 "child_card_ids",
                 "parent_card_ids",
+                "service_id",
+                "text_format_type_id",
+                "sd_new_comment",
+                "owner_email",
+                "prev_card_id",
             ),
         ),
         response_policy=ResponsePolicy(
@@ -642,10 +784,130 @@ TOOLS = (
                 "attributes": {
                     "type": "object",
                     "description": "Attributes to change on matching cards.",
+                    "properties": {
+                        "board_id": {"type": "integer", "description": "Board ID"},
+                        "column_id": {"type": "integer", "description": "Column ID"},
+                        "lane_id": {"type": "integer", "description": "Lane ID"},
+                        "owner_id": {"type": "integer", "description": "Owner ID"},
+                        "type_id": {"type": "integer", "description": "Card type ID"},
+                        "condition": {
+                            "enum": [1, 2],
+                            "description": "1 - live, 2 - archived",
+                            "type": "integer",
+                        },
+                        "title": {
+                            "type": ["number", "string"],
+                            "minLength": 1,
+                            "maxLength": 1024,
+                            "description": "Title",
+                        },
+                        "asap": {"type": "boolean", "description": "ASAP marker", "default": False},
+                        "due_date": {
+                            "description": "Deadline. ISO 8601 format",
+                            "type": ["string", "null"],
+                            "x-documentation-alternatives": [
+                                {"type": "string", "description": "Deadline. ISO 8601 format"},
+                                {"type": "null", "description": "Empty card description"},
+                            ],
+                        },
+                        "due_date_time_present": {
+                            "type": "boolean",
+                            "description": "Flag indicating that deadline is specified up to hours and minutes",
+                        },
+                        "sort_order": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "description": "Position in the cell (board_id, column_id, lane_id)",
+                        },
+                        "description": {
+                            "maxLength": 32768,
+                            "description": "Description for card",
+                            "type": ["number", "string", "null"],
+                            "x-documentation-alternatives": [
+                                {
+                                    "type": ["number", "string"],
+                                    "maxLength": 32768,
+                                    "description": "Description for card",
+                                },
+                                {"type": "null", "description": "Empty card description"},
+                            ],
+                        },
+                        "expires_later": {
+                            "type": "boolean",
+                            "description": "Fixed deadline or not. Date dependant flag in terms of Kanban",
+                        },
+                        "size_text": {
+                            "maxLength": 267,
+                            "description": "Size. Example of acceptable values: '1', '23.45', '.5', 'S', '3 M', 'L', 'XL', etc...",
+                            "type": ["number", "string", "null"],
+                            "x-documentation-alternatives": [
+                                {
+                                    "type": ["number", "string"],
+                                    "maxLength": 267,
+                                    "description": "Size. Example of acceptable values: '1', '23.45', '.5', 'S', '3 M', 'L', 'XL', etc...",
+                                },
+                                {"type": "null", "description": "Empty size text"},
+                            ],
+                        },
+                        "service_id": {
+                            "description": "Service ID",
+                            "type": ["integer", "null"],
+                            "x-documentation-alternatives": [
+                                {"type": "integer", "description": "Service ID"},
+                                {"type": "null", "description": "Empty service ID"},
+                            ],
+                        },
+                        "blocked": {
+                            "type": "boolean",
+                            "description": "Send false to release all blocks related to this card",
+                        },
+                        "external_id": {
+                            "maxLength": 1024,
+                            "description": "Any external id you want to assign to card. Not exposed in web interface",
+                            "type": ["number", "string", "null"],
+                            "x-documentation-alternatives": [
+                                {
+                                    "type": ["number", "string"],
+                                    "maxLength": 1024,
+                                    "description": "Any external id you want to assign to card. Not exposed in web interface",
+                                },
+                                {
+                                    "type": "null",
+                                    "description": "Any external id you want to assign to card. Not exposed in web interface",
+                                },
+                            ],
+                        },
+                    },
+                    "x-documentation-alternatives": [
+                        {"required": ["board_id"]},
+                        {"required": ["column_id"]},
+                        {"required": ["lane_id"]},
+                        {"required": ["owner_id"]},
+                        {"required": ["type_id"]},
+                        {"required": ["condition"]},
+                    ],
                 },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
+                },
+                "order_by": {
+                    "type": "object",
+                    "description": "Sorting parameters",
+                    "properties": {
+                        "field_type": {
+                            "enum": ["cp", "size", "created", "due_date", "title"],
+                            "description": "Field type to sort by",
+                            "type": "string",
+                        },
+                        "id": {"type": "integer", "description": "Field id to sort by"},
+                        "direction": {
+                            "enum": ["asc", "desc"],
+                            "description": "Sorting direction",
+                            "type": "string",
+                        },
+                    },
+                    "x-documentation-alternatives": [{"required": ["field_type", "direction"]}],
                 },
             },
             "required": ["attributes"],
@@ -662,6 +924,7 @@ TOOLS = (
                 "condition",
                 "attributes",
                 "payload",
+                "order_by",
             ),
         ),
         runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
@@ -896,11 +1159,22 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100).",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset.",
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset."},
+                "type": {
+                    "description": "sd-owner - returns a list of company users with access to service-desk. virtual-users - returns a list of company virtual users.",
+                    "x-documentation-constraints": "sd-owners \nvirtual-users \nmention",
+                    "type": "string",
                 },
+                "search": {
+                    "type": "string",
+                    "description": "Filter by full_name, email or username",
+                },
+                "orderBy": {
+                    "type": "string",
+                    "description": "The field to sort by",
+                    "x-documentation-constraints": "Default: id",
+                },
+                "role": {"type": "integer", "description": "Filter by role"},
             },
             "required": ["card_id"],
         },
@@ -908,7 +1182,7 @@ TOOLS = (
             method="GET",
             path_template="/cards/{card_id}/allowed-users",
             path_fields=("card_id",),
-            query_fields=("limit", "offset"),
+            query_fields=("limit", "offset", "type", "search", "orderBy", "role"),
         ),
         response_policy=ResponsePolicy(
             compact_supported=True, default_limit=50, result_kind="list"

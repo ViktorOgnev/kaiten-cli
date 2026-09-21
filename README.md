@@ -179,7 +179,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.2.1"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.0"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -227,6 +227,8 @@ python -m kaiten_cli --help
   Краткое руководство для агентов и порядок знакомства с возможностями CLI.
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
   Как устроена явно включаемая проверка на реальном API.
+- [Проверка публичного API и ограничения паритета](docs/public-api/README.md)
+  Снимок developers.kaiten.ru, воспроизводимая офлайн-сверка, схемы автоматизаций и объяснения расхождений.
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md)
   Подтверждённые особенности API текущего тестового контура.
 - [SECURITY.md](SECURITY.md)

@@ -34,6 +34,64 @@ TOOLS = (
                     "type": "string",
                     "description": "Comma-separated field names to keep for each time log.",
                 },
+                "from": {
+                    "type": "string",
+                    "description": "Date from, format YYYY-MM-DDExample: 2025-12-01",
+                },
+                "to": {
+                    "type": "string",
+                    "description": "Date from, format YYYY-MM-DD Example: 2025-12-30",
+                },
+                "tag_ids": {
+                    "type": "string",
+                    "description": "Tag ids, comma-separatedExample: 234,2342,6435",
+                },
+                "user_ids": {
+                    "type": "string",
+                    "description": "User ids, comma-separated Example: 34,345,345345",
+                },
+                "group_ids": {
+                    "type": "string",
+                    "description": "User group ids, comma-separated Example: 1,2,3",
+                },
+                "space_ids": {
+                    "type": "string",
+                    "description": "Space ids, comma-separated Example: 453,238945,2",
+                },
+                "board_ids": {
+                    "type": "string",
+                    "description": "Board ids, comma-separatedExample: 654,24,243",
+                },
+                "column_ids": {
+                    "type": "string",
+                    "description": "Column ids, comma-separatedExample: 624,12,23",
+                },
+                "card_ids": {
+                    "type": "string",
+                    "description": "Card ids, comma-separatedExample: 624,12,23",
+                },
+                "visible_column_ids": {
+                    "type": "string",
+                    "description": "Visible column ids, comma-separated",
+                },
+                "condition": {"type": "integer", "description": "Number of records to skip"},
+                "group_by": {
+                    "type": "integer",
+                    "description": "Options to group by. 0 - no groups, 1 - by user, 2 - by card",
+                },
+                "time_precision": {
+                    "type": "integer",
+                    "description": "Time precision for specified time_unit",
+                },
+                "time_unit": {"type": "integer", "description": "Time unit"},
+                "with_daily_distribution": {
+                    "type": "integer",
+                    "description": "Returns data daily when grouped by user or card",
+                },
+                "only_general_sum": {
+                    "type": "integer",
+                    "description": "Returns general sum time spent",
+                },
             },
         },
         operation=OperationSpec(
@@ -47,6 +105,22 @@ TOOLS = (
                 "date_to",
                 "limit",
                 "offset",
+                "from",
+                "to",
+                "tag_ids",
+                "user_ids",
+                "group_ids",
+                "space_ids",
+                "board_ids",
+                "column_ids",
+                "card_ids",
+                "visible_column_ids",
+                "condition",
+                "group_by",
+                "time_precision",
+                "time_unit",
+                "with_daily_distribution",
+                "only_general_sum",
             ),
         ),
         response_policy=ResponsePolicy(
@@ -78,11 +152,7 @@ TOOLS = (
                     "maximum": 100,
                     "description": "Max results (default 50, max 100).",
                 },
-                "offset": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Pagination offset.",
-                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset."},
                 "compact": {
                     "type": "boolean",
                     "description": "Strip heavy nested fields from time-log payloads.",

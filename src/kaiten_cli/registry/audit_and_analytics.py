@@ -21,18 +21,48 @@ TOOLS = (
         input_schema={
             "type": "object",
             "properties": {
-                "categories": {"type": "string", "description": "Comma-separated log categories"},
-                "actions": {"type": "string", "description": "Comma-separated audit actions"},
+                "categories": {
+                    "type": "string",
+                    "description": "Comma-separated log categories",
+                    "x-documentation-constraints": "app\nauth\nuser_profile\nuser_management\ngroup_management\nservice_desk\npublication\nimport\ncompany_profile",
+                },
+                "actions": {
+                    "type": "string",
+                    "description": "Comma-separated audit actions",
+                    "x-documentation-constraints": "start\nstop\nsign_in\nsign_in_fail\nsign_out\nrequest_auth_pin\nchange_password\nrequest_change_email\nchange_email\ninvite\ninvite_fail\ndeactivate\nactivate\nchange_permissions\nchange_apps_permissions\ngrant_access\nrevoke_access\ntransfer_ownership\ndepersonalization\ncreate\ndelete\ngroup_activate\ngroup_deactivate\nadd_user\nadd_admin\nadmin_add_user\ndelete_user\nadmin_delete_user\ndelete_admin\nset_sd_password\nchange_temporary_sd_password\npublish_document\npublish_document_group\npublish_card\nunpublish_document\nunpublish_document_group\nunpublish_card\nshare_entity\nunshare_entity\npublic_link\nextend_trial",
+                },
                 "from": {"type": "string", "description": "Start of date range filter"},
                 "to": {"type": "string", "description": "End of date range filter"},
                 "limit": {"type": "integer", "description": "Max results"},
                 "offset": {"type": "integer", "description": "Pagination offset"},
+                "author_id": {
+                    "type": "integer",
+                    "description": "Filter events by author user id.Example: 123",
+                },
+                "author_uid": {
+                    "type": "string",
+                    "description": "Filter events by author user uid.Example: 27ca9e9f-d4fc-47dd-9d4b-35c7b6e3d105",
+                },
+                "id": {
+                    "type": "string",
+                    "description": "Filter by audit log event id.Example: 8f977f36-0f13-4b5f-91ab-0df9d15c7ed8",
+                },
             },
         },
         operation=OperationSpec(
             method="GET",
             path_template="/audit-logs",
-            query_fields=("categories", "actions", "from", "to", "limit", "offset"),
+            query_fields=(
+                "categories",
+                "actions",
+                "from",
+                "to",
+                "limit",
+                "offset",
+                "author_id",
+                "author_uid",
+                "id",
+            ),
         ),
         response_policy=ResponsePolicy(default_limit=DEFAULT_LIMIT, result_kind="list", heavy=True),
         examples=(

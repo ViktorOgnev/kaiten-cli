@@ -169,13 +169,13 @@ async def execute_tool_with_diagnostics(
         elif method == "GET":
             result = await client.get(request_path, params=query, timeout=timeout)
         elif method == "POST":
-            result = await client.post(request_path, json=body, timeout=timeout)
+            result = await client.post(request_path, params=query, json=body, timeout=timeout)
         elif method == "PUT":
-            result = await client.put(request_path, json=body, timeout=timeout)
+            result = await client.put(request_path, params=query, json=body, timeout=timeout)
         elif method == "PATCH":
-            result = await client.patch(request_path, json=body, timeout=timeout)
+            result = await client.patch(request_path, params=query, json=body, timeout=timeout)
         elif method == "DELETE":
-            result = await client.delete(request_path, json=body, timeout=timeout)
+            result = await client.delete(request_path, params=query, json=body, timeout=timeout)
         else:  # pragma: no cover - impossible with current registry
             raise ConfigError(f"Unsupported method: {method}")
     except Exception as exc:

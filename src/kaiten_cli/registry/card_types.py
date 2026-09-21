@@ -37,9 +37,7 @@ TOOLS = (
         description="Get a Kaiten card type by ID.",
         input_schema={
             "type": "object",
-            "properties": {
-                "type_id": {"type": "integer", "description": "Card type ID"},
-            },
+            "properties": {"type_id": {"type": "integer", "description": "Card type ID"}},
             "required": ["type_id"],
         },
         operation=OperationSpec(
@@ -65,13 +63,77 @@ TOOLS = (
                     "type": "string",
                     "description": "Template for card description",
                 },
+                "properties": {
+                    "type": "object",
+                    "description": "Properties of the card suggested for filling - old format, deprecated, use card_properties instead",
+                },
+                "card_properties": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "regular_property": {
+                                "description": "Key of the regular property",
+                                "enum": ["size", "due_date", "tags", "timeline", "description"],
+                                "type": ["string", "null"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "string",
+                                        "enum": [
+                                            "size",
+                                            "due_date",
+                                            "tags",
+                                            "timeline",
+                                            "description",
+                                        ],
+                                    },
+                                    {"type": "null"},
+                                ],
+                            },
+                            "property_uid": {
+                                "description": "UID of the custom property",
+                                "format": "uuid",
+                                "type": ["string", "null"],
+                                "x-documentation-alternatives": [
+                                    {"type": "string", "format": "uuid"},
+                                    {"type": "null"},
+                                ],
+                            },
+                            "sort_order": {
+                                "type": "number",
+                                "description": "Order of the property in the card",
+                            },
+                            "required": {
+                                "type": "boolean",
+                                "description": "If true, this property will be required to fill in the card",
+                            },
+                        },
+                        "x-documentation-alternatives": [
+                            {"required": ["regular_property", "required"]},
+                            {"required": ["property_uid", "required"]},
+                        ],
+                    },
+                    "description": "Array of card properties that will be suggested for filling in cards of this type",
+                },
+                "suggest_fields": {
+                    "type": "boolean",
+                    "description": "If true, cards of this type will be offered to display additional fields based on statistics",
+                },
             },
             "required": ["name", "letter", "color"],
         },
         operation=OperationSpec(
             method="POST",
             path_template="/card-types",
-            body_fields=("name", "letter", "color", "description_template"),
+            body_fields=(
+                "name",
+                "letter",
+                "color",
+                "description_template",
+                "properties",
+                "card_properties",
+                "suggest_fields",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -92,6 +154,63 @@ TOOLS = (
                 "letter": {"type": "string", "description": "New letter"},
                 "color": {"type": "integer", "description": "New color (2-25)"},
                 "description_template": {"type": "string", "description": "Description template"},
+                "properties": {
+                    "type": "object",
+                    "description": "Properties of the card suggested for filling - old format, deprecated, use card_properties instead",
+                },
+                "card_properties": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "regular_property": {
+                                "description": "Key of the regular property",
+                                "enum": ["size", "due_date", "tags", "timeline", "description"],
+                                "type": ["string", "null"],
+                                "x-documentation-alternatives": [
+                                    {
+                                        "type": "string",
+                                        "enum": [
+                                            "size",
+                                            "due_date",
+                                            "tags",
+                                            "timeline",
+                                            "description",
+                                        ],
+                                    },
+                                    {"type": "null"},
+                                ],
+                            },
+                            "property_uid": {
+                                "description": "UID of the custom property",
+                                "format": "uuid",
+                                "type": ["string", "null"],
+                                "x-documentation-alternatives": [
+                                    {"type": "string", "format": "uuid"},
+                                    {"type": "null"},
+                                ],
+                            },
+                            "sort_order": {
+                                "type": "number",
+                                "description": "Order of the property in the card",
+                            },
+                            "required": {
+                                "type": "boolean",
+                                "description": "If true, this property will be required to fill in the card",
+                            },
+                            "type_uid": {"type": "string", "description": "UID of the card type"},
+                        },
+                        "x-documentation-alternatives": [
+                            {"required": ["regular_property"]},
+                            {"required": ["property_uid"]},
+                        ],
+                    },
+                    "description": "Array of card properties that will be suggested for filling in cards of this type",
+                },
+                "suggest_fields": {
+                    "type": "boolean",
+                    "description": "If true, cards of this type will be offered to display additional fields based on statistics",
+                },
             },
             "required": ["type_id"],
         },
@@ -99,7 +218,15 @@ TOOLS = (
             method="PATCH",
             path_template="/card-types/{type_id}",
             path_fields=("type_id",),
-            body_fields=("name", "letter", "color", "description_template"),
+            body_fields=(
+                "name",
+                "letter",
+                "color",
+                "description_template",
+                "properties",
+                "card_properties",
+                "suggest_fields",
+            ),
         ),
         examples=(
             ExampleSpec(
@@ -116,7 +243,10 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "type_id": {"type": "integer", "description": "Card type ID to delete"},
-                "replace_type_id": {"type": "integer", "description": "Replacement card type ID"},
+                "replace_type_id": {
+                    "type": ["integer", "number"],
+                    "description": "Replacement card type ID",
+                },
                 "has_to_replace_in_automation": {
                     "type": "boolean",
                     "description": "Replace this type in automations.",
@@ -180,7 +310,11 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "type_id": {"type": "integer", "description": "Card type ID"},
-                "tree_entity_uid": {"type": "string", "description": "Tree entity UID"},
+                "tree_entity_uid": {
+                    "type": "string",
+                    "description": "Tree entity UID",
+                    "format": "uuid",
+                },
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",

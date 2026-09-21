@@ -1,0 +1,2644 @@
+[
+  {
+    "url": "https://developers.kaiten.ru/",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/api-access",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/capabilities/card-body-section",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/capabilities/card-buttons",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/capabilities/card-facade-badges",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/capabilities/introduction",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/capabilities/settings",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/creating-example-addon",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/error-handling",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/external-authorization/authorize",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/initialization/addon-initialize",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/initialization/iframe-initialize",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/managing-secrets",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/authorize",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/delete",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/get",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/get-access-token",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/get-api-client",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/patch",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/post",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/refresh-token",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/platform-api-access/request",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/styling",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/clear-secret",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-all-data",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-card",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-card-properties",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-context",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-current-user",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-data",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-language",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-locale",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-permissions",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-secret",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-settings",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/get-theme-type",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/set-data",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/set-settings",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/sign-url",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-data-related-function/store-secret",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/close-dialog",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/close-popup",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/fit-size",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/open-dialog",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/open-popup",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/render",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/addons/web-sdk-ui-functions/show-snackbar",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/audit-logs/retrieve-audit-log-events",
+    "kind": "http",
+    "tool": "audit-logs.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/automations/create-automation",
+    "kind": "http",
+    "tool": "automations.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": [],
+    "modal_schemas": "automation-tables.json"
+  },
+  {
+    "url": "https://developers.kaiten.ru/automations/delete-automation",
+    "kind": "http",
+    "tool": "automations.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/automations/get-list-of-automations",
+    "kind": "http",
+    "tool": "automations.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/automations/update-automation",
+    "kind": "http",
+    "tool": "automations.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": [],
+    "modal_schemas": "automation-tables.json"
+  },
+  {
+    "url": "https://developers.kaiten.ru/boards/get-board",
+    "kind": "http",
+    "tool": "boards.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-allowed-users/retrieve-users-list",
+    "kind": "http",
+    "tool": "card-allowed-users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-categories/add-blocker-category",
+    "kind": "http",
+    "tool": "blocker-categories.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-categories/remove-category",
+    "kind": "http",
+    "tool": "blocker-categories.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-categories/retrieve-list-of-categories",
+    "kind": "http",
+    "tool": "blocker-categories.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-users/add-user-to-the-card-blocker",
+    "kind": "http",
+    "tool": "blocker-users.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-users/remove-user",
+    "kind": "http",
+    "tool": "blocker-users.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-users/retrieve-blockers-cards-list-on-current-user",
+    "kind": "http",
+    "tool": "current-user-blockers.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blocker-users/retrieve-list-of-users",
+    "kind": "http",
+    "tool": "blocker-users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blockers/block-card",
+    "kind": "http",
+    "tool": "blockers.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blockers/delete-card-blockers",
+    "kind": "http",
+    "tool": "blockers.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blockers/retrieve-card-blockers-list",
+    "kind": "http",
+    "tool": "blockers.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-blockers/update-card-blockers",
+    "kind": "http",
+    "tool": "blockers.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklist-items/add-item-to-checklist",
+    "kind": "http",
+    "tool": "checklist-items.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklist-items/remove-checklist-item",
+    "kind": "http",
+    "tool": "checklist-items.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklist-items/update-checklist-item",
+    "kind": "http",
+    "tool": "checklist-items.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-checklist-items/update-checklist-item",
+        "tool": "checklist-items.update",
+        "expected_issue": {
+          "field": "body.checklist_id",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "target_checklist_id maps to body.checklist_id; checklist_id identifies the source URL."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklists/add-checklist-to-card",
+    "kind": "http",
+    "tool": "checklists.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklists/remove-checklist-from-card",
+    "kind": "http",
+    "tool": "checklists.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklists/retrieve-card-checklist",
+    "kind": "http",
+    "tool": "checklists.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-checklists/update-checklist",
+    "kind": "http",
+    "tool": "checklists.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-checklists/update-checklist",
+        "tool": "checklists.update",
+        "expected_issue": {
+          "field": "body.card_id",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "target_card_id maps to body.card_id; card_id identifies the source URL."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-children/add-children",
+    "kind": "http",
+    "tool": "card-children.add",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-children/add-children",
+        "tool": "card-children.add",
+        "expected_issue": {
+          "field": "body.card_id",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "child_card_id maps to body.card_id; card_id identifies the parent URL."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-children/remove-children",
+    "kind": "http",
+    "tool": "card-children.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-children/retrieve-card-children-list",
+    "kind": "http",
+    "tool": "card-children.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/add-comment",
+    "kind": "http",
+    "tool": "comments.create",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-comments/add-comment",
+        "tool": "comments.create",
+        "expected_issue": {
+          "field": "body.files[]",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "Legacy unrestricted multipart comment attachments are deprecated. Use private-comment-files.upload; do not reinterpret files[] as JSON file data."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/remove-comment",
+    "kind": "http",
+    "tool": "comments.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/retrieve-card-comments",
+    "kind": "http",
+    "tool": "comments.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-comments/update-comment",
+    "kind": "http",
+    "tool": "comments.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-comments/update-comment",
+        "tool": "comments.update",
+        "expected_issue": {
+          "field": "body.files[]",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "Legacy unrestricted multipart comment attachments are deprecated. Use private-comment-files.upload; do not reinterpret files[] as JSON file data."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-external-links/add-external-link",
+    "kind": "http",
+    "tool": "external-links.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-external-links/remove-external-link",
+    "kind": "http",
+    "tool": "external-links.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-external-links/retrieve-card-external-links",
+    "kind": "http",
+    "tool": "external-links.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-external-links/update-external-link",
+    "kind": "http",
+    "tool": "external-links.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-files/attach-file-to-card",
+    "kind": "http",
+    "tool": "files.upload",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/card-files/attach-file-to-card",
+        "tool": "files.upload",
+        "expected_issue": {
+          "field": "body.file",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "The custom executor reads the local file and sends multipart/form-data, not a JSON body."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-files/detach-file-from-card",
+    "kind": "http",
+    "tool": "files.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-files/update-file",
+    "kind": "http",
+    "tool": "files.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-members/add-member-to-card",
+    "kind": "http",
+    "tool": "card-members.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-members/remove-member-from-card",
+    "kind": "http",
+    "tool": "card-members.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-members/retrieve-list-of-card-members",
+    "kind": "http",
+    "tool": "card-members.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-members/update-member-role",
+    "kind": "http",
+    "tool": "card-members.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-service-desk-external-recipients/add-new-recipient",
+    "kind": "http",
+    "tool": "card-service-desk-external-recipients.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-service-desk-external-recipients/remove-recipient",
+    "kind": "http",
+    "tool": "card-service-desk-external-recipients.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-sla/retrieve-card-sla-measurements",
+    "kind": "http",
+    "tool": "card-sla-measurements.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-tags/add-tag",
+    "kind": "http",
+    "tool": "card-tags.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-tags/remove-tag-from-card",
+    "kind": "http",
+    "tool": "card-tags.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-tags/rertrieve-list-of-tags",
+    "kind": "http",
+    "tool": "card-tags.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-time-logs/add-time-log",
+    "kind": "http",
+    "tool": "time-logs.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-time-logs/get-time-logs",
+    "kind": "http",
+    "tool": "time-logs.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-time-logs/remove-time-log",
+    "kind": "http",
+    "tool": "time-logs.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-time-logs/update-log-record",
+    "kind": "http",
+    "tool": "time-logs.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-type-tree-entities/add-tree-entity-to-card-type",
+    "kind": "http",
+    "tool": "card-types.tree-entities.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-type-tree-entities/delete-tree-entity-from-card-type",
+    "kind": "http",
+    "tool": "card-types.tree-entities.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-type-tree-entities/get-list-of-type-tree-entities",
+    "kind": "http",
+    "tool": "card-types.tree-entities.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-types/create-new-card-type",
+    "kind": "http",
+    "tool": "card-types.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-types/get-card-type",
+    "kind": "http",
+    "tool": "card-types.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-types/get-list-of-card-types",
+    "kind": "http",
+    "tool": "card-types.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-types/remove-card-type",
+    "kind": "http",
+    "tool": "card-types.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/card-types/update-card-type",
+    "kind": "http",
+    "tool": "card-types.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/batch-update-for-cards",
+    "kind": "http",
+    "tool": "cards.batch-update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/create-new-card",
+    "kind": "http",
+    "tool": "cards.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/delete-card",
+    "kind": "http",
+    "tool": "cards.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/retrieve-card",
+    "kind": "http",
+    "tool": "cards.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/retrieve-card-baselines",
+    "kind": "http",
+    "tool": "card-baselines.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/retrieve-card-list",
+    "kind": "http",
+    "tool": "cards.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/retrieve-card-location-history",
+    "kind": "http",
+    "tool": "card-location-history.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/cards/update-card",
+    "kind": "http",
+    "tool": "cards.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/checklist-items/add-item-to-checklist",
+    "kind": "http",
+    "tool": "checklist-items.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/checklist-items/remove-checklist-item",
+    "kind": "http",
+    "tool": "checklist-items.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/checklist-items/update-checklist-item",
+    "kind": "http",
+    "tool": "checklist-items.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/checklist-items/update-checklist-item",
+        "tool": "checklist-items.update",
+        "expected_issue": {
+          "field": "body.checklist_id",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "target_checklist_id maps to body.checklist_id; checklist_id identifies the source URL."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/checklists/retrieve-cards-with-checklist",
+    "kind": "http",
+    "tool": "checklist-cards.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/create-new-column",
+    "kind": "http",
+    "tool": "columns.create",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/columns/create-new-column",
+        "tool": "columns.create",
+        "expected_issue": {
+          "field": "body.months_to_hide_cards",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/get-list-of-columns",
+    "kind": "http",
+    "tool": "columns.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/remove-column",
+    "kind": "http",
+    "tool": "columns.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/columns/update-column",
+    "kind": "http",
+    "tool": "columns.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/columns/update-column",
+        "tool": "columns.update",
+        "expected_issue": {
+          "field": "body.months_to_hide_cards",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/company-users/get-list-of-users",
+    "kind": "http",
+    "tool": "company-users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/company-users/remove-virtual-user",
+    "kind": "http",
+    "tool": "company-users.remove-virtual",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/company-users/update-user",
+    "kind": "http",
+    "tool": "company-users.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/create-custom-directory",
+    "kind": "http",
+    "tool": "custom-directories.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/delete-custom-directory",
+    "kind": "http",
+    "tool": "custom-directories.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/get-custom-directory",
+    "kind": "http",
+    "tool": "custom-directories.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/get-list-of-custom-directories",
+    "kind": "http",
+    "tool": "custom-directories.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/custom-directories/get-list-of-custom-directories",
+        "tool": "custom-directories.list",
+        "expected_issue": {
+          "field": "query.limit",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/custom-directories/get-list-of-custom-directories",
+        "tool": "custom-directories.list",
+        "expected_issue": {
+          "field": "query.offset",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directories/update-custom-directory",
+    "kind": "http",
+    "tool": "custom-directories.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-fields/create-field",
+    "kind": "http",
+    "tool": "custom-directory-fields.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-fields/delete-field",
+    "kind": "http",
+    "tool": "custom-directory-fields.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-fields/get-field",
+    "kind": "http",
+    "tool": "custom-directory-fields.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-fields/get-list-of-fields",
+    "kind": "http",
+    "tool": "custom-directory-fields.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-fields/update-field",
+    "kind": "http",
+    "tool": "custom-directory-fields.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/create-record",
+    "kind": "http",
+    "tool": "custom-directory-records.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/delete-record",
+    "kind": "http",
+    "tool": "custom-directory-records.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-cards-linked-to-record",
+    "kind": "http",
+    "tool": "custom-directory-records.cards.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/custom-directory-records/get-cards-linked-to-record",
+        "tool": "custom-directory-records.cards.list",
+        "expected_issue": {
+          "field": "query.limit",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/custom-directory-records/get-cards-linked-to-record",
+        "tool": "custom-directory-records.cards.list",
+        "expected_issue": {
+          "field": "query.offset",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-list-of-records",
+    "kind": "http",
+    "tool": "custom-directory-records.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/custom-directory-records/get-list-of-records",
+        "tool": "custom-directory-records.list",
+        "expected_issue": {
+          "field": "query.limit",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/custom-directory-records/get-list-of-records",
+        "tool": "custom-directory-records.list",
+        "expected_issue": {
+          "field": "query.offset",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/get-record",
+    "kind": "http",
+    "tool": "custom-directory-records.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-directory-records/update-record",
+    "kind": "http",
+    "tool": "custom-directory-records.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/create-new-property",
+    "kind": "http",
+    "tool": "custom-properties.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/get-list-of-properties",
+    "kind": "http",
+    "tool": "custom-properties.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/custom-properties/get-list-of-properties",
+        "tool": "custom-properties.list",
+        "expected_issue": {
+          "field": "query.include_values",
+          "issue": "wire_mapping"
+        },
+        "status": "documented_conflict",
+        "reason": "The property list page still advertises include_values, while the existing Public API cutover contract removes embedded values. false is ignored; true points to select-values/catalog-values commands."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/get-property",
+    "kind": "http",
+    "tool": "custom-properties.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/remove-property",
+    "kind": "http",
+    "tool": "custom-properties.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-properties/update-property",
+    "kind": "http",
+    "tool": "custom-properties.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-catalog-values/create-new-catalog-value",
+    "kind": "http",
+    "tool": "custom-properties.catalog-values.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-catalog-values/get-catalog-value",
+    "kind": "http",
+    "tool": "custom-properties.catalog-values.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-catalog-values/get-list-of-catalog-values",
+    "kind": "http",
+    "tool": "custom-properties.catalog-values.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-catalog-values/remove-property",
+    "kind": "http",
+    "tool": "custom-properties.catalog-values.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-catalog-values/update-catalog-value",
+    "kind": "http",
+    "tool": "custom-properties.catalog-values.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-score-values/create-new-score-value",
+    "kind": "http",
+    "tool": "custom-properties.collective-score-values.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-score-values/get-list-of-score-values",
+    "kind": "http",
+    "tool": "custom-properties.collective-score-values.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-score-values/update-score-value",
+    "kind": "http",
+    "tool": "custom-properties.collective-score-values.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-vote-values/create-new-vote-value",
+    "kind": "http",
+    "tool": "custom-properties.collective-vote-values.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-vote-values/get-list-of-vote-values",
+    "kind": "http",
+    "tool": "custom-properties.collective-vote-values.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-vote-values/remove-vote-value",
+    "kind": "http",
+    "tool": "custom-properties.collective-vote-values.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-collective-vote-values/update-vote-value",
+    "kind": "http",
+    "tool": "custom-properties.collective-vote-values.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-select-values/create-new-select-value",
+    "kind": "http",
+    "tool": "custom-properties.select-values.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-select-values/get-list-of-select-values",
+    "kind": "http",
+    "tool": "custom-properties.select-values.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-select-values/get-select-value",
+    "kind": "http",
+    "tool": "custom-properties.select-values.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-select-values/remove-property",
+    "kind": "http",
+    "tool": "custom-properties.select-values.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-select-values/update-select-value",
+    "kind": "http",
+    "tool": "custom-properties.select-values.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-tree-entities/add-tree-entity-to-custom-property",
+    "kind": "http",
+    "tool": "custom-properties.tree-entities.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-tree-entities/delete-tree-entity-from-custom-property",
+    "kind": "http",
+    "tool": "custom-properties.tree-entities.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/custom-property-tree-entities/get-list-of-custom-property-tree-entities",
+    "kind": "http",
+    "tool": "custom-properties.tree-entities.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-groups/create-new-document-group",
+    "kind": "http",
+    "tool": "document-groups.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-groups/remove-document-group",
+    "kind": "http",
+    "tool": "document-groups.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-groups/retrieve-document-group",
+    "kind": "http",
+    "tool": "document-groups.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-groups/retrieve-list-of-document-groups",
+    "kind": "http",
+    "tool": "document-groups.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-groups/update-document-group",
+    "kind": "http",
+    "tool": "document-groups.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/document-schemas/get-document-data-schema",
+    "kind": "http",
+    "tool": "document-schemas.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/create-new-document",
+    "kind": "http",
+    "tool": "documents.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/remove-document",
+    "kind": "http",
+    "tool": "documents.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/retrieve-document",
+    "kind": "http",
+    "tool": "documents.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/retrieve-list-of-documents",
+    "kind": "http",
+    "tool": "documents.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/documents/retrieve-list-of-documents",
+        "tool": "documents.list",
+        "expected_issue": {
+          "field": "query.fields",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "search_fields maps to query.fields. fields remains the local response projection."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/documents/update-document",
+    "kind": "http",
+    "tool": "documents.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/block/block:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/block/block:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/board/board:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/board/board:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/card-members/card_member:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/card-members/card_member:remove",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/card-members/card_member:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/card/card:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/card/card:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/comment/comment:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/comment/comment:remove",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/comment/comment:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/file/file:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/file/file:remove",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/file/file:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/space/space:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/tag/tag:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/tag/tag:remove",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/tag/tag:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/timelog/timelog:add",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/timelog/timelog:remove",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/external-webhooks/timelog/timelog:update",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-admins/add-admin-to-group",
+    "kind": "http",
+    "tool": "group-admins.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-admins/get-list-of-group-admins",
+    "kind": "http",
+    "tool": "group-admins.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-admins/remove-admin-from-group",
+    "kind": "http",
+    "tool": "group-admins.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-entities/add-entity",
+    "kind": "http",
+    "tool": "group-entities.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-entities/get-list-of-group-entities",
+    "kind": "http",
+    "tool": "group-entities.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-entities/remove-entity",
+    "kind": "http",
+    "tool": "group-entities.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-entities/update-group-entity",
+    "kind": "http",
+    "tool": "group-entities.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-users/add-user-to-group",
+    "kind": "http",
+    "tool": "group-users.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-users/get-list-of-group-users",
+    "kind": "http",
+    "tool": "group-users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/group-users/remove-user-from-group",
+    "kind": "http",
+    "tool": "group-users.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/groups/create-group",
+    "kind": "http",
+    "tool": "company-groups.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/groups/get-group",
+    "kind": "http",
+    "tool": "company-groups.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/groups/get-list-of-groups",
+    "kind": "http",
+    "tool": "company-groups.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/groups/remove-group",
+    "kind": "http",
+    "tool": "company-groups.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/groups/update-group",
+    "kind": "http",
+    "tool": "company-groups.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/appendix/colors",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/boards",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/card-timers",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/cards",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/columns",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/columns-mapping",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/comments",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/custom-fields",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/document-files",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/documents",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/files",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/folders",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/meta-data",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/properties-mapping",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/spaces",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/entities/users",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/imports/examples",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/add-card-to-iteration",
+    "kind": "http",
+    "tool": "iteration-cards.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/create-iteration",
+    "kind": "http",
+    "tool": "iterations.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/delete-iteration",
+    "kind": "http",
+    "tool": "iterations.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/get-card-iterations-history",
+    "kind": "http",
+    "tool": "card-iterations-history.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/get-iteration",
+    "kind": "http",
+    "tool": "iterations.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/remove-card-from-iteration",
+    "kind": "http",
+    "tool": "iteration-cards.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/retrieve-cards-in-iteration",
+    "kind": "http",
+    "tool": "iteration-cards.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/retrieve-list-of-iterations",
+    "kind": "http",
+    "tool": "iterations.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/iterations/retrieve-list-of-iterations",
+        "tool": "iterations.list",
+        "expected_issue": {
+          "field": "query.limit",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/iterations/retrieve-list-of-iterations",
+        "tool": "iterations.list",
+        "expected_issue": {
+          "field": "query.offset",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/iterations/update-iteration",
+    "kind": "http",
+    "tool": "iterations.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/lanes/create-new-lane",
+    "kind": "http",
+    "tool": "lanes.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/lanes/get-list-of-lanes",
+    "kind": "http",
+    "tool": "lanes.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/lanes/remove-lane",
+    "kind": "http",
+    "tool": "lanes.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/lanes/update-lane",
+    "kind": "http",
+    "tool": "lanes.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-card-files/attach-file-to-card",
+    "kind": "http",
+    "tool": "files.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-card-files/delete-card-file",
+    "kind": "http",
+    "tool": "files.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-card-files/get-card-file",
+    "kind": "http",
+    "tool": "private-card-files.get",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [],
+    "notes": [
+      "redirect=true is rejected: JSON metadata commands do not follow storage redirects. Use files.download for binary downloads."
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-card-files/update-card-file",
+    "kind": "http",
+    "tool": "files.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-comment-files/attach-file-to-comment",
+    "kind": "http",
+    "tool": "private-comment-files.upload",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-comment-files/delete-comment-file",
+    "kind": "http",
+    "tool": "private-comment-files.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-comment-files/get-comment-file",
+    "kind": "http",
+    "tool": "private-comment-files.get",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [],
+    "notes": [
+      "redirect=true is rejected: JSON metadata commands do not follow storage redirects. Use files.download for binary downloads."
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-comment-files/update-comment-file",
+    "kind": "http",
+    "tool": "private-comment-files.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-custom-property-files/attach-file-to-custom-property",
+    "kind": "http",
+    "tool": "private-custom-property-files.upload",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-custom-property-files/delete-custom-property-file",
+    "kind": "http",
+    "tool": "private-custom-property-files.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-custom-property-files/get-custom-property-file",
+    "kind": "http",
+    "tool": "private-custom-property-files.get",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [],
+    "notes": [
+      "redirect=true is rejected: JSON metadata commands do not follow storage redirects. Use files.download for binary downloads."
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-custom-property-files/update-custom-property-file",
+    "kind": "http",
+    "tool": "private-custom-property-files.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/restricted-access-files-migration",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/add-group",
+    "kind": "http",
+    "tool": "scim.groups.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/get-group",
+    "kind": "http",
+    "tool": "scim.groups.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/get-groups",
+    "kind": "http",
+    "tool": "scim.groups.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/scim/groups/get-groups",
+        "tool": "scim.groups.list",
+        "expected_issue": {
+          "field": "query.startIndex",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/scim/groups/get-groups",
+        "tool": "scim.groups.list",
+        "expected_issue": {
+          "field": "query.count",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/groups/update-group",
+    "kind": "http",
+    "tool": "scim.groups.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/add-user",
+    "kind": "http",
+    "tool": "scim.users.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/get-user",
+    "kind": "http",
+    "tool": "scim.users.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/get-users",
+    "kind": "http",
+    "tool": "scim.users.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/scim/users/get-users",
+        "tool": "scim.users.list",
+        "expected_issue": {
+          "field": "query.startIndex",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/scim/users/get-users",
+        "tool": "scim.users.list",
+        "expected_issue": {
+          "field": "query.count",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/scim/users/update-user",
+    "kind": "http",
+    "tool": "scim.users.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/service-desk-services/retrieve-services-list",
+    "kind": "http",
+    "tool": "service-desk.services.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-boards/create-new-board",
+    "kind": "http",
+    "tool": "boards.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-boards/get-board",
+    "kind": "http",
+    "tool": "boards.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-boards/get-list-of-boards",
+    "kind": "http",
+    "tool": "boards.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-boards/remove-board",
+    "kind": "http",
+    "tool": "boards.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-boards/update-board",
+    "kind": "http",
+    "tool": "boards.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist-items/create-new-space-template-checklist-item",
+    "kind": "http",
+    "tool": "space-template-checklist-items.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist-items/remove-space-template-checklist-item",
+    "kind": "http",
+    "tool": "space-template-checklist-items.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist-items/update-space-template-checklist-item",
+    "kind": "http",
+    "tool": "space-template-checklist-items.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist/create-new-space-template-checklist",
+    "kind": "http",
+    "tool": "space-template-checklists.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist/get-list-of-space-template-checklists",
+    "kind": "http",
+    "tool": "space-template-checklists.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist/remove-space-template-checklist",
+    "kind": "http",
+    "tool": "space-template-checklists.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-template-checklist/update-space-template-checklist",
+    "kind": "http",
+    "tool": "space-template-checklists.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/space-template-checklist/update-space-template-checklist",
+        "tool": "space-template-checklists.update",
+        "expected_issue": {
+          "field": "body.space_uid",
+          "issue": "wire_mapping"
+        },
+        "status": "compatible_mapping",
+        "reason": "target_space_uid maps to body.space_uid; space_uid identifies the source URL."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-users/change-user-role-and-notification-settings",
+    "kind": "http",
+    "tool": "space-users.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-users/get-list-of-users",
+    "kind": "http",
+    "tool": "space-users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-users/get-user",
+    "kind": "http",
+    "tool": "space-users.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-users/invite-user-to-space",
+    "kind": "http",
+    "tool": "space-users.add",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/space-users/remove-user-from-space",
+    "kind": "http",
+    "tool": "space-users.remove",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/spaces/create-new-space",
+    "kind": "http",
+    "tool": "spaces.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/spaces/remove-space",
+    "kind": "http",
+    "tool": "spaces.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/spaces/retrieve-list-of-spaces",
+    "kind": "http",
+    "tool": "spaces.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/spaces/retrieve-space",
+    "kind": "http",
+    "tool": "spaces.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/spaces/update-space",
+    "kind": "http",
+    "tool": "spaces.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/sprints/get-sprint-summary",
+    "kind": "http",
+    "tool": "sprints.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/sprints/get-sprints-list",
+    "kind": "http",
+    "tool": "sprints.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/create-new-subcolumn",
+    "kind": "http",
+    "tool": "subcolumns.create",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/subcolumn/create-new-subcolumn",
+        "tool": "subcolumns.create",
+        "expected_issue": {
+          "field": "body.months_to_hide_cards",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/get-list-of-subcolumns",
+    "kind": "http",
+    "tool": "subcolumns.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/remove-subcolumn",
+    "kind": "http",
+    "tool": "subcolumns.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/subcolumn/update-subcolumn",
+    "kind": "http",
+    "tool": "subcolumns.update",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/subcolumn/update-subcolumn",
+        "tool": "subcolumns.update",
+        "expected_issue": {
+          "field": "body.months_to_hide_cards",
+          "issue": "missing"
+        },
+        "status": "deprecated",
+        "reason": "The same page announces removal of months_to_hide_cards; use card_hide_after_days. No month-to-day conversion."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/tags/add-tag",
+    "kind": "http",
+    "tool": "tags.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/tags/retrieve-list-of-tags",
+    "kind": "http",
+    "tool": "tags.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/timesheet/get-list",
+    "kind": "http",
+    "tool": "timesheet.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/tree-entities/get-list-of-entities",
+    "kind": "http",
+    "tool": "tree-entities.list",
+    "status": "accounted_with_notes",
+    "issues": [],
+    "decisions": [
+      {
+        "url": "https://developers.kaiten.ru/tree-entities/get-list-of-entities",
+        "tool": "tree-entities.list",
+        "expected_issue": {
+          "field": "query.limit",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      },
+      {
+        "url": "https://developers.kaiten.ru/tree-entities/get-list-of-entities",
+        "tool": "tree-entities.list",
+        "expected_issue": {
+          "field": "query.offset",
+          "issue": "type",
+          "documented": [
+            "number"
+          ],
+          "cli": [
+            "integer"
+          ]
+        },
+        "status": "documented_conflict",
+        "reason": "The table says number for a pagination count/index. CLI keeps integer counts/indexes and its existing bounds; fractional pagination is not supported."
+      }
+    ]
+  },
+  {
+    "url": "https://developers.kaiten.ru/tree-entity-roles/get-list-of-tree-entity-roles",
+    "kind": "http",
+    "tool": "roles.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-metadata",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-roles/create-user-role",
+    "kind": "http",
+    "tool": "user-roles.create",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-roles/get-list-of-user-roles",
+    "kind": "http",
+    "tool": "user-roles.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-roles/get-user-role",
+    "kind": "http",
+    "tool": "user-roles.get",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-roles/remove-user-role",
+    "kind": "http",
+    "tool": "user-roles.delete",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/user-roles/update-user-role",
+    "kind": "http",
+    "tool": "user-roles.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/users/retrieve-current-user",
+    "kind": "http",
+    "tool": "users.current",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/users/retrieve-list-of-users",
+    "kind": "http",
+    "tool": "users.list",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/users/update-user",
+    "kind": "http",
+    "tool": "users.update",
+    "status": "covered",
+    "issues": [],
+    "decisions": []
+  },
+  {
+    "url": "https://developers.kaiten.ru/webhooks",
+    "kind": "reference",
+    "status": "reference_only"
+  },
+  {
+    "url": "https://developers.kaiten.ru/webhooks/integrations/sentry",
+    "kind": "reference",
+    "status": "reference_only"
+  }
+]

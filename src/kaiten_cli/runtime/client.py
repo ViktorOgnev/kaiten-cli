@@ -289,12 +289,15 @@ class KaitenClient:
         self,
         path: str,
         *,
+        params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
         files: Any = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         try:
-            return await self._request("POST", path, json=json, files=files, timeout=timeout)
+            return await self._request(
+                "POST", path, params=params, json=json, files=files, timeout=timeout
+            )
         finally:
             await self._invalidate_after_remote_mutation()
 
@@ -302,28 +305,41 @@ class KaitenClient:
         self,
         path: str,
         *,
+        params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
         files: Any = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         try:
-            return await self._request("PUT", path, json=json, files=files, timeout=timeout)
+            return await self._request(
+                "PUT", path, params=params, json=json, files=files, timeout=timeout
+            )
         finally:
             await self._invalidate_after_remote_mutation()
 
     async def patch(
-        self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         try:
-            return await self._request("PATCH", path, json=json, timeout=timeout)
+            return await self._request("PATCH", path, params=params, json=json, timeout=timeout)
         finally:
             await self._invalidate_after_remote_mutation()
 
     async def delete(
-        self, path: str, *, json: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> Any:
         try:
-            return await self._request("DELETE", path, json=json, timeout=timeout)
+            return await self._request("DELETE", path, params=params, json=json, timeout=timeout)
         finally:
             await self._invalidate_after_remote_mutation()
 

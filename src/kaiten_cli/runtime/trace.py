@@ -14,7 +14,7 @@ from kaiten_cli.errors import ValidationError
 from kaiten_cli.runtime.fs_security import open_private_append
 
 REDACTED_ARG_VALUE = "[REDACTED]"
-_SENSITIVE_FLAGS = {"--token"}
+_SENSITIVE_FLAGS = {"--token", "--password", "--old-password"}
 _NUMERIC_PATH_SEGMENT_RE = re.compile(r"/\d+(?=/|$)")
 _UUID_PATH_SEGMENT_RE = re.compile(
     r"/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?=/|$)"
