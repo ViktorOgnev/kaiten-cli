@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from kaiten_cli.errors import ApiError, TransportError, ValidationError
+from kaiten_cli.i18n import tr
 
 # Fixed namespace from kaiten-lib/src/shared/addons/generateAddonUid.js. On
 # self-hosted Kaiten an addon UID is the UUID v5 of its normalized URL path, so
@@ -63,9 +64,10 @@ def validate_addon_uid_value(value: Any, field: str = "addon_uid") -> str:
     text = value.strip().lower() if isinstance(value, str) else ""
     if not _UUID_PATTERN.match(text):
         raise ValidationError(
-            f"Field {field} must be an addon UUID such as "
-            "0ce23a01-560f-51e0-9982-1e3445dc5990; take it from space-addons.list, "
-            "company-addons.list or addons.uid."
+            tr(
+                "Field {value_0} must be an addon UUID such as 0ce23a01-560f-51e0-9982-1e3445dc5990; take it from space-addons.list, company-addons.list or addons.uid.",
+                value_0=field,
+            )
         )
     return text
 
@@ -163,9 +165,13 @@ def _single_addon_uid(uids: list[str], url_path: str, where: str) -> str | None:
     if len(uids) == 1:
         return uids[0]
     raise ValidationError(
-        f"{where} has {len(uids)} addons mounted at {url_path} ({', '.join(uids)}), so the "
-        "right one cannot be chosen automatically. Pass --addon-uid; writing to the wrong "
-        "addon would put GitHub attachments into unrelated addon data."
+        tr(
+            "{value_0} has {value_1} addons mounted at {value_2} ({value_3}), so the right one cannot be chosen automatically. Pass --addon-uid; writing to the wrong addon would put GitHub attachments into unrelated addon data.",
+            value_0=where,
+            value_1=len(uids),
+            value_2=url_path,
+            value_3=", ".join(uids),
+        )
     )
 
 
@@ -231,7 +237,13 @@ async def resolve_addon_uid(
         card = await client.get(f"/cards/{card_id}", timeout=timeout)
     except (ApiError, TransportError) as error:
         if reporter:
-            reporter(f"addon lookup: /cards/{card_id} unavailable ({error})")
+            reporter(
+                tr(
+                    "addon lookup: /cards/{value_0} unavailable ({value_1})",
+                    value_0=card_id,
+                    value_1=error,
+                )
+            )
         return AddonResolution(None, authoritative=False)
     if not isinstance(card, dict) or not isinstance(card.get("board"), dict):
         # Without the board object we cannot tell "no addons" from "no answer".
@@ -240,15 +252,21 @@ async def resolve_addon_uid(
     embedded = _card_board_spaces(card)
     if embedded is None:
         if reporter:
-            reporter("addon lookup: card response has no registrations; addon UID is unresolved")
+            reporter(
+                tr("addon lookup: card response has no registrations; addon UID is unresolved")
+            )
         return AddonResolution(None, authoritative=False)
 
     pooled, rejected = _uids_from_card(embedded, normalized)
     uid = _single_addon_uid(pooled, url_path, "This card's board")
     if reporter:
         reporter(
-            f"addon lookup: card reported {len(pooled)} usable and {rejected} "
-            f"unusable addon(s) at {url_path}"
+            tr(
+                "addon lookup: card reported {value_0} usable and {value_1} unusable addon(s) at {value_2}",
+                value_0=len(pooled),
+                value_1=rejected,
+                value_2=url_path,
+            )
         )
     # No match in this filtered listing does not prove that no attachments exist.
     return AddonResolution(uid, authoritative=uid is not None)
@@ -322,9 +340,10 @@ def mutable_attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
         # The row exists but its container is not an object. A write would replace
         # it with one, so whatever is stored there would be gone.
         raise ValidationError(
-            f"Addon data for this card holds {type(data).__name__}, not an object, so this "
-            "command cannot rewrite it without losing data. Inspect it with card-addon-data "
-            "get and fix it with card-addon-data set."
+            tr(
+                "Addon data for this card holds {value_0}, not an object, so this command cannot rewrite it without losing data. Inspect it with card-addon-data get and fix it with card-addon-data set.",
+                value_0=type(data).__name__,
+            )
         )
 
     value = stored_value(rows, key)
@@ -334,37 +353,43 @@ def mutable_attached_items(rows: Any, key: str) -> list[dict[str, Any]]:
         return []
     if not isinstance(value, list):
         raise ValidationError(
-            f"Addon key {key} holds {type(value).__name__}, not a list, so this command cannot "
-            "rewrite it without losing data. Inspect it with card-addon-data get and fix it "
-            "with card-addon-data set."
+            tr(
+                "Addon key {value_0} holds {value_1}, not a list, so this command cannot rewrite it without losing data. Inspect it with card-addon-data get and fix it with card-addon-data set.",
+                value_0=key,
+                value_1=type(value).__name__,
+            )
         )
     unexpected = [index for index, item in enumerate(value) if not isinstance(item, dict)]
     if unexpected:
         positions = ", ".join(str(index) for index in unexpected[:5])
         raise ValidationError(
-            f"Addon key {key} has non-object entries at position(s) {positions}; rewriting the "
-            "list would drop them. Inspect it with card-addon-data get and fix it with "
-            "card-addon-data set."
+            tr(
+                "Addon key {value_0} has non-object entries at position(s) {value_1}; rewriting the list would drop them. Inspect it with card-addon-data get and fix it with card-addon-data set.",
+                value_0=key,
+                value_1=positions,
+            )
         )
     return list(value)
 
 
 def _require_object(value: Any, field: str) -> dict[str, Any]:
     if not isinstance(value, dict):
-        raise ValidationError(f"Field {field} must be a JSON object with the GitHub REST payload.")
+        raise ValidationError(
+            tr("Field {value_0} must be a JSON object with the GitHub REST payload.", value_0=field)
+        )
     return value
 
 
 def _require_int(value: Any, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValidationError(f"Field {field} must be an integer.")
+        raise ValidationError(tr("Field {value_0} must be an integer.", value_0=field))
     return value
 
 
 def _require_text(value: Any, field: str) -> str:
     text = value.strip() if isinstance(value, str) else ""
     if not text:
-        raise ValidationError(f"Field {field} must be a non-empty string.")
+        raise ValidationError(tr("Field {value_0} must be a non-empty string.", value_0=field))
     return text
 
 
@@ -405,9 +430,9 @@ def map_rest_pull(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     repo = _nested(pull, "base", "repo", "name") or _optional_text(payload.get("repo"))
     if not owner or not repo:
         raise ValidationError(
-            "Field pull_json has no base.repo.owner.login / base.repo.name; pass the full "
-            "GitHub REST pull object (gh api repos/OWNER/REPO/pulls/NUMBER) or give "
-            "--owner and --repo explicitly."
+            tr(
+                "Field pull_json has no base.repo.owner.login / base.repo.name; pass the full GitHub REST pull object (gh api repos/OWNER/REPO/pulls/NUMBER) or give --owner and --repo explicitly."
+            )
         )
     return {
         "id": _require_int(pull.get("id"), "pull_json.id"),
@@ -486,7 +511,9 @@ def map_rest_issue(rest: Any, payload: dict[str, Any]) -> dict[str, Any]:
     issue = _require_object(rest, "issue_json")
     if issue.get("pull_request") is not None:
         raise ValidationError(
-            "Field issue_json describes a pull request; attach it with github-addon pulls attach."
+            tr(
+                "Field issue_json describes a pull request; attach it with github-addon pulls attach."
+            )
         )
     owner = _require_text(payload.get("owner"), "owner")
     repo = _require_text(payload.get("repo"), "repo")
@@ -550,13 +577,13 @@ def _option(field: str) -> str:
 def _require_any_selector(payload: dict[str, Any], fields: tuple[str, ...]) -> None:
     if not any(payload.get(field) is not None for field in fields):
         options = ", ".join(_option(field) for field in fields)
-        raise ValidationError(f"Provide at least one selector: {options}.")
+        raise ValidationError(tr("Provide at least one selector: {value_0}.", value_0=options))
     # An empty string reaches here from an unset shell variable. Treated as a
     # filter it would silently match nothing, so reject it instead.
     for field in (*fields, "owner", "repo"):
         value = payload.get(field)
         if isinstance(value, str) and not value.strip():
-            raise ValidationError(f"Field {_option(field)} must not be empty.")
+            raise ValidationError(tr("Field {value_0} must not be empty.", value_0=_option(field)))
 
 
 def _pull_matches(item: dict[str, Any], payload: dict[str, Any]) -> bool:
@@ -711,15 +738,19 @@ async def _read_attached(
             # a PATCH for any addon the card may use, so a wrong guess does not
             # bounce - it lands in another addon's data.
             raise ValidationError(
-                f"Cannot establish which addon at {url_path} this card uses, so there is "
-                "nothing safe to write to: its registration could not be confirmed from "
-                "the card response. Pass --addon-uid "
-                "(see space-addons.list or company-addons.list) and retry."
+                tr(
+                    "Cannot establish which addon at {value_0} this card uses, so there is nothing safe to write to: its registration could not be confirmed from the card response. Pass --addon-uid (see space-addons.list or company-addons.list) and retry.",
+                    value_0=url_path,
+                )
             )
         if resolution.uid is not None and resolution.uid != addon_uid:
             if reporter:
                 reporter(
-                    f"addon uid: derived {addon_uid} has no data, using registered {resolution.uid}"
+                    tr(
+                        "addon uid: derived {value_0} has no data, using registered {value_1}",
+                        value_0=addon_uid,
+                        value_1=resolution.uid,
+                    )
                 )
             addon_uid = resolution.uid
             rows = await client.get(_addon_data_path(path, addon_uid), timeout=timeout)
@@ -765,23 +796,24 @@ def _envelope(
 def _make_list_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
         if reporter:
-            reporter(f"execution: read shared addon key {entity.key}")
+            reporter(tr("execution: read shared addon key {value_0}", value_0=entity.key))
         state = await _read_attached(client, payload, path, entity, timeout, reporter)
         if not state.row_found and not state.uid_confirmed:
             # An empty list here would be indistinguishable from "we read the
             # wrong addon". The card response may omit a registration whose data
             # is still readable, so refuse to report that nothing is attached.
             raise ValidationError(
-                f"Cannot establish whether {state.addon_uid} is this card's GitHub addon: the "
-                "UUID was derived from --addon-url-path, it holds no data, and the card "
-                "response did not identify its registration. That response may omit an addon "
-                "whose data is still readable. Pass --addon-uid (see space-addons.list "
-                "or company-addons.list) and retry."
+                tr(
+                    "Cannot establish whether {value_0} is this card's GitHub addon: the UUID was derived from --addon-url-path, it holds no data, and the card response did not identify its registration. That response may omit an addon whose data is still readable. Pass --addon-uid (see space-addons.list or company-addons.list) and retry.",
+                    value_0=state.addon_uid,
+                )
             )
         if reporter and not state.row_found:
             reporter(
-                f"addon data: no shared row under {state.addon_uid}; "
-                "the card has no attachments or the addon is not installed here"
+                tr(
+                    "addon data: no shared row under {value_0}; the card has no attachments or the addon is not installed here",
+                    value_0=state.addon_uid,
+                )
             )
         return state.items
 
@@ -793,7 +825,9 @@ def _make_attach_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
         item = entity.mapper(payload.get(entity.payload_field), payload)
         if reporter:
-            reporter(f"execution: read-modify-write of shared addon key {entity.key}")
+            reporter(
+                tr("execution: read-modify-write of shared addon key {value_0}", value_0=entity.key)
+            )
         state = await _read_attached(
             client, payload, path, entity, timeout, reporter, for_write=True
         )
@@ -829,7 +863,9 @@ def _make_detach_executor(entity: GithubEntity):
     async def execute(client, tool, payload, path, query, body, timeout, reporter):
         _require_any_selector(payload, entity.selectors)
         if reporter:
-            reporter(f"execution: read-modify-write of shared addon key {entity.key}")
+            reporter(
+                tr("execution: read-modify-write of shared addon key {value_0}", value_0=entity.key)
+            )
         state = await _read_attached(
             client, payload, path, entity, timeout, reporter, for_write=True
         )
@@ -855,9 +891,11 @@ def _make_detach_executor(entity: GithubEntity):
         # request to remove them all. Removing the extra ones has to be asked for.
         if len(removed) > 1 and not payload.get("all", False):
             raise ValidationError(
-                f"Selector matches {len(removed)} attachments: "
-                + ", ".join(_describe_item(entity, item) for item in removed)
-                + ". Narrow it with --owner and --repo, or pass --all to remove every match."
+                tr(
+                    "Selector matches {count} attachments: {items}. Narrow it with --owner and --repo, or pass --all to remove every match.",
+                    count=len(removed),
+                    items=", ".join(_describe_item(entity, item) for item in removed),
+                )
             )
 
         result["attached_count"] = len(kept)
@@ -902,12 +940,12 @@ async def execute_addon_uid(client, tool, payload, path, query, body, timeout, r
         # leaves a random one otherwise, so a UUID for "/" would be a value the
         # platform never assigns.
         raise ValidationError(
-            "Field url_path must contain a path segment: Kaiten does not derive a UUID for an "
-            "addon mounted at the root, it keeps the random one. Read the real value from "
-            "space-addons.list or company-addons.list."
+            tr(
+                "Field url_path must contain a path segment: Kaiten does not derive a UUID for an addon mounted at the root, it keeps the random one. Read the real value from space-addons.list or company-addons.list."
+            )
         )
     if reporter:
-        reporter("execution: local UUID v5 derivation, no API call")
+        reporter(tr("execution: local UUID v5 derivation, no API call"))
     return {
         "url_path": url_path,
         "normalized_url_path": normalize_addon_url_path(url_path),

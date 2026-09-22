@@ -1,6 +1,7 @@
 """Small compatibility validators for alternate documented request forms."""
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 
 
 def validate_public_request(tool, payload):
@@ -18,9 +19,11 @@ def validate_public_request(tool, payload):
     }
     if name in alternatives:
         if not any(all(field in payload for field in fields) for fields in alternatives[name]):
-            choices = " or ".join(" + ".join(fields) for fields in alternatives[name])
-            raise ValidationError(f"Missing required input: {choices}.")
+            choices = tr(" or ").join(" + ".join(fields) for fields in alternatives[name])
+            raise ValidationError(tr("Missing required input: {value_0}.", value_0=choices))
     if name.startswith("private-") and payload.get("redirect") is True:
         raise ValidationError(
-            "Field redirect=true returns binary/redirect content instead of JSON metadata. Use files.download to download restricted files safely."
+            tr(
+                "Field redirect=true returns binary/redirect content instead of JSON metadata. Use files.download to download restricted files safely."
+            )
         )

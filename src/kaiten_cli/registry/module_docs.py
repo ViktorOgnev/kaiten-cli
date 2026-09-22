@@ -13,73 +13,73 @@ class ModuleDocSpec:
 
 
 MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
-    ModuleDocSpec("cards", "Карточки", "Карточки, bulk reads и card-heavy workflows."),
-    ModuleDocSpec("comments", "Комментарии", "Комментарии карточек и comment-heavy reads."),
+    ModuleDocSpec("cards", "Cards", "Cards, bulk reads and card workflows."),
+    ModuleDocSpec("comments", "Comments", "Card comments and bulk comment reads."),
     ModuleDocSpec(
         "members",
-        "Участники и пользователи",
-        "Участники карточек, пользователи, группы и space users.",
+        "Members and users",
+        "Card members, users, groups and space users.",
     ),
-    ModuleDocSpec("time_logs", "Логи времени", "Time logs, work logs и related analytics inputs."),
-    ModuleDocSpec("tags", "Теги", "Теги и операции привязки тегов к карточкам."),
-    ModuleDocSpec("checklists", "Чеклисты", "Чеклисты и checklist items."),
-    ModuleDocSpec("blockers", "Блокировки", "Блокировки карточек и blocker relations."),
+    ModuleDocSpec("time_logs", "Time logs", "Time logs, work logs and related analytics inputs."),
+    ModuleDocSpec("tags", "Tags", "Tags and card tag assignments."),
+    ModuleDocSpec("checklists", "Checklists", "Checklists and checklist items."),
+    ModuleDocSpec("blockers", "Blockers", "Card blockers and blocker relations."),
     ModuleDocSpec(
-        "card_relations", "Связи карточек", "Parent/child/planned relations between cards."
+        "card_relations", "Card relations", "Parent/child/planned relations between cards."
     ),
-    ModuleDocSpec("external_links", "Внешние ссылки", "External links attached to cards."),
+    ModuleDocSpec("external_links", "External links", "External links attached to cards."),
     ModuleDocSpec(
         "files",
-        "Файлы карточек",
-        "Файлы, вложения и beta Restricted Access Files карточек.",
+        "Card files",
+        "Card files, attachments and beta Restricted Access Files.",
     ),
-    ModuleDocSpec("subscribers", "Подписчики", "Подписки на карточки и колонки."),
-    ModuleDocSpec("spaces", "Пространства", "Spaces and top-level workspace reads."),
-    ModuleDocSpec("boards", "Доски", "Boards and board-level operations."),
+    ModuleDocSpec("subscribers", "Subscribers", "Card and column subscriptions."),
+    ModuleDocSpec("spaces", "Spaces", "Spaces and top-level workspace reads."),
+    ModuleDocSpec("boards", "Boards", "Boards and board-level operations."),
     ModuleDocSpec(
-        "columns", "Колонки и подколонки", "Columns, subcolumns and related card structure."
+        "columns", "Columns and subcolumns", "Columns, subcolumns and related card structure."
     ),
-    ModuleDocSpec("lanes", "Дорожки", "Swimlanes and lane-level operations."),
-    ModuleDocSpec("card_types", "Типы карточек", "Card types and type metadata."),
+    ModuleDocSpec("lanes", "Lanes", "Swimlanes and lane-level operations."),
+    ModuleDocSpec("card_types", "Card types", "Card types and type metadata."),
     ModuleDocSpec(
         "custom_directories",
-        "Каталоги / Custom directories",
+        "Catalogs",
         "Kaiten Catalogs: directories, fields, records and linked cards.",
     ),
     ModuleDocSpec(
         "custom_properties",
-        "Кастомные свойства",
+        "Custom properties",
         "Custom properties, select values, catalog-values and collective values.",
     ),
-    ModuleDocSpec("documents", "Документы", "Documents and document groups."),
+    ModuleDocSpec("documents", "Documents", "Documents and document groups."),
     ModuleDocSpec(
         "dashboards",
-        "Дашборды",
+        "Dashboards",
         "Experimental dashboards, collaborators, widgets and compute jobs.",
     ),
-    ModuleDocSpec("iterations", "Итерации", "Beta iterations, iteration cards and card history."),
-    ModuleDocSpec("webhooks", "Вебхуки", "Webhook configuration and delivery settings."),
+    ModuleDocSpec("iterations", "Iterations", "Beta iterations, iteration cards and card history."),
+    ModuleDocSpec("webhooks", "Webhooks", "Webhook configuration and delivery settings."),
     ModuleDocSpec(
-        "automations", "Автоматизации и воркфлоу", "Automations, incoming webhooks and workflows."
+        "automations", "Automations and workflows", "Automations, incoming webhooks and workflows."
     ),
     ModuleDocSpec(
         "addons",
-        "Аддоны",
+        "Addons",
         "Addon catalog, space installation and per-card / per-user addon data.",
     ),
     ModuleDocSpec(
         "github_addon",
-        "GitHub-аддон",
+        "GitHub addon",
         "Pull requests, branches, commits and issues attached to cards by the GitHub addon.",
     ),
-    ModuleDocSpec("projects", "Проекты и спринты", "Projects, project cards and sprints."),
+    ModuleDocSpec("projects", "Projects and sprints", "Projects, project cards and sprints."),
     ModuleDocSpec(
-        "roles_and_groups", "Роли и группы", "Roles, groups and permission-related operations."
+        "roles_and_groups", "Roles and groups", "Roles, groups and permission-related operations."
     ),
     ModuleDocSpec("scim", "SCIM", "SCIM v2 user and group provisioning."),
     ModuleDocSpec(
         "audit_and_analytics",
-        "Аудит и аналитика",
+        "Audit and analytics",
         "Audit logs, activity, saved filters and analytics helpers.",
     ),
     ModuleDocSpec(
@@ -87,18 +87,18 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Service Desk",
         "Service Desk requests, users, SLA, organizations and settings.",
     ),
-    ModuleDocSpec("charts", "Графики и аналитика", "Chart endpoints and compute jobs."),
-    ModuleDocSpec("tree", "Дерево сущностей", "Entity tree and tree navigation commands."),
+    ModuleDocSpec("charts", "Charts and analytics", "Chart endpoints and compute jobs."),
+    ModuleDocSpec("tree", "Entity tree", "Entity tree and tree navigation commands."),
     ModuleDocSpec(
-        "utilities", "Утилиты", "Company, calendars, timers, api keys and removed entities."
+        "utilities", "Utilities", "Company, calendars, timers, api keys and removed entities."
     ),
     ModuleDocSpec(
         "snapshot",
-        "Локальные snapshots",
+        "Local snapshots",
         "Local-first snapshot build, refresh and management commands.",
     ),
     ModuleDocSpec(
-        "query", "Локальные запросы", "Local-only query and metrics commands over snapshots."
+        "query", "Local queries", "Local-only query and metrics commands over snapshots."
     ),
 )
 

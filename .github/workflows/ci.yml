@@ -24,6 +24,8 @@ jobs:
         run: ruff check src tests scripts
       - name: Check formatting
         run: ruff format --check src tests scripts
+      - name: Check locale catalog
+        run: python scripts/check_locales.py
       - name: Check generated documentation
         run: python scripts/generate_reference_docs.py --check
 

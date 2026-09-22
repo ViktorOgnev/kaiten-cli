@@ -8,11 +8,10 @@ from httpx import Response
 
 from kaiten_cli.app import cli
 from kaiten_cli.registry import resolve_tool
+from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.executor import build_request, execute_tool, request_path_for_tool
 from kaiten_cli.runtime.input import merge_inputs
-from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.support.files import resolve_download_source
-
 
 EXPECTED_NEW_TOOLS = {
     "cards.batch-update",
@@ -195,12 +194,12 @@ def test_custom_directory_docs_use_catalog_meaning():
     document_group = resolve_tool("document-groups.create")
     tree = resolve_tool("tree.get")
 
-    assert any("Каталоги" in note for note in directory.usage_notes)
-    assert any("справочник" in note for note in directory.usage_notes)
+    assert any("Kaiten Catalogs" in note for note in directory.usage_notes)
+    assert any("catalog table" in note for note in directory.usage_notes)
     assert any("before a mutation" in note for note in record.usage_notes)
-    assert any("card field of type `Справочник`" in note for note in custom_property.usage_notes)
+    assert any("catalog card field" in note for note in custom_property.usage_notes)
     assert any("catalog-typed custom property" in note for note in catalog_values.usage_notes)
-    assert any("card field of type `Справочник`" in note for note in catalog_values.usage_notes)
+    assert any("catalog card field" in note for note in catalog_values.usage_notes)
     assert any("document folders/containers" in note for note in document_group.usage_notes)
     assert any("internal fetched entity index" in note for note in tree.usage_notes)
 

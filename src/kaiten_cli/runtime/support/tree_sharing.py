@@ -14,6 +14,7 @@ from kaiten_cli.errors import (
     TransportError,
     ValidationError,
 )
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.support.batch import DEFAULT_BATCH_WORKERS, MAX_BATCH_WORKERS
 
@@ -27,13 +28,13 @@ def _share_path(entity_uid: str) -> str:
 
 def _parse_expired_at(value: str) -> datetime:
     if not isinstance(value, str) or not value.strip():
-        raise ValidationError("Field expired_at must be a valid ISO-8601 date or datetime.")
+        raise ValidationError(tr("Field expired_at must be a valid ISO-8601 date or datetime."))
     normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
     try:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
         raise ValidationError(
-            "Field expired_at must be a valid ISO-8601 date or datetime."
+            tr("Field expired_at must be a valid ISO-8601 date or datetime.")
         ) from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
@@ -53,11 +54,11 @@ def _expiration_matches(current: Any, requested: str | None) -> bool:
 
 def _validate_entity_uid(value: Any, *, field: str) -> None:
     if not isinstance(value, str) or not value.strip():
-        raise ValidationError(f"Field {field} must be a non-empty UUID string.")
+        raise ValidationError(tr("Field {value_0} must be a non-empty UUID string.", value_0=field))
     try:
         UUID(value)
     except ValueError as exc:
-        raise ValidationError(f"Field {field} must be a valid UUID.") from exc
+        raise ValidationError(tr("Field {value_0} must be a valid UUID.", value_0=field)) from exc
 
 
 def validate_tree_entity_share_payload(tool, payload: dict[str, Any]) -> None:
@@ -65,29 +66,31 @@ def validate_tree_entity_share_payload(tool, payload: dict[str, Any]) -> None:
     if "expired_at" in payload and payload["expired_at"] is not None:
         parsed = _parse_expired_at(payload["expired_at"])
         if parsed <= datetime.now(UTC):
-            raise ValidationError("Field expired_at must be in the future or null.")
+            raise ValidationError(tr("Field expired_at must be in the future or null."))
 
 
 def validate_tree_entity_share_batch_payload(tool, payload: dict[str, Any]) -> None:
     entity_uids = payload.get("entity_uids")
     if not isinstance(entity_uids, list) or not entity_uids:
-        raise ValidationError("Field entity_uids must be a non-empty array.")
+        raise ValidationError(tr("Field entity_uids must be a non-empty array."))
     for index, entity_uid in enumerate(entity_uids):
         _validate_entity_uid(entity_uid, field=f"entity_uids[{index}]")
     workers = payload.get("workers", DEFAULT_SHARE_WORKERS)
     if workers < 1 or workers > MAX_SHARE_WORKERS:
-        raise ValidationError(f"Field workers must be between 1 and {MAX_SHARE_WORKERS}.")
+        raise ValidationError(
+            tr("Field workers must be between 1 and {value_0}.", value_0=MAX_SHARE_WORKERS)
+        )
     if "expired_at" in payload and payload["expired_at"] is not None:
         parsed = _parse_expired_at(payload["expired_at"])
         if parsed <= datetime.now(UTC):
-            raise ValidationError("Field expired_at must be in the future or null.")
+            raise ValidationError(tr("Field expired_at must be in the future or null."))
 
 
 def _coerce_share_payload(value: Any) -> dict[str, Any] | None:
     if value is None:
         return None
     if not isinstance(value, dict):
-        raise TransportError("Kaiten returned an invalid tree entity share response.")
+        raise TransportError(tr("Kaiten returned an invalid tree entity share response."))
     return value
 
 
@@ -308,7 +311,13 @@ async def _run_tree_entity_share_batch(
             mutates_remote_state=client.mutates_remote_state,
         )
         if reporter:
-            reporter(f"{worker_label}: worker={worker_index} started")
+            reporter(
+                tr(
+                    "{value_0}: worker={value_1} started",
+                    value_0=worker_label,
+                    value_1=worker_index,
+                )
+            )
         try:
             while True:
                 try:
@@ -324,7 +333,13 @@ async def _run_tree_entity_share_batch(
         finally:
             await worker_client.close()
             if reporter:
-                reporter(f"{worker_label}: worker={worker_index} finished")
+                reporter(
+                    tr(
+                        "{value_0}: worker={value_1} finished",
+                        value_0=worker_label,
+                        value_1=worker_index,
+                    )
+                )
 
     await asyncio.gather(*(worker(index + 1) for index in range(workers)))
 
@@ -398,7 +413,9 @@ async def execute_tree_entity_share_batch_get(
         ),
     )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to get shares for all requested tree entities.", result)
+        raise BatchExecutionError(
+            tr("Failed to get shares for all requested tree entities."), result
+        )
     return result
 
 
@@ -425,6 +442,6 @@ async def execute_tree_entity_share_batch_enable(
     )
     if result["meta"]["succeeded"] == 0:
         raise BatchExecutionError(
-            "Failed to enable shares for all requested tree entities.", result
+            tr("Failed to enable shares for all requested tree entities."), result
         )
     return result

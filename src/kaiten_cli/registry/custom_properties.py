@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import (
     payload_body_request,
     reject_custom_property_include_values,
 )
-
+from kaiten_cli.runtime.public_validation import validate_public_request
 
 CARD_CATALOG_PROPERTY_USAGE_NOTES = (
-    "A card field of type `Справочник` / `справочник` is a Kaiten custom property with API type `catalog`.",
-    "Само поле карточки типа `Справочник` / `справочник` is managed by `custom-properties.*`.",
+    "A catalog card field is a Kaiten custom property with API type `catalog`.",
+    "The catalog card field itself is managed by `custom-properties.*`.",
     "Use `custom-properties.*` to list, create, update, get, or delete the card field definition itself.",
     "Allowed entries/options are managed separately from the field definition.",
     "Do not confuse this with UI catalog tables (`custom-directories`) or document groups.",
@@ -21,8 +20,8 @@ CARD_CATALOG_PROPERTY_USAGE_NOTES = (
 
 CATALOG_VALUES_USAGE_NOTES = (
     "These are catalog property values: values/options of a catalog-typed custom property, identified by `property_id`.",
-    "Значения поля карточки типа `Справочник` / `справочник` are managed by these commands.",
-    "Use these commands for values/options of a card field of type `Справочник` / `справочник`.",
+    "The values of a catalog card field are managed by these commands.",
+    "Use these commands for values/options of a catalog card field.",
     "Use these commands when the request is about property catalog options/values, not the UI catalog table itself (`custom-directories`).",
     "For UI catalog tables use custom-directories, custom-directory-fields, and custom-directory-records.",
     "Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.",
@@ -104,9 +103,10 @@ TOOLS = (
             ),
             ExampleSpec(
                 command="kaiten --json custom-properties list --types catalog",
-                description="List card fields of type Catalog/Справочник.",
+                description="List catalog card fields.",
             ),
         ),
+        search_terms=("поле карточки справочник", "само поле карточки типа справочник"),
         usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES
         + (
             "include_values is retained only as a migration input: false is ignored and true fails with replacement command guidance.",
@@ -132,6 +132,7 @@ TOOLS = (
                 description="Get a custom property.",
             ),
         ),
+        search_terms=("поле карточки справочник", "само поле карточки типа справочник"),
         usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
@@ -440,9 +441,10 @@ TOOLS = (
             ),
             ExampleSpec(
                 command='kaiten --json custom-properties create --name "Client" --type catalog',
-                description="Create a card field of type Catalog/Справочник.",
+                description="Create a catalog card field.",
             ),
         ),
+        search_terms=("поле карточки справочник", "само поле карточки типа справочник"),
         usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
@@ -737,6 +739,7 @@ TOOLS = (
                 description="Update a custom property.",
             ),
         ),
+        search_terms=("поле карточки справочник", "само поле карточки типа справочник"),
         usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
@@ -759,6 +762,7 @@ TOOLS = (
                 description="Delete a custom property.",
             ),
         ),
+        search_terms=("поле карточки справочник", "само поле карточки типа справочник"),
         usage_notes=CARD_CATALOG_PROPERTY_USAGE_NOTES,
     ),
     make_tool(
@@ -1070,6 +1074,7 @@ TOOLS = (
                 description="List catalog property values.",
             ),
         ),
+        search_terms=("значения поля карточки справочник", "справочник"),
         usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
@@ -1095,6 +1100,7 @@ TOOLS = (
                 description="Get a catalog property value.",
             ),
         ),
+        search_terms=("значения поля карточки справочник", "справочник"),
         usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
@@ -1130,6 +1136,7 @@ TOOLS = (
                 description="Create a catalog property value.",
             ),
         ),
+        search_terms=("значения поля карточки справочник", "справочник"),
         usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
@@ -1175,6 +1182,7 @@ TOOLS = (
                 description="Update a catalog property value.",
             ),
         ),
+        search_terms=("значения поля карточки справочник", "справочник"),
         usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(
@@ -1200,6 +1208,7 @@ TOOLS = (
                 description="Delete a catalog property value.",
             ),
         ),
+        search_terms=("значения поля карточки справочник", "справочник"),
         usage_notes=CATALOG_VALUES_USAGE_NOTES,
     ),
     make_tool(

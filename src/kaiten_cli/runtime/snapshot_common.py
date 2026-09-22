@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
 
 SNAPSHOT_PRESETS = {"basic", "analytics", "evidence", "full"}
@@ -175,7 +176,9 @@ def _normalize_int_list(value: Any) -> list[int]:
         try:
             normalized.append(int(item))
         except (TypeError, ValueError) as exc:
-            raise ValidationError(f"Invalid integer list value: {item}") from exc
+            raise ValidationError(
+                tr("Invalid integer list value: {value_0}", value_0=item)
+            ) from exc
     return normalized
 
 
@@ -190,7 +193,7 @@ def _normalize_bool(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    raise ValidationError("Boolean filters must use true or false.")
+    raise ValidationError(tr("Boolean filters must use true or false."))
 
 
 def _extract_id(value: Any) -> int | None:

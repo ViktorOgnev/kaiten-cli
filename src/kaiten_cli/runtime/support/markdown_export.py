@@ -10,6 +10,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from kaiten_cli.errors import ConfigError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import DebugReporter, ToolSpec
 
 UUID_RE = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
@@ -57,12 +58,20 @@ def _output_path(output: str | None, filename: str) -> Path:
 
 def _write_text_atomic(path: Path, text: str, *, overwrite: bool) -> None:
     if path.exists() and not overwrite:
-        raise ValidationError(f"Output file already exists: {path}. Use --overwrite to replace it.")
+        raise ValidationError(
+            tr(
+                "Output file already exists: {value_0}. Use --overwrite to replace it.",
+                value_0=path,
+            )
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     part_path = path.with_name(f"{path.name}.part")
     if part_path.exists() and not overwrite:
         raise ValidationError(
-            f"Partial file already exists: {part_path}. Use --overwrite to replace it."
+            tr(
+                "Partial file already exists: {value_0}. Use --overwrite to replace it.",
+                value_0=part_path,
+            )
         )
     part_path.write_text(text, encoding="utf-8")
     part_path.replace(path)
@@ -236,7 +245,7 @@ def _inline(node: dict[str, Any], *, document_uid: str | None) -> str:
     if node_type == "image":
         attrs = _attrs(node)
         url = _link_for_file(attrs, document_uid=document_uid)
-        alt = str(attrs.get("alt") or attrs.get("title") or attrs.get("name") or "image")
+        alt = str(attrs.get("alt") or attrs.get("title") or attrs.get("name") or tr("image"))
         return f"![{_escape_link_text(alt)}]({url})" if url else alt
     return "".join(_inline(child, document_uid=document_uid) for child in _children(node))
 
@@ -342,7 +351,7 @@ def _block(node: dict[str, Any], *, document_uid: str | None) -> str:
             or attrs.get("title")
             or attrs.get("fileName")
             or attrs.get("fileId")
-            or "file"
+            or tr("file")
         )
         return f"[{_escape_link_text(label)}]({url})" if url else label
     if node_type in {"inline_card_link", "block_card_link"}:
@@ -360,7 +369,7 @@ def _blocks(nodes: list[dict[str, Any]], *, document_uid: str | None) -> str:
 
 def document_to_markdown(document: dict[str, Any]) -> str:
     document_uid = str(document.get("uid") or document.get("id") or "")
-    title = str(document.get("title") or document_uid or "Document")
+    title = str(document.get("title") or document_uid or tr("Document"))
     frontmatter = _frontmatter(
         "document",
         {
@@ -388,7 +397,7 @@ def _card_file_link(card: dict[str, Any], file_item: dict[str, Any]) -> str | No
 
 def card_to_markdown(card: dict[str, Any], files: list[dict[str, Any]]) -> str:
     card_id = card.get("id")
-    title = str(card.get("title") or card.get("name") or card_id or "Card")
+    title = str(card.get("title") or card.get("name") or card_id or tr("Card"))
     frontmatter = _frontmatter(
         "card",
         {
@@ -408,17 +417,17 @@ def card_to_markdown(card: dict[str, Any], files: list[dict[str, Any]]) -> str:
         url = _card_file_link(card, item)
         if url is None:
             continue
-        label = str(item.get("name") or item.get("filename") or item.get("id") or "file")
+        label = str(item.get("name") or item.get("filename") or item.get("id") or tr("file"))
         attachment_lines.append(f"- [{_escape_link_text(label)}]({url})")
     if attachment_lines:
-        body_parts.extend(["## Attachments", "\n".join(attachment_lines)])
+        body_parts.extend(["## " + tr("Attachments"), "\n".join(attachment_lines)])
     return "\n\n".join(part for part in body_parts if part).rstrip() + "\n"
 
 
 def validate_card_get_markdown_options(tool: ToolSpec, payload: dict[str, Any]) -> None:
     del tool
     if payload.get("markdown") and payload.get("fields"):
-        raise ValidationError("--fields cannot be combined with --markdown.")
+        raise ValidationError(tr("--fields cannot be combined with --markdown."))
 
 
 def _entity_filename(title: str, identifier: Any, fallback: str) -> str:
@@ -452,15 +461,15 @@ async def execute_document_get(
 ) -> dict[str, Any]:
     del tool, body, reporter
     if client is None:
-        raise ConfigError("This command requires a Kaiten profile.")
+        raise ConfigError(tr("This command requires a Kaiten profile."))
     document = await client.get(path, params=query, timeout=timeout)
     if not isinstance(document, dict):
-        raise ValidationError("Kaiten returned an unexpected document payload.")
+        raise ValidationError(tr("Kaiten returned an unexpected document payload."))
     if not payload.get("markdown"):
         return document
     document_uid = _payload_str(payload, "document_uid")
     if document_uid is None:
-        raise ValidationError("Missing required field: document_uid.")
+        raise ValidationError(tr("Missing required field: document_uid."))
     text = document_to_markdown(document)
     filename = _entity_filename(str(document.get("title") or "document"), document_uid, "document")
     return _write_markdown_result(
@@ -488,13 +497,13 @@ async def execute_card_get(
 ) -> dict[str, Any]:
     del tool, body, reporter
     if client is None:
-        raise ConfigError("This command requires a Kaiten profile.")
+        raise ConfigError(tr("This command requires a Kaiten profile."))
     card_id = _payload_str(payload, "card_id")
     if card_id is None:
-        raise ValidationError("Missing required field: card_id.")
+        raise ValidationError(tr("Missing required field: card_id."))
     card = await client.get(path, params=query, timeout=timeout)
     if not isinstance(card, dict):
-        raise ValidationError("Kaiten returned an unexpected card payload.")
+        raise ValidationError(tr("Kaiten returned an unexpected card payload."))
     if not payload.get("markdown"):
         return card
     card_ref = card.get("uid") or card.get("id") or card_id

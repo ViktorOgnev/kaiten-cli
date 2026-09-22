@@ -19,12 +19,12 @@ from click.shell_completion import get_completion_class
 from platformdirs import user_data_path
 
 from kaiten_cli.errors import ConfigError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.fs_security import (
     PRIVATE_DIRECTORY_MODE,
     PRIVATE_FILE_MODE,
     secure_directory,
 )
-
 
 SUPPORTED_SHELLS = ("bash", "zsh")
 COMPLETION_VARIABLE = "_KAITEN_COMPLETE"
@@ -62,11 +62,17 @@ def detect_shell(shell: str | None = None) -> str:
         supported = ", ".join(SUPPORTED_SHELLS)
         if candidate:
             raise ValidationError(
-                f"Unsupported shell: {candidate}. Expected one of: {supported}. "
-                "Use --shell to select explicitly."
+                tr(
+                    "Unsupported shell: {value_0}. Expected one of: {value_1}. Use --shell to select explicitly.",
+                    value_0=candidate,
+                    value_1=supported,
+                )
             )
         raise ValidationError(
-            f"Unable to detect shell from SHELL. Use --shell with one of: {supported}."
+            tr(
+                "Unable to detect shell from SHELL. Use --shell with one of: {value_0}.",
+                value_0=supported,
+            )
         )
     return normalized
 
@@ -81,7 +87,9 @@ def generate_completion_source(command: click.Command, shell: str) -> str:
     normalized = detect_shell(shell)
     completion_class = get_completion_class(normalized)
     if completion_class is None:  # pragma: no cover - guarded by SUPPORTED_SHELLS
-        raise ValidationError(f"Click does not provide completion support for {normalized}.")
+        raise ValidationError(
+            tr("Click does not provide completion support for {value_0}.", value_0=normalized)
+        )
     source = completion_class(command, {}, PROGRAM_NAME, COMPLETION_VARIABLE).source()
     return source if source.endswith("\n") else source + "\n"
 
@@ -113,16 +121,28 @@ def _bash_version(executable: str) -> tuple[int, int] | None:
 def _shell_support(shell: str) -> tuple[bool, str | None, str | None]:
     executable = _shell_executable(shell)
     if executable is None:
-        return False, None, f"Shell executable is not available on PATH: {shell}."
+        return (
+            False,
+            None,
+            tr("Shell executable is not available on PATH: {value_0}.", value_0=shell),
+        )
     if shell == "bash":
         version = _bash_version(executable)
         if version is None:
-            return False, executable, "Unable to determine Bash version; Click requires Bash 4.4+."
+            return (
+                False,
+                executable,
+                tr("Unable to determine Bash version; Click requires Bash 4.4+."),
+            )
         if version < (4, 4):
             return (
                 False,
                 executable,
-                f"Bash {version[0]}.{version[1]} is unsupported; Click requires Bash 4.4+.",
+                tr(
+                    "Bash {value_0}.{value_1} is unsupported; Click requires Bash 4.4+.",
+                    value_0=version[0],
+                    value_1=version[1],
+                ),
             )
     return True, executable, None
 
@@ -137,15 +157,28 @@ def _resolve_edit_path(path: Path, *, require_owned: bool = False) -> Path:
         try:
             target = path.resolve(strict=True)
         except OSError as exc:
-            raise ConfigError(f"Unable to resolve shell config symlink {path}: {exc}") from exc
+            raise ConfigError(
+                tr(
+                    "Unable to resolve shell config symlink {value_0}: {value_1}",
+                    value_0=path,
+                    value_1=exc,
+                )
+            ) from exc
         if not target.is_file():
-            raise ConfigError(f"Shell config symlink target is not a regular file: {target}")
+            raise ConfigError(
+                tr("Shell config symlink target is not a regular file: {value_0}", value_0=target)
+            )
         path = target
     if path.exists() and not path.is_file():
-        raise ConfigError(f"Shell config is not a regular file: {path}")
+        raise ConfigError(tr("Shell config is not a regular file: {value_0}", value_0=path))
     getuid = getattr(os, "getuid", None)
     if require_owned and path.exists() and getuid is not None and path.stat().st_uid != getuid():
-        raise ConfigError(f"Refusing to replace shell config not owned by the current user: {path}")
+        raise ConfigError(
+            tr(
+                "Refusing to replace shell config not owned by the current user: {value_0}",
+                value_0=path,
+            )
+        )
     return path
 
 
@@ -155,14 +188,18 @@ def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
-        raise ConfigError(f"Unable to read shell config at {path}: {exc}") from exc
+        raise ConfigError(
+            tr("Unable to read shell config at {value_0}: {value_1}", value_0=path, value_1=exc)
+        ) from exc
 
 
 def _existing_mode(path: Path, default: int) -> int:
     try:
         return stat.S_IMODE(path.stat().st_mode) if path.exists() else default
     except OSError as exc:
-        raise ConfigError(f"Unable to inspect file mode at {path}: {exc}") from exc
+        raise ConfigError(
+            tr("Unable to inspect file mode at {value_0}: {value_1}", value_0=path, value_1=exc)
+        ) from exc
 
 
 def _file_signature(path: Path) -> FileSignature | None:
@@ -171,7 +208,9 @@ def _file_signature(path: Path) -> FileSignature | None:
             return None
         file_stat = path.stat()
     except OSError as exc:
-        raise ConfigError(f"Unable to inspect file at {path}: {exc}") from exc
+        raise ConfigError(
+            tr("Unable to inspect file at {value_0}: {value_1}", value_0=path, value_1=exc)
+        ) from exc
     return (file_stat.st_dev, file_stat.st_ino, file_stat.st_mtime_ns, file_stat.st_size)
 
 
@@ -180,7 +219,9 @@ def _read_edit_state(path: Path) -> tuple[str, FileSignature | None, int]:
     text = _read_text(path)
     after = _file_signature(path)
     if before != after:
-        raise ConfigError(f"Shell config changed while it was being read: {path}")
+        raise ConfigError(
+            tr("Shell config changed while it was being read: {value_0}", value_0=path)
+        )
     return text, after, _existing_mode(path, PRIVATE_FILE_MODE)
 
 
@@ -211,10 +252,17 @@ def _write_text_atomic(
             stream.flush()
             os.fsync(stream.fileno())
         if verify_signature and _file_signature(path) != expected_signature:
-            raise ConfigError(f"File changed before atomic replacement; no changes applied: {path}")
+            raise ConfigError(
+                tr(
+                    "File changed before atomic replacement; no changes applied: {value_0}",
+                    value_0=path,
+                )
+            )
         temporary_path.replace(path)
     except OSError as exc:
-        raise ConfigError(f"Unable to write file at {path}: {exc}") from exc
+        raise ConfigError(
+            tr("Unable to write file at {value_0}: {value_1}", value_0=path, value_1=exc)
+        ) from exc
     finally:
         if descriptor is not None:
             os.close(descriptor)
@@ -245,7 +293,10 @@ def _remove_managed_blocks(text: str) -> tuple[str, int]:
         end = text.find(MANAGED_BLOCK_END, start + len(MANAGED_BLOCK_BEGIN))
         if end < 0:
             raise ConfigError(
-                f"Managed completion block is incomplete: missing {MANAGED_BLOCK_END!r}."
+                tr(
+                    "Managed completion block is incomplete: missing {value_0!r}.",
+                    value_0=MANAGED_BLOCK_END,
+                )
             )
         end += len(MANAGED_BLOCK_END)
         if end < len(text) and text[end] == "\n":
@@ -284,18 +335,17 @@ def _bash_startup_warning(config_path: Path) -> str | None:
     profiles = [home / ".bash_profile", home / ".bash_login", home / ".profile"]
     active_profile = next((path for path in profiles if path.exists()), None)
     if active_profile is None:
-        return (
-            "macOS login Bash may not load ~/.bashrc. Use --config ~/.bash_profile "
-            "or make ~/.bash_profile source ~/.bashrc."
+        return tr(
+            "macOS login Bash may not load ~/.bashrc. Use --config ~/.bash_profile or make ~/.bash_profile source ~/.bashrc."
         )
     try:
         profile_text = active_profile.read_text(encoding="utf-8")
     except (OSError, UnicodeError):
-        return f"Unable to confirm that {active_profile} loads ~/.bashrc."
+        return tr("Unable to confirm that {value_0} loads ~/.bashrc.", value_0=active_profile)
     if ".bashrc" not in profile_text:
-        return (
-            f"{active_profile} does not appear to load ~/.bashrc; login Bash may not enable "
-            "completion. Use --config with the active profile or source ~/.bashrc from it."
+        return tr(
+            "{value_0} does not appear to load ~/.bashrc; login Bash may not enable completion. Use --config with the active profile or source ~/.bashrc from it.",
+            value_0=active_profile,
         )
     return None
 
@@ -337,18 +387,19 @@ def completion_status(
     legacy_registration = normalized == "zsh" and LEGACY_ZSH_BLOCK in config_text
     if legacy_registration:
         warnings.append(
-            "A legacy dynamic Kaiten completion block was found; run completion install "
-            "to migrate it."
+            tr(
+                "A legacy dynamic Kaiten completion block was found; run completion install to migrate it."
+            )
         )
     unmanaged = _unmanaged_registration(config_text, normalized)
     if unmanaged:
         warnings.append(
-            "An unmanaged Kaiten completion registration was found and was left unchanged."
+            tr("An unmanaged Kaiten completion registration was found and was left unchanged.")
         )
     if script_is_symlink:
-        warnings.append("The completion script path is a symlink and will not be trusted.")
+        warnings.append(tr("The completion script path is a symlink and will not be trusted."))
     if script_path.parent.exists() and not script_parent_secure:
-        warnings.append("The completion script directory is not a private 0700 directory.")
+        warnings.append(tr("The completion script directory is not a private 0700 directory."))
     managed = block in config_text
     script_current = script_text == source
     configured = bool(
@@ -393,11 +444,12 @@ def install_completion(
     normalized = detect_shell(shell)
     supported, _, warning = _shell_support(normalized)
     if not supported:
-        raise ValidationError(warning or f"Shell is not supported: {normalized}.")
+        raise ValidationError(warning or tr("Shell is not supported: {shell}.", shell=normalized))
     if _command_path() is None:
         raise ConfigError(
-            "The installed 'kaiten' entry point is not available on PATH. "
-            "Finish uv/pipx PATH setup before installing completion."
+            tr(
+                "The installed 'kaiten' entry point is not available on PATH. Finish uv/pipx PATH setup before installing completion."
+            )
         )
 
     requested_config = (config_path or default_config_path(normalized)).expanduser()
@@ -415,9 +467,13 @@ def install_completion(
     if not dry_run:
         secure_directory(script_path.parent)
     if script_path.is_symlink():
-        raise ConfigError(f"Refusing to replace symlinked completion script: {script_path}")
+        raise ConfigError(
+            tr("Refusing to replace symlinked completion script: {value_0}", value_0=script_path)
+        )
     if script_path.exists() and not script_path.is_file():
-        raise ConfigError(f"Completion script is not a regular file: {script_path}")
+        raise ConfigError(
+            tr("Completion script is not a regular file: {value_0}", value_0=script_path)
+        )
     current_script = _read_text(script_path)
     current_script_mode = _existing_mode(script_path, PRIVATE_FILE_MODE)
     script_changed = current_script != source or current_script_mode != PRIVATE_FILE_MODE
@@ -452,8 +508,9 @@ def install_completion(
     )
     if not dry_run and not status["configured"]:
         raise ConfigError(
-            "Completion files were written but the resulting configuration did not pass "
-            "the static verification check."
+            tr(
+                "Completion files were written but the resulting configuration did not pass the static verification check."
+            )
         )
     return status
 
@@ -474,9 +531,13 @@ def uninstall_completion(
     config_changed = desired_config != current_config
     script_exists = script_path.exists()
     if script_path.is_symlink():
-        raise ConfigError(f"Refusing to remove symlinked completion script: {script_path}")
+        raise ConfigError(
+            tr("Refusing to remove symlinked completion script: {value_0}", value_0=script_path)
+        )
     if script_path.exists() and not script_path.is_file():
-        raise ConfigError(f"Completion script is not a regular file: {script_path}")
+        raise ConfigError(
+            tr("Completion script is not a regular file: {value_0}", value_0=script_path)
+        )
 
     if not dry_run:
         if config_changed:

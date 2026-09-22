@@ -16,20 +16,54 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kaiten_cli.models import ToolSpec, format_schema_type  # noqa: E402
-from kaiten_cli.schema_docs import schema_rows  # noqa: E402
 from kaiten_cli.registry import cache_guidance_for, iter_tools  # noqa: E402
-from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract  # noqa: E402
+from kaiten_cli.registry.live_contracts import (  # noqa: E402
+    get_live_contract,
+    has_special_live_contract,
+)
 from kaiten_cli.registry.module_docs import MODULE_SPECS, ModuleDocSpec  # noqa: E402
+from kaiten_cli.schema_docs import schema_rows  # noqa: E402
 
 README_PATH = ROOT / "README.md"
 COMMAND_REFERENCE_PATH = ROOT / "COMMAND_REFERENCE.md"
 README_START = "<!-- BEGIN GENERATED COMMAND SUMMARY -->"
 README_END = "<!-- END GENERATED COMMAND SUMMARY -->"
 README_MODULE_LABELS = {
+    "cards": "Карточки",
+    "comments": "Комментарии",
+    "members": "Участники и пользователи",
+    "time_logs": "Логи времени",
+    "tags": "Теги",
+    "checklists": "Чеклисты",
+    "blockers": "Блокировки",
+    "card_relations": "Связи карточек",
+    "external_links": "Внешние ссылки",
+    "files": "Файлы карточек",
+    "subscribers": "Подписчики",
+    "spaces": "Пространства",
+    "boards": "Доски",
+    "columns": "Колонки и подколонки",
+    "lanes": "Дорожки",
+    "card_types": "Типы карточек",
     "custom_directories": "Каталоги",
     "custom_properties": "Пользовательские свойства",
+    "documents": "Документы",
+    "dashboards": "Дашборды",
+    "iterations": "Итерации",
+    "webhooks": "Вебхуки",
     "automations": "Автоматизации и рабочие процессы",
+    "addons": "Аддоны",
+    "github_addon": "GitHub-аддон",
+    "projects": "Проекты и спринты",
+    "roles_and_groups": "Роли и группы",
+    "scim": "SCIM",
+    "audit_and_analytics": "Аудит и аналитика",
+    "service_desk": "Service Desk",
+    "charts": "Графики и аналитика",
+    "tree": "Дерево сущностей",
+    "utilities": "Утилиты",
     "snapshot": "Локальные снимки",
+    "query": "Локальные запросы",
 }
 
 
@@ -266,6 +300,8 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         "",
         "- Canonical CLI form is rendered as `kaiten <namespace...> <action>`.",
         "- MCP alias is shown inline for every command.",
+        "- Pass `--locale ru|en` before the command to localize CLI-owned prose, including JSON descriptions and errors. Precedence: flag > `KAITEN_CLI_LOCALE` > `en`; OS locale and profiles are ignored.",
+        "- Agents choose the locale from the conversation (Russian: `ru`, English/other languages: `en`). Command names, JSON keys, enums, error codes and API/user data stay unchanged.",
         "- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.",
         "- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.",
         "- `--compact` and `--fields` only apply when the command metadata says they are supported.",

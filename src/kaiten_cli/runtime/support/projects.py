@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.errors import ApiError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import DebugReporter
 from kaiten_cli.runtime.client import KaitenClient
 
@@ -50,7 +51,9 @@ async def fetch_project_cards(
             raise
         if reporter is not None:
             reporter(
-                "fallback: GET /projects/{id}/cards returned 405, retrying with with_cards_data=true"
+                tr(
+                    "fallback: GET /projects/{id}/cards returned 405, retrying with with_cards_data=true"
+                )
             )
         project = await client.get(
             f"/projects/{project_id}",

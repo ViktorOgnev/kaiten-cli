@@ -26,12 +26,12 @@ from urllib.parse import urlencode, urlsplit, urlunsplit
 import click
 from platformdirs import user_cache_path
 
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.fs_security import (
     PRIVATE_FILE_MODE,
     secure_directory,
     secure_existing_file,
 )
-
 
 PACKAGE_NAME = "kaiten-cli"
 UPDATE_CHECK_ENV = "KAITEN_CLI_UPDATE_CHECK"
@@ -425,7 +425,10 @@ def _perform_update(candidate: UpdateCandidate) -> int:
     command = build_update_command(candidate.source, candidate.latest_tag)
     if command is None:
         click.echo(
-            f"Unable to update automatically: {candidate.source.manager} is not available on PATH.",
+            tr(
+                "Unable to update automatically: {value_0} is not available on PATH.",
+                value_0=candidate.source.manager,
+            ),
             err=True,
         )
         return 1
@@ -433,21 +436,29 @@ def _perform_update(candidate: UpdateCandidate) -> int:
         result = subprocess.run(command, check=False)
     except OSError as exc:
         click.echo(
-            f"Automatic update failed: {candidate.source.manager} could not be started "
-            f"({type(exc).__name__}).",
+            tr(
+                "Automatic update failed: {value_0} could not be started ({value_1}).",
+                value_0=candidate.source.manager,
+                value_1=type(exc).__name__,
+            ),
             err=True,
         )
         return 1
     if result.returncode != 0:
         click.echo(
-            f"Automatic update failed in {candidate.source.manager} "
-            f"(exit code {result.returncode}).",
+            tr(
+                "Automatic update failed in {value_0} (exit code {value_1}).",
+                value_0=candidate.source.manager,
+                value_1=result.returncode,
+            ),
             err=True,
         )
         return result.returncode if result.returncode > 0 else 1
     click.echo(
-        f"kaiten-cli {candidate.latest_tag.removeprefix('v')} installed. "
-        "The new version will be used on the next run.",
+        tr(
+            "kaiten-cli {value_0} installed. The new version will be used on the next run.",
+            value_0=candidate.latest_tag.removeprefix("v"),
+        ),
         err=True,
     )
     return 0
@@ -485,10 +496,12 @@ def maybe_offer_update(args: list[str]) -> int:
         return 0
 
     source_display = _display_git_source(source.git_url)
-    prompt = (
-        f"kaiten-cli {candidate.latest_tag.removeprefix('v')} is available "
-        f"(installed {source.installed_version}, source {source_display}). "
-        f"Update now with {source.manager}?"
+    prompt = tr(
+        "kaiten-cli {version} is available (installed {installed}, source {source}). Update now with {manager}?",
+        version=candidate.latest_tag.removeprefix("v"),
+        installed=source.installed_version,
+        source=source_display,
+        manager=source.manager,
     )
     try:
         confirmed = click.confirm(prompt, default=False, err=True)
@@ -496,7 +509,9 @@ def maybe_offer_update(args: list[str]) -> int:
         confirmed = False
     if not confirmed:
         _record_prompted(candidate)
-        click.echo("Update skipped; this release can be offered again after 24 hours.", err=True)
+        click.echo(
+            tr("Update skipped; this release can be offered again after 24 hours."), err=True
+        )
         return 0
     result = _perform_update(candidate)
     if result == 0:

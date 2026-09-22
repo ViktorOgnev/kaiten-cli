@@ -5,6 +5,7 @@ from __future__ import annotations
 import difflib
 from typing import Any
 
+from kaiten_cli.i18n import translate
 from kaiten_cli.models import (
     CACHE_POLICY_NONE,
     CACHE_POLICY_PERSISTENT_HEAVY,
@@ -14,36 +15,36 @@ from kaiten_cli.models import (
     example_commands,
     format_schema_type,
 )
-from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
 from kaiten_cli.registry.addons import TOOLS as ADDON_TOOLS
+from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
-from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS
+from kaiten_cli.registry.boards import TOOLS as BOARD_TOOLS
 from kaiten_cli.registry.card_relations import TOOLS as CARD_RELATION_TOOLS
-from kaiten_cli.registry.cards import TOOLS as CARD_TOOLS
 from kaiten_cli.registry.card_types import TOOLS as CARD_TYPE_TOOLS
+from kaiten_cli.registry.cards import TOOLS as CARD_TOOLS
 from kaiten_cli.registry.charts import TOOLS as CHART_TOOLS
 from kaiten_cli.registry.checklists import TOOLS as CHECKLIST_TOOLS
 from kaiten_cli.registry.columns import TOOLS as COLUMN_TOOLS
 from kaiten_cli.registry.comments import TOOLS as COMMENT_TOOLS
 from kaiten_cli.registry.custom_directories import TOOLS as CUSTOM_DIRECTORY_TOOLS
 from kaiten_cli.registry.custom_properties import TOOLS as CUSTOM_PROPERTY_TOOLS
-from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.dashboards import TOOLS as DASHBOARD_TOOLS
+from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
 from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
 from kaiten_cli.registry.github_addon import TOOLS as GITHUB_ADDON_TOOLS
 from kaiten_cli.registry.iterations import TOOLS as ITERATION_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
+from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
 from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
 from kaiten_cli.registry.query import TOOLS as QUERY_TOOLS
 from kaiten_cli.registry.roles_and_groups import TOOLS as ROLE_AND_GROUP_TOOLS
 from kaiten_cli.registry.scim import TOOLS as SCIM_TOOLS
 from kaiten_cli.registry.service_desk import TOOLS as SERVICE_DESK_TOOLS
-from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
-from kaiten_cli.registry.spaces import TOOLS as SPACE_TOOLS
 from kaiten_cli.registry.snapshot import TOOLS as SNAPSHOT_TOOLS
+from kaiten_cli.registry.spaces import TOOLS as SPACE_TOOLS
 from kaiten_cli.registry.subscribers import TOOLS as SUBSCRIBER_TOOLS
 from kaiten_cli.registry.tags import TOOLS as TAG_TOOLS
 from kaiten_cli.registry.time_logs import TOOLS as TIME_LOG_TOOLS
@@ -123,6 +124,8 @@ def search(query: str, limit: int = 5) -> list[ToolSpec]:
             tool.description,
             tool.bulk_alternative or "",
             " ".join(tool.usage_notes),
+            " ".join(tool.search_terms),
+            translate(tool.description, locale="ru"),
             " ".join(example.command for example in tool.examples),
             " ".join(example.description for example in tool.examples),
         ]

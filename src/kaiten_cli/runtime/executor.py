@@ -7,6 +7,7 @@ import os
 from typing import Any
 
 from kaiten_cli.errors import ConfigError, MutationBlockedError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import DebugReporter, ResolvedProfile, ToolSpec
 from kaiten_cli.profiles import resolve_profile
 from kaiten_cli.runtime.cache import ExecutionContext
@@ -31,8 +32,10 @@ def enforce_mutation_policy(tool: ToolSpec, *, read_only: bool | None = None) ->
     ):
         command_name = ".".join(tool.command_segments)
         raise MutationBlockedError(
-            f"Command {command_name} is blocked by read-only mode. "
-            "Run without --read-only and unset KAITEN_CLI_READ_ONLY only after explicitly authorizing the mutation."
+            tr(
+                "Command {value_0} is blocked by read-only mode. Run without --read-only and unset KAITEN_CLI_READ_ONLY only after explicitly authorizing the mutation.",
+                value_0=command_name,
+            )
         )
 
 
@@ -111,8 +114,12 @@ async def execute_tool_with_diagnostics(
     effective_read_only = read_only_enabled(read_only)
     _emit_debug(
         reporter,
-        f"safety: read_only={effective_read_only} mutation={tool.is_mutation} "
-        f"guarded={tool.runtime_behavior.enforce_mutation_guard}",
+        tr(
+            "safety: read_only={value_0} mutation={value_1} guarded={value_2}",
+            value_0=effective_read_only,
+            value_1=tool.is_mutation,
+            value_2=tool.runtime_behavior.enforce_mutation_guard,
+        ),
     )
     enforce_mutation_policy(tool, read_only=effective_read_only)
     profile: ResolvedProfile | None = None
@@ -126,10 +133,15 @@ async def execute_tool_with_diagnostics(
         )
         _emit_debug(
             reporter,
-            "profile: "
-            f"source={profile.source} name={profile.name or '-'} domain={profile.domain} "
-            f"sandbox_metadata={profile.sandbox} cache_mode={profile.cache_mode} "
-            f"cache_ttl_seconds={profile.cache_ttl_seconds}",
+            tr(
+                "profile: source={value_0} name={value_1} domain={value_2} sandbox_metadata={value_3} cache_mode={value_4} cache_ttl_seconds={value_5}",
+                value_0=profile.source,
+                value_1=profile.name or "-",
+                value_2=profile.domain,
+                value_3=profile.sandbox,
+                value_4=profile.cache_mode,
+                value_5=profile.cache_ttl_seconds,
+            ),
         )
         context = ExecutionContext.for_profile(profile, reporter=reporter)
         context.stats.cache_policy = tool.cache_policy
@@ -142,30 +154,42 @@ async def execute_tool_with_diagnostics(
             mutates_remote_state=tool.remote_side_effects,
         )
     else:
-        _emit_debug(reporter, "profile: not required for this command")
+        _emit_debug(reporter, tr("profile: not required for this command"))
     path, query, body = build_request(tool, payload)
     request_path = request_path_for_tool(tool, path, client)
     timeout = timeout_for_tool(tool)
     _emit_debug(
         reporter,
-        "request: "
-        f"method={tool.operation.method.upper()} path={request_path} timeout={timeout:.1f}s "
-        f"execution_mode={tool.execution_mode} cache_policy={tool.cache_policy}",
+        tr(
+            "request: method={value_0} path={value_1} timeout={value_2:.1f}s execution_mode={value_3} cache_policy={value_4}",
+            value_0=tool.operation.method.upper(),
+            value_1=request_path,
+            value_2=timeout,
+            value_3=tool.execution_mode,
+            value_4=tool.cache_policy,
+        ),
     )
     if tool.runtime_behavior.request_shaper is not None:
-        _emit_debug(reporter, f"request-shaper: {tool.runtime_behavior.request_shaper.__name__}")
+        _emit_debug(
+            reporter,
+            tr("request-shaper: {value_0}", value_0=tool.runtime_behavior.request_shaper.__name__),
+        )
     result: Any
     try:
         method = tool.operation.method.upper()
         if tool.runtime_behavior.custom_executor is not None:
             _emit_debug(
-                reporter, f"custom-executor: {tool.runtime_behavior.custom_executor.__name__}"
+                reporter,
+                tr(
+                    "custom-executor: {value_0}",
+                    value_0=tool.runtime_behavior.custom_executor.__name__,
+                ),
             )
             result = await tool.runtime_behavior.custom_executor(
                 client, tool, payload, request_path, query, body, timeout, reporter
             )
         elif client is None:
-            raise ConfigError("This command requires a custom executor.")
+            raise ConfigError(tr("This command requires a custom executor."))
         elif method == "GET":
             result = await client.get(request_path, params=query, timeout=timeout)
         elif method == "POST":
@@ -177,7 +201,7 @@ async def execute_tool_with_diagnostics(
         elif method == "DELETE":
             result = await client.delete(request_path, params=query, json=body, timeout=timeout)
         else:  # pragma: no cover - impossible with current registry
-            raise ConfigError(f"Unsupported method: {method}")
+            raise ConfigError(tr("Unsupported method: {value_0}", value_0=method))
     except Exception as exc:
         if context is not None:
             setattr(exc, "_kaiten_trace_stats", context.stats)

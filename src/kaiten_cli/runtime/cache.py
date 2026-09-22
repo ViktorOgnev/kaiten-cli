@@ -8,22 +8,23 @@ import hashlib
 import json
 import sqlite3
 import time
-from dataclasses import dataclass, field
 from contextlib import closing
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from platformdirs import user_cache_path
 
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import (
     CACHE_MODE_AUTO,
     CACHE_MODE_READWRITE,
     CACHE_MODE_REFRESH,
     CACHE_POLICY_NONE,
     CACHE_POLICY_PERSISTENT_HEAVY,
-    DebugReporter,
     PERSISTENT_CACHE_POLICIES,
+    DebugReporter,
     ResolvedProfile,
 )
 from kaiten_cli.runtime.fs_security import ensure_private_file
@@ -160,21 +161,33 @@ class PersistentCache:
             return
 
     def _reset_store(self, reason: str) -> sqlite3.Connection | None:
-        self._debug(f"cache: local store dropped store=http-cache reason={reason}")
+        self._debug(
+            tr("cache: local store dropped store=http-cache reason={value_0}", value_0=reason)
+        )
         try:
             self.path.unlink(missing_ok=True)
         except OSError as exc:
-            self._debug(f"cache: reset bypass store=http-cache reason={type(exc).__name__}")
+            self._debug(
+                tr(
+                    "cache: reset bypass store=http-cache reason={value_0}",
+                    value_0=type(exc).__name__,
+                )
+            )
             return None
         conn: sqlite3.Connection | None = None
         try:
             conn = self._open_connection()
             self._initialize_schema(conn)
-            self._debug("cache: local store recreated store=http-cache")
+            self._debug(tr("cache: local store recreated store=http-cache"))
             return conn
         except (OSError, sqlite3.Error) as exc:
             self._close_quietly(conn)
-            self._debug(f"cache: reset bypass store=http-cache reason={type(exc).__name__}")
+            self._debug(
+                tr(
+                    "cache: reset bypass store=http-cache reason={value_0}",
+                    value_0=type(exc).__name__,
+                )
+            )
             return None
 
     def _connect(self) -> sqlite3.Connection | None:
@@ -193,7 +206,12 @@ class PersistentCache:
             self._close_quietly(conn)
             if isinstance(exc, sqlite3.Error) and is_corrupt_database_error(exc):
                 return self._reset_store(type(exc).__name__)
-            self._debug(f"cache: local store bypass store=http-cache reason={type(exc).__name__}")
+            self._debug(
+                tr(
+                    "cache: local store bypass store=http-cache reason={value_0}",
+                    value_0=type(exc).__name__,
+                )
+            )
             return None
 
     def get(self, key: RequestCacheKey) -> tuple[str, Any | None]:
@@ -431,13 +449,25 @@ class ExecutionContext:
             self.stats.record_cache_bypass(
                 cache="disk", method=key.method, path_family=key.path_family
             )
-            self._debug(f"cache: disk bypass method={key.method} path={key.path}")
+            self._debug(
+                tr(
+                    "cache: disk bypass method={value_0} path={value_1}",
+                    value_0=key.method,
+                    value_1=key.path,
+                )
+            )
             return None
         if self.profile.cache_mode == CACHE_MODE_REFRESH:
             self.stats.record_cache_bypass(
                 cache="disk", method=key.method, path_family=key.path_family
             )
-            self._debug(f"cache: disk bypass refresh method={key.method} path={key.path}")
+            self._debug(
+                tr(
+                    "cache: disk bypass refresh method={value_0} path={value_1}",
+                    value_0=key.method,
+                    value_1=key.path,
+                )
+            )
             return None
         try:
             status, payload = self.persistent_cache.get(key)
@@ -446,7 +476,12 @@ class ExecutionContext:
                 cache="disk", method=key.method, path_family=key.path_family
             )
             self._debug(
-                f"cache: disk bypass method={key.method} path={key.path} reason={type(exc).__name__}"
+                tr(
+                    "cache: disk bypass method={value_0} path={value_1} reason={value_2}",
+                    value_0=key.method,
+                    value_1=key.path,
+                    value_2=type(exc).__name__,
+                )
             )
             return None
         if status == "hit":
@@ -461,7 +496,14 @@ class ExecutionContext:
             self.stats.record_cache_miss(
                 cache="disk_expired", method=key.method, path_family=key.path_family
             )
-        self._debug(f"cache: disk {status} method={key.method} path={key.path}")
+        self._debug(
+            tr(
+                "cache: disk {value_0} method={value_1} path={value_2}",
+                value_0=status,
+                value_1=key.method,
+                value_2=key.path,
+            )
+        )
         return payload
 
     def _write_to_disk(self, key: RequestCacheKey, payload: Any, *, cache_policy: str) -> None:
@@ -486,14 +528,25 @@ class ExecutionContext:
                 rows_count=rows_count,
             )
             self._debug(
-                "cache: disk write "
-                f"method={key.method} path={key.path} ttl_seconds={ttl_seconds} "
-                f"rows={rows_count} bytes={payload_bytes} family={key.path_family}"
+                tr(
+                    "cache: disk write method={value_0} path={value_1} ttl_seconds={value_2} rows={value_3} bytes={value_4} family={value_5}",
+                    value_0=key.method,
+                    value_1=key.path,
+                    value_2=ttl_seconds,
+                    value_3=rows_count,
+                    value_4=payload_bytes,
+                    value_5=key.path_family,
+                )
             )
             self._extend_dense_family(key, ttl_seconds=ttl_seconds)
         except (OSError, TypeError, sqlite3.Error, ValueError) as exc:
             self._debug(
-                f"cache: disk bypass method={key.method} path={key.path} reason={type(exc).__name__}"
+                tr(
+                    "cache: disk bypass method={value_0} path={value_1} reason={value_2}",
+                    value_0=key.method,
+                    value_1=key.path,
+                    value_2=type(exc).__name__,
+                )
             )
 
     def _ttl_seconds_for_payload(
@@ -553,13 +606,22 @@ class ExecutionContext:
             )
         except (OSError, sqlite3.Error) as exc:
             self._debug(
-                f"cache: dense family extend bypass family={key.path_family} reason={type(exc).__name__}"
+                tr(
+                    "cache: dense family extend bypass family={value_0} reason={value_1}",
+                    value_0=key.path_family,
+                    value_1=type(exc).__name__,
+                )
             )
             return
         if updated:
             self._debug(
-                "cache: dense family extended "
-                f"method={key.method} family={key.path_family} ttl_seconds={ttl_seconds} rows={updated}"
+                tr(
+                    "cache: dense family extended method={value_0} family={value_1} ttl_seconds={value_2} rows={value_3}",
+                    value_0=key.method,
+                    value_1=key.path_family,
+                    value_2=ttl_seconds,
+                    value_3=updated,
+                )
             )
 
     async def _load_or_fetch(
@@ -600,14 +662,26 @@ class ExecutionContext:
                 self.stats.record_cache_hit(
                     cache="request", method=key.method, path_family=key.path_family
                 )
-                self._debug(f"cache: request hit method={key.method} path={key.path}")
+                self._debug(
+                    tr(
+                        "cache: request hit method={value_0} path={value_1}",
+                        value_0=key.method,
+                        value_1=key.path,
+                    )
+                )
                 return copy.deepcopy(self._request_cache[key])
             task = self._inflight.get(key)
             if task is None:
                 self.stats.record_cache_miss(
                     cache="request", method=key.method, path_family=key.path_family
                 )
-                self._debug(f"cache: request miss method={key.method} path={key.path}")
+                self._debug(
+                    tr(
+                        "cache: request miss method={value_0} path={value_1}",
+                        value_0=key.method,
+                        value_1=key.path,
+                    )
+                )
                 task = asyncio.create_task(
                     self._load_or_fetch(key, cache_policy=cache_policy, fetch=fetch)
                 )
@@ -616,7 +690,13 @@ class ExecutionContext:
                 self.stats.record_cache_hit(
                     cache="inflight_dedup", method=key.method, path_family=key.path_family
                 )
-                self._debug(f"cache: inflight dedup hit method={key.method} path={key.path}")
+                self._debug(
+                    tr(
+                        "cache: inflight dedup hit method={value_0} path={value_1}",
+                        value_0=key.method,
+                        value_1=key.path,
+                    )
+                )
 
         try:
             return copy.deepcopy(await task)
@@ -632,10 +712,21 @@ class ExecutionContext:
         if self.persistent_cache is not None:
             try:
                 self.persistent_cache.clear_scope(self.scope)
-                self._debug(f"cache: profile cleared scope={self.scope} reason={reason}")
+                self._debug(
+                    tr(
+                        "cache: profile cleared scope={value_0} reason={value_1}",
+                        value_0=self.scope,
+                        value_1=reason,
+                    )
+                )
             except (OSError, sqlite3.Error) as exc:
                 self._debug(
-                    f"cache: clear bypass scope={self.scope} reason={reason} error={type(exc).__name__}"
+                    tr(
+                        "cache: clear bypass scope={value_0} reason={value_1} error={value_2}",
+                        value_0=self.scope,
+                        value_1=reason,
+                        value_2=type(exc).__name__,
+                    )
                 )
 
     async def invalidate_after_mutation(self) -> None:

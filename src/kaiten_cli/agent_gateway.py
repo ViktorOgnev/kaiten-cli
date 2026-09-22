@@ -23,7 +23,6 @@ from typing import Any, Callable
 from kaiten_cli import __version__
 from kaiten_cli.app import _agent_help_payload
 
-
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8787
 DEFAULT_TIMEOUT_SECONDS = 180
@@ -48,6 +47,7 @@ CODEX_ENV_ALLOWLIST = frozenset(
         "HTTPS_PROXY",
         "HTTP_PROXY",
         "KAITEN_CLI_CONFIG_PATH",
+        "KAITEN_CLI_LOCALE",
         "KAITEN_DOMAIN",
         "KAITEN_TOKEN",
         "LANG",
@@ -114,6 +114,10 @@ Prefer machine-readable, narrow, and bulk workflows:
 This gateway is always read-only. Never mutate Kaiten; explain that writes must be run
 outside this gateway when a user asks for a write operation.
 Answer in the user's language unless they request otherwise.
+Select the CLI locale from the current conversation language: ru for Russian, en
+for English or other languages. Pass --locale ru or --locale en BEFORE the command
+on every kaiten invocation, including discovery and JSON calls. Change it when
+the user requests a language change; explicit --locale overrides the environment.
 """
 
 SKILL_FALLBACKS = {

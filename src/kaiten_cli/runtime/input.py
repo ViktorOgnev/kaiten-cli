@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
-from kaiten_cli.models import ToolSpec, UNSET
+from kaiten_cli.i18n import tr
+from kaiten_cli.models import UNSET, ToolSpec
 
 
 def _read_text_source(source: str, stdin_text: str | None) -> str:
@@ -27,7 +28,9 @@ def _json_value(source: str, stdin_text: str | None, label: str) -> Any:
     try:
         return json.loads(text)
     except json.JSONDecodeError as exc:
-        raise ValidationError(f"Invalid JSON for {label}: {exc.msg}") from exc
+        raise ValidationError(
+            tr("Invalid JSON for {value_0}: {value_1}", value_0=label, value_1=exc.msg)
+        ) from exc
 
 
 def _coerce_nullable_string(raw: str) -> str | None:
@@ -85,12 +88,16 @@ def coerce_value(
                 return int(raw)
             except ValueError as exc:
                 if "number" not in type_list:
-                    raise ValidationError(f"Field {label} must be an integer or null.") from exc
+                    raise ValidationError(
+                        tr("Field {value_0} must be an integer or null.", value_0=label)
+                    ) from exc
         if "number" in type_list:
             try:
                 return float(raw)
             except ValueError as exc:
-                raise ValidationError(f"Field {label} must be a number or null.") from exc
+                raise ValidationError(
+                    tr("Field {value_0} must be a number or null.", value_0=label)
+                ) from exc
     return raw
 
 
@@ -103,24 +110,26 @@ def merge_inputs(
     stdin_text: str | None = None,
 ) -> dict[str, Any]:
     if stdin_json and from_file:
-        raise ValidationError("Use either --stdin-json or --from-file, not both.")
+        raise ValidationError(tr("Use either --stdin-json or --from-file, not both."))
 
     base_payload: dict[str, Any] = {}
     if from_file:
         payload = _json_value(f"@{from_file}", stdin_text, "--from-file")
         if not isinstance(payload, dict):
-            raise ValidationError("--from-file must contain a JSON object.")
+            raise ValidationError(tr("--from-file must contain a JSON object."))
         base_payload = payload
     elif stdin_json:
         payload = _json_value("-", stdin_text, "--stdin-json")
         if not isinstance(payload, dict):
-            raise ValidationError("--stdin-json must read a JSON object.")
+            raise ValidationError(tr("--stdin-json must read a JSON object."))
         base_payload = payload
 
     properties = tool.input_schema.get("properties", {})
     unknown = set(base_payload) - set(properties)
     if unknown:
-        raise ValidationError(f"Unknown input field(s): {', '.join(sorted(unknown))}")
+        raise ValidationError(
+            tr("Unknown input field(s): {value_0}", value_0=", ".join(sorted(unknown)))
+        )
 
     merged = dict(base_payload)
     for field_name, raw_value in option_values.items():
@@ -184,15 +193,22 @@ def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
             matches += 1
         if matches != 1:
             raise ValidationError(
-                f"Field {_format_path(path)} must match exactly one schema in oneOf."
+                tr(
+                    "Field {value_0} must match exactly one schema in oneOf.",
+                    value_0=_format_path(path),
+                )
             )
     schema_type = schema.get("type")
     if schema_type is not None:
         allowed_types = schema_type if isinstance(schema_type, list) else [schema_type]
         if not any(_type_matches(value, expected) for expected in allowed_types):
-            expected = " or ".join(str(item) for item in allowed_types)
+            expected = tr(" or ").join(str(item) for item in allowed_types)
             raise ValidationError(
-                f"Field {_format_path(path)} has invalid type; expected {expected}."
+                tr(
+                    "Field {value_0} has invalid type; expected {value_1}.",
+                    value_0=_format_path(path),
+                    value_1=expected,
+                )
             )
 
     enum_values = schema.get("enum")
@@ -200,18 +216,32 @@ def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
     # "one of these values, or null". Preserve that established convention.
     if enum_values is not None and value is not None and not _enum_contains(enum_values, value):
         allowed = ", ".join(map(str, enum_values))
-        raise ValidationError(f"Field {_format_path(path)} must be one of: {allowed}")
+        raise ValidationError(
+            tr(
+                "Field {value_0} must be one of: {value_1}",
+                value_0=_format_path(path),
+                value_1=allowed,
+            )
+        )
 
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         minimum = schema.get("minimum")
         maximum = schema.get("maximum")
         if minimum is not None and value < minimum:
             raise ValidationError(
-                f"Field {_format_path(path)} must be greater than or equal to {minimum}."
+                tr(
+                    "Field {value_0} must be greater than or equal to {value_1}.",
+                    value_0=_format_path(path),
+                    value_1=minimum,
+                )
             )
         if maximum is not None and value > maximum:
             raise ValidationError(
-                f"Field {_format_path(path)} must be less than or equal to {maximum}."
+                tr(
+                    "Field {value_0} must be less than or equal to {value_1}.",
+                    value_0=_format_path(path),
+                    value_1=maximum,
+                )
             )
 
     if isinstance(value, (str, list)):
@@ -222,16 +252,27 @@ def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
         ):
             bound = schema.get(keyword)
             if bound is not None and compare(len(value), bound):
-                raise ValidationError(f"Field {_format_path(path)} violates {keyword}: {bound}.")
+                raise ValidationError(
+                    tr(
+                        "Field {value_0} violates {value_1}: {value_2}.",
+                        value_0=_format_path(path),
+                        value_1=keyword,
+                        value_2=bound,
+                    )
+                )
 
     if isinstance(value, dict):
         properties = schema.get("properties", {})
         required = schema.get("required", [])
         missing = [field for field in required if field not in value]
         if missing:
-            location = f" at {_format_path(path)}" if path else ""
+            location = tr(" at {path}", path=_format_path(path)) if path else ""
             raise ValidationError(
-                f"Missing required field(s){location}: {', '.join(sorted(missing))}"
+                tr(
+                    "Missing required field(s){value_0}: {value_1}",
+                    value_0=location,
+                    value_1=", ".join(sorted(missing)),
+                )
             )
 
         pattern_matched = set()
@@ -245,7 +286,11 @@ def _validate_schema(value: Any, schema: dict[str, Any], *, path: str) -> None:
             unknown = set(value) - set(properties) - pattern_matched
             if unknown:
                 raise ValidationError(
-                    f"Unknown field(s) at {_format_path(path)}: {', '.join(sorted(unknown))}"
+                    tr(
+                        "Unknown field(s) at {value_0}: {value_1}",
+                        value_0=_format_path(path),
+                        value_1=", ".join(sorted(unknown)),
+                    )
                 )
 
         for field_name, field_schema in properties.items():

@@ -48,6 +48,37 @@ That means:
 
 The command catalog stays centralized even when runtime semantics differ.
 
+## Output Locale
+
+`i18n.py` holds an invocation-scoped `ContextVar`. The root Click group and public
+entrypoint resolve `--locale ru|en` before help and parser errors; the flag wins
+over `KAITEN_CLI_LOCALE`, then `en`. OS locale and profiles do not participate.
+The caller (agent) chooses the language from the conversation.
+
+English source templates are stable message IDs. `locales/ru.json` is an offline
+catalog shipped in the wheel. Runtime prose opts in with `tr`; discovery copies
+only explicitly defined prose fields, including JSON Schema descriptions.
+API payloads, user values, enum values, command identifiers and trace fields are
+never passed through recursive translation. Raw API/OS/library diagnostics retain
+their source language inside a localized CLI message.
+
+`localized_click.py` binds Click's module-local gettext callbacks once to the
+context-aware dispatcher. Help is rendered from command copies; Click's cached
+help option remains English. Context tokens reset on success and failure, and
+async workers inherit the invocation locale. Dependency updates must pass the
+catalog check and sequential/concurrent locale regression tests.
+
+Registry metadata stays canonical English for stable generated documentation.
+Search uses both language descriptions plus private `search_terms`; changing the
+output locale cannot change ranking. Agent instructions and gateway prompts
+require an explicit locale per invocation. This is a language contract, not a
+claim of improved model accuracy; that requires separate evaluation.
+
+Run `python scripts/check_locales.py` for coverage, formatting placeholders and
+command-flag preservation. Unknown messages fall back to English at runtime;
+the check and tests fail for missing known translations. See
+[localization verification](docs/LOCALIZATION_VERIFICATION.md) for invariants and evidence.
+
 ## Execution Context and Cache
 
 Each CLI invocation builds one execution context for the selected profile.

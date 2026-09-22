@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from io import TextIOWrapper
 from pathlib import Path
 
+from kaiten_cli.i18n import tr
 
 PRIVATE_DIRECTORY_MODE = 0o700
 PRIVATE_FILE_MODE = 0o600
@@ -36,10 +37,12 @@ def secure_directory(
 
     if path.is_symlink():
         if repair_existing:
-            raise OSError(f"Refusing to use symlinked private directory: {path}")
+            raise OSError(
+                tr("Refusing to use symlinked private directory: {value_0}", value_0=path)
+            )
         resolved = path.resolve(strict=True)
         if not resolved.is_dir():
-            raise OSError(f"Private directory path is not a directory: {path}")
+            raise OSError(tr("Private directory path is not a directory: {value_0}", value_0=path))
         if os.name != "nt":
             flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
             descriptor = os.open(resolved, flags)
@@ -49,7 +52,7 @@ def secure_directory(
     path.mkdir(parents=True, exist_ok=True, mode=mode)
     if os.name == "nt":  # pragma: no cover - Windows ACLs remain platform-managed
         if not path.is_dir():
-            raise OSError(f"Private directory path is not a directory: {path}")
+            raise OSError(tr("Private directory path is not a directory: {value_0}", value_0=path))
         if repair_existing or not existed:
             path.chmod(mode)
         return
@@ -73,10 +76,10 @@ def ensure_private_file(
     secure_directory(path.parent, repair_existing=repair_parent)
     if os.name == "nt":  # pragma: no cover - Windows ACLs remain platform-managed
         if path.is_symlink():
-            raise OSError(f"Refusing to use symlinked private file: {path}")
+            raise OSError(tr("Refusing to use symlinked private file: {value_0}", value_0=path))
         path.touch(exist_ok=True)
         if not path.is_file():
-            raise OSError(f"Private file path is not a regular file: {path}")
+            raise OSError(tr("Private file path is not a regular file: {value_0}", value_0=path))
         path.chmod(mode)
         return
     flags = (
@@ -96,10 +99,12 @@ def ensure_private_file(
             if path.exists():
                 return
     if descriptor is None:
-        raise OSError(f"Private file path changed repeatedly while opening: {path}")
+        raise OSError(
+            tr("Private file path changed repeatedly while opening: {value_0}", value_0=path)
+        )
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError(f"Private file path is not a regular file: {path}")
+            raise OSError(tr("Private file path is not a regular file: {value_0}", value_0=path))
         if _mode_needs_repair(descriptor, mode):
             _set_mode(descriptor, path, mode)
     finally:
@@ -110,19 +115,19 @@ def secure_existing_file(path: Path, *, mode: int = PRIVATE_FILE_MODE) -> None:
     """Repair a private file mode without creating the file."""
 
     if path.is_symlink():
-        raise OSError(f"Refusing to use symlinked private file: {path}")
+        raise OSError(tr("Refusing to use symlinked private file: {value_0}", value_0=path))
     if not path.exists():
         return
     if os.name == "nt":  # pragma: no cover - Windows ACLs remain platform-managed
         if not path.is_file():
-            raise OSError(f"Private file path is not a regular file: {path}")
+            raise OSError(tr("Private file path is not a regular file: {value_0}", value_0=path))
         path.chmod(mode)
         return
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     descriptor = os.open(path, flags)
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError(f"Private file path is not a regular file: {path}")
+            raise OSError(tr("Private file path is not a regular file: {value_0}", value_0=path))
         if _mode_needs_repair(descriptor, mode):
             _set_mode(descriptor, path, mode)
     finally:
@@ -140,7 +145,7 @@ def open_private_append(
 
     secure_directory(path.parent, repair_existing=repair_parent)
     if path.is_symlink():
-        raise OSError(f"Refusing to use symlinked private file: {path}")
+        raise OSError(tr("Refusing to use symlinked private file: {value_0}", value_0=path))
     flags = (
         os.O_CREAT
         | os.O_WRONLY
@@ -152,7 +157,7 @@ def open_private_append(
     descriptor = os.open(path, flags, mode)
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError(f"Private file path is not a regular file: {path}")
+            raise OSError(tr("Private file path is not a regular file: {value_0}", value_0=path))
         if _mode_needs_repair(descriptor, mode):
             _set_mode(descriptor, path, mode)
         with os.fdopen(descriptor, "a", encoding="utf-8") as stream:

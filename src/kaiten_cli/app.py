@@ -6,6 +6,8 @@ import os
 import sys
 import time
 from collections import defaultdict
+from contextvars import ContextVar
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,8 @@ from kaiten_cli.errors import (
     InternalError,
     ValidationError,
 )
+from kaiten_cli.i18n import get_locale, tr, use_locale
+from kaiten_cli.localized_click import LocalizedCommand, LocalizedGroup, resolve_locale
 from kaiten_cli.models import GlobalOptions, ToolSpec
 from kaiten_cli.profiles import (
     add_profile,
@@ -50,8 +54,7 @@ from kaiten_cli.runtime.trace import (
 )
 from kaiten_cli.update_check import maybe_offer_update
 
-
-_CURRENT_ARGV: list[str] | None = None
+_ARGV: ContextVar[list[str] | None] = ContextVar("kaiten_argv", default=None)
 CLICK_CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 REPOSITORY_URL = "https://github.com/ViktorOgnev/kaiten-cli"
 README_URL = f"{REPOSITORY_URL}/blob/master/README.md"
@@ -129,26 +132,28 @@ def _echo_human_result(ctx: click.Context, text: str) -> None:
 
 
 def _render_completion_text(action: str, data: dict[str, Any]) -> str:
-    configured = "yes" if data.get("configured") else "no"
+    configured = _yes_no(data.get("configured"))
     headline = (
-        f"Shell completion dry run for {data['shell']}."
+        tr("Shell completion dry run for {value_0}.", value_0=data["shell"])
         if data.get("dry_run")
-        else f"Shell completion {action} for {data['shell']}."
+        else tr(
+            "Shell completion {value_0} for {value_1}.", value_0=tr(action), value_1=data["shell"]
+        )
     )
     lines = [
         headline,
-        f"Configured: {configured}",
-        f"Script: {data['script_path']}",
-        f"Shell config: {data['config_path']}",
+        tr("Configured: {value_0}", value_0=configured),
+        tr("Script: {value_0}", value_0=data["script_path"]),
+        tr("Shell config: {value_0}", value_0=data["config_path"]),
     ]
     if data.get("dry_run"):
-        lines.append("Dry run: no files were changed.")
+        lines.append(tr("Dry run: no files were changed."))
     elif action == "installed":
-        lines.append(f"Restart the shell: {data['restart_command']}")
+        lines.append(tr("Restart the shell: {value_0}", value_0=data["restart_command"]))
     warnings = data.get("warnings") or []
     if warnings:
-        lines.append("Warnings:")
-        lines.extend(f"  - {warning}" for warning in warnings)
+        lines.append(tr("Warnings:"))
+        lines.extend(tr("  - {value_0}", value_0=warning) for warning in warnings)
     return "\n".join(lines)
 
 
@@ -171,7 +176,11 @@ def _fail(ctx: click.Context, command: str | None, error: CliError) -> None:
 
 
 def _emit_internal(ctx: click.Context, command: str | None, exc: Exception) -> None:
-    _fail(ctx, command, InternalError(f"{type(exc).__name__}: {exc}"))
+    _fail(
+        ctx,
+        command,
+        InternalError(tr("{value_0}: {value_1}", value_0=type(exc).__name__, value_1=exc)),
+    )
 
 
 def _make_debug_reporter(ctx: click.Context):
@@ -180,7 +189,7 @@ def _make_debug_reporter(ctx: click.Context):
         return None
 
     def reporter(message: str) -> None:
-        click.echo(f"[verbose] {message}", err=True)
+        click.echo(tr("[verbose] {value_0}", value_0=message), err=True)
 
     return reporter
 
@@ -197,7 +206,7 @@ def _current_argv(ctx: click.Context) -> list[str]:
     argv = root.meta.get("argv")
     if isinstance(argv, list):
         return list(argv)
-    return list(_CURRENT_ARGV or sys.argv[1:])
+    return list(_ARGV.get() or sys.argv[1:])
 
 
 def _trace_bulk_meta(data: Any) -> dict[str, Any]:
@@ -216,11 +225,13 @@ def _emit_stats_summary(ctx: click.Context, stats_payload: dict[str, Any]) -> No
         return
     cache_hits = stats_payload.get("cache_hits", {})
     click.echo(
-        "[verbose] stats: "
-        f"duration_ms={stats_payload.get('command_duration_ms', 0):.2f} "
-        f"http_requests={stats_payload.get('http_request_count', 0)} "
-        f"api_wait_ms={stats_payload.get('api_wait_ms', 0):.2f} "
-        f"cache_hits={cache_hits}",
+        tr(
+            "[verbose] stats: duration_ms={value_0:.2f} http_requests={value_1} api_wait_ms={value_2:.2f} cache_hits={value_3}",
+            value_0=stats_payload.get("command_duration_ms", 0),
+            value_1=stats_payload.get("http_request_count", 0),
+            value_2=stats_payload.get("api_wait_ms", 0),
+            value_3=cache_hits,
+        ),
         err=True,
     )
 
@@ -234,7 +245,7 @@ def _cli_option_name(argument_name: str) -> str:
 
 
 def _yes_no(value: Any) -> str:
-    return "yes" if bool(value) else "no"
+    return tr("yes") if bool(value) else tr("no")
 
 
 def _format_enum(values: Any) -> str:
@@ -270,37 +281,47 @@ def _build_namespace_help() -> dict[tuple[str, ...], tuple[str, str]]:
         modules = sorted(bucket["modules"])
         specs = [MODULE_SPECS_BY_KEY[module] for module in modules if module in MODULE_SPECS_BY_KEY]
         if len(specs) == 1:
-            summary = specs[0].description
+            summary = tr(specs[0].description)
         elif specs:
-            labels = ", ".join(spec.label for spec in specs)
-            summary = f"Commands from these Kaiten areas: {labels}."
+            labels = ", ".join(tr(spec.label) for spec in specs)
+            summary = tr("Commands from these Kaiten areas: {labels}.", labels=labels)
         else:
-            summary = f"Kaiten command group for {'.'.join(path)}."
+            summary = tr("Kaiten command group for {path}.", path=".".join(path))
 
         children = sorted(bucket["children"])
         child_sample = ", ".join(children[:8])
         if len(children) > 8:
-            child_sample += f", and {len(children) - 8} more"
+            child_sample += tr(", and {count} more", count=len(children) - 8)
         detail = (
-            f"{summary}\n\n"
-            f"Contains {bucket['total']} command"
-            f"{'' if bucket['total'] == 1 else 's'} under: {child_sample}."
+            summary
+            + "\n\n"
+            + tr(
+                "Contains {count} commands under: {children}.",
+                count=bucket["total"],
+                children=child_sample,
+            )
         )
         help_by_path[path] = (detail, _format_short_help(summary))
     return help_by_path
 
 
-NAMESPACE_HELP = _build_namespace_help()
+@lru_cache(maxsize=2)
+def _namespace_help(locale: str):
+    with use_locale(locale):
+        return _build_namespace_help()
+
+
+NAMESPACE_HELP = _namespace_help("en")
 
 
 def _render_search_tools_text(query: str, results: list[dict[str, Any]]) -> str:
-    lines = [f"Search results for: {query}", ""]
+    lines = [tr("Search results for: {value_0}", value_0=query), ""]
     if not results:
         lines.extend(
             [
-                "No matching commands found.",
+                tr("No matching commands found."),
                 "",
-                "Try a broader query or inspect the full command list with: kaiten --help",
+                tr("Try a broader query or inspect the full command list with: kaiten --help"),
             ]
         )
         return "\n".join(lines)
@@ -309,28 +330,34 @@ def _render_search_tools_text(query: str, results: list[dict[str, Any]]) -> str:
         canonical_name = item["canonical_name"]
         flags = [
             str(item.get("method", "GET")),
-            "mutation" if item.get("mutation") else "read",
+            tr("mutation") if item.get("mutation") else tr("read"),
             "read-only=allowed" if item.get("read_only_allowed") else "read-only=blocked",
             "remote-effects=yes" if item.get("remote_side_effects") else "remote-effects=no",
             str(item.get("execution_mode", "direct_http")),
             f"cache={item.get('cache_policy', 'unknown')}",
         ]
         if item.get("heavy"):
-            flags.append("heavy")
+            flags.append(tr("heavy"))
 
-        lines.append(f"{index}. {canonical_name}")
-        lines.append(f"   CLI: {_cli_command_from_canonical(canonical_name)}")
-        lines.append(f"   {item.get('description', '').strip()}")
-        lines.append(f"   {' | '.join(flags)}")
+        lines.append(tr("{value_0}. {value_1}", value_0=index, value_1=canonical_name))
+        lines.append(tr("   CLI: {value_0}", value_0=_cli_command_from_canonical(canonical_name)))
+        lines.append(tr("   {value_0}", value_0=item.get("description", "").strip()))
+        lines.append(tr("   {value_0}", value_0=" | ".join(flags)))
         if item.get("bulk_alternative"):
-            lines.append(f"   Bulk alternative: {item['bulk_alternative']}")
+            lines.append(tr("   Bulk alternative: {value_0}", value_0=item["bulk_alternative"]))
         notes = item.get("usage_notes") or []
         if notes:
-            lines.append(f"   Note: {notes[0]}")
-        lines.append(f"   Next: kaiten describe {canonical_name}; kaiten examples {canonical_name}")
+            lines.append(tr("   Note: {value_0}", value_0=notes[0]))
+        lines.append(
+            tr(
+                "   Next: kaiten describe {value_0}; kaiten examples {value_1}",
+                value_0=canonical_name,
+                value_1=canonical_name,
+            )
+        )
         lines.append("")
 
-    lines.append("Use --json before the command for machine-readable output.")
+    lines.append(tr("Use --json before the command for machine-readable output."))
     return "\n".join(lines).rstrip()
 
 
@@ -339,71 +366,95 @@ def _render_describe_text(description: dict[str, Any]) -> str:
     lines = [
         canonical_name,
         "",
-        f"Description: {description.get('description', '')}",
-        f"CLI: {_cli_command_from_canonical(canonical_name)}",
-        f"MCP alias: {description.get('mcp_alias', '')}",
+        tr("Description: {value_0}", value_0=description.get("description", "")),
+        tr("CLI: {value_0}", value_0=_cli_command_from_canonical(canonical_name)),
+        tr("MCP alias: {value_0}", value_0=description.get("mcp_alias", "")),
         (
-            f"API: {description.get('method', '')} {description.get('path_template', '')} "
-            f"| mutation={_yes_no(description.get('mutation'))} "
-            f"| read-only={('allowed' if description.get('read_only_allowed') else 'blocked')} "
-            f"| remote-effects={_yes_no(description.get('remote_side_effects'))} "
-            f"| mode={description.get('execution_mode', '')}"
+            tr(
+                "API: {value_0} {value_1} | mutation={value_2} | read-only={value_3} | remote-effects={value_4} | mode={value_5}",
+                value_0=description.get("method", ""),
+                value_1=description.get("path_template", ""),
+                value_2=_yes_no(description.get("mutation")),
+                value_3=tr("allowed") if description.get("read_only_allowed") else tr("blocked"),
+                value_4=_yes_no(description.get("remote_side_effects")),
+                value_5=description.get("execution_mode", ""),
+            )
         ),
         (
-            f"Cache: {description.get('cache_policy', '')} "
-            f"({description.get('cache_guidance', {}).get('strategy', 'unknown')})"
+            tr(
+                "Cache: {value_0} ({value_1})",
+                value_0=description.get("cache_policy", ""),
+                value_1=description.get("cache_guidance", {}).get("strategy", "unknown"),
+            )
         ),
         (
-            "Cache modes: "
+            tr("Cache modes: ")
             + ", ".join(description.get("cache_guidance", {}).get("available_modes", []))
-            + " | default="
+            + tr(" | default=")
             + str(description.get("cache_guidance", {}).get("default_mode", "auto"))
-            + " | recommended="
+            + tr(" | recommended=")
             + str(description.get("cache_guidance", {}).get("recommended_mode", "auto"))
         ),
     ]
 
     response_policy = description.get("response_policy", {})
     lines.append(
-        "Response: "
-        f"kind={response_policy.get('result_kind', 'unknown')} "
-        f"| compact={_yes_no(response_policy.get('compact_supported'))} "
-        f"| fields={_yes_no(response_policy.get('fields_supported'))} "
-        f"| heavy={_yes_no(response_policy.get('heavy'))}"
+        tr(
+            "Response: kind={value_0} | compact={value_1} | fields={value_2} | heavy={value_3}",
+            value_0=response_policy.get("result_kind", "unknown"),
+            value_1=_yes_no(response_policy.get("compact_supported")),
+            value_2=_yes_no(response_policy.get("fields_supported")),
+            value_3=_yes_no(response_policy.get("heavy")),
+        )
     )
 
     if description.get("bulk_alternative"):
-        lines.append(f"Bulk alternative: {description['bulk_alternative']}")
+        lines.append(tr("Bulk alternative: {value_0}", value_0=description["bulk_alternative"]))
     if live_contract := description.get("live_contract"):
         statuses = ", ".join(str(status) for status in live_contract.get("expected_statuses", []))
-        lines.append(f"Live contract: {live_contract.get('status')} ({statuses or 'no statuses'})")
-        lines.append(f"Live note: {live_contract.get('note')}")
+        lines.append(
+            tr(
+                "Live contract: {value_0} ({value_1})",
+                value_0=live_contract.get("status"),
+                value_1=statuses or tr("no statuses"),
+            )
+        )
+        lines.append(tr("Live note: {value_0}", value_0=live_contract.get("note")))
 
     arguments = description.get("arguments") or []
-    lines.extend(["", "Arguments:"])
+    lines.extend(["", tr("Arguments:")])
     if arguments:
         for argument in arguments:
-            required = "required" if argument.get("required") else "optional"
+            required = tr("required") if argument.get("required") else tr("optional")
             type_display = argument.get("type_display") or argument.get("type") or "unknown"
             option_name = _cli_option_name(str(argument.get("name")))
             enum_display = _format_enum(argument.get("enum"))
             minimum = argument.get("minimum")
             maximum = argument.get("maximum")
             if minimum is not None and maximum is not None:
-                bounds_display = f", range={minimum}..{maximum}"
+                bounds_display = tr(
+                    ", range={value_0}..{value_1}", value_0=minimum, value_1=maximum
+                )
             elif minimum is not None:
-                bounds_display = f", minimum={minimum}"
+                bounds_display = tr(", minimum={value_0}", value_0=minimum)
             elif maximum is not None:
-                bounds_display = f", maximum={maximum}"
+                bounds_display = tr(", maximum={value_0}", value_0=maximum)
             else:
                 bounds_display = ""
-            arg_description = argument.get("description") or "No description."
+            arg_description = argument.get("description") or tr("No description.")
             lines.append(
-                f"  {option_name} ({type_display}, {required}{enum_display}{bounds_display}): "
-                f"{arg_description}"
+                tr(
+                    "  {value_0} ({value_1}, {value_2}{value_3}{value_4}): {value_5}",
+                    value_0=option_name,
+                    value_1=type_display,
+                    value_2=required,
+                    value_3=enum_display,
+                    value_4=bounds_display,
+                    value_5=arg_description,
+                )
             )
     else:
-        lines.append("  No tool-specific arguments.")
+        lines.append(tr("  No tool-specific arguments."))
 
     from kaiten_cli.schema_docs import schema_rows
 
@@ -413,7 +464,7 @@ def _render_describe_text(description: dict[str, Any]) -> str:
         if "." in path or "<" in path or "[]" in path
     ]
     if nested:
-        lines.extend(["", "Nested schemas (unknown extension fields are preserved):"])
+        lines.extend(["", tr("Nested schemas (unknown extension fields are preserved):")])
         for path, definition, required in nested:
             kinds = definition.get("type", "any")
             kinds = "|".join(kinds) if isinstance(kinds, list) else kinds
@@ -424,14 +475,22 @@ def _render_describe_text(description: dict[str, Any]) -> str:
                 if key in definition
             )
             lines.append(
-                f"  {path} ({kinds}, {'required' if required else 'optional'}{enum}{', ' + limits if limits else ''}): {definition.get('description', '')}"
+                tr(
+                    "  {value_0} ({value_1}, {value_2}{value_3}{value_4}): {value_5}",
+                    value_0=path,
+                    value_1=kinds,
+                    value_2=tr("required") if required else tr("optional"),
+                    value_3=enum,
+                    value_4=", " + limits if limits else "",
+                    value_5=definition.get("description", ""),
+                )
             )
 
     examples = description.get("examples") or []
     if examples:
-        lines.extend(["", "Examples:"])
+        lines.extend(["", tr("Examples:")])
         for example in examples:
-            lines.append(f"  {example}")
+            lines.append(tr("  {value_0}", value_0=example))
 
     notes = description.get("usage_notes") or []
     cache_guidance = description.get("cache_guidance") or {}
@@ -444,84 +503,135 @@ def _render_describe_text(description: dict[str, Any]) -> str:
     ]
     rendered_notes = [note for note in rendered_notes if note]
     if rendered_notes:
-        lines.extend(["", "Notes:"])
+        lines.extend(["", tr("Notes:")])
         for note in rendered_notes:
-            lines.append(f"  - {note}")
+            lines.append(tr("  - {value_0}", value_0=note))
 
     lines.extend(
         [
             "",
-            f"Next: kaiten examples {canonical_name}",
-            "Use --json before the command for machine-readable output.",
+            tr("Next: kaiten examples {value_0}", value_0=canonical_name),
+            tr("Use --json before the command for machine-readable output."),
         ]
     )
     return "\n".join(lines)
 
 
 def _render_examples_text(identifier: str, examples: list[str]) -> str:
-    lines = [f"Examples for: {identifier}", ""]
+    lines = [tr("Examples for: {value_0}", value_0=identifier), ""]
     if not examples:
-        lines.append("No examples registered for this command.")
+        lines.append(tr("No examples registered for this command."))
     else:
         for index, example in enumerate(examples, start=1):
-            lines.append(f"{index}. {example}")
-    lines.extend(["", f"Next: kaiten describe {identifier}"])
+            lines.append(tr("{value_0}. {value_1}", value_0=index, value_1=example))
+    lines.extend(["", tr("Next: kaiten describe {value_0}", value_0=identifier)])
     return "\n".join(lines)
 
 
 def _agent_help_payload() -> dict[str, Any]:
     return {
-        "summary": "Kaiten API CLI optimized for humans and agents.",
+        "summary": tr("Kaiten API CLI optimized for humans and agents."),
         "llm_bootstrap": [
-            'Discover once per unfamiliar family: kaiten search-tools "wip cards"',
-            "Inspect one tool: kaiten describe cards.list-all",
-            "Check examples: kaiten examples cards.list-all",
-            "For repeated analytics or report runs, build a local snapshot first.",
-            "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates.",
-            "Use --json for automation and LLM workflows.",
-            "Read top-level JSON stats to understand API calls, wait time, cache hits, and grouped path families.",
-            "Omit --cache-mode for normal workflows: auto reuses cacheable safe reads and heavy analytics.",
-            "Use refresh once at a freshness boundary; never put refresh in an entity loop.",
-            "Use off only for cache diagnostics, privacy requirements, or high-frequency polling.",
-            "Use readwrite only with a meaningful --cache-ttl-seconds.",
-            "Use a bulk_alternative for two or more IDs.",
-            "Shrink payloads with --compact and --fields.",
-            "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
-            "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>.",
-            "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill.",
-            "Treat dashboards as experimental and iterations/Restricted Access Files as beta; run discovery first and expect feature/version gates.",
+            tr(
+                "Use --locale ru or --locale en before every command to match the current conversation language; explicit --locale overrides KAITEN_CLI_LOCALE. Other languages use en."
+            ),
+            tr('Discover once per unfamiliar family: kaiten search-tools "wip cards"'),
+            tr("Inspect one tool: kaiten describe cards.list-all"),
+            tr("Check examples: kaiten examples cards.list-all"),
+            tr("For repeated analytics or report runs, build a local snapshot first."),
+            tr(
+                "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates."
+            ),
+            tr("Use --json for automation and LLM workflows."),
+            tr(
+                "Read top-level JSON stats to understand API calls, wait time, cache hits, and grouped path families."
+            ),
+            tr(
+                "Omit --cache-mode for normal workflows: auto reuses cacheable safe reads and heavy analytics."
+            ),
+            tr("Use refresh once at a freshness boundary; never put refresh in an entity loop."),
+            tr(
+                "Use off only for cache diagnostics, privacy requirements, or high-frequency polling."
+            ),
+            tr("Use readwrite only with a meaningful --cache-ttl-seconds."),
+            tr("Use a bulk_alternative for two or more IDs."),
+            tr("Shrink payloads with --compact and --fields."),
+            tr(
+                "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop."
+            ),
+            tr(
+                "Summarize a trace locally with kaiten --json trace summarize --file <trace.jsonl>."
+            ),
+            tr(
+                "Before mutation, run kaiten --json --profile <name> --read-only profile probe and follow the mutation skill."
+            ),
+            tr(
+                "Treat dashboards as experimental and iterations/Restricted Access Files as beta; run discovery first and expect feature/version gates."
+            ),
         ],
         "quickstart": [
-            'Discover commands: kaiten search-tools "wip cards"',
-            "Inspect one tool: kaiten describe cards.list-all",
-            "See examples: kaiten examples cards.list-all",
-            "Build a local read snapshot: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
-            "Query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
-            "Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title",
-            "Configure credentials: kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active",
-            "Probe authentication safely: kaiten --json --profile main --read-only profile probe",
-            "Summarize a trace locally: kaiten --json trace summarize --file <trace.jsonl>",
-            "Explore dashboards safely: kaiten --json dashboards list --fields id,title,is_public,role --compact",
-            "Explore iterations safely: kaiten --json iterations list --space-uid <space_uuid> --status planned,active --compact",
+            tr('Discover commands: kaiten search-tools "wip cards"'),
+            tr("Inspect one tool: kaiten describe cards.list-all"),
+            tr("See examples: kaiten examples cards.list-all"),
+            tr(
+                "Build a local read snapshot: kaiten snapshot build --name team-basic --space-id 10 --preset basic"
+            ),
+            tr(
+                "Query locally after build: kaiten query cards --snapshot team-basic --view summary --fields id,title,state"
+            ),
+            tr("Prefer machine-safe output: kaiten --json spaces list --compact --fields id,title"),
+            tr(
+                "Configure credentials: kaiten profile add main --domain <company-subdomain-or-url> --token <api-token> --set-active"
+            ),
+            tr(
+                "Probe authentication safely: kaiten --json --profile main --read-only profile probe"
+            ),
+            tr("Summarize a trace locally: kaiten --json trace summarize --file <trace.jsonl>"),
+            tr(
+                "Explore dashboards safely: kaiten --json dashboards list --fields id,title,is_public,role --compact"
+            ),
+            tr(
+                "Explore iterations safely: kaiten --json iterations list --space-uid <space_uuid> --status planned,active --compact"
+            ),
         ],
         "principles": [
-            "Use --json for automation and LLM workflows.",
-            "Read top-level JSON stats before repeating or widening expensive workflows.",
-            "Omit --cache-mode for normal workflows: auto is the recommended default.",
-            "Use refresh once before a freshness-critical result or use snapshot refresh; never put refresh in a loop.",
-            "Use off only for cache diagnostics, privacy requirements, or high-frequency polling.",
-            "Use readwrite only with a meaningful fixed --cache-ttl-seconds.",
-            "Run search-tools -> describe -> examples once per unfamiliar command family, mutation, or heavy command.",
-            "For a population used more than once, snapshot once and query locally before touching the API again.",
-            "For two or more IDs, use bulk_alternative when available instead of a per-entity loop.",
-            "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get.",
-            "Keep query cards summary-first; use detail/evidence only after local candidate reduction.",
-            "Live validation runs only when KAITEN_LIVE=1|true for the current process.",
-            "Use --compact and --fields to reduce payload and token cost.",
-            "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop.",
-            "Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>.",
-            "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback.",
-            "Dashboards are experimental; iterations and Restricted Access Files are beta and may be unavailable on older installations or tariffs.",
+            tr("Use --json for automation and LLM workflows."),
+            tr("Read top-level JSON stats before repeating or widening expensive workflows."),
+            tr("Omit --cache-mode for normal workflows: auto is the recommended default."),
+            tr(
+                "Use refresh once before a freshness-critical result or use snapshot refresh; never put refresh in a loop."
+            ),
+            tr(
+                "Use off only for cache diagnostics, privacy requirements, or high-frequency polling."
+            ),
+            tr("Use readwrite only with a meaningful fixed --cache-ttl-seconds."),
+            tr(
+                "Run search-tools -> describe -> examples once per unfamiliar command family, mutation, or heavy command."
+            ),
+            tr(
+                "For a population used more than once, snapshot once and query locally before touching the API again."
+            ),
+            tr(
+                "For two or more IDs, use bulk_alternative when available instead of a per-entity loop."
+            ),
+            tr(
+                "Prefer bulk tools like cards.list-all, cards.batch-get, time-logs.batch-list, space-activity-all.get, card-children.batch-list, comments.batch-list, and card-location-history.batch-get."
+            ),
+            tr(
+                "Keep query cards summary-first; use detail/evidence only after local candidate reduction."
+            ),
+            tr("Live validation runs only when KAITEN_LIVE=1|true for the current process."),
+            tr("Use --compact and --fields to reduce payload and token cost."),
+            tr(
+                "Use --trace-file for wrappers with 3+ CLI commands, >10 expected HTTP requests, or an unavoidable loop."
+            ),
+            tr("Inspect trace cost with kaiten --json trace summarize --file <trace.jsonl>."),
+            tr(
+                "Before mutations: profile probe, read-only investigation, exact preview, authorization, resumable manifest, small batches, and field-scoped readback."
+            ),
+            tr(
+                "Dashboards are experimental; iterations and Restricted Access Files are beta and may be unavailable on older installations or tariffs."
+            ),
         ],
         "docs": {
             "repository": REPOSITORY_URL,
@@ -541,29 +651,42 @@ def _agent_help_payload() -> dict[str, Any]:
 def _agent_help_text() -> str:
     return "\n".join(
         [
-            "Kaiten agent bootstrap",
+            tr("Kaiten agent bootstrap"),
             "",
-            "LLM bootstrap:",
-            '1. discover: kaiten search-tools "wip cards"',
-            "2. inspect: kaiten describe cards.list-all",
-            "3. examples: kaiten examples cards.list-all",
-            "4. use --json for automation and LLM workflows",
-            "5. inspect JSON stats for API count, wait time, cache hits, and grouped path families",
-            "6. omit --cache-mode for normal workflows: auto is the recommended default",
-            "7. use refresh once at a freshness boundary, off for diagnostics/privacy/polling, and readwrite only with --cache-ttl-seconds",
-            "8. use a bulk alternative for 2+ IDs; never put refresh in an entity loop",
-            "9. snapshot a population before its second use",
-            "10. snapshot once: kaiten snapshot build --name team-basic --space-id 10 --preset basic",
-            "11. query locally: kaiten query cards --snapshot team-basic --view summary --fields id,title,state",
-            "12. only escalate to --view detail or --view evidence after local narrowing",
-            "13. shrink payloads with --compact and --fields",
-            "14. trace wrappers with 3+ CLI commands, >10 expected HTTP requests, or a loop",
-            "15. summarize: kaiten --json trace summarize --file <trace.jsonl>",
-            "16. before mutations: kaiten --json --profile <name> --read-only profile probe",
-            "17. live validation only runs when KAITEN_LIVE=1|true",
-            "18. dashboards are experimental; iterations/Restricted Access Files are beta, so discover and probe before use",
+            tr("LLM bootstrap:"),
+            tr(
+                "Use --locale ru or --locale en before every command to match the current conversation language; explicit --locale overrides KAITEN_CLI_LOCALE. Other languages use en."
+            ),
+            tr('1. discover: kaiten search-tools "wip cards"'),
+            tr("2. inspect: kaiten describe cards.list-all"),
+            tr("3. examples: kaiten examples cards.list-all"),
+            tr("4. use --json for automation and LLM workflows"),
+            tr(
+                "5. inspect JSON stats for API count, wait time, cache hits, and grouped path families"
+            ),
+            tr("6. omit --cache-mode for normal workflows: auto is the recommended default"),
+            tr(
+                "7. use refresh once at a freshness boundary, off for diagnostics/privacy/polling, and readwrite only with --cache-ttl-seconds"
+            ),
+            tr("8. use a bulk alternative for 2+ IDs; never put refresh in an entity loop"),
+            tr("9. snapshot a population before its second use"),
+            tr(
+                "10. snapshot once: kaiten snapshot build --name team-basic --space-id 10 --preset basic"
+            ),
+            tr(
+                "11. query locally: kaiten query cards --snapshot team-basic --view summary --fields id,title,state"
+            ),
+            tr("12. only escalate to --view detail or --view evidence after local narrowing"),
+            tr("13. shrink payloads with --compact and --fields"),
+            tr("14. trace wrappers with 3+ CLI commands, >10 expected HTTP requests, or a loop"),
+            tr("15. summarize: kaiten --json trace summarize --file <trace.jsonl>"),
+            tr("16. before mutations: kaiten --json --profile <name> --read-only profile probe"),
+            tr("17. live validation only runs when KAITEN_LIVE=1|true"),
+            tr(
+                "18. dashboards are experimental; iterations/Restricted Access Files are beta, so discover and probe before use"
+            ),
             "",
-            "Good bulk defaults:",
+            tr("Good bulk defaults:"),
             "  kaiten --json cards list-all --board-id 10 --selection active_only --fields id,title,state --compact",
             "  kaiten --json cards batch-get --card-ids '[101,102,103]' --workers 2 --fields id,title,description",
             "  kaiten --json time-logs batch-list --card-ids '[101,102,103]' --workers 2 --fields id,time_spent,for_date",
@@ -575,15 +698,15 @@ def _agent_help_text() -> str:
             "  kaiten --json dashboards list --fields id,title,is_public,role --compact",
             "  kaiten --json iterations list --space-uid <space_uuid> --status planned,active --compact",
             "",
-            "Docs:",
-            f"  repo: {REPOSITORY_URL}",
-            f"  readme: {README_URL}",
-            f"  command reference: {COMMAND_REFERENCE_URL}",
-            f"  architecture: {ARCHITECTURE_URL}",
-            f"  agents: {AGENTS_URL}",
-            f"  skills heavy-data: {HEAVY_DATA_SKILL_URL}",
-            f"  skills metrics: {METRICS_SKILL_URL}",
-            f"  skills mutations: {MUTATIONS_SKILL_URL}",
+            tr("Docs:"),
+            tr("  repo: {value_0}", value_0=REPOSITORY_URL),
+            tr("  readme: {value_0}", value_0=README_URL),
+            tr("  command reference: {value_0}", value_0=COMMAND_REFERENCE_URL),
+            tr("  architecture: {value_0}", value_0=ARCHITECTURE_URL),
+            tr("  agents: {value_0}", value_0=AGENTS_URL),
+            tr("  skills heavy-data: {value_0}", value_0=HEAVY_DATA_SKILL_URL),
+            tr("  skills metrics: {value_0}", value_0=METRICS_SKILL_URL),
+            tr("  skills mutations: {value_0}", value_0=MUTATIONS_SKILL_URL),
         ]
     )
 
@@ -650,7 +773,7 @@ def _write_trace_safely(recorder: TraceRecorder, **kwargs: Any) -> None:
         recorder.write(**kwargs)
     except Exception as error:
         click.echo(
-            f"Warning: trace record was not written ({type(error).__name__}).",
+            tr("Warning: trace record was not written ({value_0}).", value_0=type(error).__name__),
             err=True,
         )
 
@@ -733,7 +856,7 @@ def _command_params(tool: ToolSpec) -> list[click.Parameter]:
 
 
 def _make_command(tool: ToolSpec, *, hidden: bool = False) -> click.Command:
-    return click.Command(
+    return LocalizedCommand(
         name=tool.action if not hidden else tool.mcp_alias,
         help=tool.description,
         short_help=tool.description,
@@ -758,13 +881,14 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
                     f"Kaiten command group for {'.'.join(current_path)}.",
                 ),
             )
-            nested = click.Group(
+            nested = LocalizedGroup(
                 name=segment,
                 no_args_is_help=True,
                 help=group_help,
                 short_help=short_help,
                 context_settings=CLICK_CONTEXT_SETTINGS,
             )
+            nested.help_factory = lambda path=current_path: _namespace_help(get_locale())[path][0]
             group.add_command(nested)
             group = nested
             continue
@@ -775,10 +899,14 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 
 
 @click.group(
+    cls=LocalizedGroup,
     context_settings=CLICK_CONTEXT_SETTINGS,
     no_args_is_help=True,
     help=CLI_HELP,
     epilog=CLI_EPILOG,
+)
+@click.option(
+    "--locale", type=click.Choice(["en", "ru"]), help="Language for CLI messages (default: en)."
 )
 @click.version_option(version=__version__, prog_name="kaiten")
 @click.option(
@@ -835,6 +963,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 @click.pass_context
 def cli(
     ctx: click.Context,
+    locale: str | None,
     json_mode: bool,
     profile_name: str | None,
     from_file: str | None,
@@ -849,8 +978,9 @@ def cli(
 ) -> None:
     if no_color:
         ctx.color = False
-    ctx.meta["argv"] = list(_CURRENT_ARGV or sys.argv[1:])
+    ctx.meta["argv"] = list(_ARGV.get() or sys.argv[1:])
     ctx.obj = GlobalOptions(
+        locale=get_locale(),
         json_mode=json_mode,
         profile_name=profile_name,
         from_file=from_file,
@@ -900,7 +1030,7 @@ def describe_command(ctx: click.Context, identifier: str) -> None:
         else:
             _echo_human_result(ctx, _render_describe_text(result))
     except KeyError:
-        _fail(ctx, "describe", ConfigError(f"Unknown command: {identifier}"))
+        _fail(ctx, "describe", ConfigError(tr("Unknown command: {value_0}", value_0=identifier)))
     except CliError as error:
         _fail(ctx, "describe", error)
     except Exception as exc:  # pragma: no cover
@@ -924,7 +1054,7 @@ def examples_command(ctx: click.Context, identifier: str) -> None:
         else:
             _echo_human_result(ctx, _render_examples_text(identifier, result["examples"]))
     except KeyError:
-        _fail(ctx, "examples", ConfigError(f"Unknown command: {identifier}"))
+        _fail(ctx, "examples", ConfigError(tr("Unknown command: {value_0}", value_0=identifier)))
     except CliError as error:
         _fail(ctx, "examples", error)
     except Exception as exc:  # pragma: no cover
@@ -1345,6 +1475,7 @@ for tool in iter_tools():
 
 
 _ROOT_OPTION_USAGE = {
+    "--locale": "--locale <ru|en>",
     "--json": "--json",
     "--profile": "--profile <name>",
     "--from-file": "--from-file <path>",
@@ -1396,7 +1527,7 @@ def _supported_context_options(error: click.UsageError) -> list[str]:
 def _suggested_root_options(*, offending_option: str, supported_options: list[str]) -> list[str]:
     suggested: list[str] = []
     seen: set[str] = set()
-    for token in _CURRENT_ARGV or []:
+    for token in _ARGV.get() or []:
         option = token.split("=", 1)[0]
         if option not in _ROOT_OPTION_USAGE or option in seen:
             continue
@@ -1455,12 +1586,11 @@ def _validation_details(error: click.UsageError) -> dict[str, Any] | None:
     return details
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     json_mode = "--json" in args
     try:
-        global _CURRENT_ARGV
-        _CURRENT_ARGV = list(args)
+        argv_token = _ARGV.set(list(args))
         click_result = cli.main(args=args, prog_name="kaiten", standalone_mode=False)
         if isinstance(click_result, int) and click_result != 0:
             return click_result
@@ -1485,11 +1615,27 @@ def main(argv: list[str] | None = None) -> int:
         stream.write(render_error(None, cli_error, json_mode) + "\n")
         return cli_error.exit_code
     finally:
-        _CURRENT_ARGV = None
+        _ARGV.reset(argv_token)
     try:
         return maybe_offer_update(args)
     except Exception:  # pragma: no cover - update checks must never break the primary command
         return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    try:
+        locale = resolve_locale(args)
+    except click.UsageError as error:
+        with use_locale("en"):
+            json_mode = "--json" in args
+            stream = sys.stdout if json_mode else sys.stderr
+            stream.write(
+                render_error(None, ValidationError(error.format_message()), json_mode) + "\n"
+            )
+        return 2
+    with use_locale(locale):
+        return _main(args)
 
 
 if __name__ == "__main__":  # pragma: no cover

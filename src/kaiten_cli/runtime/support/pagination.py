@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from kaiten_cli.errors import ConfigError, ValidationError
-
+from kaiten_cli.i18n import tr
 
 API_MAX_PAGE_SIZE = 100
 DEFAULT_COLLECTION_MAX_PAGES = 100
@@ -65,20 +65,26 @@ def validate_page_bounds(
 ) -> None:
     """Defensively validate bounds used by internal pagination helpers."""
     if isinstance(page_size, bool) or not isinstance(page_size, int):
-        raise ValidationError("Field page_size must be an integer.")
+        raise ValidationError(tr("Field page_size must be an integer."))
     if not 1 <= page_size <= max_page_size:
-        raise ValidationError(f"Field page_size must be between 1 and {max_page_size}.")
+        raise ValidationError(
+            tr("Field page_size must be between 1 and {value_0}.", value_0=max_page_size)
+        )
     if isinstance(max_pages, bool) or not isinstance(max_pages, int):
-        raise ValidationError("Field max_pages must be an integer.")
+        raise ValidationError(tr("Field max_pages must be an integer."))
     if not 1 <= max_pages <= max_allowed_pages:
-        raise ValidationError(f"Field max_pages must be between 1 and {max_allowed_pages}.")
+        raise ValidationError(
+            tr("Field max_pages must be between 1 and {value_0}.", value_0=max_allowed_pages)
+        )
 
 
 def list_page_items(response: Any, *, path: str) -> list[Any]:
     """Require the list response shape documented for offset-paginated endpoints."""
     if isinstance(response, list):
         return response
-    raise ConfigError(f"{path} pagination expected a list response from Kaiten.")
+    raise ConfigError(
+        tr("{value_0} pagination expected a list response from Kaiten.", value_0=path)
+    )
 
 
 async def fetch_all_offset_pages(
@@ -99,7 +105,14 @@ async def fetch_all_offset_pages(
     guard = OffsetPageGuard(page_size=page_size)
 
     if reporter is not None:
-        reporter(f"pagination: path={path} page_size={page_size} max_pages={max_pages}")
+        reporter(
+            tr(
+                "pagination: path={value_0} page_size={value_1} max_pages={value_2}",
+                value_0=path,
+                value_1=page_size,
+                value_2=max_pages,
+            )
+        )
 
     for page_index in range(max_pages):
         page_params = {
@@ -134,15 +147,21 @@ async def fetch_all_offset_pages(
             return rows
         if page_state == REPEATED_PAGE_AFTER_PROGRESS:
             raise ConfigError(
-                f"{path} pagination repeated a previously received page after progress; "
-                "refusing to return a possibly duplicated or truncated result."
+                tr(
+                    "{value_0} pagination repeated a previously received page after progress; refusing to return a possibly duplicated or truncated result.",
+                    value_0=path,
+                )
             )
         rows.extend(page)
         if len(page) < page_size:
             return rows
 
     raise ConfigError(
-        f"{path} pagination reached {max_pages} full pages of {page_size} rows; "
-        f"refusing to return a possibly truncated result ({len(rows)} rows read). "
-        "Increase max_pages after reviewing the expected collection size."
+        tr(
+            "{value_0} pagination reached {value_1} full pages of {value_2} rows; refusing to return a possibly truncated result ({value_3} rows read). Increase max_pages after reviewing the expected collection size.",
+            value_0=path,
+            value_1=max_pages,
+            value_2=page_size,
+            value_3=len(rows),
+        )
     )

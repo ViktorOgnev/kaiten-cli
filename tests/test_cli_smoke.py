@@ -38,7 +38,7 @@ def test_help_shows_top_level_commands(runner):
     assert "spaces" in result.output
     assert "boards" in result.output
     assert "Search commands with usage guidance." in result.output
-    assert "Карточки, bulk reads и card-heavy workflows." in result.output
+    assert "Cards, bulk reads and card workflows." in result.output
     assert "Spaces and top-level workspace reads." in result.output
     assert "Local-only query and metrics commands over" in result.output
     assert "Manage Kaiten profiles." in result.output
@@ -56,7 +56,7 @@ def test_all_visible_commands_support_short_help(runner):
 def test_namespace_help_shows_dynamic_commands(runner):
     result = runner.invoke(cli, ["cards", "--help"])
     assert result.exit_code == 0
-    assert "Карточки, bulk reads и card-heavy workflows." in result.output
+    assert "Cards, bulk reads and card workflows." in result.output
     assert "Contains 11 commands under:" in result.output
     assert "list" in result.output
     assert "get" in result.output
@@ -122,7 +122,7 @@ def test_agent_help_returns_quickstart_and_docs(runner):
     assert payload["command"] == "agent-help"
     assert payload["data"]["summary"] == "Kaiten API CLI optimized for humans and agents."
     assert payload["data"]["llm_bootstrap"]
-    assert payload["data"]["llm_bootstrap"][0].startswith("Discover once")
+    assert any(note.startswith("Discover once") for note in payload["data"]["llm_bootstrap"])
     assert any("snapshot" in line for line in payload["data"]["llm_bootstrap"])
     assert payload["data"]["quickstart"]
     assert payload["data"]["docs"]["repository"] == "https://github.com/ViktorOgnev/kaiten-cli"

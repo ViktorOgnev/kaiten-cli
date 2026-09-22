@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import mimetypes
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -14,6 +14,7 @@ from urllib.parse import unquote, urlparse
 import httpx
 
 from kaiten_cli.errors import ConfigError, TransportError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import DebugReporter, ToolSpec
 
 CHUNK_SIZE = 1024 * 1024
@@ -74,7 +75,7 @@ def _strip_file_extension(value: str) -> str:
 def _file_id(payload: dict[str, Any]) -> str:
     value = _payload_str(payload, "file_id")
     if value is None:
-        raise ValidationError("Missing required field: file_id.")
+        raise ValidationError(tr("Missing required field: file_id."))
     return _strip_file_extension(value)
 
 
@@ -93,7 +94,7 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
     if entity_type == "document":
         document_uid = _payload_str(payload, "document_uid")
         if document_uid is None:
-            raise ValidationError("document files require --document-uid.")
+            raise ValidationError(tr("document files require --document-uid."))
         return DownloadSource(
             kind="kaiten_api",
             endpoint_path=f"/documents/{document_uid}/files/{file_id}",
@@ -105,7 +106,9 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
     if entity_type == "card":
         card_ref = _first_payload_str(payload, "card_id_or_uid", "card_uid", "card_id")
         if card_ref is None:
-            raise ValidationError("card files require --card-id, --card-uid, or --card-id-or-uid.")
+            raise ValidationError(
+                tr("card files require --card-id, --card-uid, or --card-id-or-uid.")
+            )
         return DownloadSource(
             kind="kaiten_api",
             endpoint_path=f"/cards/{card_ref}/files/{file_id}",
@@ -118,7 +121,9 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
         card_ref = _first_payload_str(payload, "card_id_or_uid", "card_uid", "card_id")
         comment_uid = _payload_str(payload, "comment_uid")
         if card_ref is None or comment_uid is None:
-            raise ValidationError("comment files require --card-id/--card-uid and --comment-uid.")
+            raise ValidationError(
+                tr("comment files require --card-id/--card-uid and --comment-uid.")
+            )
         return DownloadSource(
             kind="kaiten_api",
             endpoint_path=f"/cards/{card_ref}/comments/{comment_uid}/files/{file_id}",
@@ -132,7 +137,7 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
         custom_property_uid = _payload_str(payload, "custom_property_uid")
         if card_ref is None or custom_property_uid is None:
             raise ValidationError(
-                "custom property files require --card-id/--card-uid and --custom-property-uid."
+                tr("custom property files require --card-id/--card-uid and --custom-property-uid.")
             )
         return DownloadSource(
             kind="kaiten_api",
@@ -147,7 +152,9 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
         conversation_message_uid = _payload_str(payload, "conversation_message_uid")
         if conversation_uid is None or conversation_message_uid is None:
             raise ValidationError(
-                "conversation message files require --conversation-uid and --conversation-message-uid."
+                tr(
+                    "conversation message files require --conversation-uid and --conversation-message-uid."
+                )
             )
         return DownloadSource(
             kind="kaiten_api",
@@ -160,8 +167,9 @@ def _source_from_entity(payload: dict[str, Any]) -> DownloadSource:
         )
 
     raise ValidationError(
-        "Provide --url or --entity-type with one of: card, document, comment, "
-        "custom_property, conversation_message."
+        tr(
+            "Provide --url or --entity-type with one of: card, document, comment, custom_property, conversation_message."
+        )
     )
 
 
@@ -197,7 +205,7 @@ def _source_from_url(url: str) -> DownloadSource:
         return DownloadSource(kind="direct_url", endpoint_path=None, direct_url=url)
 
     raise ValidationError(
-        "Unsupported file URL. Use a Kaiten /api/... URL or an absolute http(s) URL."
+        tr("Unsupported file URL. Use a Kaiten /api/... URL or an absolute http(s) URL.")
     )
 
 
@@ -243,12 +251,12 @@ def _part_path(target_path: Path) -> Path:
 def _upload_file_path(payload: dict[str, Any]) -> Path:
     value = _payload_str(payload, "file")
     if value is None:
-        raise ValidationError("Missing required field: file.")
+        raise ValidationError(tr("Missing required field: file."))
     path = Path(value).expanduser()
     if not path.exists():
-        raise ValidationError(f"Upload file does not exist: {path}.")
+        raise ValidationError(tr("Upload file does not exist: {value_0}.", value_0=path))
     if not path.is_file():
-        raise ValidationError(f"Upload path is not a file: {path}.")
+        raise ValidationError(tr("Upload path is not a file: {value_0}.", value_0=path))
     return path
 
 
@@ -297,13 +305,15 @@ async def _resolve_signed_url(
     if source.direct_url is not None:
         return ResolvedDownload(url=source.direct_url, source=source)
     if client is None:
-        raise ConfigError("This file source requires a Kaiten profile.")
+        raise ConfigError(tr("This file source requires a Kaiten profile."))
     if source.endpoint_path is None:
-        raise ValidationError("Cannot resolve file source without endpoint path.")
-    _emit_debug(reporter, f"download: resolving file endpoint {source.endpoint_path}")
+        raise ValidationError(tr("Cannot resolve file source without endpoint path."))
+    _emit_debug(
+        reporter, tr("download: resolving file endpoint {value_0}", value_0=source.endpoint_path)
+    )
     response = await client.get(source.endpoint_path, params=RESOLVE_QUERY, timeout=timeout)
     if not isinstance(response, dict) or not isinstance(response.get("url"), str):
-        raise TransportError("Kaiten did not return a downloadable URL for this file.")
+        raise TransportError(tr("Kaiten did not return a downloadable URL for this file."))
     return ResolvedDownload(url=response["url"], source=source)
 
 
@@ -324,13 +334,16 @@ async def _download_once(
             part_path.unlink()
         else:
             raise ValidationError(
-                f"Partial file already exists: {part_path}. Use --continue or --overwrite."
+                tr(
+                    "Partial file already exists: {value_0}. Use --continue or --overwrite.",
+                    value_0=part_path,
+                )
             )
 
     resume_from = part_path.stat().st_size if continue_enabled and part_path.exists() else 0
     headers = {"Range": f"bytes={resume_from}-"} if resume_from > 0 else None
     if resume_from > 0:
-        _emit_debug(reporter, f"download: resuming from byte {resume_from}")
+        _emit_debug(reporter, tr("download: resuming from byte {value_0}", value_0=resume_from))
 
     async with httpx.AsyncClient(follow_redirects=True) as http:
         started = time.perf_counter()
@@ -342,11 +355,17 @@ async def _download_once(
                     return response.status_code
                 if resume_from > 0 and response.status_code != 206:
                     raise TransportError(
-                        "Server did not honor the Range request for the existing .part file. "
-                        "Use --overwrite to restart the download."
+                        tr(
+                            "Server did not honor the Range request for the existing .part file. Use --overwrite to restart the download."
+                        )
                     )
                 if resume_from == 0 and response.status_code != 200:
-                    raise TransportError(f"File download failed with HTTP {response.status_code}.")
+                    raise TransportError(
+                        tr(
+                            "File download failed with HTTP {value_0}.",
+                            value_0=response.status_code,
+                        )
+                    )
 
                 remote_filename = _content_disposition_filename(
                     response.headers.get("content-disposition")
@@ -359,11 +378,17 @@ async def _download_once(
 
                 if target_path.exists() and not overwrite:
                     raise ValidationError(
-                        f"Output file already exists: {target_path}. Use --overwrite to replace it."
+                        tr(
+                            "Output file already exists: {value_0}. Use --overwrite to replace it.",
+                            value_0=target_path,
+                        )
                     )
                 if part_path.exists() and not continue_enabled:
                     raise ValidationError(
-                        f"Partial file already exists: {part_path}. Use --continue or --overwrite."
+                        tr(
+                            "Partial file already exists: {value_0}. Use --continue or --overwrite.",
+                            value_0=part_path,
+                        )
                     )
 
                 target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -382,9 +407,11 @@ async def _download_once(
                     status_code=response.status_code,
                 )
         except httpx.TimeoutException as exc:
-            raise TransportError(f"Timeout downloading file: {exc}") from exc
+            raise TransportError(tr("Timeout downloading file: {value_0}", value_0=exc)) from exc
         except httpx.HTTPError as exc:
-            raise TransportError(f"Connection error downloading file: {exc}") from exc
+            raise TransportError(
+                tr("Connection error downloading file: {value_0}", value_0=exc)
+            ) from exc
         finally:
             if getattr(client, "execution_context", None) is not None:
                 path = urlparse(url).path or "/"
@@ -426,17 +453,20 @@ async def _download_with_refresh(
         if isinstance(result, DownloadResult):
             return result
         if resolved.source.direct_url is not None:
-            raise TransportError(f"File download failed with HTTP {result}.")
+            raise TransportError(tr("File download failed with HTTP {value_0}.", value_0=result))
         if attempt == 1:
             raise TransportError(
-                f"File download failed with HTTP {result} after refreshing signed URL."
+                tr(
+                    "File download failed with HTTP {value_0} after refreshing signed URL.",
+                    value_0=result,
+                )
             )
-        _emit_debug(reporter, "download: signed URL expired, resolving it again")
+        _emit_debug(reporter, tr("download: signed URL expired, resolving it again"))
         resolved = await _resolve_signed_url(
             client, resolved.source, timeout=timeout, reporter=reporter
         )
 
-    raise TransportError("File download failed.")
+    raise TransportError(tr("File download failed."))
 
 
 async def execute_file_download(
@@ -479,11 +509,13 @@ async def execute_file_upload(
 ) -> dict[str, Any]:
     del tool, query, body
     if client is None:
-        raise ConfigError("This command requires a Kaiten profile.")
+        raise ConfigError(tr("This command requires a Kaiten profile."))
 
     file_path = _upload_file_path(payload)
     content_type = _upload_content_type(file_path)
-    _emit_debug(reporter, f"upload: sending {file_path} as multipart field file")
+    _emit_debug(
+        reporter, tr("upload: sending {value_0} as multipart field file", value_0=file_path)
+    )
     try:
         with file_path.open("rb") as file_obj:
             return await client.put(
@@ -492,7 +524,9 @@ async def execute_file_upload(
                 timeout=timeout,
             )
     except OSError as exc:
-        raise ValidationError(f"Cannot read upload file {file_path}: {exc}") from exc
+        raise ValidationError(
+            tr("Cannot read upload file {value_0}: {value_1}", value_0=file_path, value_1=exc)
+        ) from exc
 
 
 async def execute_private_file_upload(
@@ -507,11 +541,13 @@ async def execute_private_file_upload(
 ) -> dict[str, Any]:
     del tool, query, body
     if client is None:
-        raise ConfigError("This command requires a Kaiten profile.")
+        raise ConfigError(tr("This command requires a Kaiten profile."))
 
     file_path = _upload_file_path(payload)
     content_type = _upload_content_type(file_path)
-    _emit_debug(reporter, f"upload: sending {file_path} to private multipart endpoint")
+    _emit_debug(
+        reporter, tr("upload: sending {value_0} to private multipart endpoint", value_0=file_path)
+    )
     try:
         with file_path.open("rb") as file_obj:
             return await client.post(
@@ -520,4 +556,6 @@ async def execute_private_file_upload(
                 timeout=timeout,
             )
     except OSError as exc:
-        raise ValidationError(f"Cannot read upload file {file_path}: {exc}") from exc
+        raise ValidationError(
+            tr("Cannot read upload file {value_0}: {value_1}", value_0=file_path, value_1=exc)
+        ) from exc

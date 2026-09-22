@@ -41,6 +41,7 @@ def make_tool(
     runtime_behavior: RuntimeBehavior | None = None,
     examples: tuple[ExampleSpec, ...] = (),
     usage_notes: tuple[str, ...] = (),
+    search_terms: tuple[str, ...] = (),
     bulk_alternative: str | None = None,
 ) -> ToolSpec:
     *namespace_segments, action = canonical_name.split(".")
@@ -56,5 +57,6 @@ def make_tool(
         runtime_behavior=runtime_behavior or RuntimeBehavior(),
         examples=examples,
         usage_notes=usage_notes,
+        search_terms=search_terms,
         bulk_alternative=bulk_alternative,
     )

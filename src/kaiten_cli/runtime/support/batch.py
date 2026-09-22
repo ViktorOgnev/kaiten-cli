@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from kaiten_cli.errors import ApiError, CliError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.client import KaitenClient
 from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
@@ -57,7 +58,7 @@ async def fetch_card_collection_batch(
     worker_label: str,
 ) -> dict[str, Any]:
     if (page_size is None) != (max_pages is None):
-        raise ValidationError("Batch pagination requires both page_size and max_pages.")
+        raise ValidationError(tr("Batch pagination requires both page_size and max_pages."))
     unique_ids = unique_card_ids(card_ids)
     queue: asyncio.Queue[tuple[int, int]] = asyncio.Queue()
     for index, card_id in enumerate(unique_ids):
@@ -76,7 +77,13 @@ async def fetch_card_collection_batch(
             cache_policy=cache_policy,
         )
         if reporter is not None:
-            reporter(f"{worker_label}: worker={worker_index} started")
+            reporter(
+                tr(
+                    "{value_0}: worker={value_1} started",
+                    value_0=worker_label,
+                    value_1=worker_index,
+                )
+            )
         try:
             while True:
                 try:
@@ -110,7 +117,13 @@ async def fetch_card_collection_batch(
         finally:
             await client.close()
             if reporter is not None:
-                reporter(f"{worker_label}: worker={worker_index} finished")
+                reporter(
+                    tr(
+                        "{value_0}: worker={value_1} finished",
+                        value_0=worker_label,
+                        value_1=worker_index,
+                    )
+                )
 
     await asyncio.gather(*(worker(i + 1) for i in range(bounded_workers)))
 
@@ -164,7 +177,13 @@ async def fetch_card_entity_batch(
             cache_policy=cache_policy,
         )
         if reporter is not None:
-            reporter(f"{worker_label}: worker={worker_index} started")
+            reporter(
+                tr(
+                    "{value_0}: worker={value_1} started",
+                    value_0=worker_label,
+                    value_1=worker_index,
+                )
+            )
         try:
             while True:
                 try:
@@ -189,7 +208,13 @@ async def fetch_card_entity_batch(
         finally:
             await client.close()
             if reporter is not None:
-                reporter(f"{worker_label}: worker={worker_index} finished")
+                reporter(
+                    tr(
+                        "{value_0}: worker={value_1} finished",
+                        value_0=worker_label,
+                        value_1=worker_index,
+                    )
+                )
 
     await asyncio.gather(*(worker(i + 1) for i in range(bounded_workers)))
 

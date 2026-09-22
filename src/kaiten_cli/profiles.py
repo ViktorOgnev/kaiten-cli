@@ -12,6 +12,7 @@ from typing import Any
 from platformdirs import user_config_path
 
 from kaiten_cli.errors import ConfigError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import (
     CACHE_MODE_AUTO,
     CACHE_MODE_OFF,
@@ -39,27 +40,27 @@ def _profile_setup_command() -> str:
 
 def _config_guidance(*, include_profile_list: bool) -> str:
     lines = [
-        f"Config file: {config_path()}",
-        "Recommended persistent setup:",
-        f"  {_profile_setup_command()}",
+        tr("Config file: {value_0}", value_0=config_path()),
+        tr("Recommended persistent setup:"),
+        tr("  {value_0}", value_0=_profile_setup_command()),
     ]
     if include_profile_list:
         lines.extend(
             [
-                "Saved profiles:",
+                tr("Saved profiles:"),
                 "  kaiten profile list",
-                "Activate one:",
+                tr("Activate one:"),
                 "  kaiten profile use <name>",
             ]
         )
     lines.extend(
         [
-            "Temporary shell environment:",
-            "  export KAITEN_DOMAIN=<company-subdomain-or-url>",
-            "  export KAITEN_TOKEN=<api-token>",
-            "Check current setup:",
+            tr("Temporary shell environment:"),
+            tr("  export KAITEN_DOMAIN=<company-subdomain-or-url>"),
+            tr("  export KAITEN_TOKEN=<api-token>"),
+            tr("Check current setup:"),
             "  kaiten profile show",
-            "First read-only call:",
+            tr("First read-only call:"),
             "  kaiten --json spaces list --compact --fields id,title",
         ]
     )
@@ -69,7 +70,7 @@ def _config_guidance(*, include_profile_list: bool) -> str:
 def missing_credentials_message(*, has_profiles: bool) -> str:
     return "\n".join(
         [
-            "Missing Kaiten credentials.",
+            tr("Missing Kaiten credentials."),
             _config_guidance(include_profile_list=has_profiles),
         ]
     )
@@ -77,17 +78,17 @@ def missing_credentials_message(*, has_profiles: bool) -> str:
 
 def unknown_profile_message(name: str, *, has_profiles: bool) -> str:
     lines = [
-        f"Unknown profile: {name}",
-        f"Config file: {config_path()}",
-        "List saved profiles:",
+        tr("Unknown profile: {value_0}", value_0=name),
+        tr("Config file: {value_0}", value_0=config_path()),
+        tr("List saved profiles:"),
         "  kaiten profile list",
-        "Create and activate a profile:",
-        f"  {_profile_setup_command()}",
+        tr("Create and activate a profile:"),
+        tr("  {value_0}", value_0=_profile_setup_command()),
     ]
     if has_profiles:
         lines.extend(
             [
-                "Or activate an existing one:",
+                tr("Or activate an existing one:"),
                 "  kaiten profile use <name>",
             ]
         )
@@ -104,7 +105,13 @@ def load_config() -> dict[str, Any]:
         secure_existing_file(path)
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise ConfigError(f"Unable to read Kaiten CLI config at {path}: {exc}") from exc
+        raise ConfigError(
+            tr(
+                "Unable to read Kaiten CLI config at {value_0}: {value_1}",
+                value_0=path,
+                value_1=exc,
+            )
+        ) from exc
 
 
 def save_config(config: dict[str, Any]) -> None:
@@ -129,7 +136,13 @@ def save_config(config: dict[str, Any]) -> None:
         temporary_path.replace(path)
         secure_existing_file(path)
     except OSError as exc:
-        raise ConfigError(f"Unable to write Kaiten CLI config at {path}: {exc}") from exc
+        raise ConfigError(
+            tr(
+                "Unable to write Kaiten CLI config at {value_0}: {value_1}",
+                value_0=path,
+                value_1=exc,
+            )
+        ) from exc
     finally:
         if descriptor is not None:
             os.close(descriptor)
@@ -152,7 +165,13 @@ def _normalize_cache_mode(value: str | None) -> str:
     normalized = str(value).strip().lower()
     if normalized not in CACHE_MODE_VALUES:
         allowed = ", ".join(sorted(CACHE_MODE_VALUES))
-        raise ConfigError(f"Invalid cache mode: {value}. Expected one of: {allowed}.")
+        raise ConfigError(
+            tr(
+                "Invalid cache mode: {value_0}. Expected one of: {value_1}.",
+                value_0=value,
+                value_1=allowed,
+            )
+        )
     return normalized
 
 
@@ -162,9 +181,9 @@ def _normalize_cache_ttl_seconds(value: int | str | None) -> int:
     try:
         ttl = int(value)
     except (TypeError, ValueError) as exc:
-        raise ConfigError(f"Invalid cache TTL seconds: {value}") from exc
+        raise ConfigError(tr("Invalid cache TTL seconds: {value_0}", value_0=value)) from exc
     if ttl < 1:
-        raise ConfigError("Cache TTL seconds must be >= 1.")
+        raise ConfigError(tr("Cache TTL seconds must be >= 1."))
     return ttl
 
 
@@ -200,7 +219,7 @@ def add_profile(
 def use_profile(name: str) -> dict[str, Any]:
     config = load_config()
     if name not in config.get("profiles", {}):
-        raise ConfigError(f"Unknown profile: {name}")
+        raise ConfigError(tr("Unknown profile: {value_0}", value_0=name))
     config["active_profile"] = name
     save_config(config)
     return sanitized_profile(name, config["profiles"][name], active=True)
@@ -210,7 +229,7 @@ def remove_profile(name: str) -> dict[str, Any]:
     config = load_config()
     profiles = config.get("profiles", {})
     if name not in profiles:
-        raise ConfigError(f"Unknown profile: {name}")
+        raise ConfigError(tr("Unknown profile: {value_0}", value_0=name))
     removed = profiles.pop(name)
     if config.get("active_profile") == name:
         config["active_profile"] = next(iter(profiles), None)
@@ -243,7 +262,7 @@ def show_profile(name: str | None = None) -> dict[str, Any]:
         }
     profiles = config.get("profiles", {})
     if name not in profiles:
-        raise ConfigError(f"Unknown profile: {name}")
+        raise ConfigError(tr("Unknown profile: {value_0}", value_0=name))
     return sanitized_profile(name, profiles[name], active=(name == config.get("active_profile")))
 
 

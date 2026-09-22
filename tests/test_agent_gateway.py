@@ -15,7 +15,6 @@ from typing import Iterator
 import pytest
 
 import kaiten_cli.agent_gateway as agent_gateway
-
 from kaiten_cli.agent_gateway import (
     MAX_REQUEST_BODY_BYTES,
     AgentGatewayConfig,
@@ -181,6 +180,7 @@ def test_run_codex_uses_minimal_read_only_environment(tmp_path, monkeypatch):
         repo_root=tmp_path,
     )
     captured = {}
+    monkeypatch.setenv("KAITEN_CLI_LOCALE", "ru")
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "kaiten-secret")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-secret")
@@ -198,6 +198,7 @@ def test_run_codex_uses_minimal_read_only_environment(tmp_path, monkeypatch):
     assert run_codex("prompt", config, runner=runner) == "final answer"
 
     child_env = captured["env"]
+    assert child_env["KAITEN_CLI_LOCALE"] == "ru"
     assert child_env["KAITEN_DOMAIN"] == "sandbox"
     assert child_env["KAITEN_TOKEN"] == "kaiten-secret"
     assert child_env["OPENAI_API_KEY"] == "openai-secret"

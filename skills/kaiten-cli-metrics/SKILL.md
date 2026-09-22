@@ -7,6 +7,14 @@ description: Use when collecting Kanban metrics or operational analytics through
 
 Use this skill for lead time, cycle time, throughput, WIP, due-date performance, audit snapshots, and similar Kanban analytics.
 
+## Conversation locale
+
+Before every command, including discovery and JSON reads, pass `--locale ru`
+for a Russian conversation or `--locale en` for English/other languages.
+Update it when the user changes language. The explicit flag overrides
+`KAITEN_CLI_LOCALE`; without either, the CLI uses English. Add the flag to the
+examples below. Keep command names, JSON keys and user data unchanged.
+
 ## Source selection
 
 - Prefer `cards list-all` when the metric can be computed from card fields.

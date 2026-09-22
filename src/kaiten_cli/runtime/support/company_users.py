@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.support.pagination import (
     LEGACY_OVERSIZED_FIRST_PAGE,
     LEGACY_REPEATED_FIRST_PAGE,
@@ -12,7 +13,6 @@ from kaiten_cli.runtime.support.pagination import (
     OffsetPageGuard,
     report_legacy_pagination,
 )
-
 
 COMPANY_USERS_MAX_PAGE_SIZE = 100
 COMPANY_USERS_DEFAULT_MAX_PAGES = 100
@@ -24,10 +24,15 @@ def validate_company_users_list_all(tool, payload: dict[str, Any]) -> None:
     max_pages = payload.get("max_pages", COMPANY_USERS_DEFAULT_MAX_PAGES)
     if not isinstance(page_size, int) or not 1 <= page_size <= COMPANY_USERS_MAX_PAGE_SIZE:
         raise ValidationError(
-            f"Field page_size must be between 1 and {COMPANY_USERS_MAX_PAGE_SIZE}."
+            tr(
+                "Field page_size must be between 1 and {value_0}.",
+                value_0=COMPANY_USERS_MAX_PAGE_SIZE,
+            )
         )
     if not isinstance(max_pages, int) or not 1 <= max_pages <= COMPANY_USERS_MAX_PAGES:
-        raise ValidationError(f"Field max_pages must be between 1 and {COMPANY_USERS_MAX_PAGES}.")
+        raise ValidationError(
+            tr("Field max_pages must be between 1 and {value_0}.", value_0=COMPANY_USERS_MAX_PAGES)
+        )
 
 
 def _page_items(response: Any) -> list[Any]:
@@ -38,7 +43,7 @@ def _page_items(response: Any) -> list[Any]:
             value = response.get(key)
             if isinstance(value, list):
                 return value
-    raise ValidationError("Company users pagination expected a list response from Kaiten.")
+    raise ValidationError(tr("Company users pagination expected a list response from Kaiten."))
 
 
 async def execute_company_users_list_all(
@@ -61,8 +66,11 @@ async def execute_company_users_list_all(
 
     if reporter:
         reporter(
-            "execution: aggregated bounded pagination over /company/users "
-            f"with page_size={page_size} max_pages={max_pages}"
+            tr(
+                "execution: aggregated bounded pagination over /company/users with page_size={value_0} max_pages={value_1}",
+                value_0=page_size,
+                value_1=max_pages,
+            )
         )
 
     for page_index in range(max_pages):
@@ -93,15 +101,17 @@ async def execute_company_users_list_all(
             return users
         if page_state == REPEATED_PAGE_AFTER_PROGRESS:
             raise ValidationError(
-                "Company users pagination repeated a previously received page after progress; "
-                "refusing to return a possibly duplicated or truncated result."
+                tr(
+                    "Company users pagination repeated a previously received page after progress; refusing to return a possibly duplicated or truncated result."
+                )
             )
         users.extend(page)
         if len(page) < page_size:
             return users
 
     raise ValidationError(
-        "Company users pagination reached max_pages while the last page was full; "
-        f"refusing to return a silently truncated result ({len(users)} users read). "
-        "Increase --max-pages after reviewing the expected company size."
+        tr(
+            "Company users pagination reached max_pages while the last page was full; refusing to return a silently truncated result ({value_0} users read). Increase --max-pages after reviewing the expected company size.",
+            value_0=len(users),
+        )
     )

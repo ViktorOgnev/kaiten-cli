@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.snapshot_common import (
     DEFAULT_LOCAL_LIMIT,
     QUERY_FILTER_KEYS,
@@ -26,10 +27,12 @@ def validate_query_filter(tool, payload: dict[str, Any]) -> None:
     if filter_payload is None:
         return
     if not isinstance(filter_payload, dict):
-        raise ValidationError("Field filter must be an object.")
+        raise ValidationError(tr("Field filter must be an object."))
     unknown = sorted(set(filter_payload) - QUERY_FILTER_KEYS)
     if unknown:
-        raise ValidationError(f"Unknown query filter field(s): {', '.join(unknown)}")
+        raise ValidationError(
+            tr("Unknown query filter field(s): {value_0}", value_0=", ".join(unknown))
+        )
 
 
 def _matches_query_filter(record: dict[str, Any], filters: dict[str, Any]) -> bool:

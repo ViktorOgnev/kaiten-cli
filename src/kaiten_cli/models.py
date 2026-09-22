@@ -112,6 +112,7 @@ class ToolSpec:
     runtime_behavior: RuntimeBehavior = field(default_factory=RuntimeBehavior)
     examples: tuple[ExampleSpec, ...] = ()
     usage_notes: tuple[str, ...] = ()
+    search_terms: tuple[str, ...] = ()
     bulk_alternative: str | None = None
 
     @property
@@ -166,6 +167,7 @@ class ToolSpec:
 
 @dataclass(slots=True)
 class GlobalOptions:
+    locale: str = "en"
     json_mode: bool = False
     profile_name: str | None = None
     from_file: str | None = None

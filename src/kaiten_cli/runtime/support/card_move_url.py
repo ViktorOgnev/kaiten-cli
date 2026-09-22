@@ -7,6 +7,7 @@ from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.endpoints import KAITEN_HOST_SUFFIX, normalize_profile_domain
 
 COLUMN_CHILD_KEYS = ("columns", "subcolumns", "children")
@@ -34,7 +35,7 @@ def _domain_from_url(raw_url: str) -> str:
     parsed = urlparse(raw_url)
     hostname = (parsed.hostname or "").lower()
     if not hostname.endswith(KAITEN_HOST_SUFFIX):
-        raise ValidationError(f"URL must point to a Kaiten tenant: {raw_url}")
+        raise ValidationError(tr("URL must point to a Kaiten tenant: {value_0}", value_0=raw_url))
     return normalize_kaiten_domain(hostname)
 
 
@@ -48,7 +49,9 @@ def _space_id_from_segments(segments: list[str], *, raw_url: str) -> int:
         space_index = segments.index("space")
         return int(segments[space_index + 1])
     except (ValueError, IndexError) as exc:
-        raise ValidationError(f"URL must contain /space/<space_id>/: {raw_url}") from exc
+        raise ValidationError(
+            tr("URL must contain /space/<space_id>/: {value_0}", value_0=raw_url)
+        ) from exc
 
 
 def parse_card_url(raw_url: str) -> ParsedCardUrl:
@@ -59,9 +62,13 @@ def parse_card_url(raw_url: str) -> ParsedCardUrl:
             raise ValueError
         card_ref = segments[card_index + 1]
     except (ValueError, IndexError) as exc:
-        raise ValidationError(f"Card URL must contain /boards/card/<id-or-key>: {raw_url}") from exc
+        raise ValidationError(
+            tr("Card URL must contain /boards/card/<id-or-key>: {value_0}", value_0=raw_url)
+        ) from exc
     if not card_ref:
-        raise ValidationError(f"Card URL must contain a card ID or key: {raw_url}")
+        raise ValidationError(
+            tr("Card URL must contain a card ID or key: {value_0}", value_0=raw_url)
+        )
     return ParsedCardUrl(
         domain=_domain_from_url(raw_url),
         space_id=_space_id_from_segments(segments, raw_url=raw_url),
@@ -73,18 +80,20 @@ def parse_target_url(raw_url: str) -> ParsedTargetUrl:
     parsed = urlparse(raw_url)
     segments = _path_segments(raw_url)
     if "boards" not in segments:
-        raise ValidationError(f"Target URL must point to a board view: {raw_url}")
+        raise ValidationError(
+            tr("Target URL must point to a board view: {value_0}", value_0=raw_url)
+        )
     query = parse_qs(parsed.query)
     focus = (query.get("focus") or [""])[0]
     if focus != "column":
-        raise ValidationError("Target URL must use focus=column.")
+        raise ValidationError(tr("Target URL must use focus=column."))
     focus_ids = query.get("focusId")
     if not focus_ids or not focus_ids[0]:
-        raise ValidationError("Target URL must include focusId=<column_id>.")
+        raise ValidationError(tr("Target URL must include focusId=<column_id>."))
     try:
         column_id = int(focus_ids[0])
     except ValueError as exc:
-        raise ValidationError("Target URL focusId must be an integer column ID.") from exc
+        raise ValidationError(tr("Target URL focusId must be an integer column ID.")) from exc
     return ParsedTargetUrl(
         domain=_domain_from_url(raw_url),
         space_id=_space_id_from_segments(segments, raw_url=raw_url),
@@ -96,8 +105,13 @@ def validate_url_domain(url_domain: str, profile_domain: str, *, label: str) -> 
     normalized_profile = normalize_kaiten_domain(profile_domain)
     if url_domain != normalized_profile:
         raise ValidationError(
-            f"{label} host {url_domain}.kaiten.ru does not match profile domain "
-            f"{normalized_profile}.kaiten.ru. Pass --profile for the {url_domain} tenant."
+            tr(
+                "{value_0} host {value_1}.kaiten.ru does not match profile domain {value_2}.kaiten.ru. Pass --profile for the {value_3} tenant.",
+                value_0=label,
+                value_1=url_domain,
+                value_2=normalized_profile,
+                value_3=url_domain,
+            )
         )
 
 
@@ -139,7 +153,9 @@ async def resolve_move_target(
 ) -> dict[str, Any]:
     boards = await client.get(f"/spaces/{target.space_id}/boards", timeout=timeout)
     if not isinstance(boards, list):
-        raise ValidationError(f"Expected a board list for space {target.space_id}.")
+        raise ValidationError(
+            tr("Expected a board list for space {value_0}.", value_0=target.space_id)
+        )
 
     for board_summary in boards:
         if not isinstance(board_summary, dict) or "id" not in board_summary:
@@ -161,13 +177,21 @@ async def resolve_move_target(
             lane_ids = {lane.get("id") for lane in lanes}
             if lane_ids and resolved_lane_id not in lane_ids:
                 raise ValidationError(
-                    f"Lane {resolved_lane_id} does not belong to target board {board_id}."
+                    tr(
+                        "Lane {value_0} does not belong to target board {value_1}.",
+                        value_0=resolved_lane_id,
+                        value_1=board_id,
+                    )
                 )
         elif len(lanes) == 1 and isinstance(lanes[0].get("id"), int):
             resolved_lane_id = lanes[0]["id"]
         elif len(lanes) > 1:
             raise ValidationError(
-                f"Target board {board_id} has {len(lanes)} lanes; pass --lane-id explicitly."
+                tr(
+                    "Target board {value_0} has {value_1} lanes; pass --lane-id explicitly.",
+                    value_0=board_id,
+                    value_1=len(lanes),
+                )
             )
 
         return {
@@ -180,4 +204,10 @@ async def resolve_move_target(
             "lane_title": lane_title(board, resolved_lane_id),
         }
 
-    raise ValidationError(f"Column {target.column_id} was not found in space {target.space_id}.")
+    raise ValidationError(
+        tr(
+            "Column {value_0} was not found in space {value_1}.",
+            value_0=target.column_id,
+            value_1=target.space_id,
+        )
+    )

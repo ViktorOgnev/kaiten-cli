@@ -6,6 +6,7 @@ import time
 from typing import Any
 
 from kaiten_cli.errors import ConfigError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import CACHE_POLICY_PERSISTENT_HEAVY
 from kaiten_cli.runtime.snapshot_common import (
     SNAPSHOT_PRESETS,
@@ -33,19 +34,21 @@ def _validate_snapshot_build_payload(payload: dict[str, Any]) -> None:
     preset = payload.get("preset", "basic")
     if preset not in SNAPSHOT_PRESETS:
         allowed = ", ".join(sorted(SNAPSHOT_PRESETS))
-        raise ValidationError(f"Field preset must be one of: {allowed}.")
+        raise ValidationError(tr("Field preset must be one of: {value_0}.", value_0=allowed))
     if preset in WINDOW_PRESETS:
         if not payload.get("window_start") or not payload.get("window_end"):
             raise ValidationError(
-                "Fields window_start and window_end are required for analytics and full snapshots."
+                tr(
+                    "Fields window_start and window_end are required for analytics and full snapshots."
+                )
             )
     start = _parse_timestamp(payload.get("window_start"))
     end = _parse_timestamp(payload.get("window_end"))
     if start is not None and end is not None and start > end:
-        raise ValidationError("window_start must be <= window_end.")
+        raise ValidationError(tr("window_start must be <= window_end."))
     board_ids = payload.get("board_ids")
     if board_ids is not None and (not isinstance(board_ids, list) or not board_ids):
-        raise ValidationError("Field board_ids must be a non-empty array when provided.")
+        raise ValidationError(tr("Field board_ids must be a non-empty array when provided."))
 
 
 def validate_snapshot_build(tool, payload: dict[str, Any]) -> None:
@@ -103,8 +106,12 @@ async def _measure_stage(client, reporter, name: str, callback):
     }
     if reporter is not None:
         reporter(
-            f"snapshot-stage: name={name} duration_ms={stage['duration_ms']:.2f} "
-            f"http_requests={stage['http_request_count']}"
+            tr(
+                "snapshot-stage: name={value_0} duration_ms={value_1:.2f} http_requests={value_2}",
+                value_0=name,
+                value_1=stage["duration_ms"],
+                value_2=stage["http_request_count"],
+            )
         )
     return data, stage
 
@@ -424,7 +431,7 @@ async def execute_snapshot_build(
     reporter,
 ) -> Any:
     if client is None or client.execution_context is None:
-        raise ConfigError("snapshot.build requires an active Kaiten profile.")
+        raise ConfigError(tr("snapshot.build requires an active Kaiten profile."))
     spec = {
         "name": payload["name"],
         "space_id": int(payload["space_id"]),
@@ -436,7 +443,12 @@ async def execute_snapshot_build(
     _validate_snapshot_build_payload(spec)
     if reporter is not None:
         reporter(
-            f"execution: local snapshot build name={spec['name']} preset={spec['preset']} space_id={spec['space_id']}"
+            tr(
+                "execution: local snapshot build name={value_0} preset={value_1} space_id={value_2}",
+                value_0=spec["name"],
+                value_1=spec["preset"],
+                value_2=spec["space_id"],
+            )
         )
     return await _build_snapshot(
         client=client, payload=payload, reporter=reporter, timeout=timeout, spec=spec
@@ -454,17 +466,22 @@ async def execute_snapshot_refresh(
     reporter,
 ) -> Any:
     if client is None or client.execution_context is None:
-        raise ConfigError("snapshot.refresh requires an active Kaiten profile.")
+        raise ConfigError(tr("snapshot.refresh requires an active Kaiten profile."))
     store = SnapshotStore(reporter=reporter)
     store.ensure_writable()
     existing = store.get_snapshot(payload["name"])
     if existing["domain"] and existing["domain"] != client.domain:
         raise ConfigError(
-            f"Snapshot {payload['name']} was built for domain {existing['domain']}, current profile uses {client.domain}."
+            tr(
+                "Snapshot {value_0} was built for domain {value_1}, current profile uses {value_2}.",
+                value_0=payload["name"],
+                value_1=existing["domain"],
+                value_2=client.domain,
+            )
         )
     spec = dict(existing["spec"])
     if reporter is not None:
-        reporter(f"execution: local snapshot refresh name={spec['name']}")
+        reporter(tr("execution: local snapshot refresh name={value_0}", value_0=spec["name"]))
     await client.execution_context.clear_cache_scope(reason="snapshot-refresh")
     return await _build_snapshot(
         client=client, payload=payload, reporter=reporter, timeout=timeout, spec=spec

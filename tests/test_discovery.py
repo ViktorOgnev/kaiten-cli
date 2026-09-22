@@ -126,11 +126,11 @@ def test_describe_tool_disambiguates_catalog_meanings():
     document_group = describe_tool("document-groups.create")
     tree = describe_tool("tree.get")
 
-    assert any("справочник" in note for note in custom_directory["usage_notes"])
+    assert any("catalog table" in note for note in custom_directory["usage_notes"])
     assert any("before a mutation" in note for note in custom_directory["usage_notes"])
-    assert any("card field of type `Справочник`" in note for note in custom_property["usage_notes"])
+    assert any("catalog card field" in note for note in custom_property["usage_notes"])
     assert any("property catalog options/values" in note for note in catalog_value["usage_notes"])
-    assert any("card field of type `Справочник`" in note for note in catalog_value["usage_notes"])
+    assert any("catalog card field" in note for note in catalog_value["usage_notes"])
     assert any("document folders/containers" in note for note in document_group["usage_notes"])
     assert any("internal fetched entity index" in note for note in tree["usage_notes"])
 

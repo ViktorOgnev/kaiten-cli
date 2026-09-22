@@ -6,7 +6,6 @@ from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, Runtim
 from kaiten_cli.registry.base import make_tool
 from kaiten_cli.runtime.behaviors import encode_object_query_request, payload_body_request
 
-
 DIRECTORY_ID = {"type": "string", "description": "Custom directory ID (UUID)."}
 FIELD_ID = {"type": "string", "description": "Custom directory field ID (UUID)."}
 RECORD_ID = {"type": "string", "description": "Custom directory record ID (UUID)."}
@@ -20,13 +19,13 @@ PAYLOAD = {
 }
 
 CATALOG_USAGE_NOTES = (
-    "Kaiten UI calls this feature `Каталоги`; Developers API calls it `custom-directories`; users may also call it `справочник`, `catalog`, or `directory`.",
-    "For a `справочник-таблица`, `справочник таблица`, or `табличный справочник`, use these commands.",
+    "Kaiten Catalogs are table-like directories exposed by the Developers API as `custom-directories`.",
+    "Use these commands for a catalog table with fields and records.",
     "Use these commands for table/database-like catalogs with fields and records, such as clients, contacts, equipment, or contractors.",
     "`custom-directories` manages the catalog itself, `custom-directory-fields` manages table columns, and `custom-directory-records` manages table rows.",
     "Do not confuse this with `custom-properties catalog-values`, which manages values for custom fields of type catalog.",
     "Do not confuse this with document folders/containers; those use `document-groups.*` and tree navigation.",
-    "If a request says only `каталог`, `справочник`, or `catalog` before a mutation, clarify whether it means UI `Каталоги`, a card field of type `Справочник` (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.",
+    "If a request says only `catalog` or `directory` before a mutation, clarify whether it means a catalog table (`custom-directories`), a catalog card field (`custom-properties.*`), its values (`custom-properties catalog-values`), or document groups.",
     "The Developers API marks custom directories, fields, and records as beta; parameters and response formats may change.",
 )
 
@@ -81,6 +80,14 @@ TOOLS = (
                 description="List Catalogs with field metadata and record counts.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -114,6 +121,14 @@ TOOLS = (
                 command="kaiten --json custom-directories get --directory-id dir-uuid",
                 description="Get a Catalog.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -255,6 +270,14 @@ TOOLS = (
                 command='kaiten --json custom-directories create --name "Contacts" --settings \'{"multi_select":false,"allow_editing":true}\'',
                 description="Create a Catalog.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -398,6 +421,14 @@ TOOLS = (
                 description="Update a Catalog.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -419,6 +450,14 @@ TOOLS = (
                 command="kaiten --json custom-directories delete --directory-id dir-uuid",
                 description="Delete a Catalog.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -452,6 +491,14 @@ TOOLS = (
                 description="List Catalog fields.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -473,6 +520,14 @@ TOOLS = (
                 command="kaiten --json custom-directory-fields get --directory-id dir-uuid --field-id field-uuid",
                 description="Get a Catalog field.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -529,6 +584,14 @@ TOOLS = (
                 description="Create a Catalog field.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -578,6 +641,14 @@ TOOLS = (
                 description="Update a Catalog field.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -599,6 +670,14 @@ TOOLS = (
                 command="kaiten --json custom-directory-fields delete --directory-id dir-uuid --field-id field-uuid",
                 description="Delete a Catalog field.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -666,6 +745,14 @@ TOOLS = (
                 description="List Catalog records.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -700,6 +787,14 @@ TOOLS = (
                 command="kaiten --json custom-directory-records get --directory-id dir-uuid --record-id record-uuid",
                 description="Get a Catalog record.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -740,6 +835,14 @@ TOOLS = (
                 command='kaiten --json custom-directory-records create --directory-id dir-uuid --values \'{"field-uuid":"Alice"}\'',
                 description="Create a Catalog record.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -790,6 +893,14 @@ TOOLS = (
                 description="Update a Catalog record.",
             ),
         ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
+        ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
     make_tool(
@@ -811,6 +922,14 @@ TOOLS = (
                 command="kaiten --json custom-directory-records delete --directory-id dir-uuid --record-id record-uuid",
                 description="Delete a Catalog record.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),
@@ -847,6 +966,14 @@ TOOLS = (
                 command="kaiten --json custom-directory-records cards list --directory-id dir-uuid --record-id record-uuid",
                 description="List cards linked to a Catalog record.",
             ),
+        ),
+        search_terms=(
+            "каталог",
+            "каталоги",
+            "справочник",
+            "справочник-таблица",
+            "справочник таблица",
+            "табличный справочник",
         ),
         usage_notes=CATALOG_USAGE_NOTES,
     ),

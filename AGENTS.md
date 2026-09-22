@@ -11,6 +11,17 @@ For optimized LLM workflows, start with:
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
 - [skills/kaiten-cli-mutations/SKILL.md](skills/kaiten-cli-mutations/SKILL.md)
 
+## Conversation locale
+
+Pass `--locale ru` for Russian conversations and `--locale en` for English or
+other languages, before the command name in every invocation, including help,
+discovery and `--json`. Change it when the user changes the conversation language.
+Explicit `--locale` overrides `KAITEN_CLI_LOCALE`; the default is `en`.
+The CLI does not infer conversation language from the operating system.
+Only CLI-owned prose is localized; command names, JSON keys, enum values and
+Kaiten/user data remain unchanged. Examples below omit the locale for brevity;
+add the current conversation locale when executing them.
+
 ## Discovery-first flow
 
 Prefer this sequence before calling mutations or heavy commands:

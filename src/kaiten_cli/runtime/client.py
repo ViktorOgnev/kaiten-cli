@@ -15,6 +15,7 @@ import httpx
 
 from kaiten_cli import __version__
 from kaiten_cli.errors import ApiError, ConfigError, TransportError
+from kaiten_cli.i18n import tr
 from kaiten_cli.models import CACHE_POLICY_NONE, DebugReporter
 from kaiten_cli.runtime.cache import ExecutionContext
 from kaiten_cli.runtime.endpoints import profile_api_base_url, profile_origin
@@ -56,9 +57,9 @@ class KaitenClient:
         mutates_remote_state: bool = True,
     ):
         if not domain:
-            raise ConfigError("KAITEN_DOMAIN is required")
+            raise ConfigError(tr("KAITEN_DOMAIN is required"))
         if not token:
-            raise ConfigError("KAITEN_TOKEN is required")
+            raise ConfigError(tr("KAITEN_TOKEN is required"))
         self.domain = domain
         self.token = token
         self._reporter = reporter
@@ -132,9 +133,12 @@ class KaitenClient:
     @staticmethod
     def _ambiguous_mutation_error(method: str, path: str, detail: str) -> TransportError:
         return TransportError(
-            f"{detail} calling {method} {path}. The request was not retried because it may "
-            "have changed Kaiten; the remote outcome is unknown. Verify the remote state with "
-            "--cache-mode off or --cache-mode refresh before retrying."
+            tr(
+                "{value_0} calling {value_1} {value_2}. The request was not retried because it may have changed Kaiten; the remote outcome is unknown. Verify the remote state with --cache-mode off or --cache-mode refresh before retrying.",
+                value_0=detail,
+                value_1=method,
+                value_2=path,
+            )
         )
 
     async def _request(
@@ -184,8 +188,15 @@ class KaitenClient:
                             response.headers.get("X-RateLimit-Reset")
                         )
                     delay = self._retry_delay(attempt, parsed_retry_after)
-                    self._debug(f"retry: rate-limited on {method} {path}, waiting {delay:.2f}s")
-                    logger.warning("Rate limited, retrying after %.2fs", delay)
+                    self._debug(
+                        tr(
+                            "retry: rate-limited on {value_0} {value_1}, waiting {value_2:.2f}s",
+                            value_0=method,
+                            value_1=path,
+                            value_2=delay,
+                        )
+                    )
+                    logger.warning(tr("Rate limited, retrying after %.2fs"), delay)
                     if self.execution_context is not None:
                         self.execution_context.stats.retry_count += 1
                     await asyncio.sleep(delay)
@@ -213,13 +224,19 @@ class KaitenClient:
                 except ValueError as exc:
                     if mutation_attempt:
                         raise TransportError(
-                            f"HTTP {response.status_code} succeeded for {method} {path}, but the "
-                            "response was not valid JSON. The remote change may have been applied; "
-                            "verify the remote state with --cache-mode off or --cache-mode refresh "
-                            "before retrying."
+                            tr(
+                                "HTTP {value_0} succeeded for {value_1} {value_2}, but the response was not valid JSON. The remote change may have been applied; verify the remote state with --cache-mode off or --cache-mode refresh before retrying.",
+                                value_0=response.status_code,
+                                value_1=method,
+                                value_2=path,
+                            )
                         ) from exc
                     raise TransportError(
-                        f"Kaiten returned invalid JSON for {method} {path}."
+                        tr(
+                            "Kaiten returned invalid JSON for {value_0} {value_1}.",
+                            value_0=method,
+                            value_1=path,
+                        )
                     ) from exc
             except ApiError:
                 raise
@@ -233,15 +250,25 @@ class KaitenClient:
                         error=True,
                     )
                 if mutation_attempt:
-                    raise self._ambiguous_mutation_error(method, path, "Timeout") from exc
+                    raise self._ambiguous_mutation_error(method, path, tr("Timeout")) from exc
                 if not retryable:
-                    raise TransportError(f"Timeout calling Kaiten API: {exc}") from exc
+                    raise TransportError(
+                        tr("Timeout calling Kaiten API: {value_0}", value_0=exc)
+                    ) from exc
                 if attempt == attempts - 1:
-                    raise TransportError(f"Timeout calling Kaiten API: {exc}") from exc
+                    raise TransportError(
+                        tr("Timeout calling Kaiten API: {value_0}", value_0=exc)
+                    ) from exc
                 delay = self._retry_delay(attempt)
                 self._debug(
-                    f"retry: timeout on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
-                    f"waiting {delay:.2f}s"
+                    tr(
+                        "retry: timeout on {value_0} {value_1}, attempt {value_2}/{value_3}, waiting {value_4:.2f}s",
+                        value_0=method,
+                        value_1=path,
+                        value_2=attempt + 1,
+                        value_3=MAX_RETRIES,
+                        value_4=delay,
+                    )
                 )
                 if self.execution_context is not None:
                     self.execution_context.stats.retry_count += 1
@@ -256,21 +283,29 @@ class KaitenClient:
                         error=True,
                     )
                 if mutation_attempt:
-                    raise self._ambiguous_mutation_error(method, path, "Connection error") from exc
+                    raise self._ambiguous_mutation_error(
+                        method, path, tr("Connection error")
+                    ) from exc
                 if not retryable:
-                    raise TransportError(f"Connection error: {exc}") from exc
+                    raise TransportError(tr("Connection error: {value_0}", value_0=exc)) from exc
                 if attempt == attempts - 1:
-                    raise TransportError(f"Connection error: {exc}") from exc
+                    raise TransportError(tr("Connection error: {value_0}", value_0=exc)) from exc
                 delay = self._retry_delay(attempt)
                 self._debug(
-                    f"retry: transport error on {method} {path}, attempt {attempt + 1}/{MAX_RETRIES}, "
-                    f"waiting {delay:.2f}s"
+                    tr(
+                        "retry: transport error on {value_0} {value_1}, attempt {value_2}/{value_3}, waiting {value_4:.2f}s",
+                        value_0=method,
+                        value_1=path,
+                        value_2=attempt + 1,
+                        value_3=MAX_RETRIES,
+                        value_4=delay,
+                    )
                 )
                 if self.execution_context is not None:
                     self.execution_context.stats.retry_count += 1
                 await asyncio.sleep(delay)
 
-        raise TransportError("Rate limit retries exhausted")
+        raise TransportError(tr("Rate limit retries exhausted"))
 
     async def get(
         self, path: str, *, params: dict[str, Any] | None = None, timeout: float = DEFAULT_TIMEOUT

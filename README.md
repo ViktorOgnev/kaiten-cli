@@ -217,6 +217,26 @@ export KAITEN_CLI_UPDATE_CHECK=0
 python -m kaiten_cli --help
 ```
 
+## Язык вывода
+
+`kaiten --locale ru --help` выводит справку по-русски, `--locale en` — по-английски.
+Приоритет: явный `--locale` → `KAITEN_CLI_LOCALE` → `en`.
+Системные `LANG`/`LC_ALL` и профиль не выбирают язык CLI. Флаг ставится перед
+именем команды; агент передаёт его по языку текущего разговора.
+
+```bash
+kaiten --locale ru --json describe cards.list
+kaiten --locale en search-tools карточки
+KAITEN_CLI_LOCALE=ru kaiten cards --help
+```
+
+Переводятся справка, описания инструментов и полей, рекомендации и собственные
+ошибки CLI, в том числе в JSON. Имена команд, ключи JSON, коды ошибок, значения
+перечислений и данные Kaiten сохраняются. Поиск понимает русские и английские
+описания независимо от языка ответа. Для остальных языков агент использует `en`.
+
+Проверка каталога: `python scripts/check_locales.py`.
+
 ## Карта документации
 
 - [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)

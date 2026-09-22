@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from kaiten_cli.errors import ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.fs_security import open_private_append
 
 REDACTED_ARG_VALUE = "[REDACTED]"
@@ -327,7 +328,9 @@ def summarize_trace(path: str | Path) -> dict[str, Any]:
     try:
         handle = trace_path.open("r", encoding="utf-8", errors="replace")
     except OSError as exc:
-        raise ValidationError(f"Unable to read trace file: {type(exc).__name__}.") from exc
+        raise ValidationError(
+            tr("Unable to read trace file: {value_0}.", value_0=type(exc).__name__)
+        ) from exc
 
     with handle:
         for line in handle:

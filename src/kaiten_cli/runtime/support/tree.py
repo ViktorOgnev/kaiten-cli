@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from kaiten_cli.errors import ConfigError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.support.pagination import fetch_all_offset_pages
 
 TREE_PAGE_LIMIT = 100
@@ -116,7 +117,7 @@ def build_tree(
     entities: list[dict[str, Any]], root_uid: str | None, max_depth: int
 ) -> list[dict[str, Any]]:
     if root_uid is not None and not any(entity["uid"] == root_uid for entity in entities):
-        raise ConfigError(f"Entity with uid '{root_uid}' not found")
+        raise ConfigError(tr("Entity with uid '{value_0}' not found", value_0=root_uid))
 
     known_uids = {entity.get("uid") for entity in entities}
     by_parent: dict[str | None, list[dict[str, Any]]] = {}

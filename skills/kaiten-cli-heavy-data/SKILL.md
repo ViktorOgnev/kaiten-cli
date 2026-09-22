@@ -7,6 +7,14 @@ description: Use when working with large Kaiten reads, exports, audits, or repea
 
 Use this skill when the task smells like bulk reads, exports, audits, migrations, cross-board scans, or repeated card/history fetches.
 
+## Conversation locale
+
+Before every command, including discovery and JSON reads, pass `--locale ru`
+for a Russian conversation or `--locale en` for English/other languages.
+Update it when the user changes language. The explicit flag overrides
+`KAITEN_CLI_LOCALE`; without either, the CLI uses English. Add the flag to the
+examples below. Keep command names, JSON keys and user data unchanged.
+
 ## Core rules
 
 - Start with discovery: `kaiten search-tools ...` and `kaiten describe ...`.

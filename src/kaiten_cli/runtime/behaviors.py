@@ -6,11 +6,13 @@ import json
 from typing import Any
 
 from kaiten_cli.errors import BatchExecutionError, ValidationError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.support.audit import (
     DEFAULT_HISTORY_WORKERS,
     fetch_all_space_activity,
     fetch_card_location_histories,
 )
+from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
 from kaiten_cli.runtime.support.card_move_url import (
     parse_card_url,
     parse_target_url,
@@ -20,14 +22,13 @@ from kaiten_cli.runtime.support.card_move_url import (
 from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_get
 from kaiten_cli.runtime.support.checklists import extract_card_checklists, extract_checklist_items
 from kaiten_cli.runtime.support.documents import prepare_document_body
-from kaiten_cli.runtime.support.projects import fetch_project_cards
 from kaiten_cli.runtime.support.pagination import (
     API_MAX_PAGE_SIZE,
     DEFAULT_COLLECTION_MAX_PAGES,
 )
+from kaiten_cli.runtime.support.projects import fetch_project_cards
 from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
 from kaiten_cli.runtime.support.spaces import fetch_space_topology
-from kaiten_cli.runtime.support.batch import MAX_BATCH_WORKERS
 from kaiten_cli.runtime.support.time_logs import fetch_time_logs_batch
 from kaiten_cli.runtime.support.tree import build_tree, fetch_all_entities, list_children
 from kaiten_cli.runtime.transforms import compact_response, select_fields, strip_base64
@@ -228,7 +229,7 @@ def payload_body_request(
     payload_body = shaped.pop("payload", None)
     if payload_body is not None:
         if not isinstance(payload_body, dict):
-            raise ValidationError("Field payload must be a JSON object.")
+            raise ValidationError(tr("Field payload must be a JSON object."))
         shaped.update(payload_body)
     return path, query, shaped or None
 
@@ -246,9 +247,9 @@ def encode_object_query_request(
 def reject_custom_property_include_values(tool, payload: dict[str, Any]) -> None:
     if payload.get("include_values") is True:
         raise ValidationError(
-            "Field include_values is no longer supported by Kaiten Public API. "
-            "List Select options with `kaiten custom-properties select-values list` "
-            "and Catalog entries with `kaiten custom-properties catalog-values list`."
+            tr(
+                "Field include_values is no longer supported by Kaiten Public API. List Select options with `kaiten custom-properties select-values list` and Catalog entries with `kaiten custom-properties catalog-values list`."
+            )
         )
 
 
@@ -266,16 +267,18 @@ def validate_cards_list_all_selection(tool, payload: dict[str, Any]) -> None:
     if selection is None:
         return
     if "archived" in payload or "condition" in payload:
-        raise ValidationError("Field selection cannot be combined with archived or condition.")
+        raise ValidationError(tr("Field selection cannot be combined with archived or condition."))
 
 
 def validate_card_id_batch(tool, payload: dict[str, Any]) -> None:
     card_ids = payload.get("card_ids")
     if not isinstance(card_ids, list) or not card_ids:
-        raise ValidationError("Field card_ids must be a non-empty array.")
+        raise ValidationError(tr("Field card_ids must be a non-empty array."))
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if workers < 1 or workers > MAX_BATCH_WORKERS:
-        raise ValidationError(f"Field workers must be between 1 and {MAX_BATCH_WORKERS}.")
+        raise ValidationError(
+            tr("Field workers must be between 1 and {value_0}.", value_0=MAX_BATCH_WORKERS)
+        )
 
 
 validate_history_batch_get = validate_card_id_batch
@@ -294,7 +297,7 @@ async def execute_blockers_get(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: custom read by filtering the blockers list")
+        reporter(tr("execution: custom read by filtering the blockers list"))
     blockers = await client.get(path, params=query, timeout=timeout)
     if not isinstance(blockers, list):
         return blockers
@@ -316,7 +319,7 @@ async def execute_tree_children_list(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated read from spaces, documents, and document groups")
+        reporter(tr("execution: aggregated read from spaces, documents, and document groups"))
     entities = await fetch_all_entities(client, timeout=timeout, reporter=reporter)
     return list_children(entities, payload.get("parent_entity_uid"))
 
@@ -332,7 +335,7 @@ async def execute_tree_get(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated tree build from spaces, documents, and document groups")
+        reporter(tr("execution: aggregated tree build from spaces, documents, and document groups"))
     entities = await fetch_all_entities(client, timeout=timeout, reporter=reporter)
     return build_tree(entities, payload.get("root_uid"), payload.get("depth", 0))
 
@@ -348,7 +351,7 @@ async def execute_project_cards_list(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: synthetic read with direct endpoint and embedded project fallback")
+        reporter(tr("execution: synthetic read with direct endpoint and embedded project fallback"))
     return await fetch_project_cards(
         client, str(payload["project_id"]), timeout=timeout, reporter=reporter
     )
@@ -365,7 +368,7 @@ async def execute_cards_list_all(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated bounded pagination over /cards")
+        reporter(tr("execution: aggregated bounded pagination over /cards"))
     return await fetch_all_cards(client, payload, timeout=timeout)
 
 
@@ -378,7 +381,7 @@ def _shape_move_by_url_card(card: Any, payload: dict[str, Any]) -> Any:
 
 def _verify_moved_card(card: Any, target: dict[str, Any]) -> None:
     if not isinstance(card, dict):
-        raise ValidationError("Move verification failed: final card response is not an object.")
+        raise ValidationError(tr("Move verification failed: final card response is not an object."))
 
     expected = {
         "board_id": target["board_id"],
@@ -388,12 +391,19 @@ def _verify_moved_card(card: Any, target: dict[str, Any]) -> None:
         expected["lane_id"] = target["lane_id"]
 
     mismatches = [
-        f"{key}: expected {value}, got {card.get(key)}"
+        tr(
+            "{key}: expected {expected}, got {actual}",
+            key=key,
+            expected=value,
+            actual=card.get(key),
+        )
         for key, value in expected.items()
         if card.get(key) != value
     ]
     if mismatches:
-        raise ValidationError("Move verification failed: " + "; ".join(mismatches))
+        raise ValidationError(
+            tr("Move verification failed: {details}", details="; ".join(mismatches))
+        )
 
 
 async def execute_cards_move_by_url(
@@ -407,12 +417,12 @@ async def execute_cards_move_by_url(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated card move by Kaiten UI URLs")
+        reporter(tr("execution: aggregated card move by Kaiten UI URLs"))
 
     card_url = parse_card_url(payload["card_url"])
     target_url = parse_target_url(payload["target_url"])
-    validate_url_domain(card_url.domain, client.domain, label="Card URL")
-    validate_url_domain(target_url.domain, client.domain, label="Target URL")
+    validate_url_domain(card_url.domain, client.domain, label=tr("Card URL"))
+    validate_url_domain(target_url.domain, client.domain, label=tr("Target URL"))
 
     target = await resolve_move_target(
         client,
@@ -467,8 +477,10 @@ async def execute_card_location_history_batch_get(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            "execution: aggregated batch history fetch over /cards/{card_id}/location-history "
-            f"with workers={workers}"
+            tr(
+                "execution: aggregated batch history fetch over /cards/{{card_id}}/location-history with workers={value_0}",
+                value_0=workers,
+            )
         )
     result = await fetch_card_location_histories(
         domain=client.domain,
@@ -484,13 +496,17 @@ async def execute_card_location_history_batch_get(
     if reporter:
         meta = result["meta"]
         reporter(
-            "batch-history: "
-            f"requested={meta['requested_count']} unique={meta['unique_count']} "
-            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+            tr(
+                "batch-history: requested={value_0} unique={value_1} succeeded={value_2} failed={value_3}",
+                value_0=meta["requested_count"],
+                value_1=meta["unique_count"],
+                value_2=meta["succeeded"],
+                value_3=meta["failed"],
+            )
         )
     if result["meta"]["succeeded"] == 0:
         raise BatchExecutionError(
-            "Failed to fetch location history for all requested cards.", result
+            tr("Failed to fetch location history for all requested cards."), result
         )
     return result
 
@@ -508,8 +524,10 @@ async def execute_card_children_batch_list(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            "execution: aggregated batch relation fetch over /cards/{card_id}/children "
-            f"with workers={workers}"
+            tr(
+                "execution: aggregated batch relation fetch over /cards/{{card_id}}/children with workers={value_0}",
+                value_0=workers,
+            )
         )
     result = await fetch_card_children_batch(
         domain=client.domain,
@@ -528,12 +546,18 @@ async def execute_card_children_batch_list(
     if reporter:
         meta = result["meta"]
         reporter(
-            "batch-children: "
-            f"requested={meta['requested_count']} unique={meta['unique_count']} "
-            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+            tr(
+                "batch-children: requested={value_0} unique={value_1} succeeded={value_2} failed={value_3}",
+                value_0=meta["requested_count"],
+                value_1=meta["unique_count"],
+                value_2=meta["succeeded"],
+                value_3=meta["failed"],
+            )
         )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to fetch child cards for all requested cards.", result)
+        raise BatchExecutionError(
+            tr("Failed to fetch child cards for all requested cards."), result
+        )
     return result
 
 
@@ -550,7 +574,10 @@ async def execute_cards_batch_get(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            f"execution: aggregated batch card read over /cards/{{card_id}} with workers={workers}"
+            tr(
+                "execution: aggregated batch card read over /cards/{{card_id}} with workers={value_0}",
+                value_0=workers,
+            )
         )
     result = await fetch_cards_batch_get(
         domain=client.domain,
@@ -567,12 +594,16 @@ async def execute_cards_batch_get(
     if reporter:
         meta = result["meta"]
         reporter(
-            "batch-cards: "
-            f"requested={meta['requested_count']} unique={meta['unique_count']} "
-            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+            tr(
+                "batch-cards: requested={value_0} unique={value_1} succeeded={value_2} failed={value_3}",
+                value_0=meta["requested_count"],
+                value_1=meta["unique_count"],
+                value_2=meta["succeeded"],
+                value_3=meta["failed"],
+            )
         )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to fetch cards for all requested card IDs.", result)
+        raise BatchExecutionError(tr("Failed to fetch cards for all requested card IDs."), result)
     return result
 
 
@@ -587,7 +618,7 @@ async def execute_checklists_list(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: synthetic checklist read from /cards/{card_id} payload")
+        reporter(tr("execution: synthetic checklist read from /cards/{card_id} payload"))
     card = await client.get(path, timeout=timeout)
     return extract_card_checklists(card if isinstance(card, dict) else {})
 
@@ -603,7 +634,7 @@ async def execute_checklist_items_list(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: synthetic checklist item read from /cards/{card_id} payload")
+        reporter(tr("execution: synthetic checklist item read from /cards/{card_id} payload"))
     card = await client.get(path, timeout=timeout)
     return extract_checklist_items(card if isinstance(card, dict) else {}, payload["checklist_id"])
 
@@ -621,8 +652,10 @@ async def execute_comments_batch_list(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            "execution: aggregated batch comment fetch over /cards/{card_id}/comments "
-            f"with workers={workers}"
+            tr(
+                "execution: aggregated batch comment fetch over /cards/{{card_id}}/comments with workers={value_0}",
+                value_0=workers,
+            )
         )
     result = await fetch_comments_batch(
         domain=client.domain,
@@ -641,12 +674,16 @@ async def execute_comments_batch_list(
     if reporter:
         meta = result["meta"]
         reporter(
-            "batch-comments: "
-            f"requested={meta['requested_count']} unique={meta['unique_count']} "
-            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+            tr(
+                "batch-comments: requested={value_0} unique={value_1} succeeded={value_2} failed={value_3}",
+                value_0=meta["requested_count"],
+                value_1=meta["unique_count"],
+                value_2=meta["succeeded"],
+                value_3=meta["failed"],
+            )
         )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to fetch comments for all requested cards.", result)
+        raise BatchExecutionError(tr("Failed to fetch comments for all requested cards."), result)
     return result
 
 
@@ -663,8 +700,10 @@ async def execute_time_logs_batch_list(
     workers = payload.get("workers", DEFAULT_HISTORY_WORKERS)
     if reporter:
         reporter(
-            "execution: aggregated batch time-log fetch over /cards/{card_id}/time-logs "
-            f"with workers={workers}"
+            tr(
+                "execution: aggregated batch time-log fetch over /cards/{{card_id}}/time-logs with workers={value_0}",
+                value_0=workers,
+            )
         )
     result = await fetch_time_logs_batch(
         domain=client.domain,
@@ -685,12 +724,16 @@ async def execute_time_logs_batch_list(
     if reporter:
         meta = result["meta"]
         reporter(
-            "batch-time-logs: "
-            f"requested={meta['requested_count']} unique={meta['unique_count']} "
-            f"succeeded={meta['succeeded']} failed={meta['failed']}"
+            tr(
+                "batch-time-logs: requested={value_0} unique={value_1} succeeded={value_2} failed={value_3}",
+                value_0=meta["requested_count"],
+                value_1=meta["unique_count"],
+                value_2=meta["succeeded"],
+                value_3=meta["failed"],
+            )
         )
     if result["meta"]["succeeded"] == 0:
-        raise BatchExecutionError("Failed to fetch time logs for all requested cards.", result)
+        raise BatchExecutionError(tr("Failed to fetch time logs for all requested cards."), result)
     return result
 
 
@@ -705,7 +748,7 @@ async def execute_space_activity_all(
     reporter,
 ) -> Any:
     if reporter:
-        reporter("execution: aggregated bounded pagination over /spaces/{space_id}/activity")
+        reporter(tr("execution: aggregated bounded pagination over /spaces/{space_id}/activity"))
     return await fetch_all_space_activity(client, payload, timeout=timeout)
 
 
@@ -721,6 +764,8 @@ async def execute_space_topology_get(
 ) -> Any:
     if reporter:
         reporter(
-            "execution: aggregated topology read over /spaces/{space_id}/boards and /boards/{board_id}"
+            tr(
+                "execution: aggregated topology read over /spaces/{space_id}/boards and /boards/{board_id}"
+            )
         )
     return await fetch_space_topology(client, payload["space_id"], timeout=timeout)

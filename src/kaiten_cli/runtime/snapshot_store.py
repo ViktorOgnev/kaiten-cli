@@ -14,6 +14,7 @@ from typing import Any
 from platformdirs import user_data_path
 
 from kaiten_cli.errors import ConfigError
+from kaiten_cli.i18n import tr
 from kaiten_cli.runtime.fs_security import (
     ensure_private_file,
     secure_directory,
@@ -67,7 +68,7 @@ class SnapshotStore:
     def ensure_writable(self) -> None:
         if self.storage_read_only:
             raise ConfigError(
-                "Local snapshot writes are disabled in this storage read-only environment."
+                tr("Local snapshot writes are disabled in this storage read-only environment.")
             )
 
     def _debug(self, message: str) -> None:
@@ -105,14 +106,27 @@ class SnapshotStore:
 
     def _reset_error(self, action: str) -> ConfigError:
         return ConfigError(
-            f"Unable to {action} local snapshot store at {self.path}. Remove the file and retry."
+            tr(
+                "Unable to {value_0} local snapshot store at {value_1}. Remove the file and retry.",
+                value_0=tr(action),
+                value_1=self.path,
+            )
         )
 
     def _access_error(self, action: str, error: BaseException) -> ConfigError:
-        return ConfigError(f"Unable to {action} local snapshot store at {self.path}: {error}")
+        return ConfigError(
+            tr(
+                "Unable to {value_0} local snapshot store at {value_1}: {value_2}",
+                value_0=tr(action),
+                value_1=self.path,
+                value_2=error,
+            )
+        )
 
     def _reset_store(self, reason: str) -> sqlite3.Connection:
-        self._debug(f"snapshot: local store dropped store=snapshots reason={reason}")
+        self._debug(
+            tr("snapshot: local store dropped store=snapshots reason={value_0}", value_0=reason)
+        )
         try:
             self.path.unlink(missing_ok=True)
         except OSError as exc:
@@ -123,7 +137,7 @@ class SnapshotStore:
             conn = self._open_connection()
             secure_existing_file(self.path)
             self._initialize_schema(conn)
-            self._debug("snapshot: local store recreated store=snapshots")
+            self._debug(tr("snapshot: local store recreated store=snapshots"))
             return conn
         except (sqlite3.Error, OSError) as exc:
             self._close_quietly(conn)
@@ -166,8 +180,11 @@ class SnapshotStore:
             version = int(conn.execute("PRAGMA user_version").fetchone()[0])
             if version != SNAPSHOT_DB_SCHEMA_VERSION:
                 raise ConfigError(
-                    f"Local snapshot store at {self.path} has incompatible schema {version}; "
-                    "refresh or rebuild it outside the storage read-only sandbox."
+                    tr(
+                        "Local snapshot store at {value_0} has incompatible schema {value_1}; refresh or rebuild it outside the storage read-only sandbox.",
+                        value_0=self.path,
+                        value_1=version,
+                    )
                 )
             return conn
         except ConfigError:
@@ -464,7 +481,7 @@ class SnapshotStore:
 
     def get_snapshot(self, name: str) -> dict[str, Any]:
         if self.storage_read_only and not self.path.exists() and not self.path.is_symlink():
-            raise ConfigError(f"Unknown snapshot: {name}")
+            raise ConfigError(tr("Unknown snapshot: {value_0}", value_0=name))
         with self._connection(read_only=True) as conn:
             row = conn.execute(
                 """
@@ -477,7 +494,7 @@ class SnapshotStore:
                 (name,),
             ).fetchone()
         if row is None:
-            raise ConfigError(f"Unknown snapshot: {name}")
+            raise ConfigError(tr("Unknown snapshot: {value_0}", value_0=name))
         built_at = _parse_timestamp(row["built_at"])
         now = datetime.now(timezone.utc)
         staleness_seconds = None
@@ -508,7 +525,7 @@ class SnapshotStore:
                 pass
             conn.commit()
         if not deleted:
-            raise ConfigError(f"Unknown snapshot: {name}")
+            raise ConfigError(tr("Unknown snapshot: {value_0}", value_0=name))
         return {"name": name, "deleted": True}
 
     def replace_snapshot(
