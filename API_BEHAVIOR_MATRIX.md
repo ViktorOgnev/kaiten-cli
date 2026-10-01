@@ -39,8 +39,8 @@
 | Command | Primary endpoint | Status | Fallback |
 |---------|------------------|--------|----------|
 | `projects.cards.list` | `GET /projects/{project_id}/cards` | `synthetic_read` | При `405` CLI делает `GET /projects/{project_id}?with_cards_data=true` и извлекает embedded cards list. |
-| `checklists.list` | `GET /cards/{card_id}` | `synthetic_read` | Replaces unsupported direct `GET /cards/{card_id}/checklists` by extracting embedded `checklists`. |
-| `checklist-items.list` | `GET /cards/{card_id}` | `synthetic_read` | Replaces unsupported direct `GET /cards/{card_id}/checklists/{checklist_id}/items` by extracting matching checklist `items`. |
+| `checklists.list` | `GET /cards/{card_id}` | `synthetic_read` | Extracts embedded `checklists` instead of the collection GET, which returned 405 on the tested tenant and was also reported on production in [kaiten-mcp PR #4](https://github.com/ViktorOgnev/kaiten-mcp/pull/4). |
+| `checklist-items.list` | `GET /cards/{card_id}/checklists/{checklist_id}` | `synthetic_read` | Extracts `items` from the individual checklist, avoiding the unsupported collection GET. API errors are preserved. |
 
 ## Stable expected-error contracts
 

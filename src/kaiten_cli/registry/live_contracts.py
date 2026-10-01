@@ -59,12 +59,12 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
     ),
     "checklists.list": LiveContract(
         status=LIVE_STATUS_SYNTHETIC_READ,
-        note="Direct checklist listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklists.",
+        note="The collection GET returned 405 on the tested tenant and was also reported on production in kaiten-mcp PR #4; the CLI extracts checklists from GET /cards/{card_id}.",
         expected_statuses=(405,),
     ),
     "checklist-items.list": LiveContract(
         status=LIVE_STATUS_SYNTHETIC_READ,
-        note="Direct checklist item listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklist items.",
+        note="The collection GET returned 405 on tested instances; the CLI extracts items from GET /cards/{card_id}/checklists/{checklist_id} and preserves API errors.",
         expected_statuses=(405,),
     ),
     "card-subscribers.list": LiveContract(

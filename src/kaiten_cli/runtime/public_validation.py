@@ -27,3 +27,9 @@ def validate_public_request(tool, payload):
                 "Field redirect=true returns binary/redirect content instead of JSON metadata. Use files.download to download restricted files safely."
             )
         )
+
+
+def validate_nonempty_body(tool, payload):
+    """Require a body field while preserving explicit zero, false, and null values."""
+    if not any(field in payload for field in tool.operation.body_fields):
+        raise ValidationError(tr("Provide at least one field to update."))

@@ -192,7 +192,6 @@ def add_profile(
     *,
     domain: str,
     token: str,
-    sandbox: bool = False,
     set_active: bool = False,
     cache_mode: str | None = None,
     cache_ttl_seconds: int | None = None,
@@ -201,7 +200,6 @@ def add_profile(
     profile = {
         "domain": normalize_profile_domain(domain),
         "token": token,
-        "sandbox": sandbox,
     }
     if cache_mode is not None:
         profile["cache_mode"] = _normalize_cache_mode(cache_mode)
@@ -255,7 +253,6 @@ def show_profile(name: str | None = None) -> dict[str, Any]:
             "name": None,
             "active": False,
             "domain": None,
-            "sandbox": False,
             "token_masked": None,
             "cache_mode": CACHE_MODE_AUTO,
             "cache_ttl_seconds": 60,
@@ -271,7 +268,6 @@ def sanitized_profile(name: str, raw: dict[str, Any], *, active: bool) -> dict[s
         "name": name,
         "active": active,
         "domain": normalize_profile_domain(str(raw.get("domain", ""))),
-        "sandbox": bool(raw.get("sandbox", False)),
         "token_masked": redact_token(raw.get("token")),
         "cache_mode": _normalize_cache_mode(raw.get("cache_mode")),
         "cache_ttl_seconds": _normalize_cache_ttl_seconds(raw.get("cache_ttl_seconds")),
@@ -294,7 +290,6 @@ def resolve_profile(
             name=selected_name,
             domain=normalize_profile_domain(str(selected.get("domain", ""))),
             token=str(selected.get("token", "")),
-            sandbox=bool(selected.get("sandbox", False)),
             source=source,
             cache_mode=_normalize_cache_mode(cache_mode_override or selected.get("cache_mode")),
             cache_ttl_seconds=_normalize_cache_ttl_seconds(
@@ -311,7 +306,6 @@ def resolve_profile(
             name=None,
             domain=normalize_profile_domain(env_domain),
             token=env_token,
-            sandbox=False,
             source="environment",
             cache_mode=_normalize_cache_mode(cache_mode_override),
             cache_ttl_seconds=_normalize_cache_ttl_seconds(cache_ttl_seconds_override),

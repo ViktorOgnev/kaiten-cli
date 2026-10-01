@@ -634,9 +634,13 @@ async def execute_checklist_items_list(
     reporter,
 ) -> Any:
     if reporter:
-        reporter(tr("execution: synthetic checklist item read from /cards/{card_id} payload"))
-    card = await client.get(path, timeout=timeout)
-    return extract_checklist_items(card if isinstance(card, dict) else {}, payload["checklist_id"])
+        reporter(
+            tr(
+                "execution: synthetic checklist item read from /cards/{card_id}/checklists/{checklist_id} payload"
+            )
+        )
+    checklist = await client.get(path, timeout=timeout)
+    return extract_checklist_items(checklist)
 
 
 async def execute_comments_batch_list(

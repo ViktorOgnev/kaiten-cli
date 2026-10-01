@@ -1276,11 +1276,6 @@ def profile_group() -> None:
     "--token", required=True, type=click.STRING, help="Kaiten API token for this profile."
 )
 @click.option(
-    "--sandbox/--no-sandbox",
-    default=False,
-    help="Deprecated compatibility metadata. Does not affect mutations or live-test gating.",
-)
-@click.option(
     "--cache-mode",
     type=click.Choice(["auto", "off", "readwrite", "refresh"]),
     default=None,
@@ -1303,7 +1298,6 @@ def profile_add_command(
     name: str,
     domain: str,
     token: str,
-    sandbox: bool,
     cache_mode: str | None,
     cache_ttl_seconds: int | None,
     set_active: bool,
@@ -1318,7 +1312,6 @@ def profile_add_command(
                     name,
                     domain=domain,
                     token=token,
-                    sandbox=sandbox,
                     cache_mode=cache_mode,
                     cache_ttl_seconds=cache_ttl_seconds,
                     set_active=set_active,

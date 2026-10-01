@@ -25,7 +25,7 @@ Main layers:
 - `src/kaiten_cli/registry/`
   Source of truth for the command catalog. Each tool is declared as a `ToolSpec` with canonical name, MCP alias, schema, examples, request metadata, response policy, and optional runtime behavior.
 - `src/kaiten_cli/runtime/`
-  Execution layer. Builds requests, resolves profiles and cache settings, applies sandbox safety rules, runs HTTP calls, handles synthetic and aggregated reads, persists local snapshots, and serves local-only query commands.
+  Execution layer. Builds requests, resolves profiles and cache settings, applies read-only mutation policies, runs HTTP calls, handles synthetic and aggregated reads, persists local snapshots, and serves local-only query commands.
 - `src/kaiten_cli/runtime/support/`
   Domain-specific helpers used by runtime behaviors for documents, projects, tree aggregation, cards bulk pagination, relation/comment batch reads, activity pagination, and space topology aggregation.
 - top-level `src/kaiten_cli/`

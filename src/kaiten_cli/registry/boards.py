@@ -165,7 +165,8 @@ TOOLS = (
                             "col_count": {"type": "integer", "description": "Width"},
                             "archive_after_days": {
                                 "type": "integer",
-                                "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                                "minimum": -1,
+                                "description": "Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job.",
                             },
                             "months_to_hide_cards": {
                                 "type": ["integer", "null"],

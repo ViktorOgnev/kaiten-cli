@@ -27,7 +27,7 @@ from kaiten_cli.registry import resolve_tool
 @pytest.mark.asyncio
 @respx.mock
 async def test_request_scope_cache_reuses_identical_gets_within_one_execution():
-    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token", sandbox=True)
+    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token")
     context = ExecutionContext.for_profile(profile)
     route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/1").mock(
         return_value=Response(200, json={"id": 1, "title": "Task"})
@@ -52,7 +52,7 @@ async def test_request_scope_cache_reuses_identical_gets_within_one_execution():
 @pytest.mark.asyncio
 @respx.mock
 async def test_inflight_dedup_shares_one_get_across_clients():
-    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token", sandbox=True)
+    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token")
     context = ExecutionContext.for_profile(profile)
 
     async def delayed_response(request):
@@ -192,7 +192,7 @@ async def test_persistent_cache_does_not_cross_environment_credentials(
 @pytest.mark.asyncio
 @respx.mock
 async def test_ambiguous_mutation_clears_cached_reads_before_verification():
-    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token", sandbox=True)
+    profile = ResolvedProfile(name=None, domain="sandbox", token="test-token")
     context = ExecutionContext.for_profile(profile)
     client = KaitenClient(
         domain="sandbox",

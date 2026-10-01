@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec
+from kaiten_cli.models import ExampleSpec, OperationSpec, RuntimeBehavior
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.public_validation import validate_nonempty_body
 
 
 TOOLS = (
@@ -29,7 +30,8 @@ TOOLS = (
     make_tool(
         canonical_name="columns.create",
         mcp_alias="kaiten_create_column",
-        description="Create a column on a Kaiten board. Type: 1=queue, 2=in_progress, 3=done.",
+        description="Create a column on a Kaiten board, including automatic card archival via archive_after_days. Type: 1=queue, 2=in_progress, 3=done.",
+        search_terms=("column auto archive", "автоархивация колонок", "автоархивирование"),
         input_schema={
             "type": "object",
             "properties": {
@@ -80,7 +82,8 @@ TOOLS = (
                 },
                 "archive_after_days": {
                     "type": "integer",
-                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                    "minimum": -1,
+                    "description": "Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job.",
                 },
                 "card_hide_after_days": {
                     "type": ["integer", "null"],
@@ -124,7 +127,8 @@ TOOLS = (
     make_tool(
         canonical_name="columns.update",
         mcp_alias="kaiten_update_column",
-        description="Update a column on a Kaiten board.",
+        description="Update a column on a Kaiten board, including automatic card archival via archive_after_days.",
+        search_terms=("column auto archive", "автоархивация колонок", "автоархивирование"),
         input_schema={
             "type": "object",
             "properties": {
@@ -185,7 +189,8 @@ TOOLS = (
                 },
                 "archive_after_days": {
                     "type": "integer",
-                    "description": "Specify amount of days after which cards will be automatically archived. Works only for columns with type **done**",
+                    "minimum": -1,
+                    "description": "Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job.",
                 },
                 "card_hide_after_days": {
                     "type": ["integer", "null"],
@@ -247,6 +252,8 @@ TOOLS = (
                 "pause_sla",
             ),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_nonempty_body),
+        usage_notes=("Provide at least one field to update.",),
         examples=(
             ExampleSpec(
                 command='kaiten --json columns update --board-id 10 --column-id 20 --title "Review"',
@@ -307,7 +314,8 @@ TOOLS = (
     make_tool(
         canonical_name="subcolumns.create",
         mcp_alias="kaiten_create_subcolumn",
-        description="Create a subcolumn inside a Kaiten column.",
+        description="Create a subcolumn inside a Kaiten column, including automatic card archival via archive_after_days.",
+        search_terms=("column auto archive", "автоархивация колонок", "автоархивирование"),
         input_schema={
             "type": "object",
             "properties": {
@@ -342,7 +350,8 @@ TOOLS = (
                 },
                 "archive_after_days": {
                     "type": "integer",
-                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                    "minimum": -1,
+                    "description": "Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job.",
                 },
                 "card_hide_after_days": {
                     "type": ["integer", "null"],
@@ -397,7 +406,8 @@ TOOLS = (
     make_tool(
         canonical_name="subcolumns.update",
         mcp_alias="kaiten_update_subcolumn",
-        description="Update a subcolumn of a Kaiten column.",
+        description="Update a subcolumn of a Kaiten column, including automatic card archival via archive_after_days.",
+        search_terms=("column auto archive", "автоархивация колонок", "автоархивирование"),
         input_schema={
             "type": "object",
             "properties": {
@@ -433,7 +443,8 @@ TOOLS = (
                 },
                 "archive_after_days": {
                     "type": "integer",
-                    "description": "Specify amont of days after which cards will be automatically archived. Works only for columns with type **done**",
+                    "minimum": -1,
+                    "description": "Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job.",
                 },
                 "card_hide_after_days": {
                     "type": ["integer", "null"],
@@ -506,6 +517,8 @@ TOOLS = (
                 "pause_sla",
             ),
         ),
+        runtime_behavior=RuntimeBehavior(payload_validator=validate_nonempty_body),
+        usage_notes=("Provide at least one field to update.",),
         examples=(
             ExampleSpec(
                 command='kaiten --json subcolumns update --column-id 20 --subcolumn-id 30 --title "Blocked"',

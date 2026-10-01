@@ -2212,7 +2212,7 @@ space-template-checklists
 | Execution mode | `synthetic` |
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
-| Path template | `/cards/{card_id}` |
+| Path template | `/cards/{card_id}/checklists/{checklist_id}` |
 | Compact | `no` |
 | Fields | `no` |
 | Heavy | `no` |
@@ -2235,9 +2235,9 @@ space-template-checklists
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Direct checklist item listing is unsupported on sandbox; this command reads the card and extracts items from the matching embedded checklist.
+- GET /cards/{card_id}/checklists/{checklist_id}/items has returned 405 on tested instances. This command reads the individual checklist and extracts items; API errors, including a missing checklist, are preserved.
 - Live contract: `synthetic_read`; expected statuses: `405`
-- Live note: Direct checklist item listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklist items.
+- Live note: The collection GET returned 405 on tested instances; the CLI extracts items from GET /cards/{card_id}/checklists/{checklist_id} and preserves API errors.
 
 ### `checklist-items.update`
 
@@ -2442,9 +2442,9 @@ space-template-checklists
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-- Direct checklist listing is unsupported on sandbox; this command reads the card and extracts embedded checklists.
+- GET /cards/{card_id}/checklists has returned 405 on tested instances, including a production instance reported in kaiten-mcp PR #4. This command reads the card and extracts embedded checklists.
 - Live contract: `synthetic_read`; expected statuses: `405`
-- Live note: Direct checklist listing returns 405 on sandbox; the CLI reads GET /cards/{card_id} and extracts embedded checklists.
+- Live note: The collection GET returned 405 on the tested tenant and was also reported on production in kaiten-mcp PR #4; the CLI extracts checklists from GET /cards/{card_id}.
 
 ### `checklists.update`
 
@@ -5205,7 +5205,7 @@ boards
 | `columns[].type` | integer | yes | 1 - queue, 2 – in progress, 3 – done Values: [1, 2, 3] |
 | `columns[].wip_limit` | integer | no | Work in progress recommended limit for column |
 | `columns[].col_count` | integer | no | Width |
-| `columns[].archive_after_days` | integer | no | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `columns[].archive_after_days` | integer | no | Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job. minimum: -1 |
 | `columns[].months_to_hide_cards` | integer\|null | no | [Deprecated] Hide cards not moved for the last N months |
 | `columns[].card_hide_after_days` | integer\|null | no | Hide cards not moved for the last N days |
 | `columns[].rules` | integer | no | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order minimum: 0 |
@@ -5493,7 +5493,7 @@ subcolumns
 |---|---|
 | CLI command | `kaiten columns create` |
 | MCP alias | `kaiten_create_column` |
-| Description | Create a column on a Kaiten board. Type: 1=queue, 2=in_progress, 3=done. |
+| Description | Create a column on a Kaiten board, including automatic card archival via archive_after_days. Type: 1=queue, 2=in_progress, 3=done. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -5521,7 +5521,7 @@ subcolumns
 | `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
 | `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
 | `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
-| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `archive_after_days` | `integer` | no | — | minimum=-1 | Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job. |
 | `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
 | `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
 
@@ -5619,7 +5619,7 @@ subcolumns
 |---|---|
 | CLI command | `kaiten columns update` |
 | MCP alias | `kaiten_update_column` |
-| Description | Update a column on a Kaiten board. |
+| Description | Update a column on a Kaiten board, including automatic card archival via archive_after_days. |
 | Method | `PATCH` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -5648,7 +5648,7 @@ subcolumns
 | `last_moved_warning_after_days` | `integer` | no | — | — | Warning appears on stale cards |
 | `last_moved_warning_after_hours` | `integer` | no | — | — | Warning appears on stale cards |
 | `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
-| `archive_after_days` | `integer` | no | — | — | Specify amount of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `archive_after_days` | `integer` | no | — | minimum=-1 | Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job. |
 | `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
 | `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
 | `default_tags` | `string|null` | no | — | — | Default tags |
@@ -5667,6 +5667,7 @@ subcolumns
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Provide at least one field to update.
 
 ### `subcolumns.create`
 
@@ -5674,7 +5675,7 @@ subcolumns
 |---|---|
 | CLI command | `kaiten subcolumns create` |
 | MCP alias | `kaiten_create_subcolumn` |
-| Description | Create a subcolumn inside a Kaiten column. |
+| Description | Create a subcolumn inside a Kaiten column, including automatic card archival via archive_after_days. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -5698,7 +5699,7 @@ subcolumns
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 | `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
 | `type` | `integer` | no | `1`, `2`, `3` | — | 1 - queue, 2 – in progress, 3 – done |
-| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `archive_after_days` | `integer` | no | — | minimum=-1 | Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job. |
 | `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
 | `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
 | `last_moved_warning_after_minutes` | `integer` | no | — | — | Warning appears on stale cards |
@@ -5799,7 +5800,7 @@ subcolumns
 |---|---|
 | CLI command | `kaiten subcolumns update` |
 | MCP alias | `kaiten_update_subcolumn` |
-| Description | Update a subcolumn of a Kaiten column. |
+| Description | Update a subcolumn of a Kaiten column, including automatic card archival via archive_after_days. |
 | Method | `PATCH` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
@@ -5824,7 +5825,7 @@ subcolumns
 | `col_count` | `integer` | no | — | — | Number of sub-columns to split into |
 | `external_id` | `number|string|null` | no | — | maxLength=1024 | Any external id you want to assign to column. Not exposed in web interface |
 | `type` | `integer` | no | `1`, `2`, `3` | — | 1 - queue, 2 – in progress, 3 – done |
-| `archive_after_days` | `integer` | no | — | — | Specify amont of days after which cards will be automatically archived. Works only for columns with type **done** |
+| `archive_after_days` | `integer` | no | — | minimum=-1 | Days before automatic card archival; -1 disables auto-archive. Reducing the threshold also affects cards already in the column; eligible cards may be archived by the background job. |
 | `card_hide_after_days` | `integer|null` | no | — | — | Hide cards not moved for the last N days |
 | `rules` | `integer` | no | — | minimum=0 | Bit mask for column rules. Rules: 1 - checklists must be checked, 2 - display FIFO order |
 | `default_tags` | `string|null` | no | — | — | Default tags |
@@ -5846,6 +5847,7 @@ subcolumns
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Provide at least one field to update.
 
 <a id="module-lanes"></a>
 ## Lanes (`lanes`) — 4 commands

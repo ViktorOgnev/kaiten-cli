@@ -105,59 +105,42 @@ async def test_execute_checklists_list_returns_empty_when_card_has_no_checklists
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("items", [[], [{"id": 30, "text": "Review", "checked": False}]])
 @respx.mock
-async def test_execute_checklist_items_list_reads_items_from_matching_embedded_checklist(
-    monkeypatch,
-):
+async def test_execute_checklist_items_list_reads_individual_checklist(monkeypatch, items):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
-        return_value=Response(
-            200,
-            json={
-                "id": 10,
-                "checklists": [
-                    {"id": 19, "items": [{"id": 29, "text": "Skip"}]},
-                    {"id": 20, "items": [{"id": 30, "text": "Review"}]},
-                ],
-            },
-        )
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10/checklists/20").mock(
+        return_value=Response(200, json={"id": 20, "items": items})
     )
-
+    card_route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
+        return_value=Response(200, json={"id": 10})
+    )
+    dead_route = respx.get(
+        "https://sandbox.kaiten.ru/api/latest/cards/10/checklists/20/items"
+    ).mock(return_value=Response(405))
     tool = resolve_tool("checklist-items.list")
     payload = merge_inputs(tool, {"card_id": 10, "checklist_id": 20})
-    result = await execute_tool(tool, payload)
-
-    assert route.called
-    assert result == [{"id": 30, "text": "Review"}]
+    result = await execute_tool(tool, payload, cache_mode="off")
+    assert result == items
+    assert route.call_count == 1
+    assert not card_route.called
+    assert not dead_route.called
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("response", [[], {"id": 20}, {"id": 20, "items": None}])
 @respx.mock
-async def test_execute_checklist_items_list_matches_embedded_checklist_id_alias(monkeypatch):
+async def test_checklist_items_malformed_response_is_not_empty_success(monkeypatch, response):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")
     monkeypatch.setenv("KAITEN_TOKEN", "test-token")
-    respx.get("https://sandbox.kaiten.ru/api/latest/cards/10").mock(
-        return_value=Response(
-            200,
-            json={
-                "id": 10,
-                "checklists": [
-                    {
-                        "id": 99,
-                        "checklist_id": 20,
-                        "items": [{"id": 30, "text": "Review"}],
-                    }
-                ],
-            },
-        )
+    respx.get("https://sandbox.kaiten.ru/api/latest/cards/10/checklists/20").mock(
+        return_value=Response(200, json=response)
     )
-
     tool = resolve_tool("checklist-items.list")
     payload = merge_inputs(tool, {"card_id": 10, "checklist_id": 20})
-    result = await execute_tool(tool, payload)
-
-    assert result == [{"id": 30, "text": "Review"}]
+    with pytest.raises(TransportError, match="items array"):
+        await execute_tool(tool, payload, cache_mode="off")
 
 
 @pytest.mark.asyncio

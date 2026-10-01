@@ -16,6 +16,34 @@ from kaiten_cli.runtime.executor import execute_tool
 from kaiten_cli.runtime.input import _validate_schema, coerce_value, merge_inputs
 
 
+@pytest.mark.parametrize("status", [403, 404, 500])
+@respx.mock
+def test_checklist_items_api_errors_are_preserved(runner, status):
+    route = respx.get("https://sandbox.kaiten.ru/api/latest/cards/10/checklists/20").mock(
+        return_value=Response(status, json={"message": "Checklist unavailable"})
+    )
+    result = runner.invoke(
+        cli,
+        [
+            "--locale",
+            "ru",
+            "--json",
+            "--cache-mode",
+            "off",
+            "checklist-items",
+            "list",
+            "--card-id",
+            "10",
+            "--checklist-id",
+            "20",
+        ],
+    )
+    assert result.exit_code == 4, result.output
+    error = json.loads(result.output)["error"]
+    assert error["status_code"] == status
+    assert route.called
+
+
 @pytest.fixture(autouse=True)
 def credentials(monkeypatch):
     monkeypatch.setenv("KAITEN_DOMAIN", "sandbox")

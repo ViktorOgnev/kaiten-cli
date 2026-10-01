@@ -151,3 +151,16 @@ KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
 2. Если это runtime bug — добавить/обновить offline test и чинить CLI.
 3. Если это корректный expected error — зафиксировать его в `API_BEHAVIOR_MATRIX.md` и, если меняется объяснение системы, в `ARCHITECTURE.md`.
 4. Если это честный synthetic candidate — сначала добавить failing offline test, потом реализовать fallback.
+
+## Изменения чтения чеклистов
+
+`checklists.list` читает `GET /cards/{card_id}` и извлекает `checklists`.
+Collection GET возвращал 405 на тестовом инстансе; такое же поведение на боевом
+инстансе описано автором [kaiten-mcp PR #4](https://github.com/ViktorOgnev/kaiten-mcp/pull/4).
+Это свидетельство автора PR, а не новая live-проверка CLI.
+
+`checklist-items.list` теперь читает `GET /cards/{card_id}/checklists/{checklist_id}`
+и извлекает `items`. Пустой чеклист возвращает `[]`, а ошибки API, включая 404,
+сохраняются. Некорректный ответ без массива `items` считается ошибкой транспорта.
+Оба обхода применяются ко всем профилям; тестовый инстанс — место наблюдения,
+а не особый режим CLI. Изменение проверено офлайн через HTTP-моки.

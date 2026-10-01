@@ -134,13 +134,12 @@ async def execute_tool_with_diagnostics(
         _emit_debug(
             reporter,
             tr(
-                "profile: source={value_0} name={value_1} domain={value_2} sandbox_metadata={value_3} cache_mode={value_4} cache_ttl_seconds={value_5}",
+                "profile: source={value_0} name={value_1} domain={value_2} cache_mode={value_3} cache_ttl_seconds={value_4}",
                 value_0=profile.source,
                 value_1=profile.name or "-",
                 value_2=profile.domain,
-                value_3=profile.sandbox,
-                value_4=profile.cache_mode,
-                value_5=profile.cache_ttl_seconds,
+                value_3=profile.cache_mode,
+                value_4=profile.cache_ttl_seconds,
             ),
         )
         context = ExecutionContext.for_profile(profile, reporter=reporter)

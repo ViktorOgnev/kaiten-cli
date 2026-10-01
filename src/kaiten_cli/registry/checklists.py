@@ -66,7 +66,8 @@ TOOLS = (
             ),
         ),
         usage_notes=(
-            "Direct checklist listing is unsupported on sandbox; this command reads the card "
+            "GET /cards/{card_id}/checklists has returned 405 on tested instances, including "
+            "a production instance reported in kaiten-mcp PR #4. This command reads the card "
             "and extracts embedded checklists.",
         ),
     ),
@@ -222,8 +223,8 @@ TOOLS = (
         },
         operation=OperationSpec(
             method="GET",
-            path_template="/cards/{card_id}",
-            path_fields=("card_id",),
+            path_template="/cards/{card_id}/checklists/{checklist_id}",
+            path_fields=("card_id", "checklist_id"),
         ),
         response_policy=ResponsePolicy(result_kind="list"),
         runtime_behavior=RuntimeBehavior(
@@ -237,8 +238,9 @@ TOOLS = (
             ),
         ),
         usage_notes=(
-            "Direct checklist item listing is unsupported on sandbox; this command reads the "
-            "card and extracts items from the matching embedded checklist.",
+            "GET /cards/{card_id}/checklists/{checklist_id}/items has returned 405 on tested "
+            "instances. This command reads the individual checklist and extracts items; "
+            "API errors, including a missing checklist, are preserved.",
         ),
     ),
     make_tool(

@@ -8,7 +8,7 @@ import pytest
 import respx
 from httpx import Response
 
-from kaiten_cli.app import main
+from kaiten_cli.app import cli, main
 from kaiten_cli.errors import ConfigError
 from kaiten_cli.profiles import (
     add_profile,
@@ -24,11 +24,8 @@ from kaiten_cli.runtime.client import KaitenClient
 
 
 def test_profile_lifecycle(config_env):
-    added = add_profile(
-        "sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True
-    )
+    added = add_profile("sandbox", domain="sandbox", token="secret-token", set_active=True)
     assert added["active"] is True
-    assert added["sandbox"] is True
     assert added["cache_mode"] == "auto"
     assert added["cache_ttl_seconds"] == 60
     assert added["token_masked"].endswith("oken")
@@ -41,7 +38,6 @@ def test_profile_lifecycle(config_env):
 
     resolved = resolve_profile()
     assert resolved.domain == "sandbox"
-    assert resolved.sandbox is True
     assert resolved.source == "active_profile"
     assert resolved.cache_mode == "auto"
     assert resolved.cache_ttl_seconds == 60
@@ -105,7 +101,6 @@ def test_resolve_profile_uses_env_fallback(config_env, monkeypatch):
     resolved = resolve_profile()
     assert resolved.domain == "sandbox"
     assert resolved.token == "env-token"
-    assert resolved.sandbox is False
     assert resolved.source == "environment"
     assert resolved.cache_mode == "auto"
     assert resolved.cache_ttl_seconds == 60
@@ -189,7 +184,6 @@ def test_resolve_profile_env_domain_does_not_imply_test_metadata(config_env, mon
     resolved = resolve_profile()
 
     assert resolved.domain == "sandbox"
-    assert resolved.sandbox is False
 
 
 def test_profile_add_and_resolve_cache_settings(config_env):
@@ -197,7 +191,6 @@ def test_profile_add_and_resolve_cache_settings(config_env):
         "main",
         domain="sandbox",
         token="secret-token",
-        sandbox=True,
         cache_mode="readwrite",
         cache_ttl_seconds=120,
         set_active=True,
@@ -217,7 +210,6 @@ def test_resolve_profile_cli_cache_overrides_profile_defaults(config_env):
         "main",
         domain="sandbox",
         token="secret-token",
-        sandbox=True,
         cache_mode="readwrite",
         cache_ttl_seconds=120,
         set_active=True,
@@ -231,7 +223,7 @@ def test_resolve_profile_cli_cache_overrides_profile_defaults(config_env):
 
 def test_resolve_profile_explicit_profile_beats_active_and_env(config_env, monkeypatch):
     add_profile("main", domain="active-tenant", token="active-token", set_active=True)
-    add_profile("sandbox", domain="sandbox", token="sandbox-token", sandbox=True)
+    add_profile("sandbox", domain="sandbox", token="sandbox-token")
     monkeypatch.setenv("KAITEN_DOMAIN", "env-tenant")
     monkeypatch.setenv("KAITEN_TOKEN", "env-token")
 
@@ -240,7 +232,6 @@ def test_resolve_profile_explicit_profile_beats_active_and_env(config_env, monke
     assert resolved.name == "sandbox"
     assert resolved.domain == "sandbox"
     assert resolved.token == "sandbox-token"
-    assert resolved.sandbox is True
     assert resolved.source == "explicit_profile"
 
 
@@ -301,7 +292,7 @@ def test_resolve_profile_guides_setup_when_missing(config_env, monkeypatch):
 def test_resolve_profile_unknown_profile_guides_listing(config_env, monkeypatch):
     monkeypatch.delenv("KAITEN_DOMAIN", raising=False)
     monkeypatch.delenv("KAITEN_TOKEN", raising=False)
-    add_profile("sandbox", domain="sandbox", token="secret-token", sandbox=True, set_active=True)
+    add_profile("sandbox", domain="sandbox", token="secret-token", set_active=True)
 
     with pytest.raises(ConfigError) as excinfo:
         resolve_profile("prod")
@@ -393,3 +384,85 @@ def test_profile_probe_preserves_transport_failure(config_env, capsys):
 
     assert payload["command"] == "profile.probe"
     assert payload["error"]["type"] == "transport_error"
+
+
+def test_legacy_sandbox_metadata_is_ignored_without_rewriting_config(config_env, monkeypatch):
+    legacy = {
+        "active_profile": "Sandbox",
+        "profiles": {
+            "Sandbox": {
+                "domain": "test-tenant",
+                "token": "test-token",
+                "sandbox": True,
+                "cache_mode": "readwrite",
+                "cache_ttl_seconds": 120,
+            },
+            "production": {"domain": "prod-tenant", "token": "prod-token", "sandbox": False},
+        },
+    }
+    save_config(legacy)
+    before = config_env.read_bytes()
+    monkeypatch.setenv("KAITEN_DOMAIN", "env-tenant")
+    monkeypatch.setenv("KAITEN_TOKEN", "env-token")
+    for shown in [show_profile(), *list_profiles()]:
+        assert "sandbox" not in shown
+    resolved = resolve_profile()
+    assert resolved.name == "Sandbox"
+    assert resolved.domain == "test-tenant"
+    assert resolved.token == "test-token"
+    assert resolved.cache_mode == "readwrite"
+    assert resolved.cache_ttl_seconds == 120
+    assert not hasattr(resolved, "sandbox")
+    assert resolve_profile("production").token == "prod-token"
+    assert config_env.read_bytes() == before
+    updated = add_profile("Sandbox", domain="test-tenant", token="test-token", set_active=True)
+    assert "sandbox" not in updated
+    after = json.loads(config_env.read_text())
+    assert "sandbox" not in after["profiles"]["Sandbox"]
+    assert after["profiles"]["production"] == legacy["profiles"]["production"]
+
+
+@pytest.mark.parametrize("flag", ["--sandbox", "--no-sandbox"])
+def test_removed_sandbox_flags_fail_before_config_write(config_env, runner, flag):
+    add_profile("Sandbox", domain="test-tenant", token="test-token")
+    before = config_env.read_bytes()
+    result = runner.invoke(
+        cli,
+        [
+            "--locale",
+            "ru",
+            "--json",
+            "profile",
+            "add",
+            "another",
+            "--domain",
+            "other",
+            "--token",
+            "fake",
+            flag,
+        ],
+    )
+    assert result.exit_code == 2
+    assert flag in result.output
+    assert config_env.read_bytes() == before
+    help_result = runner.invoke(cli, ["--locale", "ru", "profile", "add", "--help"])
+    assert "--sandbox" not in help_result.output
+    assert "--no-sandbox" not in help_result.output
+
+
+def test_profile_cli_json_has_no_sandbox_metadata(config_env, runner):
+    commands = [
+        ["add", "Sandbox", "--domain", "test-tenant", "--token", "test-token"],
+        ["list"],
+        ["show"],
+        ["use", "Sandbox"],
+        ["remove", "Sandbox"],
+        ["show"],
+    ]
+    for command in commands:
+        result = runner.invoke(cli, ["--locale", "ru", "--json", "profile", *command])
+        assert result.exit_code == 0, result.output
+        data = json.loads(result.output)["data"]
+        for profile in data if isinstance(data, list) else [data]:
+            assert "sandbox" not in profile
+    assert json.loads(config_env.read_text())["profiles"] == {}
