@@ -63,6 +63,9 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "automations", "Automations and workflows", "Automations, incoming webhooks and workflows."
     ),
     ModuleDocSpec(
+        "restrictions", "Restrictions", "Undocumented space rules for card creation and movement."
+    ),
+    ModuleDocSpec(
         "addons",
         "Addons",
         "Addon catalog, space installation and per-card / per-user addon data.",

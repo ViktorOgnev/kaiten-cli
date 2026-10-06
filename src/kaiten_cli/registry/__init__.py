@@ -41,6 +41,7 @@ from kaiten_cli.registry.members import TOOLS as MEMBER_TOOLS
 from kaiten_cli.registry.projects import TOOLS as PROJECT_TOOLS
 from kaiten_cli.registry.query import TOOLS as QUERY_TOOLS
 from kaiten_cli.registry.roles_and_groups import TOOLS as ROLE_AND_GROUP_TOOLS
+from kaiten_cli.registry.restrictions import TOOLS as RESTRICTION_TOOLS
 from kaiten_cli.registry.scim import TOOLS as SCIM_TOOLS
 from kaiten_cli.registry.service_desk import TOOLS as SERVICE_DESK_TOOLS
 from kaiten_cli.registry.snapshot import TOOLS as SNAPSHOT_TOOLS
@@ -55,6 +56,7 @@ from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("spaces", SPACE_TOOLS),
     ("automations", AUTOMATION_TOOLS),
+    ("restrictions", RESTRICTION_TOOLS),
     ("addons", ADDON_TOOLS),
     ("github_addon", GITHUB_ADDON_TOOLS),
     ("boards", BOARD_TOOLS),

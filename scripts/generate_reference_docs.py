@@ -52,6 +52,7 @@ README_MODULE_LABELS = {
     "iterations": "Итерации",
     "webhooks": "Вебхуки",
     "automations": "Автоматизации и рабочие процессы",
+    "restrictions": "Ограничения",
     "addons": "Аддоны",
     "github_addon": "GitHub-аддон",
     "projects": "Проекты и спринты",

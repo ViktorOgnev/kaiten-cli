@@ -72,7 +72,7 @@ class LiveHarness:
         time.sleep(HEAVY_PAUSE_SECONDS if tool.response_policy.heavy else NORMAL_PAUSE_SECONDS)
 
     def _invoke(self, args: list[str], label: str):
-        result = self.runner.invoke(cli, ["--json", *args], env=self.env)
+        result = self.runner.invoke(cli, ["--locale", "ru", "--json", *args], env=self.env)
         assert result.output, f"{label}: empty output"
         payload = json.loads(result.output)
         return result, payload

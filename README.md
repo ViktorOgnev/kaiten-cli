@@ -179,7 +179,7 @@ pipx upgrade kaiten-cli
 По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.0"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.2"
 ```
 
 После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
@@ -486,7 +486,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 ## Инструменты
 
 <!-- BEGIN GENERATED COMMAND SUMMARY -->
-В `kaiten-cli` доступно **417** основных инструментов. Количество модулей реестра: **35**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+В `kaiten-cli` доступно **423** основных инструментов. Количество модулей реестра: **36**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
 
 | Область | Модуль | Инструментов | Справочник |
 |---|---|---:|---|
@@ -513,6 +513,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Итерации | `iterations` | 9 | [Раздел](COMMAND_REFERENCE.md#module-iterations) |
 | Вебхуки | `webhooks` | 9 | [Раздел](COMMAND_REFERENCE.md#module-webhooks) |
 | Автоматизации и рабочие процессы | `automations` | 11 | [Раздел](COMMAND_REFERENCE.md#module-automations) |
+| Ограничения | `restrictions` | 6 | [Раздел](COMMAND_REFERENCE.md#module-restrictions) |
 | Аддоны | `addons` | 10 | [Раздел](COMMAND_REFERENCE.md#module-addons) |
 | GitHub-аддон | `github_addon` | 12 | [Раздел](COMMAND_REFERENCE.md#module-github-addon) |
 | Проекты и спринты | `projects` | 13 | [Раздел](COMMAND_REFERENCE.md#module-projects) |
@@ -525,7 +526,7 @@ GitHub-аддона. `--dry-run` выполняет чтение и показы
 | Утилиты | `utilities` | 15 | [Раздел](COMMAND_REFERENCE.md#module-utilities) |
 | Локальные снимки | `snapshot` | 5 | [Раздел](COMMAND_REFERENCE.md#module-snapshot) |
 | Локальные запросы | `query` | 2 | [Раздел](COMMAND_REFERENCE.md#module-query) |
-| **Итого** | **35** | **417** | [Полный справочник](COMMAND_REFERENCE.md) |
+| **Итого** | **36** | **423** | [Полный справочник](COMMAND_REFERENCE.md) |
 <!-- END GENERATED COMMAND SUMMARY -->
 
 ## Структура репозитория
@@ -644,7 +645,7 @@ CLI определяет данные доступа в следующем по�
 CLI поддерживает три способа передачи входных данных:
 
 - обычные параметры командной строки: `kaiten cards list --board-id 10 --limit 5`;
-- `--from-file payload.json` для полного объекта JSON из файла;
+- `--from-file payload.json` (также `--input-file payload.json`) для полного объекта JSON из файла;
 - `--stdin-json` для объекта JSON из стандартного ввода.
 
 Сложные объекты и массивы можно передавать как значение параметра JSON или вынести в файл. Для большого тела запроса `--from-file` обычно надёжнее и требует меньше токенов LLM, чем длинная строка аргументов.

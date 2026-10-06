@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **417** canonical commands across **35** registry modules.
+`kaiten-cli` currently exposes **423** canonical commands across **36** registry modules.
 
 ## Conventions
 
@@ -46,6 +46,7 @@
 | Iterations | `iterations` | 9 | [Open](#module-iterations) |
 | Webhooks | `webhooks` | 9 | [Open](#module-webhooks) |
 | Automations and workflows | `automations` | 11 | [Open](#module-automations) |
+| Restrictions | `restrictions` | 6 | [Open](#module-restrictions) |
 | Addons | `addons` | 10 | [Open](#module-addons) |
 | GitHub addon | `github_addon` | 12 | [Open](#module-github-addon) |
 | Projects and sprints | `projects` | 13 | [Open](#module-projects) |
@@ -12121,6 +12122,321 @@ workflows
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Live contract: `live_passed_as_expected_error`; expected statuses: `403`, `404`, `405`
 - Live note: When workflow creation is unavailable, the live suite validates the documented 403/404/405 error contract on a sentinel workflow id.
+
+<a id="module-restrictions"></a>
+## Restrictions (`restrictions`) — 6 commands
+
+Undocumented space rules for card creation and movement.
+
+**Namespace tree**
+
+```text
+restrictions
+  copy
+  create
+  delete
+  get
+  list
+  update
+```
+
+### `restrictions.copy`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions copy` |
+| MCP alias | `kaiten_copy_restriction` |
+| Description | Copy a restriction to another Kaiten space using the collection POST route. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{target_space_id}/restrictions` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `restriction_id` | `string` | yes | — | — | Restriction ID (UUID) |
+| `target_space_id` | `integer` | yes | — | — | Target space ID |
+
+**Examples**
+
+- Copy a restriction to another space.: `kaiten --json restrictions copy --restriction-id a52165d4-26cc-4483-a272-edfaeff2b1b2 --target-space-id 2`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- Copy sends source_restriction_id. The returned status may be broken when references are invalid in the target space.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
+
+### `restrictions.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions create` |
+| MCP alias | `kaiten_create_restriction` |
+| Description | Create a restriction on card creation or movement in a Kaiten space. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/restrictions` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `name` | `string|null` | no | — | maxLength=256 | Restriction name |
+| `error_text` | `string|null` | no | — | maxLength=4096 | Message shown when the restriction rejects an action |
+| `conditions` | `array` | yes | — | — | Conditions selecting cards and actions |
+| `restrictions` | `array` | yes | — | — | Restrictions on card creation or movement |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `conditions[]` | object | no | — |
+| `conditions[].type` | string | yes | Condition or restriction type |
+| `conditions[].created` | string | yes | Rule element creation timestamp |
+| `conditions[].operator` | string | yes | Rule operator Values: ['eq', 'ne', 'contains', 'not_contains', 'start_with', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company', 'in_role', 'not_in_role', 'is_less', 'is_more', 'is_between', 'any', 'none', 'exceeded', 'not_exceeded'] |
+| `conditions[].data` | object | yes | Rule data passed through unchanged |
+| `restrictions[]` | object | no | — |
+| `restrictions[].type` | string | yes | Condition or restriction type |
+| `restrictions[].created` | string | yes | Rule element creation timestamp |
+| `restrictions[].operator` | string | yes | Rule operator Values: ['eq', 'ne', 'contains', 'not_contains', 'start_with', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company', 'in_role', 'not_in_role', 'is_less', 'is_more', 'is_between', 'any', 'none', 'exceeded', 'not_exceeded'] |
+| `restrictions[].data` | object | yes | Rule data passed through unchanged |
+
+**Examples**
+
+- Create a movement restriction for cards without size.: `kaiten --json restrictions create --space-id 1 --name "Require size before moving" --conditions '[{"type":"cardProperty","created":"2026-01-01T00:00:00Z","operator":"eq","data":{"properties":[{"propertyKey":"size_text","comparator":"noSet","value":null}]}}]' --restrictions '[{"type":"movement","created":"2026-01-01T00:00:00Z","operator":"eq","data":{"pathType":"any"}}]'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- Creation does not accept status; use update to disable the new rule.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
+
+### `restrictions.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions delete` |
+| MCP alias | `kaiten_delete_restriction` |
+| Description | Delete a Kaiten space restriction. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/restrictions/{restriction_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `restriction_id` | `string` | yes | — | — | Restriction ID (UUID) |
+
+**Examples**
+
+- Delete a space restriction.: `kaiten --json restrictions delete --space-id 1 --restriction-id a52165d4-26cc-4483-a272-edfaeff2b1b2`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
+
+### `restrictions.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions get` |
+| MCP alias | `kaiten_get_restriction` |
+| Description | Get a space restriction by selecting its UUID from the full list. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `synthetic` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_id}/restrictions` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `restriction_id` | `string` | yes | — | — | Restriction ID (UUID) |
+
+**Examples**
+
+- Read a restriction from its space.: `kaiten --json restrictions get --space-id 1 --restriction-id a52165d4-26cc-4483-a272-edfaeff2b1b2`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- No single-rule GET handler exists; a missing rule is an explicit error.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
+
+### `restrictions.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions list` |
+| MCP alias | `kaiten_list_restrictions` |
+| Description | List all non-removed, non-workflow restrictions in a Kaiten space. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{space_id}/restrictions` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List space restrictions.: `kaiten --json restrictions list --space-id 1 --compact --fields id,name,status`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- The server returns the full list without pagination.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
+
+### `restrictions.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten restrictions update` |
+| MCP alias | `kaiten_update_restriction` |
+| Description | Update, enable or disable a Kaiten space restriction. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/spaces/{space_id}/restrictions/{restriction_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `space_id` | `integer` | yes | — | — | Space ID |
+| `restriction_id` | `string` | yes | — | — | Restriction ID (UUID) |
+| `name` | `string|null` | no | — | maxLength=256 | Restriction name |
+| `error_text` | `string|null` | no | — | maxLength=4096 | Message shown when the restriction rejects an action |
+| `conditions` | `array` | no | — | — | Conditions selecting cards and actions |
+| `restrictions` | `array` | no | — | — | Restrictions on card creation or movement |
+| `status` | `string` | no | `active`, `disabled` | — | Restriction status |
+
+**Nested schemas** (unknown extension fields are preserved)
+
+| Field / variant | Type | Required | Description / constraints |
+|---|---|---|---|
+| `conditions[]` | object | no | — |
+| `conditions[].type` | string | yes | Condition or restriction type |
+| `conditions[].created` | string | yes | Rule element creation timestamp |
+| `conditions[].operator` | string | yes | Rule operator Values: ['eq', 'ne', 'contains', 'not_contains', 'start_with', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company', 'in_role', 'not_in_role', 'is_less', 'is_more', 'is_between', 'any', 'none', 'exceeded', 'not_exceeded'] |
+| `conditions[].data` | object | yes | Rule data passed through unchanged |
+| `restrictions[]` | object | no | — |
+| `restrictions[].type` | string | yes | Condition or restriction type |
+| `restrictions[].created` | string | yes | Rule element creation timestamp |
+| `restrictions[].operator` | string | yes | Rule operator Values: ['eq', 'ne', 'contains', 'not_contains', 'start_with', 'in_groups', 'not_in_groups', 'in_company', 'not_in_company', 'in_role', 'not_in_role', 'is_less', 'is_more', 'is_between', 'any', 'none', 'exceeded', 'not_exceeded'] |
+| `restrictions[].data` | object | yes | Rule data passed through unchanged |
+
+**Examples**
+
+- Disable a restriction.: `kaiten --json restrictions update --space-id 1 --restriction-id a52165d4-26cc-4483-a272-edfaeff2b1b2 --status disabled`
+- Enable a restriction.: `kaiten --json restrictions update --space-id 1 --restriction-id a52165d4-26cc-4483-a272-edfaeff2b1b2 --status active`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API extension derived from Kaiten server code; live compatibility is not yet verified.
+- Restrictions belong to a space; boards and columns are selected inside conditions. Workflow transition restrictions are managed through Workflow API.
+- Only supplied fields are sent. Supplied conditions and restrictions arrays replace the whole arrays.
+- An update requires name, conditions, restrictions or status; error_text alone is rejected by the server schema.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.
 
 <a id="module-addons"></a>
 ## Addons (`addons`) — 10 commands

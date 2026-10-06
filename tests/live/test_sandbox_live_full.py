@@ -919,6 +919,7 @@ def _exercise_company_metadata(h) -> None:
 
 
 def _exercise_integrations(h) -> None:
+    _exercise_restrictions(h)
     webhook = h.run_tool(
         "webhooks.create", space_id=h.state["space_id"], url="https://example.com/live-webhook"
     )
@@ -1083,6 +1084,87 @@ def _exercise_integrations(h) -> None:
         )
 
     _exercise_addons(h)
+
+
+def _exercise_restrictions(h) -> None:
+    """Only temporary spaces are affected; every created rule gets verified cleanup."""
+    result, probe = h._invoke(["--read-only", "profile", "probe"], "restriction profile probe")
+    assert result.exit_code == 0 and probe["success"], result.output
+    space_id = h.state["space_id"]
+    target_space_id = h.state["secondary_space_id"]
+    created_at = _iso_datetime(0)
+    rule = h.run_tool(
+        "restrictions.create",
+        space_id=space_id,
+        name=h.name("restriction"),
+        conditions=[
+            {
+                "type": "cardType",
+                "created": created_at,
+                "operator": "eq",
+                "data": {"typeIds": [1]},
+            }
+        ],
+        restrictions=[
+            {
+                "type": "movement",
+                "created": created_at,
+                "operator": "eq",
+                "data": {"pathType": "any"},
+            }
+        ],
+    )
+
+    def register_cleanup(rule_space_id, restriction_id):
+        def delete_and_verify():
+            items = h.run_tool("restrictions.list", space_id=rule_space_id)
+            if any(item["id"] == restriction_id for item in items):
+                h.run_tool(
+                    "restrictions.delete", space_id=rule_space_id, restriction_id=restriction_id
+                )
+            remaining = h.run_tool("restrictions.list", space_id=rule_space_id)
+            assert not any(item["id"] == restriction_id for item in remaining)
+
+        h.cleanup_stack.append(
+            ("delete and verify temporary restriction", delete_and_verify, "restrictions.delete")
+        )
+        return delete_and_verify
+
+    source_id = rule["id"]
+    delete_source = register_cleanup(space_id, source_id)
+    assert (
+        h.run_tool("restrictions.get", space_id=space_id, restriction_id=source_id)["conditions"]
+        == rule["conditions"]
+    )
+    h.run_tool(
+        "restrictions.update", space_id=space_id, restriction_id=source_id, status="disabled"
+    )
+    assert (
+        h.run_tool("restrictions.get", space_id=space_id, restriction_id=source_id)["status"]
+        == "disabled"
+    )
+    h.run_tool("restrictions.update", space_id=space_id, restriction_id=source_id, status="active")
+    assert (
+        h.run_tool("restrictions.get", space_id=space_id, restriction_id=source_id)["status"]
+        == "active"
+    )
+    copied = h.run_tool(
+        "restrictions.copy", restriction_id=source_id, target_space_id=target_space_id
+    )
+    delete_copy = register_cleanup(target_space_id, copied["id"])
+    assert copied["id"] != source_id
+    assert copied["status"] in {"active", "broken"}
+    assert (
+        h.run_tool("restrictions.get", space_id=target_space_id, restriction_id=copied["id"])[
+            "status"
+        ]
+        == copied["status"]
+    )
+    delete_copy()
+    delete_source()
+    h.run_tool_expect_api_error(
+        "restrictions.get", {404}, space_id=space_id, restriction_id=source_id
+    )
 
 
 # Deterministic UID of the GitHub addon mounted at /github on self-hosted Kaiten.

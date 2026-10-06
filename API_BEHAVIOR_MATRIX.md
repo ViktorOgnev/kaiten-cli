@@ -86,6 +86,9 @@
 
 | Command family | Verb / Path | Status | Notes |
 |----------------|-------------|--------|-------|
+| `restrictions.list`, `restrictions.get` | `GET /spaces/{space_id}/restrictions` | `live_not_validated` | Недокументированное расширение по серверному коду. Весь список без пагинации; `get` выбирает UUID из списка и возвращает явную ошибку при отсутствии. Ограничения workflow исключены. |
+| `restrictions.create`, `restrictions.copy` | `POST /spaces/{space_id}/restrictions` | `live_not_validated` | Создание принимает `conditions` и `restrictions`; копирование передаёт `source_restriction_id` в целевое пространство и сохраняет фактический статус ответа, включая `broken`. |
+| `restrictions.update`, `restrictions.delete` | `PATCH` / `DELETE /spaces/{space_id}/restrictions/{restriction_id}` | `live_not_validated` | PATCH передаёт только заданные поля; массивы заменяются целиком. `status=active\|disabled`. Для `error_text` необходимо ещё одно поле. DELETE может вернуть пустое тело. Opt-in lifecycle и проверяемая очистка добавлены, но не запускались. |
 | `addons.list` | `GET /addons` | `live_not_validated` | Каталог опубликованных аддонов без фильтра по компании; live suite принимает success или `403/405`. |
 | `company-addons.list` | `GET /company/addons` | `live_not_validated` | Аддоны, зарегистрированные самой компанией, включая неопубликованные. |
 | `addons.uid` | локальная команда | `live_not_validated` | UUID v5 считается локально, обращения к API нет; проверяется совпадение с эталонным UID `/github`. |

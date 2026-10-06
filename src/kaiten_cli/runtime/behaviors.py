@@ -28,6 +28,7 @@ from kaiten_cli.runtime.support.pagination import (
 )
 from kaiten_cli.runtime.support.projects import fetch_project_cards
 from kaiten_cli.runtime.support.relations import fetch_card_children_batch, fetch_comments_batch
+from kaiten_cli.runtime.support.restrictions import select_restriction
 from kaiten_cli.runtime.support.spaces import fetch_space_topology
 from kaiten_cli.runtime.support.time_logs import fetch_time_logs_batch
 from kaiten_cli.runtime.support.tree import build_tree, fetch_all_entities, list_children
@@ -145,6 +146,17 @@ def automation_copy_request(
     if "target_space_id" in shaped:
         shaped["targetSpaceId"] = shaped.pop("target_space_id")
     return path, query, shaped
+
+
+def restriction_copy_request(tool, payload, path, query, body):
+    return path, query, {"source_restriction_id": payload["restriction_id"]}
+
+
+async def execute_restriction_get(client, tool, payload, path, query, body, timeout, reporter):
+    if reporter:
+        reporter(tr("execution: synthetic restriction read from the space restriction list"))
+    data = await client.get(path, timeout=timeout)
+    return select_restriction(data, payload["restriction_id"])
 
 
 def archive_service_request(

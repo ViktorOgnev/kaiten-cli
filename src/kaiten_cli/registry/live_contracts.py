@@ -325,6 +325,17 @@ _SPECIAL_CONTRACTS: dict[str, LiveContract] = {
 }
 
 
+_SPECIAL_CONTRACTS.update(
+    {
+        f"restrictions.{action}": LiveContract(
+            status=LIVE_STATUS_NOT_VALIDATED,
+            note="Restrictions are an undocumented server-code extension. The opt-in live scenario has not been run; compatibility and cleanup remain unverified on a live tenant.",
+        )
+        for action in ("list", "get", "create", "update", "delete", "copy")
+    }
+)
+
+
 def get_live_contract(canonical_name: str) -> LiveContract:
     return _SPECIAL_CONTRACTS.get(
         canonical_name,

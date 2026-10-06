@@ -50,6 +50,7 @@ kaiten_chart_throughput_capacity
 kaiten_chart_throughput_demand
 kaiten_clone_dashboard
 kaiten_copy_automation
+kaiten_copy_restriction
 kaiten_create_api_key
 kaiten_create_automation
 kaiten_create_board
@@ -79,6 +80,7 @@ kaiten_create_incoming_webhook
 kaiten_create_iteration
 kaiten_create_lane
 kaiten_create_project
+kaiten_create_restriction
 kaiten_create_saved_filter
 kaiten_create_scim_group
 kaiten_create_scim_user
@@ -130,6 +132,7 @@ kaiten_delete_private_card_file
 kaiten_delete_private_comment_file
 kaiten_delete_private_custom_property_file
 kaiten_delete_project
+kaiten_delete_restriction
 kaiten_delete_saved_filter
 kaiten_delete_sd_organization
 kaiten_delete_sd_request
@@ -193,6 +196,7 @@ kaiten_get_private_card_file
 kaiten_get_private_comment_file
 kaiten_get_private_custom_property_file
 kaiten_get_project
+kaiten_get_restriction
 kaiten_get_role
 kaiten_get_saved_filter
 kaiten_get_scim_group
@@ -285,6 +289,7 @@ kaiten_list_project_cards
 kaiten_list_projects
 kaiten_list_removed_boards
 kaiten_list_removed_cards
+kaiten_list_restrictions
 kaiten_list_roles
 kaiten_list_saved_filters
 kaiten_list_scim_groups
@@ -383,6 +388,7 @@ kaiten_update_private_card_file
 kaiten_update_private_comment_file
 kaiten_update_private_custom_property_file
 kaiten_update_project
+kaiten_update_restriction
 kaiten_update_saved_filter
 kaiten_update_scim_group
 kaiten_update_scim_user

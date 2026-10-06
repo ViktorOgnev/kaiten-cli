@@ -921,6 +921,7 @@ def _ensure_group(root: click.Group, segments: tuple[str, ...]) -> click.Group:
 )
 @click.option(
     "--from-file",
+    "--input-file",
     type=click.Path(exists=True, dir_okay=False, path_type=str),
     default=None,
     help="Load the full JSON payload from a file.",
