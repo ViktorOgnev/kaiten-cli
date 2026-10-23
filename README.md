@@ -14,46 +14,55 @@
 
 ### Установка из PyPI
 
-Требуется Python 3.11 или новее. Начиная с выпуска `0.3.3`, стабильные версии
-публикуются в PyPI.
+Требуется Python 3.11 или новее. Стабильные версии доступны в
+[PyPI](https://pypi.org/project/kaiten-cli/), начиная с выпуска `0.3.3`.
 
 Рекомендуемый путь:
 
 ```bash
-uv tool install kaiten-cli
+pip install kaiten-cli
 ```
 
-Альтернатива:
+Установка CLI в отдельное окружение через pipx:
 
 ```bash
 pipx install kaiten-cli
 ```
 
-Установка в локальное виртуальное окружение:
+Альтернатива через uv:
+
+```bash
+uv tool install kaiten-cli
+```
+
+Для установки через pip можно предварительно создать и активировать виртуальное
+окружение. На macOS и Linux:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install kaiten-cli
+source .venv/bin/activate
+pip install kaiten-cli
 ```
 
-В уже активированном виртуальном окружении достаточно `pip install kaiten-cli`.
+В Windows PowerShell окружение активируется командой `.venv\Scripts\Activate.ps1`.
 
 ### Установка из Git
 
-Для установки текущего состояния `master`:
+PyPI устанавливает опубликованный выпуск. Для установки текущего состояния
+`master`, которое может содержать ещё не выпущенные изменения, используйте Git:
 
 ```bash
-uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
+pip install git+https://github.com/ViktorOgnev/kaiten-cli.git
 ```
 
 Для установки конкретного выпуска:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
 ```
 
-Вместо `uv tool install` можно использовать `pipx install` или
-`python -m pip install` в виртуальном окружении.
+Вместо `pip install` можно использовать `pipx install` или `uv tool install`.
+Чтобы выбрать конкретный Python для pip, используйте `python -m pip install`.
 
 ### Проверка установки
 
@@ -194,39 +203,41 @@ PowerShell необходимо использовать отдельную ру
 Для установки из PyPI обновление выполняется вручную тем же менеджером:
 
 ```bash
-uv tool upgrade kaiten-cli
-pipx upgrade kaiten-cli
 python -m pip install --upgrade kaiten-cli
+pipx upgrade kaiten-cli
+uv tool upgrade kaiten-cli
 ```
 
 Выберите команду своего менеджера; для pip используйте Python того окружения,
 куда установлен пакет. Встроенное предложение обновиться для установок из PyPI
 пока не поддерживается.
 
-Если CLI установлен по адресу ветки Git, обновление выполняется вручную:
+Для установки из Git-ветки `master` обновление выполняется вручную:
 
 ```bash
-uv tool upgrade kaiten-cli
+python -m pip install --upgrade git+https://github.com/ViktorOgnev/kaiten-cli.git
 pipx upgrade kaiten-cli
+uv tool upgrade kaiten-cli
 ```
 
 Установка из Git без тега использует текущую версию из ветки `master`.
 Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
 ```
 
-Для установки из Git после успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
-проверяет стабильные теги `vX.Y.Z` в том же Git-репозитории. Если найден новый
-релиз, появляется вопрос `Update now ...? [y/N]`. Основная команда к этому
+При установке из Git CLI после успешной команды в интерактивном терминале
+не чаще одного раза в сутки проверяет стабильные теги `vX.Y.Z` в том же
+Git-репозитории. Если найден новый релиз, появляется вопрос `Update now ...? [y/N]`.
+Основная команда к этому
 моменту уже завершена; подтверждённое обновление применяется со следующего запуска.
 
 Способ обновления соответствует способу установки:
 
-- `uv tool` → `uv tool upgrade kaiten-cli`;
+- виртуальное окружение и pip → текущий `python -m pip install --upgrade <git-source>`;
 - `pipx` → `pipx upgrade kaiten-cli`;
-- виртуальное окружение и pip → текущий `python -m pip install --upgrade <git-source>`.
+- `uv tool` → `uv tool upgrade kaiten-cli`.
 
 Для установки, закреплённой на `@vX.Y.Z`, подтверждение заменяет текущий тег на
 новый с помощью того же менеджера. Проверка не запускается в режиме `--json`,
