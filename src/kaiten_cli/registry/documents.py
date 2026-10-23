@@ -18,6 +18,8 @@ from kaiten_cli.runtime.behaviors import (
 )
 from kaiten_cli.runtime.support.files import execute_file_upload
 from kaiten_cli.runtime.support.markdown_export import execute_document_get
+from kaiten_cli.runtime.support.documents import validate_document_update
+from kaiten_cli.runtime.support.document_sync import execute_document_update
 
 
 DOCUMENT_PARENT_USAGE_NOTES = (
@@ -233,6 +235,19 @@ TOOLS = (
             "type": "object",
             "properties": {
                 "document_uid": {"type": "string", "description": "Document UID"},
+                "content_mode": {
+                    "type": "string",
+                    "enum": ["api", "yjs"],
+                    "description": "Content transport: api (default, unsafe replacement requires explicit permission) or yjs (requires Node.js 20+). No automatic fallback.",
+                },
+                "allow_unsafe_content_replace": {
+                    "type": "boolean",
+                    "description": "Permit API content replacement, which may duplicate the entire document when syncing with an open editor. Cannot be combined with yjs mode.",
+                },
+                "socket_url": {
+                    "type": "string",
+                    "description": "Socket.IO server origin for yjs mode. Defaults to the selected profile origin.",
+                },
                 "title": {"type": "string", "description": "New document title"},
                 "text": {
                     "type": "string",
@@ -401,14 +416,28 @@ TOOLS = (
                 "slug",
             ),
         ),
-        runtime_behavior=RuntimeBehavior(request_shaper=prepare_document_request),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="custom",
+            request_shaper=prepare_document_request,
+            payload_validator=validate_document_update,
+            custom_executor=execute_document_update,
+        ),
         examples=(
             ExampleSpec(
-                command='kaiten --json documents update --document-uid doc-1 --text "**bold**"',
-                description="Update a document body.",
+                command='kaiten --json documents update --document-uid doc-1 --content-mode yjs --text "**bold**"',
+                description="Update document content through Yjs without replacing its collaboration history.",
+            ),
+            ExampleSpec(
+                command='kaiten --json documents update --document-uid doc-1 --title "Spec"',
+                description="Update document metadata without changing content.",
             ),
         ),
-        usage_notes=DOCUMENT_PARENT_USAGE_NOTES,
+        usage_notes=DOCUMENT_PARENT_USAGE_NOTES
+        + (
+            "API content replacement may duplicate the entire document when an open editor synchronizes. It is blocked unless --allow-unsafe-content-replace is explicitly set.",
+            "Use --content-mode yjs for collaboration updates. Node.js 20+ must already be installed; the CLI never installs Node or npm dependencies and never falls back to PATCH.",
+            "Yjs mode accepts content only; update metadata separately. Concurrent edits can produce a verification conflict; the CLI does not automatically overwrite or retry them.",
+        ),
     ),
     make_tool(
         canonical_name="documents.delete",
