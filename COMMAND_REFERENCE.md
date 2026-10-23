@@ -8963,7 +8963,7 @@ documents
 | Mutation | `yes` |
 | Allowed in read-only mode | `no` |
 | Remote side effects | `yes` |
-| Execution mode | `direct_http` |
+| Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
 | Path template | `/documents/{document_uid}` |
@@ -8976,6 +8976,9 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `document_uid` | `string` | yes | — | — | Document UID |
+| `content_mode` | `string` | no | `api`, `yjs` | — | Content transport: api (default, unsafe replacement requires explicit permission) or yjs (requires Node.js 20+). No automatic fallback. |
+| `allow_unsafe_content_replace` | `boolean` | no | — | — | Permit API content replacement, which may duplicate the entire document when syncing with an open editor. Cannot be combined with yjs mode. |
+| `socket_url` | `string` | no | — | — | Socket.IO server origin for yjs mode. Defaults to the selected profile origin. |
 | `title` | `string` | no | — | — | New document title |
 | `text` | `string` | no | — | — | Markdown content converted to ProseMirror. |
 | `data` | `object` | no | — | — | Raw ProseMirror JSON. |
@@ -9009,7 +9012,8 @@ documents
 
 **Examples**
 
-- Update a document body.: `kaiten --json documents update --document-uid doc-1 --text "**bold**"`
+- Update document content through Yjs without replacing its collaboration history.: `kaiten --json documents update --document-uid doc-1 --content-mode yjs --text "**bold**"`
+- Update document metadata without changing content.: `kaiten --json documents update --document-uid doc-1 --title "Spec"`
 
 **Notes**
 
@@ -9020,6 +9024,9 @@ documents
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - `parent_entity_uid` places the document under a document group/container in the sidebar tree.
 - Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
+- API content replacement may duplicate the entire document when an open editor synchronizes. It is blocked unless --allow-unsafe-content-replace is explicitly set.
+- Use --content-mode yjs for collaboration updates. Node.js 20+ must already be installed; the CLI never installs Node or npm dependencies and never falls back to PATCH.
+- Yjs mode accepts content only; update metadata separately. Concurrent edits can produce a verification conflict; the CLI does not automatically overwrite or retry them.
 
 <a id="module-dashboards"></a>
 ## Dashboards (`dashboards`) — 16 commands

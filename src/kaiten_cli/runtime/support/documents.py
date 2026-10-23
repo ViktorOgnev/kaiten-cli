@@ -6,6 +6,42 @@ import re
 import time
 from typing import Any
 
+from kaiten_cli.errors import MutationBlockedError, ValidationError
+from kaiten_cli.i18n import tr
+
+
+def validate_document_update(tool: Any, payload: dict[str, Any]) -> None:
+    """Keep content replacement opt-in across CLI and programmatic entrypoints."""
+    if tool.canonical_name != "documents.update":
+        return
+    has_content = "data" in payload or "text" in payload
+    mode = payload.get("content_mode", "api")
+    if mode not in {"api", "yjs"}:
+        raise ValidationError(tr("Document content mode must be api or yjs."))
+    if mode == "yjs":
+        if payload.get("allow_unsafe_content_replace"):
+            raise ValidationError(
+                tr("Do not combine --content-mode yjs with --allow-unsafe-content-replace.")
+            )
+        allowed = {"document_uid", "data", "text", "content_mode", "socket_url"}
+        if not has_content or set(payload) - allowed - {"allow_unsafe_content_replace"}:
+            raise ValidationError(
+                tr(
+                    "Yjs mode requires content only. Update document metadata in a separate command."
+                )
+            )
+        if "data" in payload and "text" in payload:
+            raise ValidationError(tr("Use either data or text in Yjs mode, not both."))
+    elif payload.get("socket_url"):
+        raise ValidationError(tr("--socket-url requires --content-mode yjs."))
+    elif has_content and not payload.get("allow_unsafe_content_replace"):
+        raise MutationBlockedError(
+            tr(
+                "Updating content through the API may duplicate the entire document when syncing with an open editor. No write was performed. Use --content-mode yjs. To explicitly permit an unsafe API write, specify --allow-unsafe-content-replace."
+            )
+        )
+
+
 _MARK_ALIASES = {
     "bold": "strong",
     "italic": "em",

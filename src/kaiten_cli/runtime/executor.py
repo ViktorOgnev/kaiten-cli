@@ -122,6 +122,7 @@ async def execute_tool_with_diagnostics(
         ),
     )
     enforce_mutation_policy(tool, read_only=effective_read_only)
+    path, query, body = build_request(tool, payload)
     profile: ResolvedProfile | None = None
     context: ExecutionContext | None = None
     client: KaitenClient | None = None
@@ -154,7 +155,6 @@ async def execute_tool_with_diagnostics(
         )
     else:
         _emit_debug(reporter, tr("profile: not required for this command"))
-    path, query, body = build_request(tool, payload)
     request_path = request_path_for_tool(tool, path, client)
     timeout = timeout_for_tool(tool)
     _emit_debug(
