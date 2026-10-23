@@ -44,7 +44,7 @@ source .venv/bin/activate
 pip install kaiten-cli
 ```
 
-В Windows PowerShell окружение активируется командой `.venv\Scripts\Activate.ps1`.
+В Windows PowerShell окружение активируется командой `.\.venv\Scripts\Activate.ps1`.
 
 ### Установка из Git
 
