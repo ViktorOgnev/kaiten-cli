@@ -23,9 +23,9 @@ protocol, so this is not a claim of a stable Public API contract.
 
 ## Automated checks
 
-- Python suite: **1458 passed**, 3 live tests deselected. Existing Click 9
+- Python suite after the master refresh: **1486 passed**, 3 live tests deselected. Existing Click 9
   deprecation warnings remain.
-- Final local recheck on 2026-10-23: **1458 Python tests passed**, and **16
+- Final local recheck on 2026-10-23: **1486 Python tests passed**, and **16
   JavaScript tests passed** on Node **24.2.0**. The previous 15-test JavaScript
   suite also passed on Node **20.20.0**. CI now runs the complete JavaScript suite
   on Node 20 and checks reproducibility of the committed helper and license files.
@@ -39,6 +39,9 @@ protocol, so this is not a claim of a stable Public API contract.
 - Ruff, EN/RU catalog coverage and generated command documentation checks passed.
 - Wheel and sdist built successfully. The sdist includes helper source and its
   lockfile and excludes node_modules. The wheel includes the helper and licenses.
+- After refreshing from master, version 0.3.3 archives passed the release artifact
+  checks and strict Twine validation. The version is inherited from master; this
+  feature does not introduce another version bump or publish a release.
 - A fresh environment installed from the wheel was checked for blocked API
   replacement, missing Node and a real Yjs no-op on Node 20. Both refusal cases
   made zero HTTP requests.
@@ -117,7 +120,8 @@ private manifests are excluded from the repository.
 
 ## Package size
 
-Compared with a wheel built from the original Git HEAD using the same builder:
+Initial version 0.3.2 measurement, compared with a wheel built from the original
+Git HEAD using the same builder (these are not the refreshed 0.3.3 archive sizes):
 
 | Measurement | Bytes |
 | --- | ---: |

@@ -4,7 +4,7 @@
 
 Его можно использовать самостоятельно или подключать к автоматизации: те же команды могут запускать человек, программа или LLM-агент.
 
-Проект устанавливается напрямую из Git и использует тот же доменный слой, который ранее применялся в `kaiten-mcp`.
+Проект распространяется через PyPI и Git и использует тот же доменный слой, который ранее применялся в `kaiten-mcp`.
 
 `kaiten-cli` работает самостоятельно: он не перенаправляет команды в MCP и не зависит от `kaiten-mcp` во время выполнения.
 
@@ -49,26 +49,48 @@ Yjs-режима заблокирован (`mutation_blocked`, код `6`). Дл
 
 ## Быстрый старт
 
-### Установка из Git
+### Установка из PyPI
+
+Требуется Python 3.11 или новее. Начиная с выпуска `0.3.3`, стабильные версии
+публикуются в PyPI.
 
 Рекомендуемый путь:
 
 ```bash
-uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
+uv tool install kaiten-cli
 ```
 
 Альтернатива:
 
 ```bash
-pipx install git+https://github.com/ViktorOgnev/kaiten-cli.git
+pipx install kaiten-cli
 ```
 
 Установка в локальное виртуальное окружение:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git"
+.venv/bin/python -m pip install kaiten-cli
 ```
+
+В уже активированном виртуальном окружении достаточно `pip install kaiten-cli`.
+
+### Установка из Git
+
+Для установки текущего состояния `master`:
+
+```bash
+uv tool install git+https://github.com/ViktorOgnev/kaiten-cli.git
+```
+
+Для установки конкретного выпуска:
+
+```bash
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
+```
+
+Вместо `uv tool install` можно использовать `pipx install` или
+`python -m pip install` в виртуальном окружении.
 
 ### Проверка установки
 
@@ -206,6 +228,18 @@ PowerShell необходимо использовать отдельную ру
 
 ### Обновление
 
+Для установки из PyPI обновление выполняется вручную тем же менеджером:
+
+```bash
+uv tool upgrade kaiten-cli
+pipx upgrade kaiten-cli
+python -m pip install --upgrade kaiten-cli
+```
+
+Выберите команду своего менеджера; для pip используйте Python того окружения,
+куда установлен пакет. Встроенное предложение обновиться для установок из PyPI
+пока не поддерживается.
+
 Если CLI установлен по адресу ветки Git, обновление выполняется вручную:
 
 ```bash
@@ -213,13 +247,14 @@ uv tool upgrade kaiten-cli
 pipx upgrade kaiten-cli
 ```
 
-По умолчанию используется текущая версия из ветки `master`. Установку можно закрепить на конкретном выпуске с помощью тега:
+Установка из Git без тега использует текущую версию из ветки `master`.
+Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.2"
+uv tool install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.3"
 ```
 
-После успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
+Для установки из Git после успешной команды в интерактивном терминале CLI не чаще одного раза в сутки
 проверяет стабильные теги `vX.Y.Z` в том же Git-репозитории. Если найден новый
 релиз, появляется вопрос `Update now ...? [y/N]`. Основная команда к этому
 моменту уже завершена; подтверждённое обновление применяется со следующего запуска.
@@ -280,6 +315,8 @@ KAITEN_CLI_LOCALE=ru kaiten cards --help
   Полный автоматически созданный справочник по основным командам и их псевдонимам MCP.
 - [ARCHITECTURE.md](ARCHITECTURE.md)
   Архитектурная карта, режимы выполнения и устройство документации.
+- [docs/PYPI_PUBLISHING.md](docs/PYPI_PUBLISHING.md)
+  Настройка Trusted Publishing, проверки и порядок выпуска пакета в PyPI.
 - [AGENTS.md](AGENTS.md)
   Краткое руководство для агентов и порядок знакомства с возможностями CLI.
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md)
@@ -1051,6 +1088,8 @@ KAITEN_LIVE=true KAITEN_DOMAIN=<company-subdomain-or-url> KAITEN_TOKEN=... \
 Релизная политика:
 
 - каждый пользовательский выпуск сопровождается увеличением версии CLI и тегом Git вида `vX.Y.Z`;
+- push стабильного тега запускает полный CI и публикацию проверенных wheel/sdist в PyPI; порядок настройки и выпуска описан в [инструкции](docs/PYPI_PUBLISHING.md);
+- слияние PR или push в `master` выполняет CI без загрузки пакета в PyPI;
 - установка из ветки не обновляется автоматически: требуется явный запуск `uv tool upgrade kaiten-cli` или `pipx upgrade kaiten-cli`;
 - установка с `@vX.Y.Z` закреплена на указанном теге и не переключается на следующий тег автоматически.
 
