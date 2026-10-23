@@ -42,11 +42,13 @@ test = [
     "pytest-cov>=6.0",
     "pytest-timeout>=2.3",
     "pytest-socket>=0.7",
+    "pyyaml>=6.0",
     "respx>=0.22",
 ]
 dev = [
     "kaiten-cli[test]",
     "build>=1.2",
+    "twine>=6.0",
     "pip-audit>=2.9",
     "ruff==0.15.0",
 ]
