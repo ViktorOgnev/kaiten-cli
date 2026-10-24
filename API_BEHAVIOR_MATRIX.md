@@ -8,17 +8,24 @@
 
 | Поле | Значение |
 |------|----------|
-| Contract baseline | `kaiten-cli v0.1.23` |
+| Исторический contract baseline | `kaiten-cli v0.1.23` |
 | Tenant class | Kaiten sandbox test tenant |
-| Текущий аудит | `2026-07-09`; live suite **не запускался** |
+| Последний зафиксированный аудит | `2026-07-09`; live suite **не запускался** |
 | Последняя полная live campaign | `TBD`: дата и commit не подтверждены в репозитории |
-| Источник до следующего live run | checked-in contracts и `tests/live/`; записи ниже нельзя считать повторно подтверждёнными текущим аудитом |
+| Источник до следующего live run | checked-in contracts и `tests/live/`; записи ниже не являются свежей live-проверкой текущего выпуска |
 
 После следующей полной live campaign эту таблицу нужно обновить точными датой, commit SHA, версией CLI и tenant class. Secrets, tenant URL и идентификаторы тестовых сущностей сюда не записываются.
+
+Публикация новой версии CLI и успешный offline CI не меняют дату или статус
+исторической live-проверки. Текущий command surface задаёт реестр CLI.
 
 ## Default rule
 
 Все canonical команды из registry, которые не перечислены ниже, считаются `live_passed`: они должны проходить по normal success-path в полном live suite.
+
+Это правило интерпретации закодированной матрицы и ожидаемого success-path,
+а не свидетельство нового прогона каждой команды. Для добавленных позднее команд
+сохраняется явный статус `live_not_validated` до фактической live-проверки.
 
 ## Validated success-path contracts with special notes
 
