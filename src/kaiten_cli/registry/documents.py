@@ -238,7 +238,7 @@ TOOLS = (
                 "content_mode": {
                     "type": "string",
                     "enum": ["api", "yjs"],
-                    "description": "Content transport: api (default, unsafe replacement requires explicit permission) or yjs (requires Node.js 20+). No automatic fallback.",
+                    "description": "Content transport: api (default, unsafe replacement requires explicit permission) or yjs (temporary compatibility fallback for servers without the API fix; requires Node.js 20+). Select explicitly; no automatic transport switching.",
                 },
                 "allow_unsafe_content_replace": {
                     "type": "boolean",
@@ -435,7 +435,9 @@ TOOLS = (
         usage_notes=DOCUMENT_PARENT_USAGE_NOTES
         + (
             "API content replacement may duplicate the entire document when an open editor synchronizes. It is blocked unless --allow-unsafe-content-replace is explicitly set.",
-            "Use --content-mode yjs for collaboration updates. Node.js 20+ must already be installed; the CLI never installs Node or npm dependencies and never falls back to PATCH.",
+            "Yjs is a temporary compatibility fallback for installations without the server-side API fix, selected explicitly with --content-mode yjs. It is a candidate for future removal, not deprecated; there is no removal date.",
+            "Node.js 20+ must already be installed for Yjs; the CLI never installs Node or npm dependencies and never falls back to PATCH.",
+            "Retire the Yjs fallback only after the fixed API is enabled across supported installations, controlled synchronization tests pass, and the minimum supported server version no longer needs it.",
             "Yjs mode accepts content only; update metadata separately. Concurrent edits can produce a verification conflict; the CLI does not automatically overwrite or retry them.",
         ),
     ),

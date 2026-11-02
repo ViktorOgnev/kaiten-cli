@@ -1,4 +1,12 @@
-"""Explicit Yjs content transport. Failures never trigger automatic API replacement."""
+"""Temporary compatibility fallback for installations without the fixed document API.
+
+Replacing JSON used to create independent Yjs ancestry and duplicate editor content.
+Select this transport explicitly; failures never trigger automatic transport switching.
+Server fixes: https://github.com/flowfast/kaiten-lib/pull/5080 and
+https://github.com/flowfast/kaiten/pull/17310.
+Retirement criteria: docs/DOCUMENT_YJS_VERIFICATION.md#temporary-fallback-and-retirement.
+This fallback is a removal candidate, not deprecated; it has no removal date.
+"""
 
 from __future__ import annotations
 

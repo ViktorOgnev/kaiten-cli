@@ -3,8 +3,43 @@
 Verified on a local instance on 2026-10-20 and on two explicitly authorized,
 synthetic cloud documents on 2026-10-20–21. The cloud experiment reproduced
 duplication with API replacement; the Yjs document matched the intended content.
-No release was published. The transport uses Kaiten's internal collaboration
+No release of this feature was published. The transport uses Kaiten's internal collaboration
 protocol, so this is not a claim of a stable Public API contract.
+
+## Temporary fallback and retirement
+
+The Yjs transport is a **temporary compatibility fallback for installations
+without the fixed server-side document API**, selected explicitly with
+`--content-mode yjs`. It preserves support for older cloud and on-premise
+installations. "Fallback" does not mean automatic switching: neither API nor Yjs
+errors cause the CLI to select another transport. It is a candidate for future
+removal, not deprecated; there is no removal date.
+
+As checked on 2026-11-02, [kaiten-lib #5080](https://github.com/flowfast/kaiten-lib/pull/5080)
+was merged on 2026-10-30 and [kaiten #17310](https://github.com/flowfast/kaiten/pull/17310)
+on 2026-10-31. They apply changes to the existing Y.Doc instead of recreating its
+ancestry. The merged implementation still gates the fixed path on Yjs flags and
+a company allowlist. A merged PR, an unchanged PATCH schema, or the general
+`documentsYjsEnabled` company flag does not prove that Yjs v2 is enabled for a
+particular installation. Deployment and rollout have not been validated by a new
+content-write experiment in this refresh.
+
+Remove the compatibility layer only when all of these conditions are met:
+
+1. The server fixes and their dependencies have been released and the fixed API
+   path is enabled across the installations supported by the CLI.
+2. Ordinary PATCH passes a controlled synchronization test retaining an editor's
+   old state, with a fresh authoritative read confirming no duplicated or lost
+   content. Immediate HTTP readback or a page reload alone is insufficient.
+3. The minimum supported server version and compatibility policy no longer
+   require this workaround for older installations.
+
+The removable layer consists of the Python socket-process wrapper, bundled JS
+helper and its licenses, embedded schemas and maintenance export, JS source and
+build dependencies (`package.json` and lockfile), transport-specific tests, and
+the `document-yjs` CI job. Clean up its packaging entries, socket diagnostics,
+help and instructions in the same removal change. Reassess the API-write guard
+and public flags explicitly then; this document does not disable them now.
 
 ## Behaviour
 
@@ -25,7 +60,7 @@ protocol, so this is not a claim of a stable Public API contract.
 
 - Python suite after the master refresh: **1486 passed**, 3 live tests deselected. Existing Click 9
   deprecation warnings remain.
-- Final local recheck on 2026-10-23: **1486 Python tests passed**, and **16
+- Final local recheck on 2026-11-02: **1486 Python tests passed**, and **16
   JavaScript tests passed** on Node **24.2.0**. The previous 15-test JavaScript
   suite also passed on Node **20.20.0**. CI now runs the complete JavaScript suite
   on Node 20 and checks reproducibility of the committed helper and license files.

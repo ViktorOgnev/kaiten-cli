@@ -1,5 +1,18 @@
 # Document Yjs helper
 
+This is a **temporary compatibility fallback**, explicitly selected with
+`--content-mode yjs`, for installations where the fixed server-side document API
+has not been released or enabled. JSON replacement used to create independent
+Yjs ancestry and duplicate content when an editor synchronized. The CLI never
+switches transports automatically after an API or Yjs error.
+
+The server fixes are [kaiten-lib #5080](https://github.com/flowfast/kaiten-lib/pull/5080)
+and [kaiten #17310](https://github.com/flowfast/kaiten/pull/17310). Their merge does
+not prove rollout on a particular installation. This helper is a candidate for
+future removal, not deprecated, and has no removal date. See the
+[retirement criteria and removable layer](../../docs/DOCUMENT_YJS_VERIFICATION.md#temporary-fallback-and-retirement)
+before removing it or its build dependencies.
+
 The wheel ships `src/kaiten_cli/assets/document_yjs.cjs` and its license files.
 End users need an existing Node.js 20+ only for `--content-mode yjs`. Neither
 Python installation nor command execution invokes npm or installs Node.

@@ -8976,7 +8976,7 @@ documents
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `document_uid` | `string` | yes | — | — | Document UID |
-| `content_mode` | `string` | no | `api`, `yjs` | — | Content transport: api (default, unsafe replacement requires explicit permission) or yjs (requires Node.js 20+). No automatic fallback. |
+| `content_mode` | `string` | no | `api`, `yjs` | — | Content transport: api (default, unsafe replacement requires explicit permission) or yjs (temporary compatibility fallback for servers without the API fix; requires Node.js 20+). Select explicitly; no automatic transport switching. |
 | `allow_unsafe_content_replace` | `boolean` | no | — | — | Permit API content replacement, which may duplicate the entire document when syncing with an open editor. Cannot be combined with yjs mode. |
 | `socket_url` | `string` | no | — | — | Socket.IO server origin for yjs mode. Defaults to the selected profile origin. |
 | `title` | `string` | no | — | — | New document title |
@@ -9025,7 +9025,9 @@ documents
 - `parent_entity_uid` places the document under a document group/container in the sidebar tree.
 - Do not use document parent fields for UI catalog tables (`custom-directories`) or `custom-properties catalog-values`.
 - API content replacement may duplicate the entire document when an open editor synchronizes. It is blocked unless --allow-unsafe-content-replace is explicitly set.
-- Use --content-mode yjs for collaboration updates. Node.js 20+ must already be installed; the CLI never installs Node or npm dependencies and never falls back to PATCH.
+- Yjs is a temporary compatibility fallback for installations without the server-side API fix, selected explicitly with --content-mode yjs. It is a candidate for future removal, not deprecated; there is no removal date.
+- Node.js 20+ must already be installed for Yjs; the CLI never installs Node or npm dependencies and never falls back to PATCH.
+- Retire the Yjs fallback only after the fixed API is enabled across supported installations, controlled synchronization tests pass, and the minimum supported server version no longer needs it.
 - Yjs mode accepts content only; update metadata separately. Concurrent edits can produce a verification conflict; the CLI does not automatically overwrite or retry them.
 
 <a id="module-dashboards"></a>
