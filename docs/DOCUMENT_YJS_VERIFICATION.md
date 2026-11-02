@@ -21,8 +21,9 @@ on 2026-10-31. They apply changes to the existing Y.Doc instead of recreating it
 ancestry. The merged implementation still gates the fixed path on Yjs flags and
 a company allowlist. A merged PR, an unchanged PATCH schema, or the general
 `documentsYjsEnabled` company flag does not prove that Yjs v2 is enabled for a
-particular installation. Deployment and rollout have not been validated by a new
-content-write experiment in this refresh.
+particular installation. Code review alone does not establish deployment or
+rollout. The native PATCH recheck below records observed behavior without claiming
+that the fixed path was enabled.
 
 Remove the compatibility layer only when all of these conditions are met:
 
@@ -152,6 +153,33 @@ the browser transport was not instrumented, and page reload is not such a test.
 The controlled old-state reconnect remains the separate local lifecycle above.
 Raw documents, tenant/document identifiers, credentials, screenshots, traces and
 private manifests are excluded from the repository.
+
+## Native PATCH recheck on 2026-11-02
+
+A separate synthetic document was created on the previously tested cloud
+installation. Creation returned an empty document; an explicit initial PATCH
+populated the baseline, and HTTP readback matched its single 122-row table,
+formatting and block identifiers before the synchronization scenario began.
+
+A protocol client subscribed, retained the original Yjs state and disconnected.
+The public PATCH then changed the introduction and one table cell. Its immediate
+HTTP readback matched the target. After the client reconnected and submitted its
+retained old state once, the socket acknowledged the submission. Fresh full
+synchronization and two subsequent HTTP reads contained two 122-row tables and
+both V1/V2 introductions and end markers: 29,611 text characters instead of the
+intended 14,816.
+
+The check stopped at this first post-reconnect mismatch. The planned structural
+and pending-editor-input scenarios were not run. No corrective write or automatic
+retry followed; the document was retained as evidence. The earlier two cloud
+documents were not modified. No browser was used.
+
+This confirms that ordinary PATCH can still duplicate content on the tested
+installation. It does not determine whether the new server code is deployed or
+Yjs v2 is enabled there, and is not evidence of a defect in an enabled fixed path.
+The compatibility fallback remains necessary until those retirement conditions
+are established. Raw payloads, identifiers, traces and credentials remain outside
+the repository.
 
 ## Package size
 
