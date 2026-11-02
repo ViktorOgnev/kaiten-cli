@@ -40,6 +40,7 @@ def required_messages():
         "Mutation blocked",
         "Internal error",
         "Batch execution error",
+        "Document sync error",
         "reset",
         "recreate",
         "open",

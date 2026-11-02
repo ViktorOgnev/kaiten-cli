@@ -68,6 +68,23 @@ Use JSONL with one operation per line:
 - Do not mark a source checklist item complete or add comments/status changes
   unless those effects were explicitly authorized.
 
+## Document content writes
+
+Use `documents update --content-mode yjs` as an explicitly selected temporary
+compatibility fallback for installations without the fixed server-side API. It
+preserves Yjs ancestry and is a future removal candidate, not deprecated. Do not
+infer rollout from merged server PRs; follow the retirement criteria in
+`docs/DOCUMENT_YJS_VERIFICATION.md`. It requires an already installed Node.js 20+; the CLI never
+installs it or runs npm. Pass either `data` or `text` and update metadata in a
+separate command. Use `--socket-url` only for a known separate Socket.IO origin.
+
+API replacement can duplicate the entire document when an open editor syncs.
+It is blocked unless `--allow-unsafe-content-replace` is explicitly supplied.
+Do not automatically choose that flag when Yjs fails. After a lost acknowledgement,
+the update may already be saved: report uncertainty and investigate before another
+write. A Yjs verification conflict can represent concurrent edits, not a reason
+to overwrite them. `--read-only` blocks both transports.
+
 ## Addon data writes
 
 Addon state is not part of the card entity. A card's GitHub attachments, and any

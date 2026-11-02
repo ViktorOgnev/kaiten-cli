@@ -716,6 +716,7 @@ def _exercise_projects_documents_and_tree(h) -> None:
     h.run_tool(
         "documents.update",
         document_uid=h.state["document_uid"],
+        allow_unsafe_content_replace=True,
         title=h.name("document-updated"),
         text="# Updated",
     )

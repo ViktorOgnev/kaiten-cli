@@ -21,7 +21,7 @@ from kaiten_cli.runtime.support.card_move_url import (
 )
 from kaiten_cli.runtime.support.cards import fetch_all_cards, fetch_cards_batch_get
 from kaiten_cli.runtime.support.checklists import extract_card_checklists, extract_checklist_items
-from kaiten_cli.runtime.support.documents import prepare_document_body
+from kaiten_cli.runtime.support.documents import prepare_document_body, validate_document_update
 from kaiten_cli.runtime.support.pagination import (
     API_MAX_PAGE_SIZE,
     DEFAULT_COLLECTION_MAX_PAGES,
@@ -86,6 +86,9 @@ def default_role_time_log_request(
 def prepare_document_request(
     tool, payload: dict[str, Any], path: str, query: Query, body: Body
 ) -> tuple[str, Query, Body]:
+    validate_document_update(tool, payload)
+    if tool.canonical_name == "documents.update" and payload.get("content_mode") == "yjs":
+        return path, query, body
     return path, query, prepare_document_body(tool.canonical_name, dict(body or {}))
 
 

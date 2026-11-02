@@ -106,6 +106,7 @@ class ExecutionStats:
     disk_cache_expired: int = 0
     disk_cache_bypasses: int = 0
     pagination_compatibility: list[dict[str, Any]] = field(default_factory=list)
+    document_sync: dict[str, Any] = field(default_factory=dict)
     _groups: dict[tuple[str, str, str], ExecutionGroupStats] = field(
         default_factory=dict, init=False
     )
@@ -239,6 +240,8 @@ class ExecutionStats:
             payload["pagination_compatibility"] = [
                 dict(event) for event in self.pagination_compatibility
             ]
+        if self.document_sync:
+            payload["document_sync"] = dict(self.document_sync)
         if command_duration_ms is not None:
             payload["command_duration_ms"] = round(command_duration_ms, 2)
         return payload

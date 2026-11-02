@@ -80,6 +80,7 @@ def test_build_request_for_update_document_sanitizes_lists_and_marks():
         tool,
         {
             "document_uid": "doc-1",
+            "allow_unsafe_content_replace": True,
             "data": {
                 "type": "doc",
                 "content": [
