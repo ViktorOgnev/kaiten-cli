@@ -61,6 +61,35 @@ Yjs-режима заблокирован (`mutation_blocked`, код `6`). Дл
 
 ## Быстрый старт
 
+### Установка через Homebrew
+
+На macOS и Linux:
+
+```bash
+brew install ViktorOgnev/tap/kaiten-cli
+kaiten --locale ru --version
+```
+
+Homebrew устанавливает Python, Node.js для Yjs и зависимости CLI в управляемое
+окружение. Отдельно устанавливать pipx или uv не требуется. Формула находится в
+[публичном tap](https://github.com/ViktorOgnev/homebrew-tap); пока она не входит
+в основной каталог Homebrew.
+
+Обновление:
+
+```bash
+brew update
+brew upgrade kaiten-cli
+```
+
+При переходе с pipx или uv сначала удалите прежнюю установку соответствующим
+менеджером (`pipx uninstall kaiten-cli` или `uv tool uninstall kaiten-cli`).
+Для pip используйте `python -m pip uninstall kaiten-cli` именно в прежнем
+окружении. Эти команды не удаляют профили Kaiten. После установки проверьте
+`command -v kaiten` и `type -a kaiten`: запускаемый файл должен принадлежать
+Homebrew. При необходимости выполните `hash -r` или откройте новый терминал.
+Обновляйте Homebrew-установку только через `brew upgrade`.
+
 ### Установка из PyPI
 
 Требуется Python 3.11 или новее. Стабильные версии доступны в
@@ -107,7 +136,7 @@ pip install git+https://github.com/ViktorOgnev/kaiten-cli.git
 Для установки конкретного выпуска:
 
 ```bash
-pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.4"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.5"
 ```
 
 Вместо `pip install` можно использовать `pipx install` или `uv tool install`.
@@ -273,7 +302,7 @@ uv tool upgrade kaiten-cli
 Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.4"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.5"
 ```
 
 При установке из Git CLI после успешной команды в интерактивном терминале
