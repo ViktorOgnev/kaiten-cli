@@ -7,6 +7,8 @@ name = "kaiten-cli"
 dynamic = ["version"]
 description = "LLM-oriented CLI for Kaiten"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [
     { name = "Viktor Ognev" },
@@ -68,6 +70,7 @@ include = [
     "/src",
     "/tests",
     "/README.md",
+    "/LICENSE",
     "/ARCHITECTURE.md",
     "/AGENTS.md",
     "/LIVE_VALIDATION.md",

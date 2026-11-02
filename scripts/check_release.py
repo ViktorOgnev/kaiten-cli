@@ -83,6 +83,10 @@ def check_metadata(data: bytes, version: str, archive: Path) -> None:
         raise ReleaseError(
             f"Unexpected Name/Version in {archive.name}: expected {PACKAGE} {version}"
         )
+    if metadata.get("License-Expression") != "MIT" or "LICENSE" not in metadata.get_all(
+        "License-File", []
+    ):
+        raise ReleaseError(f"Missing MIT license metadata in {archive.name}")
 
 
 def check_artifacts(dist: Path, version: str) -> list[Path]:
@@ -96,6 +100,9 @@ def check_artifacts(dist: Path, version: str) -> list[Path]:
         if len(names) != 1:
             raise ReleaseError("Expected exactly one wheel METADATA file")
         check_metadata(wheel.read(names[0]), version, wheels[0])
+        license_path = names[0].removesuffix("METADATA") + "licenses/LICENSE"
+        if license_path not in wheel.namelist() or not wheel.read(license_path).strip():
+            raise ReleaseError("Missing wheel LICENSE text")
     with tarfile.open(sdists[0], "r:gz") as sdist:
         members = [
             member
@@ -108,6 +115,9 @@ def check_artifacts(dist: Path, version: str) -> list[Path]:
         assert stream is not None
         with stream:
             check_metadata(stream.read(), version, sdists[0])
+        license_member = sdist.getmember(members[0].name.rsplit("/", 1)[0] + "/LICENSE")
+        if not license_member.isfile() or license_member.size == 0:
+            raise ReleaseError("Missing sdist LICENSE text")
     return files
 
 

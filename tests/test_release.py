@@ -128,22 +128,46 @@ def test_network_failure_never_allows_publishing(monkeypatch, error):
         release.check_unpublished("0.3.3")
 
 
-def make_archives(root, *, wheel_version="0.3.3", sdist_version="0.3.3", name="kaiten-cli"):
+def make_archives(
+    root,
+    *,
+    wheel_version="0.3.3",
+    sdist_version="0.3.3",
+    name="kaiten-cli",
+    license_text=True,
+    license_metadata=True,
+):
     root.mkdir(exist_ok=True)
+    licensing = "License-Expression: MIT\nLicense-File: LICENSE\n" if license_metadata else ""
     with zipfile.ZipFile(root / "kaiten_cli-0.3.3-py3-none-any.whl", "w") as wheel:
         wheel.writestr(
-            "kaiten_cli-0.3.3.dist-info/METADATA", f"Name: {name}\nVersion: {wheel_version}\n"
+            "kaiten_cli-0.3.3.dist-info/METADATA",
+            f"Name: {name}\nVersion: {wheel_version}\n{licensing}",
         )
+        if license_text:
+            wheel.writestr("kaiten_cli-0.3.3.dist-info/licenses/LICENSE", "MIT License\n")
     with tarfile.open(root / "kaiten_cli-0.3.3.tar.gz", "w:gz") as sdist:
-        data = f"Name: {name}\nVersion: {sdist_version}\n".encode()
+        data = f"Name: {name}\nVersion: {sdist_version}\n{licensing}".encode()
         member = tarfile.TarInfo("kaiten_cli-0.3.3/PKG-INFO")
         member.size = len(data)
         sdist.addfile(member, io.BytesIO(data))
+        if license_text:
+            data = b"MIT License\n"
+            member = tarfile.TarInfo("kaiten_cli-0.3.3/LICENSE")
+            member.size = len(data)
+            sdist.addfile(member, io.BytesIO(data))
 
 
 def test_matching_archives(tmp_path):
     make_archives(tmp_path)
     assert len(release.check_artifacts(tmp_path, "0.3.3")) == 2
+
+
+@pytest.mark.parametrize("changes", [{"license_text": False}, {"license_metadata": False}])
+def test_missing_license_blocks_release(tmp_path, changes):
+    make_archives(tmp_path, **changes)
+    with pytest.raises(release.ReleaseError, match="[Ll][Ii][Cc][Ee][Nn][Ss][Ee]"):
+        release.check_artifacts(tmp_path, "0.3.3")
 
 
 @pytest.mark.parametrize(

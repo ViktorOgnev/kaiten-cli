@@ -61,6 +61,35 @@ Yjs-режима заблокирован (`mutation_blocked`, код `6`). Дл
 
 ## Быстрый старт
 
+### Установка через Homebrew
+
+На macOS и Linux:
+
+```bash
+brew install ViktorOgnev/tap/kaiten-cli
+kaiten --locale ru --version
+```
+
+Homebrew устанавливает Python, Node.js для Yjs и зависимости CLI в управляемое
+окружение. Отдельно устанавливать pipx или uv не требуется. Формула находится в
+[публичном tap](https://github.com/ViktorOgnev/homebrew-tap); пока она не входит
+в основной каталог Homebrew.
+
+Обновление:
+
+```bash
+brew update
+brew upgrade kaiten-cli
+```
+
+При переходе с pipx или uv сначала удалите прежнюю установку соответствующим
+менеджером (`pipx uninstall kaiten-cli` или `uv tool uninstall kaiten-cli`).
+Для pip используйте `python -m pip uninstall kaiten-cli` именно в прежнем
+окружении. Эти команды не удаляют профили Kaiten. После установки проверьте
+`command -v kaiten` и `type -a kaiten`: запускаемый файл должен принадлежать
+Homebrew. При необходимости выполните `hash -r` или откройте новый терминал.
+Обновляйте Homebrew-установку только через `brew upgrade`.
+
 ### Установка из PyPI
 
 Требуется Python 3.11 или новее. Стабильные версии доступны в
