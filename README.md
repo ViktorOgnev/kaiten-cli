@@ -136,7 +136,7 @@ pip install git+https://github.com/ViktorOgnev/kaiten-cli.git
 Для установки конкретного выпуска:
 
 ```bash
-pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.4"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.5"
 ```
 
 Вместо `pip install` можно использовать `pipx install` или `uv tool install`.
@@ -302,7 +302,7 @@ uv tool upgrade kaiten-cli
 Установку можно закрепить на конкретном выпуске с помощью тега:
 
 ```bash
-pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.4"
+pip install "git+https://github.com/ViktorOgnev/kaiten-cli.git@v0.3.5"
 ```
 
 При установке из Git CLI после успешной команды в интерактивном терминале
