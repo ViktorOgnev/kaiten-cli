@@ -185,7 +185,9 @@ Bulk reads are still registry-defined tools. The difference is that some aggrega
 
 Primary docs:
 
-- [README.md](README.md) for install, usage, config, and operator guidance
+- [README.md](README.md) for installation, upgrades, configuration, first commands, and the docs map
+- [docs/USAGE.md](docs/USAGE.md) for detailed workflows, document updates, API compatibility, cache and snapshot behavior
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for developer setup, documentation generation, tests and benchmarks
 - [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md) for the full generated command catalog
 - [AGENTS.md](AGENTS.md) for agent-specific usage and safety shortcuts
 - [docs/PYPI_PUBLISHING.md](docs/PYPI_PUBLISHING.md) for PyPI setup, release and verification

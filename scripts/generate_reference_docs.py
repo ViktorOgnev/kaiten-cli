@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import importlib
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -24,48 +23,7 @@ from kaiten_cli.registry.live_contracts import (  # noqa: E402
 from kaiten_cli.registry.module_docs import MODULE_SPECS, ModuleDocSpec  # noqa: E402
 from kaiten_cli.schema_docs import schema_rows  # noqa: E402
 
-README_PATH = ROOT / "README.md"
 COMMAND_REFERENCE_PATH = ROOT / "COMMAND_REFERENCE.md"
-README_START = "<!-- BEGIN GENERATED COMMAND SUMMARY -->"
-README_END = "<!-- END GENERATED COMMAND SUMMARY -->"
-README_MODULE_LABELS = {
-    "cards": "Карточки",
-    "comments": "Комментарии",
-    "members": "Участники и пользователи",
-    "time_logs": "Логи времени",
-    "tags": "Теги",
-    "checklists": "Чеклисты",
-    "blockers": "Блокировки",
-    "card_relations": "Связи карточек",
-    "external_links": "Внешние ссылки",
-    "files": "Файлы карточек",
-    "subscribers": "Подписчики",
-    "spaces": "Пространства",
-    "boards": "Доски",
-    "columns": "Колонки и подколонки",
-    "lanes": "Дорожки",
-    "card_types": "Типы карточек",
-    "custom_directories": "Каталоги",
-    "custom_properties": "Пользовательские свойства",
-    "documents": "Документы",
-    "dashboards": "Дашборды",
-    "iterations": "Итерации",
-    "webhooks": "Вебхуки",
-    "automations": "Автоматизации и рабочие процессы",
-    "restrictions": "Ограничения",
-    "addons": "Аддоны",
-    "github_addon": "GitHub-аддон",
-    "projects": "Проекты и спринты",
-    "roles_and_groups": "Роли и группы",
-    "scim": "SCIM",
-    "audit_and_analytics": "Аудит и аналитика",
-    "service_desk": "Service Desk",
-    "charts": "Графики и аналитика",
-    "tree": "Дерево сущностей",
-    "utilities": "Утилиты",
-    "snapshot": "Локальные снимки",
-    "query": "Локальные запросы",
-}
 
 
 def _load_module_tools(spec: ModuleDocSpec) -> tuple[ToolSpec, ...]:
@@ -91,37 +49,6 @@ def _cli_command(tool: ToolSpec) -> str:
 
 def _module_anchor(spec: ModuleDocSpec) -> str:
     return f"module-{spec.key.replace('_', '-')}"
-
-
-def _render_readme_summary(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec, ...]]]) -> str:
-    total_tools = sum(len(tools) for _, tools in modules)
-    lines = [
-        README_START,
-        f"В `kaiten-cli` доступно **{total_tools}** основных инструментов. Количество модулей реестра: **{len(modules)}**. Полный список команд: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).",
-        "",
-        "| Область | Модуль | Инструментов | Справочник |",
-        "|---|---|---:|---|",
-    ]
-    for spec, tools in modules:
-        label = README_MODULE_LABELS.get(spec.key, spec.label)
-        lines.append(
-            f"| {label} | `{spec.key}` | {len(tools)} | [Раздел](COMMAND_REFERENCE.md#{_module_anchor(spec)}) |"
-        )
-    lines.append(
-        f"| **Итого** | **{len(modules)}** | **{total_tools}** | [Полный справочник](COMMAND_REFERENCE.md) |"
-    )
-    lines.append(README_END)
-    return "\n".join(lines)
-
-
-def _replace_readme_summary(readme_text: str, summary_block: str) -> str:
-    pattern = re.compile(
-        rf"{re.escape(README_START)}.*?{re.escape(README_END)}",
-        flags=re.DOTALL,
-    )
-    if not pattern.search(readme_text):
-        raise SystemExit("README summary markers not found.")
-    return pattern.sub(summary_block, readme_text, count=1)
 
 
 def _namespace_tree(tools: tuple[ToolSpec, ...]) -> str:
@@ -297,21 +224,6 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         "",
         f"`kaiten-cli` currently exposes **{total_tools}** canonical commands across **{len(modules)}** registry modules.",
         "",
-        "## Conventions",
-        "",
-        "- Canonical CLI form is rendered as `kaiten <namespace...> <action>`.",
-        "- MCP alias is shown inline for every command.",
-        "- Pass `--locale ru|en` before the command to localize CLI-owned prose, including JSON descriptions and errors. Precedence: flag > `KAITEN_CLI_LOCALE` > `en`; OS locale and profiles are ignored.",
-        "- Agents choose the locale from the conversation (Russian: `ru`, English/other languages: `en`). Command names, JSON keys, enums, error codes and API/user data stay unchanged.",
-        "- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.",
-        "- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.",
-        "- `--compact` and `--fields` only apply when the command metadata says they are supported.",
-        "- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.",
-        "- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.",
-        "- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.",
-        "- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.",
-        "- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.",
-        "",
         "## Module Index",
         "",
         "| Area | Module | Count | Section |",
@@ -323,11 +235,26 @@ def _render_command_reference(modules: list[tuple[ModuleDocSpec, tuple[ToolSpec,
         )
     lines.extend(
         [
+            f"| **Total** | **{len(modules)}** | **{total_tools}** | |",
             "",
-            "## Full Reference",
+            "## Conventions",
+            "",
+            "- Canonical CLI form is rendered as `kaiten <namespace...> <action>`.",
+            "- MCP alias is shown inline for every command.",
+            "- Pass `--locale ru|en` before the command to localize CLI-owned prose, including JSON descriptions and errors. Precedence: flag > `KAITEN_CLI_LOCALE` > `en`; OS locale and profiles are ignored.",
+            "- Agents choose the locale from the conversation (Russian: `ru`, English/other languages: `en`). Command names, JSON keys, enums, error codes and API/user data stay unchanged.",
+            "- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.",
+            "- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.",
+            "- `--compact` and `--fields` only apply when the command metadata says they are supported.",
+            "- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.",
+            "- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.",
+            "- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.",
+            "- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.",
+            "- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.",
             "",
         ]
     )
+    lines.extend(["## Full Reference", ""])
 
     for spec, tools in modules:
         lines.extend(
@@ -389,15 +316,10 @@ def main() -> int:
         raise SystemExit("Specify --check or --write.")
 
     modules = _load_docs_index()
-    summary_block = _render_readme_summary(modules)
-    readme = README_PATH.read_text(encoding="utf-8")
-    expected_readme = _replace_readme_summary(readme, summary_block)
     expected_reference = _render_command_reference(modules)
 
     if args.check:
         mismatches: list[str] = []
-        if readme != expected_readme:
-            mismatches.append("README.md")
         current_reference = (
             COMMAND_REFERENCE_PATH.read_text(encoding="utf-8")
             if COMMAND_REFERENCE_PATH.exists()
@@ -409,7 +331,6 @@ def main() -> int:
             raise SystemExit("Generated docs are out of date: " + ", ".join(mismatches))
         return 0
 
-    _write_if_changed(README_PATH, expected_readme)
     _write_if_changed(COMMAND_REFERENCE_PATH, expected_reference)
     return 0
 

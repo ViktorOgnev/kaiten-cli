@@ -4,21 +4,6 @@
 
 `kaiten-cli` currently exposes **423** canonical commands across **36** registry modules.
 
-## Conventions
-
-- Canonical CLI form is rendered as `kaiten <namespace...> <action>`.
-- MCP alias is shown inline for every command.
-- Pass `--locale ru|en` before the command to localize CLI-owned prose, including JSON descriptions and errors. Precedence: flag > `KAITEN_CLI_LOCALE` > `en`; OS locale and profiles are ignored.
-- Agents choose the locale from the conversation (Russian: `ru`, English/other languages: `en`). Command names, JSON keys, enums, error codes and API/user data stay unchanged.
-- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.
-- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.
-- `--compact` and `--fields` only apply when the command metadata says they are supported.
-- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.
-- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
-- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.
-- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.
-- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
-
 ## Module Index
 
 | Area | Module | Count | Section |
@@ -59,6 +44,22 @@
 | Utilities | `utilities` | 15 | [Open](#module-utilities) |
 | Local snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Local queries | `query` | 2 | [Open](#module-query) |
+| **Total** | **36** | **423** | |
+
+## Conventions
+
+- Canonical CLI form is rendered as `kaiten <namespace...> <action>`.
+- MCP alias is shown inline for every command.
+- Pass `--locale ru|en` before the command to localize CLI-owned prose, including JSON descriptions and errors. Precedence: flag > `KAITEN_CLI_LOCALE` > `en`; OS locale and profiles are ignored.
+- Agents choose the locale from the conversation (Russian: `ru`, English/other languages: `en`). Command names, JSON keys, enums, error codes and API/user data stay unchanged.
+- All commands support `--json`, `--from-file` and `--stdin-json`; these global input modes are not repeated per command.
+- `--json` success/error envelopes include top-level `stats` with duration, HTTP/API wait, cache counters, and grouped method/path-family aggregates.
+- `--compact` and `--fields` only apply when the command metadata says they are supported.
+- `Mutation` reflects the HTTP method; `Allowed in read-only mode` is the semantic policy used by `--read-only`; `Remote side effects` controls ambiguous-outcome handling and cache invalidation.
+- Use `search-tools`, `describe` and `examples` when you need interactive discovery instead of scrolling the full page.
+- Default cache mode is `auto`: cacheable safe reads use adaptive persistent TTLs, and heavy or dense repeated analytics are retained longer.
+- Use `refresh` once at a freshness boundary, `off` for cache diagnostics, privacy or high-frequency polling, and `readwrite` only with an explicit fixed `--cache-ttl-seconds`.
+- For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
 
 ## Full Reference
 
