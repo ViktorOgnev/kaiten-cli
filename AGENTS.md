@@ -5,6 +5,10 @@ This file only captures agent-specific guidance.
 For install, human-oriented usage, and the full docs map, start with [README.md](README.md).  
 For the full command catalog, use [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).  
 For the system map, use [ARCHITECTURE.md](ARCHITECTURE.md).
+For the PyPI publishing process, use [docs/PYPI_PUBLISHING.md](docs/PYPI_PUBLISHING.md).
+For a stable install, start with `pip install kaiten-cli`; pipx and uv are alternatives.
+Use a Git install when the requested source is a branch or tag. Check the installed
+version separately from the checkout: they can differ.
 For optimized LLM workflows, start with:
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)

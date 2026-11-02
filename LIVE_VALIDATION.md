@@ -6,10 +6,13 @@
 
 ## Статус проверки
 
-- На `2026-07-09` в рамках текущего аудита live suite **не запускался**.
-- Текущий contract baseline — `kaiten-cli v0.1.23`; tenant class ранее зафиксированных контрактов — Kaiten sandbox test tenant.
+- В последнем зафиксированном аудите от `2026-07-09` live suite **не запускался**.
+- Исторический contract baseline — `kaiten-cli v0.1.23`; tenant class ранее зафиксированных контрактов — Kaiten sandbox test tenant.
 - Дата и commit последней полной live campaign не подтверждены в репозитории и остаются `TBD`.
 - До нового запуска [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md) описывает ранее наблюдавшиеся и закодированные контракты, а не свежую проверку production или sandbox API.
+
+Версия baseline и дата аудита относятся к истории live-проверок, а не к текущему
+выпуску CLI. Успешный CI и публикация пакета в PyPI не обновляют эти свидетельства.
 
 После каждой полной campaign нужно записать в оба документа дату, commit SHA, версию CLI и tenant class, не сохраняя credentials, tenant URL и идентификаторы временных сущностей.
 
@@ -108,11 +111,12 @@ Harness делает следующее:
   - если live API отвечает `405`, CLI делает `GET /projects/{project_id}?with_cards_data=true`
   - затем извлекает embedded cards list из project payload
 - `checklists.list`
-  - direct `GET /cards/{card_id}/checklists` возвращает `405`
+  - direct `GET /cards/{card_id}/checklists` ранее возвращал `405` на проверенном tenant
   - CLI делает `GET /cards/{card_id}` и извлекает embedded `checklists`
 - `checklist-items.list`
-  - direct `GET /cards/{card_id}/checklists/{checklist_id}/items` возвращает `405`
-  - CLI делает `GET /cards/{card_id}` и извлекает `items` из matching checklist
+  - direct `GET /cards/{card_id}/checklists/{checklist_id}/items` ранее возвращал `405` на проверенных экземплярах
+  - CLI делает `GET /cards/{card_id}/checklists/{checklist_id}` и извлекает `items` из отдельного чеклиста
+  - ошибки API, включая отсутствие чеклиста, сохраняются; чтения всей карточки как fallback нет
 
 ## Expected-error contracts
 

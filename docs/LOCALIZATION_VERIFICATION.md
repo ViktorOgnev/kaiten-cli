@@ -2,6 +2,10 @@
 
 Verified locally on 2026-09-22 with Python 3.11.15 and Click 8.5.0.
 
+This is the historical verification report for the v0.3.1 localization change.
+Counts and results below belong to that run. Current usage is maintained in
+[README](../README.md); current checks run in [CI](../.github/workflows/ci.yml).
+
 ## Implementation
 
 The CLI accepts `--locale ru|en` before the command. Precedence is explicit flag,

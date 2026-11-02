@@ -111,6 +111,30 @@ Git URL, and installer commands are passed directly to `subprocess` without a
 shell. A confirmed update is a separate local side effect and does not alter the
 already completed Kaiten command.
 
+PyPI installations do not use this post-command check. They are updated manually
+through the same installer: pip, pipx, or uv. Git installations retain their Git
+source; the updater does not migrate them to PyPI.
+
+## Packaging and Releases
+
+Hatchling builds the Python 3.11+ wheel and sdist from `pyproject.toml`; the package
+version comes from `src/kaiten_cli/__init__.py`. Stable installations use PyPI;
+Git installations can follow a branch or a specific tag.
+
+Pushing a stable `vX.Y.Z` tag runs release preflight, the full reusable CI and then
+the PyPI upload. Preflight checks the tag/version, triggering commit, ancestry in
+`origin/master` and absence of the version on PyPI. CI checks both archives and
+their installation; the upload job publishes those same artifacts without a rebuild.
+PRs and ordinary `master` pushes run CI without uploading.
+
+The upload uses Trusted Publishing through the GitHub environment `pypi`, which
+allows only tags matching `v*`. Only the upload job has `id-token: write`; no
+long-lived PyPI API token is stored in the repository. See the
+[publishing guide](docs/PYPI_PUBLISHING.md) for setup, release and readback steps.
+
+The PyPI project description is packaged from README at build time. Updating the
+repository docs does not replace metadata in an already published release.
+
 ## Mutation Safety
 
 - Transport retries are limited to safe HTTP methods. An ambiguous timeout, connection failure, HTTP 5xx, or malformed successful response for a remote mutation is returned without retry and explicitly tells the caller to verify remote state.
@@ -164,6 +188,7 @@ Primary docs:
 - [README.md](README.md) for install, usage, config, and operator guidance
 - [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md) for the full generated command catalog
 - [AGENTS.md](AGENTS.md) for agent-specific usage and safety shortcuts
+- [docs/PYPI_PUBLISHING.md](docs/PYPI_PUBLISHING.md) for PyPI setup, release and verification
 - `skills/` for repo-local LLM workflows in `SKILL.md` format
 - [LIVE_VALIDATION.md](LIVE_VALIDATION.md) for live test process
 - [API_BEHAVIOR_MATRIX.md](API_BEHAVIOR_MATRIX.md) for documented sandbox contracts
@@ -175,7 +200,7 @@ Primary docs:
 
 - The manual registry is easy to inspect, but large and maintenance-heavy.
 - Runtime behaviors are now explicit, but still centralized in one behavior module.
-- Request-scoped cache is built in, but persistent cache deliberately stays conservative and opt-in.
+- Request-scoped cache is built in; persistent cache defaults to `auto` with adaptive TTLs. Freshness overrides remain explicit.
 - Snapshot refresh is still rebuild-oriented in v1; there is no incremental sync yet.
 - Local metric semantics are still generic; tenant-specific flow profiles are intentionally deferred.
 - The default local card path is intentionally summary-first to reduce token and payload cost before LLM involvement.

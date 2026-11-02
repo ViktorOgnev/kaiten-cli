@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from kaiten_cli import __version__
+
 
 def test_primary_docs_and_archive_layout_are_explicit():
     root = Path(__file__).resolve().parents[1]
@@ -40,7 +42,7 @@ def test_primary_docs_expose_current_install_safety_and_live_metadata():
     live_validation = (root / "LIVE_VALIDATION.md").read_text(encoding="utf-8")
     behavior_matrix = (root / "API_BEHAVIOR_MATRIX.md").read_text(encoding="utf-8")
 
-    assert "@v0.3.3" in readme
+    assert f"@v{__version__}" in readme
     assert "@v0.1.29" not in readme
     assert "@v0.1.23" not in readme
     assert "`v0.2.0` — граница совместимости" in readme
