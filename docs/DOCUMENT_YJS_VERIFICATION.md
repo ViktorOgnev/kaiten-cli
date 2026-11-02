@@ -1,5 +1,8 @@
 # Document Yjs transport verification
 
+Current usage instructions: [document updates](USAGE.md#обновление-содержимого-документов).
+This file records verification evidence and retirement criteria.
+
 Verified on a local instance on 2026-10-20 and on two explicitly authorized,
 synthetic cloud documents on 2026-10-20–21. The cloud experiment reproduced
 duplication with API replacement; the Yjs document matched the intended content.

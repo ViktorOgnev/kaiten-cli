@@ -10,6 +10,8 @@ def test_repo_contains_expected_skill_files():
     mutations = root / "skills" / "kaiten-cli-mutations" / "SKILL.md"
     readme = (root / "README.md").read_text(encoding="utf-8")
     agents = (root / "AGENTS.md").read_text(encoding="utf-8")
+    usage = (root / "docs" / "USAGE.md").read_text(encoding="utf-8")
+    contributing = (root / "docs" / "CONTRIBUTING.md").read_text(encoding="utf-8")
 
     assert heavy.is_file()
     assert metrics.is_file()
@@ -79,11 +81,11 @@ def test_repo_contains_expected_skill_files():
     assert "--cache-ttl-seconds" in readme
     assert "profile probe" in readme
     assert "trace summarize" in readme
-    assert "request-scoped" in readme
-    assert "persistent" in readme
-    assert "Локальный сценарий включается явно" in readme
-    assert "benchmark_reference_workflows.py" in readme
-    assert "Полный автоматически созданный справочник" in readme
+    assert "request-scoped" in usage
+    assert "persistent" in usage
+    assert "Локальный сценарий включается явно" in usage
+    assert "benchmark_reference_workflows.py" in contributing
+    assert "полный автоматически созданный справочник" in readme
     assert "skills/kaiten-cli-heavy-data/SKILL.md" in agents
     assert "skills/kaiten-cli-metrics/SKILL.md" in agents
     assert "skills/kaiten-cli-mutations/SKILL.md" in agents
