@@ -2,7 +2,7 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **449** canonical commands across **37** registry modules.
+`kaiten-cli` currently exposes **450** canonical commands across **37** registry modules.
 
 ## Module Index
 
@@ -36,7 +36,7 @@
 | Addons | `addons` | 10 | [Open](#module-addons) |
 | GitHub addon | `github_addon` | 12 | [Open](#module-github-addon) |
 | Projects and sprints | `projects` | 13 | [Open](#module-projects) |
-| Roles and groups | `roles_and_groups` | 31 | [Open](#module-roles-and-groups) |
+| Roles and groups | `roles_and_groups` | 32 | [Open](#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Open](#module-scim) |
 | Audit and analytics | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
@@ -45,7 +45,7 @@
 | Utilities | `utilities` | 15 | [Open](#module-utilities) |
 | Local snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Local queries | `query` | 2 | [Open](#module-query) |
-| **Total** | **37** | **449** | |
+| **Total** | **37** | **450** | |
 
 ## Conventions
 
@@ -15369,7 +15369,7 @@ _No tool-specific arguments._
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
 <a id="module-roles-and-groups"></a>
-## Roles and groups (`roles_and_groups`) — 31 commands
+## Roles and groups (`roles_and_groups`) — 32 commands
 
 Roles, groups and permission-related operations.
 
@@ -15394,6 +15394,7 @@ group-admins
 group-entities
   add
   list
+  list-all
   remove
   update
 group-users
@@ -15986,7 +15987,7 @@ user-roles
 |---|---|
 | CLI command | `kaiten group-entities list` |
 | MCP alias | `kaiten_list_group_entities` |
-| Description | List tree entities attached to a company group. |
+| Description | List one page of tree entities attached to a company group. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -15995,8 +15996,8 @@ user-roles
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/company/groups/{group_uid}/entities` |
-| Compact | `no` |
-| Fields | `no` |
+| Compact | `yes` |
+| Fields | `yes` |
 | Heavy | `no` |
 
 **Arguments**
@@ -16004,10 +16005,61 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Group UID |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (max 100); omitted keeps the server default. |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
 - List group entities.: `kaiten --json group-entities list --group-uid grp-1`
+
+**Notes**
+
+- Bulk alternative: `group-entities.list-all`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Reads one page. Use group-entities.list-all for a bounded complete group assignment listing.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: On 2026-11-04 an ordinary API token read three temporary group assignments as pages of two and one, verified list-all parity, revoked all assignments and confirmed cleanup.
+
+### `group-entities.list-all`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities list-all` |
+| MCP alias | `kaiten_list_all_group_entities` |
+| Description | List all tree entities attached to a company group with bounded pagination. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `aggregated` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/groups/{group_uid}/entities` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Page size (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Maximum pages (default 100, max 1000). |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read every entity assignment of a group within an explicit page cap.: `kaiten --json group-entities list-all --group-uid grp-1 --page-size 100 --max-pages 100 --fields uid,title --compact`
 
 **Notes**
 
@@ -16016,8 +16068,13 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Uses documented GET /company/groups/{group_uid}/entities; requires company members permission and the groups module.
+- Requires a server that honors limit/offset. Repeated entities, malformed or oversized pages and a full final page at max_pages fail instead of returning a partial list. No legacy fallback is used.
+- Concurrent assignment changes can shift offset pages; this listing is not an atomic snapshot. fields and compact only shape local output after all pages are read.
 - Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 - Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: On 2026-11-04 an ordinary API token read three temporary group assignments as pages of two and one, verified list-all parity, revoked all assignments and confirmed cleanup.
 
 ### `group-entities.remove`
 

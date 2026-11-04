@@ -20,7 +20,7 @@ CLI предоставляет операции API Kaiten. Внешний аг�
 | Пользователи пространства | `space-users list/add/update/remove` | [Публичный](https://developers.kaiten.ru/space-users/invite-user-to-space) |
 | Пользователи документа, папки, карты историй | `document-users`, `document-group-users`, `story-map-users`: `list/add/update/remove` | Недокументированные расширения |
 | Группы компании и их пользователи | `company-groups.*`, `group-users.*` | [Публичный](https://developers.kaiten.ru/group-users/add-user-to-group) |
-| Назначения групп сущностям | `group-entities list/add/update/remove` | [Публичный](https://developers.kaiten.ru/group-entities/add-entity) |
+| Назначения групп сущностям | `group-entities list/list-all/add/update/remove` | [Публичный](https://developers.kaiten.ru/group-entities/add-entity); `list-all` агрегирует страницы в CLI |
 | Группы с доступом к конкретному объекту | `space-access-groups`, `document-access-groups`, `document-group-access-groups`, `story-map-access-groups`: `list` | Недокументированные расширения |
 | Список ролей доступа | `roles list` | [Публичный](https://developers.kaiten.ru/tree-entity-roles/get-list-of-tree-entity-roles) |
 | Чтение и изменение роли доступа | `roles get/create/update/delete` | Недокументированное расширение |
@@ -41,6 +41,30 @@ CLI предоставляет операции API Kaiten. Внешний аг�
 показывает контракт и статус проверки. Не поддерживаемый сервером метод может
 вернуть ошибку; CLI сохраняет её без обходного запроса.
 [Результаты live-проверки](ACCESS_MANAGEMENT_LIVE.md).
+
+## Полный список назначений группы
+
+`group-entities list --group-uid <uuid> --limit 100 --offset 0` читает одну
+страницу. Если `limit/offset` не переданы, CLI сохраняет поведение сервера.
+Для полного списка используйте `group-entities list-all` с тем же `group_uid`:
+
+```bash
+kaiten --locale ru --json --read-only group-entities list-all --group-uid <group_uuid> --page-size 100 --max-pages 100 --fields uid,title --compact
+```
+
+Команда агрегирует документированный GET `/company/groups/{group_uid}/entities`.
+`page_size` — 1–100, `max_pages` — 1–1000; оба по умолчанию 100. Пустая или
+короткая страница завершает чтение. Повтор UID, некорректный ответ, страница
+больше запрошенной или полная страница на пределе запросов дают явную ошибку
+вместо успешного частичного списка. Нужен сервер с поддержкой `limit/offset`;
+legacy fallback отсутствует. Параллельные изменения могут сдвинуть страницы:
+это не атомарный снимок. `--fields` и `--compact` сокращают локальный вывод после
+загрузки всех страниц, а не HTTP-ответ.
+
+Для назначения группе доступа к пространствам достаточно административных
+метаданных и UUID объектов: выгружать карточки, документы и вложения не нужно.
+Выбор целевых объектов и ролей, сравнение назначений и регулярность запусков
+определяет внешний агент; CLI предоставляет чтение и отдельные операции API.
 
 ## Права запускающего пользователя
 

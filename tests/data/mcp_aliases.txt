@@ -239,6 +239,7 @@ kaiten_install_space_addon
 kaiten_list_addons
 kaiten_list_all_cards
 kaiten_list_all_company_users
+kaiten_list_all_group_entities
 kaiten_list_api_keys
 kaiten_list_audit_logs
 kaiten_list_automations

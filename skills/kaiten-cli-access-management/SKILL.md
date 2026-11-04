@@ -23,6 +23,16 @@ Prefer documented APIs at https://developers.kaiten.ru/:
 - `company-groups.*`, `group-users.*`, `group-entities.*`: company groups,
   membership, and group-to-entity access. Group assignments use `entity_uid` and
   `role_ids` (array of UUIDs).
+- `group-entities list --limit 100 --offset 0` reads one page of assignments;
+  use `group-entities list-all --group-uid <uuid> --page-size 100 --max-pages 100`
+  for a bounded complete listing. This aggregates the same documented GET.
+  Repeated UIDs, malformed/oversized pages or a full page at the request cap
+  fail explicitly. Servers must honor limit/offset; no legacy fallback is used.
+  Concurrent changes can shift pages, so this is not an atomic snapshot.
+  `--fields` and `--compact` shape local output after loading all pages;
+  they do not reduce the HTTP response body.
+  Pagination, temporary group grants/revocations and cleanup were live checked
+  with an ordinary API token on 2026-11-04.
 - `roles list`: available UUID access roles.
 - `company-users update`, `company-groups create/update`: administrative
   `permissions` or `named_permissions`; use one format per request.

@@ -365,6 +365,16 @@ _SPECIAL_CONTRACTS["company-users.update"] = LiveContract(
     note="On 2026-11-04 the test company returned HTTP 500 for named company permissions on a temporary virtual user. The CLI reported an uncertain mutation without retrying; cleanup was verified. Company-user permission success remains unvalidated.",
 )
 
+_SPECIAL_CONTRACTS.update(
+    {
+        name: LiveContract(
+            status=LIVE_STATUS_PASSED,
+            note="On 2026-11-04 an ordinary API token read three temporary group assignments as pages of two and one, verified list-all parity, revoked all assignments and confirmed cleanup.",
+        )
+        for name in ("group-entities.list", "group-entities.list-all")
+    }
+)
+
 
 def get_live_contract(canonical_name: str) -> LiveContract:
     return _SPECIAL_CONTRACTS.get(

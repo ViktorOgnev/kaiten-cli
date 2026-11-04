@@ -4,10 +4,20 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
+from kaiten_cli.models import (
+    CACHE_POLICY_REQUEST_SCOPE,
+    ExampleSpec,
+    OperationSpec,
+    ResponsePolicy,
+    RuntimeBehavior,
+)
 from kaiten_cli.registry.access_management import EXTENSION, GUIDE, INHERITANCE, ROLE_KIND
-from kaiten_cli.registry.base import make_tool
-from kaiten_cli.runtime.support.access_management import company_permissions_request
+from kaiten_cli.registry.base import make_tool, shaping_properties
+from kaiten_cli.runtime.support.access_management import (
+    company_permissions_request,
+    execute_access_list_all,
+    validate_access_list_all,
+)
 from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
 from kaiten_cli.runtime.support.company_users import (
@@ -971,10 +981,64 @@ TOOLS = (
     make_tool(
         canonical_name="group-entities.list",
         mcp_alias="kaiten_list_group_entities",
-        description="List tree entities attached to a company group.",
+        description="List one page of tree entities attached to a company group.",
         input_schema={
             "type": "object",
-            "properties": {"group_uid": {"type": "string", "description": "Group UID"}},
+            "properties": {
+                "group_uid": {"type": "string", "description": "Group UID"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (max 100); omitted keeps the server default.",
+                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
+                **shaping_properties(),
+            },
+            "required": ["group_uid"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/company/groups/{group_uid}/entities",
+            path_fields=("group_uid",),
+            query_fields=("limit", "offset"),
+        ),
+        response_policy=ResponsePolicy(
+            result_kind="list", compact_supported=True, fields_supported=True
+        ),
+        bulk_alternative="group-entities.list-all",
+        usage_notes=(
+            "Reads one page. Use group-entities.list-all for a bounded complete group assignment listing.",
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json group-entities list --group-uid grp-1",
+                description="List group entities.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="group-entities.list-all",
+        mcp_alias="kaiten_list_all_group_entities",
+        description="List all tree entities attached to a company group with bounded pagination.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "group_uid": {"type": "string", "description": "Group UID"},
+                "page_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Page size (default 100, max 100).",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Maximum pages (default 100, max 1000).",
+                },
+                **shaping_properties(),
+            },
             "required": ["group_uid"],
         },
         operation=OperationSpec(
@@ -982,12 +1046,25 @@ TOOLS = (
             path_template="/company/groups/{group_uid}/entities",
             path_fields=("group_uid",),
         ),
-        response_policy=ResponsePolicy(result_kind="list"),
+        response_policy=ResponsePolicy(
+            result_kind="list", compact_supported=True, fields_supported=True, heavy=True
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_access_list_all,
+            payload_validator=validate_access_list_all,
+            cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+        ),
         examples=(
             ExampleSpec(
-                command="kaiten --json group-entities list --group-uid grp-1",
-                description="List group entities.",
+                command="kaiten --json group-entities list-all --group-uid grp-1 --page-size 100 --max-pages 100 --fields uid,title --compact",
+                description="Read every entity assignment of a group within an explicit page cap.",
             ),
+        ),
+        usage_notes=(
+            "Uses documented GET /company/groups/{group_uid}/entities; requires company members permission and the groups module.",
+            "Requires a server that honors limit/offset. Repeated entities, malformed or oversized pages and a full final page at max_pages fail instead of returning a partial list. No legacy fallback is used.",
+            "Concurrent assignment changes can shift offset pages; this listing is not an atomic snapshot. fields and compact only shape local output after all pages are read.",
         ),
     ),
     make_tool(

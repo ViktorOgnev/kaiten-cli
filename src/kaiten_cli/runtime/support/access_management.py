@@ -35,7 +35,7 @@ def validate_entity_user(tool, payload):
         raise ValidationError(tr("Provide user_id or email to add an entity user."))
 
 
-def validate_admin_list_all(tool, payload):
+def validate_access_list_all(tool, payload):
     del tool
     validate_page_bounds(
         page_size=payload.get("page_size", 100), max_pages=payload.get("max_pages", 100)
@@ -43,38 +43,41 @@ def validate_admin_list_all(tool, payload):
 
 
 async def execute_admin_list_all(client, tool, payload, path, query, body, timeout, reporter):
-    """Read a flat company inventory; never accept repeated pages as legacy success."""
+    params = dict(query or {})
+    params.setdefault("entity_types", "space,document,document_group,story_map")
+    return await execute_access_list_all(
+        client, tool, payload, path, params, body, timeout, reporter
+    )
+
+
+async def execute_access_list_all(client, tool, payload, path, query, body, timeout, reporter):
+    """Read UID entities; never accept repeated pages as legacy success."""
     del tool, body
-    validate_admin_list_all(None, payload)
+    validate_access_list_all(None, payload)
     page_size = payload.get("page_size", 100)
     max_pages = payload.get("max_pages", 100)
     params = dict(query or {})
-    params.setdefault("entity_types", "space,document,document_group,story_map")
     rows = []
     seen = set()
     for page_index in range(max_pages):
         if reporter:
-            reporter(tr("Reading administrative tree page {value_0}.", value_0=page_index + 1))
+            reporter(tr("Reading entity page {value_0}.", value_0=page_index + 1))
         page = await client.get(
             path,
             params={**params, "limit": page_size, "offset": page_index * page_size},
             timeout=timeout,
         )
         if not isinstance(page, list) or len(page) > page_size:
-            raise ConfigError(tr("Administrative tree pagination returned an invalid page."))
+            raise ConfigError(tr("Entity pagination returned an invalid page."))
         for row in page:
             if not isinstance(row, dict) or not isinstance(row.get("uid"), str) or not row["uid"]:
-                raise ConfigError(tr("Administrative tree pagination returned an invalid entity."))
+                raise ConfigError(tr("Entity pagination returned an invalid entity."))
             if row["uid"] in seen:
                 raise ConfigError(
-                    tr(
-                        "Administrative tree pagination repeated an entity; the result may be incomplete."
-                    )
+                    tr("Entity pagination repeated an entity; the result may be incomplete.")
                 )
             seen.add(row["uid"])
         rows.extend(page)
         if len(page) < page_size:
             return rows
-    raise ConfigError(
-        tr("Administrative tree pagination reached max_pages; refusing an incomplete result.")
-    )
+    raise ConfigError(tr("Entity pagination reached max_pages; refusing an incomplete result."))

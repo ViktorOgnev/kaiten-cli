@@ -18,7 +18,7 @@ from kaiten_cli.registry.base import make_tool, shaping_properties
 from kaiten_cli.runtime.support.access_management import (
     execute_admin_list_all,
     story_map_create_request,
-    validate_admin_list_all,
+    validate_access_list_all,
     validate_entity_user,
 )
 
@@ -218,7 +218,7 @@ def _tools():
         behavior=RuntimeBehavior(
             execution_mode="aggregated",
             custom_executor=execute_admin_list_all,
-            payload_validator=validate_admin_list_all,
+            payload_validator=validate_access_list_all,
             cache_policy=CACHE_POLICY_REQUEST_SCOPE,
         ),
         example="kaiten --json admin-tree-entities list-all --max-pages 100 --fields uid,title,entity_type,parent_entity_uid",

@@ -679,3 +679,124 @@ def test_access_inheritance_live(tmp_path, socket_enabled):
         h.invoke("group-users.remove", {"group_uid": group_uid, "user_id": user_id})
     finally:
         h.teardown()
+
+
+@pytest.mark.live
+@pytest.mark.timeout(240)
+def test_group_entities_pagination_live(tmp_path, socket_enabled):
+    if os.environ.get("KAITEN_LIVE", "").lower() not in ("1", "true"):
+        pytest.skip("Set KAITEN_LIVE=1|true")
+    profile_name = os.environ.get("KAITEN_ACCESS_LIVE_PROFILE")
+    domain = os.environ.get("KAITEN_ACCESS_LIVE_DOMAIN")
+    if not profile_name or not domain:
+        pytest.skip("Select an explicit access-test profile and expected domain")
+    assert resolve_profile(profile_name).domain == domain
+    root = (
+        Path(os.environ.get("KAITEN_ACCESS_LIVE_DIR", str(tmp_path / "access-live")))
+        / "group-pagination"
+    )
+    h = AccessCampaign(root, profile_name)
+    h.probe()
+    try:
+        group = h.invoke("company-groups.create", {"name": h.prefix + "-group"})
+        group_uid = group["uid"]
+        h.register(
+            "company-groups.delete",
+            {"group_uid": group_uid},
+            "company-groups.get",
+            {"group_uid": group_uid},
+        )
+        reader_id = "06ccb31f-426b-4fa3-b7e5-861daee95696"
+        folders = []
+        for index in range(3):
+            folder = h.invoke("document-groups.create", {"title": f"{h.prefix}-folder-{index}"})
+            uid = folder["uid"]
+            folders.append(uid)
+            h.register(
+                "document-groups.delete",
+                {"group_uid": uid},
+                "document-groups.get",
+                {"group_uid": uid},
+            )
+            h.invoke("document-groups.update", {"group_uid": uid, "access": "by_invite"})
+            h.invoke(
+                "group-entities.add",
+                {
+                    "group_uid": group_uid,
+                    "entity_uid": uid,
+                    "role_ids": [reader_id],
+                },
+            )
+            groups = h.invoke(
+                "document-group-access-groups.list",
+                {
+                    "entity_uid": uid,
+                    "include_inherited_access": False,
+                },
+            )
+            h.verify(
+                any(
+                    row.get("uid", row.get("group_uid")) == group_uid
+                    and reader_id in (row.get("own_role_ids") or [])
+                    for row in groups
+                ),
+                "temporary group has direct reader role",
+            )
+
+        pages = [
+            h.invoke(
+                "group-entities.list",
+                {
+                    "group_uid": group_uid,
+                    "limit": 2,
+                    "offset": offset,
+                    "fields": "uid,title",
+                    "compact": True,
+                },
+            )
+            for offset in (0, 2)
+        ]
+        h.verify([len(page) for page in pages] == [2, 1], "server honors group pagination")
+        paged_uids = [row["uid"] for page in pages for row in page]
+        h.verify(
+            len(set(paged_uids)) == 3 and set(paged_uids) == set(folders),
+            "pages cover all three entities",
+        )
+        all_rows = h.invoke(
+            "group-entities.list-all",
+            {
+                "group_uid": group_uid,
+                "page_size": 2,
+                "max_pages": 2,
+                "fields": "uid,title",
+                "compact": True,
+            },
+        )
+        h.verify(all_rows == pages[0] + pages[1], "list-all agrees with explicit pages")
+        for uid in folders:
+            h.invoke("group-entities.remove", {"group_uid": group_uid, "entity_uid": uid})
+            groups = h.invoke(
+                "document-group-access-groups.list",
+                {
+                    "entity_uid": uid,
+                    "include_inherited_access": False,
+                },
+            )
+            h.verify(
+                not any(row.get("uid", row.get("group_uid")) == group_uid for row in groups),
+                "temporary group reader role revoked",
+            )
+        h.verify(
+            h.invoke(
+                "group-entities.list-all",
+                {
+                    "group_uid": group_uid,
+                    "page_size": 2,
+                    "max_pages": 2,
+                },
+            )
+            == [],
+            "group has no remaining entity assignments",
+        )
+    finally:
+        h.teardown()
