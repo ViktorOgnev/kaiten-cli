@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from kaiten_cli.registry.access_management import TOOLS as ACCESS_MANAGEMENT_TOOLS
+
 
 LIVE_STATUS_PASSED = "live_passed"
 LIVE_STATUS_PASSED_WITH_RUNTIME_FIX = "live_passed_with_runtime_fix"
@@ -333,6 +335,34 @@ _SPECIAL_CONTRACTS.update(
         )
         for action in ("list", "get", "create", "update", "delete", "copy")
     }
+)
+
+
+_SPECIAL_CONTRACTS.update(
+    {
+        tool.canonical_name: LiveContract(
+            status=LIVE_STATUS_PASSED_WITH_RUNTIME_FIX
+            if tool.canonical_name == "story-maps.create"
+            else LIVE_STATUS_PASSED,
+            note="Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.",
+        )
+        for tool in ACCESS_MANAGEMENT_TOOLS
+    }
+)
+
+_SPECIAL_CONTRACTS.update(
+    {
+        name: LiveContract(
+            status=LIVE_STATUS_PASSED,
+            note="Named company permissions were granted and revoked on a temporary group with readback and cleanup on 2026-11-04.",
+        )
+        for name in ("company-groups.create", "company-groups.update")
+    }
+)
+
+_SPECIAL_CONTRACTS["company-users.update"] = LiveContract(
+    status=LIVE_STATUS_NOT_VALIDATED,
+    note="On 2026-11-04 the test company returned HTTP 500 for named company permissions on a temporary virtual user. The CLI reported an uncertain mutation without retrying; cleanup was verified. Company-user permission success remains unvalidated.",
 )
 
 

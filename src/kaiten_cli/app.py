@@ -64,6 +64,9 @@ AGENTS_URL = f"{REPOSITORY_URL}/blob/master/AGENTS.md"
 HEAVY_DATA_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-heavy-data/SKILL.md"
 METRICS_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-metrics/SKILL.md"
 MUTATIONS_SKILL_URL = f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-mutations/SKILL.md"
+ACCESS_MANAGEMENT_SKILL_URL = (
+    f"{REPOSITORY_URL}/blob/master/skills/kaiten-cli-access-management/SKILL.md"
+)
 CLI_HELP = """Kaiten API CLI optimized for humans and agents.
 
 \b
@@ -640,6 +643,7 @@ def _agent_help_payload() -> dict[str, Any]:
             "architecture": ARCHITECTURE_URL,
             "agent_guide": AGENTS_URL,
             "skills": {
+                "access_management": ACCESS_MANAGEMENT_SKILL_URL,
                 "heavy_data": HEAVY_DATA_SKILL_URL,
                 "metrics": METRICS_SKILL_URL,
                 "mutations": MUTATIONS_SKILL_URL,
@@ -707,6 +711,7 @@ def _agent_help_text() -> str:
             tr("  skills heavy-data: {value_0}", value_0=HEAVY_DATA_SKILL_URL),
             tr("  skills metrics: {value_0}", value_0=METRICS_SKILL_URL),
             tr("  skills mutations: {value_0}", value_0=MUTATIONS_SKILL_URL),
+            tr("  skills access-management: {value_0}", value_0=ACCESS_MANAGEMENT_SKILL_URL),
         ]
     )
 

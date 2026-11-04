@@ -16,6 +16,7 @@ from kaiten_cli.models import (
     format_schema_type,
 )
 from kaiten_cli.registry.addons import TOOLS as ADDON_TOOLS
+from kaiten_cli.registry.access_management import TOOLS as ACCESS_MANAGEMENT_TOOLS
 from kaiten_cli.registry.audit_and_analytics import TOOLS as AUDIT_AND_ANALYTICS_TOOLS
 from kaiten_cli.registry.automations import TOOLS as AUTOMATION_TOOLS
 from kaiten_cli.registry.blockers import TOOLS as BLOCKER_TOOLS
@@ -54,6 +55,7 @@ from kaiten_cli.registry.utilities import TOOLS as UTILITY_TOOLS
 from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 
 REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
+    ("access_management", ACCESS_MANAGEMENT_TOOLS),
     ("spaces", SPACE_TOOLS),
     ("automations", AUTOMATION_TOOLS),
     ("restrictions", RESTRICTION_TOOLS),

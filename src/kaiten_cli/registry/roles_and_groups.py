@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
+from kaiten_cli.registry.access_management import EXTENSION, GUIDE, INHERITANCE, ROLE_KIND
 from kaiten_cli.registry.base import make_tool
+from kaiten_cli.runtime.support.access_management import company_permissions_request
 from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
 from kaiten_cli.runtime.support.company_users import (
@@ -15,6 +19,11 @@ from kaiten_cli.runtime.support.company_users import (
 
 
 COMPANY_USERS_DEFAULT_LIMIT = 100
+NAMED_PERMISSIONS = {
+    "type": "object",
+    "additionalProperties": {"type": "boolean"},
+    "description": "Named company permissions: partial name-to-boolean map. Send separately from the numeric permissions mask.",
+}
 
 
 TOOLS = (
@@ -434,6 +443,12 @@ TOOLS = (
                 "user_id": {"type": "integer", "description": "User ID"},
                 "full_name": {"type": "string", "description": "Full name"},
                 "email": {"type": "string", "description": "Email"},
+                "permissions": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Direct company permissions bit mask; excludes named-only permissions.",
+                },
+                "named_permissions": NAMED_PERMISSIONS,
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -459,9 +474,11 @@ TOOLS = (
                 "payload",
                 "apps_permissions",
                 "temporarily_inactive",
+                "permissions",
+                "named_permissions",
             ),
         ),
-        runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-users update --user-id 7 --full-name "Alice Smith"',
@@ -666,6 +683,7 @@ TOOLS = (
             "properties": {
                 "name": {"type": "string", "description": "Group name"},
                 "permissions": {"type": "integer", "description": "Group permissions"},
+                "named_permissions": NAMED_PERMISSIONS,
                 "add_to_cards_and_spaces_enabled": {
                     "type": "boolean",
                     "description": "Should add cards and spaces",
@@ -676,8 +694,14 @@ TOOLS = (
         operation=OperationSpec(
             method="POST",
             path_template="/company/groups",
-            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
+            body_fields=(
+                "name",
+                "permissions",
+                "named_permissions",
+                "add_to_cards_and_spaces_enabled",
+            ),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-groups create --name "Engineering"',
@@ -714,6 +738,7 @@ TOOLS = (
                 "group_uid": {"type": "string", "description": "Group UID"},
                 "name": {"type": "string", "description": "New group name"},
                 "permissions": {"type": "integer", "description": "Group permissions(bit mask)"},
+                "named_permissions": NAMED_PERMISSIONS,
                 "add_to_cards_and_spaces_enabled": {
                     "type": "boolean",
                     "description": "Ability to add all users of the group to cards, placed in group spaces. Ability to filter logs by group in «Timesheets»",
@@ -725,8 +750,14 @@ TOOLS = (
             method="PATCH",
             path_template="/company/groups/{group_uid}",
             path_fields=("group_uid",),
-            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
+            body_fields=(
+                "name",
+                "permissions",
+                "named_permissions",
+                "add_to_cards_and_spaces_enabled",
+            ),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-groups update --group-uid grp-1 --name "Docs"',
@@ -1099,4 +1130,26 @@ TOOLS = (
             ),
         ),
     ),
+)
+
+# Keep access references discoverable without duplicating every existing declaration.
+TOOLS = tuple(
+    replace(
+        tool,
+        usage_notes=tool.usage_notes
+        + (GUIDE,)
+        + ((EXTENSION,) if tool.canonical_name == "roles.get" else ())
+        + ((ROLE_KIND,) if tool.namespace in ("roles", "user-roles") else ())
+        + ((INHERITANCE,) if tool.namespace in ("space-users", "group-entities") else ())
+        + (
+            (
+                "Documented company permissions: https://developers.kaiten.ru/company-permissions. Named PATCH preserves omitted names; false removes a direct grant, not access through another group. Requires company members permission; profile probe checks authentication only.",
+            )
+            if tool.canonical_name
+            in ("company-users.update", "company-groups.create", "company-groups.update")
+            else ()
+        ),
+        search_terms=tool.search_terms + ("доступ права роли пользователи группы",),
+    )
+    for tool in TOOLS
 )

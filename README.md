@@ -584,7 +584,17 @@ kaiten --locale ru --read-only --json query cards --snapshot team-basic --view s
 
 ## Рекомендации для LLM-агентов
 
+Для работы с сущностями, пользователями, группами и правами используйте
+[руководство по доступам](https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md).
+Оно различает документированные методы и расширения обычного API с токеном,
+прямые и унаследованные назначения, административные права и роли объектов.
+CLI принимает готовые параметры операций; внешние спецификации и регулярные
+сценарии обрабатывает вызывающий агент или harness.
+
 Рекомендуемые сценарии работы агентов с CLI описаны в отдельных файлах навыков:
+
+- [skills/kaiten-cli-access-management/SKILL.md](https://github.com/ViktorOgnev/kaiten-cli/blob/master/skills/kaiten-cli-access-management/SKILL.md)
+  Какие команды и параметры использовать для сущностей, пользователей, групп и ролей доступа, с учётом прав и наследования.
 
 - [skills/kaiten-cli-heavy-data/SKILL.md](https://github.com/ViktorOgnev/kaiten-cli/blob/master/skills/kaiten-cli-heavy-data/SKILL.md)
   Как избежать множества отдельных запросов, когда использовать массовое чтение, а когда создавать локальный снимок данных.
