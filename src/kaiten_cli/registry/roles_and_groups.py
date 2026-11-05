@@ -2,8 +2,22 @@
 
 from __future__ import annotations
 
-from kaiten_cli.models import ExampleSpec, OperationSpec, ResponsePolicy, RuntimeBehavior
-from kaiten_cli.registry.base import make_tool
+from dataclasses import replace
+
+from kaiten_cli.models import (
+    CACHE_POLICY_REQUEST_SCOPE,
+    ExampleSpec,
+    OperationSpec,
+    ResponsePolicy,
+    RuntimeBehavior,
+)
+from kaiten_cli.registry.access_management import EXTENSION, GUIDE, INHERITANCE, ROLE_KIND
+from kaiten_cli.registry.base import make_tool, shaping_properties
+from kaiten_cli.runtime.support.access_management import (
+    company_permissions_request,
+    execute_access_list_all,
+    validate_access_list_all,
+)
 from kaiten_cli.runtime.public_validation import validate_public_request
 from kaiten_cli.runtime.behaviors import company_members_section_request, payload_body_request
 from kaiten_cli.runtime.support.company_users import (
@@ -15,6 +29,11 @@ from kaiten_cli.runtime.support.company_users import (
 
 
 COMPANY_USERS_DEFAULT_LIMIT = 100
+NAMED_PERMISSIONS = {
+    "type": "object",
+    "additionalProperties": {"type": "boolean"},
+    "description": "Named company permissions: partial name-to-boolean map. Send separately from the numeric permissions mask.",
+}
 
 
 TOOLS = (
@@ -434,6 +453,12 @@ TOOLS = (
                 "user_id": {"type": "integer", "description": "User ID"},
                 "full_name": {"type": "string", "description": "Full name"},
                 "email": {"type": "string", "description": "Email"},
+                "permissions": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Direct company permissions bit mask; excludes named-only permissions.",
+                },
+                "named_permissions": NAMED_PERMISSIONS,
                 "payload": {
                     "type": "object",
                     "description": "Extra JSON body fields from the Kaiten API docs.",
@@ -459,9 +484,11 @@ TOOLS = (
                 "payload",
                 "apps_permissions",
                 "temporarily_inactive",
+                "permissions",
+                "named_permissions",
             ),
         ),
-        runtime_behavior=RuntimeBehavior(request_shaper=payload_body_request),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-users update --user-id 7 --full-name "Alice Smith"',
@@ -666,6 +693,7 @@ TOOLS = (
             "properties": {
                 "name": {"type": "string", "description": "Group name"},
                 "permissions": {"type": "integer", "description": "Group permissions"},
+                "named_permissions": NAMED_PERMISSIONS,
                 "add_to_cards_and_spaces_enabled": {
                     "type": "boolean",
                     "description": "Should add cards and spaces",
@@ -676,8 +704,14 @@ TOOLS = (
         operation=OperationSpec(
             method="POST",
             path_template="/company/groups",
-            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
+            body_fields=(
+                "name",
+                "permissions",
+                "named_permissions",
+                "add_to_cards_and_spaces_enabled",
+            ),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-groups create --name "Engineering"',
@@ -714,6 +748,7 @@ TOOLS = (
                 "group_uid": {"type": "string", "description": "Group UID"},
                 "name": {"type": "string", "description": "New group name"},
                 "permissions": {"type": "integer", "description": "Group permissions(bit mask)"},
+                "named_permissions": NAMED_PERMISSIONS,
                 "add_to_cards_and_spaces_enabled": {
                     "type": "boolean",
                     "description": "Ability to add all users of the group to cards, placed in group spaces. Ability to filter logs by group in «Timesheets»",
@@ -725,8 +760,14 @@ TOOLS = (
             method="PATCH",
             path_template="/company/groups/{group_uid}",
             path_fields=("group_uid",),
-            body_fields=("name", "permissions", "add_to_cards_and_spaces_enabled"),
+            body_fields=(
+                "name",
+                "permissions",
+                "named_permissions",
+                "add_to_cards_and_spaces_enabled",
+            ),
         ),
+        runtime_behavior=RuntimeBehavior(request_shaper=company_permissions_request),
         examples=(
             ExampleSpec(
                 command='kaiten --json company-groups update --group-uid grp-1 --name "Docs"',
@@ -940,10 +981,64 @@ TOOLS = (
     make_tool(
         canonical_name="group-entities.list",
         mcp_alias="kaiten_list_group_entities",
-        description="List tree entities attached to a company group.",
+        description="List one page of tree entities attached to a company group.",
         input_schema={
             "type": "object",
-            "properties": {"group_uid": {"type": "string", "description": "Group UID"}},
+            "properties": {
+                "group_uid": {"type": "string", "description": "Group UID"},
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results (max 100); omitted keeps the server default.",
+                },
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset"},
+                **shaping_properties(),
+            },
+            "required": ["group_uid"],
+        },
+        operation=OperationSpec(
+            method="GET",
+            path_template="/company/groups/{group_uid}/entities",
+            path_fields=("group_uid",),
+            query_fields=("limit", "offset"),
+        ),
+        response_policy=ResponsePolicy(
+            result_kind="list", compact_supported=True, fields_supported=True
+        ),
+        bulk_alternative="group-entities.list-all",
+        usage_notes=(
+            "Reads one page. Use group-entities.list-all for a bounded complete group assignment listing.",
+        ),
+        examples=(
+            ExampleSpec(
+                command="kaiten --json group-entities list --group-uid grp-1",
+                description="List group entities.",
+            ),
+        ),
+    ),
+    make_tool(
+        canonical_name="group-entities.list-all",
+        mcp_alias="kaiten_list_all_group_entities",
+        description="List all tree entities attached to a company group with bounded pagination.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "group_uid": {"type": "string", "description": "Group UID"},
+                "page_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Page size (default 100, max 100).",
+                },
+                "max_pages": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Maximum pages (default 100, max 1000).",
+                },
+                **shaping_properties(),
+            },
             "required": ["group_uid"],
         },
         operation=OperationSpec(
@@ -951,12 +1046,25 @@ TOOLS = (
             path_template="/company/groups/{group_uid}/entities",
             path_fields=("group_uid",),
         ),
-        response_policy=ResponsePolicy(result_kind="list"),
+        response_policy=ResponsePolicy(
+            result_kind="list", compact_supported=True, fields_supported=True, heavy=True
+        ),
+        runtime_behavior=RuntimeBehavior(
+            execution_mode="aggregated",
+            custom_executor=execute_access_list_all,
+            payload_validator=validate_access_list_all,
+            cache_policy=CACHE_POLICY_REQUEST_SCOPE,
+        ),
         examples=(
             ExampleSpec(
-                command="kaiten --json group-entities list --group-uid grp-1",
-                description="List group entities.",
+                command="kaiten --json group-entities list-all --group-uid grp-1 --page-size 100 --max-pages 100 --fields uid,title --compact",
+                description="Read every entity assignment of a group within an explicit page cap.",
             ),
+        ),
+        usage_notes=(
+            "Uses documented GET /company/groups/{group_uid}/entities; requires company members permission and the groups module.",
+            "Requires a server that honors limit/offset. Repeated entities, malformed or oversized pages and a full final page at max_pages fail instead of returning a partial list. No legacy fallback is used.",
+            "Concurrent assignment changes can shift offset pages; this listing is not an atomic snapshot. fields and compact only shape local output after all pages are read.",
         ),
     ),
     make_tool(
@@ -1099,4 +1207,26 @@ TOOLS = (
             ),
         ),
     ),
+)
+
+# Keep access references discoverable without duplicating every existing declaration.
+TOOLS = tuple(
+    replace(
+        tool,
+        usage_notes=tool.usage_notes
+        + (GUIDE,)
+        + ((EXTENSION,) if tool.canonical_name == "roles.get" else ())
+        + ((ROLE_KIND,) if tool.namespace in ("roles", "user-roles") else ())
+        + ((INHERITANCE,) if tool.namespace in ("space-users", "group-entities") else ())
+        + (
+            (
+                "Documented company permissions: https://developers.kaiten.ru/company-permissions. Named PATCH preserves omitted names; false removes a direct grant, not access through another group. Requires company members permission; profile probe checks authentication only.",
+            )
+            if tool.canonical_name
+            in ("company-users.update", "company-groups.create", "company-groups.update")
+            else ()
+        ),
+        search_terms=tool.search_terms + ("доступ права роли пользователи группы",),
+    )
+    for tool in TOOLS
 )

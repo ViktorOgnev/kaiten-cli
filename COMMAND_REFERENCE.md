@@ -2,12 +2,13 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **423** canonical commands across **36** registry modules.
+`kaiten-cli` currently exposes **450** canonical commands across **37** registry modules.
 
 ## Module Index
 
 | Area | Module | Count | Section |
 |---|---|---:|---|
+| Entity access management | `access_management` | 26 | [Open](#module-access-management) |
 | Cards | `cards` | 15 | [Open](#module-cards) |
 | Comments | `comments` | 5 | [Open](#module-comments) |
 | Members and users | `members` | 7 | [Open](#module-members) |
@@ -35,7 +36,7 @@
 | Addons | `addons` | 10 | [Open](#module-addons) |
 | GitHub addon | `github_addon` | 12 | [Open](#module-github-addon) |
 | Projects and sprints | `projects` | 13 | [Open](#module-projects) |
-| Roles and groups | `roles_and_groups` | 31 | [Open](#module-roles-and-groups) |
+| Roles and groups | `roles_and_groups` | 32 | [Open](#module-roles-and-groups) |
 | SCIM | `scim` | 8 | [Open](#module-scim) |
 | Audit and analytics | `audit_and_analytics` | 12 | [Open](#module-audit-and-analytics) |
 | Service Desk | `service_desk` | 47 | [Open](#module-service-desk) |
@@ -44,7 +45,7 @@
 | Utilities | `utilities` | 15 | [Open](#module-utilities) |
 | Local snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Local queries | `query` | 2 | [Open](#module-query) |
-| **Total** | **36** | **423** | |
+| **Total** | **37** | **450** | |
 
 ## Conventions
 
@@ -62,6 +63,1263 @@
 - For read-heavy workflows, prefer bulk tools and the `snapshot` / `query` local-first path over per-entity loops.
 
 ## Full Reference
+
+<a id="module-access-management"></a>
+## Entity access management (`access_management`) — 26 commands
+
+Administrative tree metadata, entity users, group access, access roles and story maps.
+
+**Namespace tree**
+
+```text
+admin-tree-entities
+  list
+  list-all
+document-access-groups
+  list
+document-group-access-groups
+  list
+document-group-users
+  add
+  list
+  remove
+  update
+document-users
+  add
+  list
+  remove
+  update
+roles
+  create
+  delete
+  update
+space-access-groups
+  list
+story-map-access-groups
+  list
+story-map-users
+  add
+  list
+  remove
+  update
+story-maps
+  create
+  delete
+  get
+  list
+  update
+```
+
+### `admin-tree-entities.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten admin-tree-entities list` |
+| MCP alias | `kaiten_admin_tree_entities_list` |
+| Description | List one page of administrative tree metadata. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/admin-tree-entities` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `parent_uid` | `string` | no | — | — | Tree entity UID (UUID). |
+| `query` | `string` | no | — | — | Search query. |
+| `user_id` | `integer` | no | — | minimum=1 | User ID |
+| `group_uid` | `string` | no | — | — | Group UID |
+| `role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `entity_types` | `string` | no | — | — | Comma-separated entity types: space, document, document_group, story_map. |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | — |
+| `relations` | `string` | no | — | — | Comma-separated server relation names. |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | — |
+| `offset` | `integer` | no | — | minimum=0 | — |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List one page of administrative tree metadata.: `kaiten --json admin-tree-entities list --limit 100 --offset 0 --fields uid,title,entity_type,parent_entity_uid`
+
+**Notes**
+
+- Bulk alternative: `admin-tree-entities.list-all`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires company entitiesTree or members permission. Returns metadata, not content access. user_id filters by that user's visibility; omit it for company inventory.
+- Without parent_uid or other filters, list returns roots. entity_types requests a flat list. Administrative parent_uid differs from public tree-entities parent_entity_uid.
+- Offset pagination is not an atomic snapshot; concurrent creates, renames, moves and access changes may cause omissions. Archived/protected entities are not a complete event history.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `admin-tree-entities.list-all`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten admin-tree-entities list-all` |
+| MCP alias | `kaiten_admin_tree_entities_list_all` |
+| Description | Read a bounded flat administrative tree inventory. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `aggregated` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/admin-tree-entities` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Page size (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Maximum pages (default 100, max 1000). |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read a bounded flat administrative tree inventory.: `kaiten --json admin-tree-entities list-all --max-pages 100 --fields uid,title,entity_type,parent_entity_uid`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires company entitiesTree or members permission. Returns metadata, not content access. user_id filters by that user's visibility; omit it for company inventory.
+- Without parent_uid or other filters, list returns roots. entity_types requests a flat list. Administrative parent_uid differs from public tree-entities parent_entity_uid.
+- Offset pagination is not an atomic snapshot; concurrent creates, renames, moves and access changes may cause omissions. Archived/protected entities are not a complete event history.
+- Reads all pages with entity_types=space,document,document_group,story_map. Repeated entities, malformed pages and a reached page cap fail instead of returning a partial inventory.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-access-groups.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-access-groups list` |
+| MCP alias | `kaiten_document_access_groups_list` |
+| Description | List group access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/documents/{entity_uid}/groups` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `with_current_user_as_admin_check` | `boolean` | no | — | — | Include whether the current user administers each group. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List group access to an entity.: `kaiten --json document-access-groups list --entity-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree/members permission. Use documented group-entities commands to change group assignments.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-group-access-groups.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-group-access-groups list` |
+| MCP alias | `kaiten_document_group_access_groups_list` |
+| Description | List group access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/document-groups/{entity_uid}/groups` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `with_current_user_as_admin_check` | `boolean` | no | — | — | Include whether the current user administers each group. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List group access to an entity.: `kaiten --json document-group-access-groups list --entity-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree/members permission. Use documented group-entities commands to change group assignments.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-group-users.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-group-users add` |
+| MCP alias | `kaiten_document_group_users_add` |
+| Description | Assign an entity role to a user. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/document-groups/{group_uid}/users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | no | — | minimum=1 | User ID |
+| `role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `email` | `string` | no | — | — | User email address |
+| `guest` | `boolean` | no | — | — | Set true to invite the user as a guest |
+| `send_email` | `boolean` | no | — | — | Whether to send email or not |
+| `operator_comment` | `string` | no | — | — | Operator's comment |
+
+**Examples**
+
+- Assign an entity role to a user.: `kaiten --json document-group-users add --group-uid 11111111-1111-4111-8111-111111111111 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-group-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-group-users list` |
+| MCP alias | `kaiten_document_group_users_list` |
+| Description | List users with access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/document-groups/{group_uid}/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List users with access to an entity.: `kaiten --json document-group-users list --group-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-group-users.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-group-users remove` |
+| MCP alias | `kaiten_document_group_users_remove` |
+| Description | Remove a user's direct entity role. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/document-groups/{group_uid}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+
+**Examples**
+
+- Remove a user's direct entity role.: `kaiten --json document-group-users remove --group-uid 11111111-1111-4111-8111-111111111111 --user-id 7`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-group-users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-group-users update` |
+| MCP alias | `kaiten_document_group_users_update` |
+| Description | Change a user's direct entity role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/document-groups/{group_uid}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+| `role_id` | `string` | yes | — | — | Tree entity role ID (UUID). |
+
+**Examples**
+
+- Change a user's direct entity role.: `kaiten --json document-group-users update --group-uid 11111111-1111-4111-8111-111111111111 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-users.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-users add` |
+| MCP alias | `kaiten_document_users_add` |
+| Description | Assign an entity role to a user. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/documents/{document_uid}/users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | no | — | minimum=1 | User ID |
+| `role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `email` | `string` | no | — | — | User email address |
+| `guest` | `boolean` | no | — | — | Set true to invite the user as a guest |
+| `send_email` | `boolean` | no | — | — | Whether to send email or not |
+| `operator_comment` | `string` | no | — | — | Operator's comment |
+
+**Examples**
+
+- Assign an entity role to a user.: `kaiten --json document-users add --document-uid 11111111-1111-4111-8111-111111111111 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-users list` |
+| MCP alias | `kaiten_document_users_list` |
+| Description | List users with access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/documents/{document_uid}/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List users with access to an entity.: `kaiten --json document-users list --document-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-users.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-users remove` |
+| MCP alias | `kaiten_document_users_remove` |
+| Description | Remove a user's direct entity role. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/documents/{document_uid}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+
+**Examples**
+
+- Remove a user's direct entity role.: `kaiten --json document-users remove --document-uid 11111111-1111-4111-8111-111111111111 --user-id 7`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `document-users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten document-users update` |
+| MCP alias | `kaiten_document_users_update` |
+| Description | Change a user's direct entity role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/documents/{document_uid}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `document_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+| `role_id` | `string` | yes | — | — | Tree entity role ID (UUID). |
+
+**Examples**
+
+- Change a user's direct entity role.: `kaiten --json document-users update --document-uid 11111111-1111-4111-8111-111111111111 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `roles.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten roles create` |
+| MCP alias | `kaiten_roles_create` |
+| Description | Create a tree entity access role. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entity-roles` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `string` | yes | — | minLength=1, maxLength=128 | Role name |
+| `permissions` | `object` | yes | — | — | Tree entity permissions JSON; create requires the complete server permission structure, update accepts a partial object. |
+| `new_permissions_default_value` | `boolean` | no | — | — | Grant newly introduced permissions by default. |
+
+**Examples**
+
+- Create a tree entity access role.: `kaiten --json --from-file role.json roles create`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires company members permission and the Groups module for writes. System roles and locked roles cannot be changed; deleting a used role may require replacing_role_id.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `roles.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten roles delete` |
+| MCP alias | `kaiten_roles_delete` |
+| Description | Delete a tree entity access role. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entity-roles/{role_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `string` | yes | — | — | Tree entity role ID (UUID). |
+| `replacing_role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+
+**Examples**
+
+- Delete a tree entity access role.: `kaiten --json roles delete --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires company members permission and the Groups module for writes. System roles and locked roles cannot be changed; deleting a used role may require replacing_role_id.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `roles.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten roles update` |
+| MCP alias | `kaiten_roles_update` |
+| Description | Update a tree entity access role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/tree-entity-roles/{role_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `role_id` | `string` | yes | — | — | Tree entity role ID (UUID). |
+| `name` | `string` | no | — | minLength=1, maxLength=128 | Role name |
+| `permissions` | `object` | no | — | — | Tree entity permissions JSON; create requires the complete server permission structure, update accepts a partial object. |
+| `new_permissions_default_value` | `boolean` | no | — | — | Grant newly introduced permissions by default. |
+| `sort_order` | `number` | no | — | — | — |
+
+**Examples**
+
+- Update a tree entity access role.: `kaiten --json roles update --role-id 11111111-1111-4111-8111-111111111111 --permissions '{"document":{"read":false}}'`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires company members permission and the Groups module for writes. System roles and locked roles cannot be changed; deleting a used role may require replacing_role_id.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
+- PATCH permissions merges only supplied keys on the server; send false explicitly to remove a permission. A shared role change affects all its assignments.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `space-access-groups.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten space-access-groups list` |
+| MCP alias | `kaiten_space_access_groups_list` |
+| Description | List group access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/spaces/{entity_uid}/groups` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `with_current_user_as_admin_check` | `boolean` | no | — | — | Include whether the current user administers each group. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List group access to an entity.: `kaiten --json space-access-groups list --entity-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree/members permission. Use documented group-entities commands to change group assignments.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-map-access-groups.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-map-access-groups list` |
+| MCP alias | `kaiten_story_map_access_groups_list` |
+| Description | List group access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/story-maps/{entity_uid}/groups` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `entity_uid` | `string` | yes | — | — | Tree entity UID (UUID). |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `with_current_user_as_admin_check` | `boolean` | no | — | — | Include whether the current user administers each group. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List group access to an entity.: `kaiten --json story-map-access-groups list --entity-uid 11111111-1111-4111-8111-111111111111 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree/members permission. Use documented group-entities commands to change group assignments.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-map-users.add`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-map-users add` |
+| MCP alias | `kaiten_story_map_users_add` |
+| Description | Assign an entity role to a user. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps/{map_id}/users` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+| `user_id` | `integer` | no | — | minimum=1 | User ID |
+| `role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `email` | `string` | no | — | — | User email address |
+| `guest` | `boolean` | no | — | — | Set true to invite the user as a guest |
+| `send_email` | `boolean` | no | — | — | Whether to send email or not |
+| `operator_comment` | `string` | no | — | — | Operator's comment |
+
+**Examples**
+
+- Assign an entity role to a user.: `kaiten --json story-map-users add --map-id 10 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-map-users.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-map-users list` |
+| MCP alias | `kaiten_story_map_users_list` |
+| Description | List users with access to an entity. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/story-maps/{map_id}/users` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+| `include_inherited_access` | `boolean` | no | — | — | Include inherited access. |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List users with access to an entity.: `kaiten --json story-map-users list --map-id 10 --include-inherited-access true`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-map-users.remove`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-map-users remove` |
+| MCP alias | `kaiten_story_map_users_remove` |
+| Description | Remove a user's direct entity role. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps/{map_id}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+
+**Examples**
+
+- Remove a user's direct entity role.: `kaiten --json story-map-users remove --map-id 10 --user-id 7`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-map-users.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-map-users update` |
+| MCP alias | `kaiten_story_map_users_update` |
+| Description | Change a user's direct entity role. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps/{map_id}/users/{user_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+| `user_id` | `integer` | yes | — | minimum=1 | User ID |
+| `role_id` | `string` | yes | — | — | Tree entity role ID (UUID). |
+
+**Examples**
+
+- Change a user's direct entity role.: `kaiten --json story-map-users update --map-id 10 --user-id 7 --role-id 11111111-1111-4111-8111-111111111111`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires entity access_control permission or company entitiesTree permission; inviting a new company user needs additional invitation rights.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-maps.create`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-maps create` |
+| MCP alias | `kaiten_story_maps_create` |
+| Description | Create a story map. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `title` | `string` | yes | — | minLength=1, maxLength=256 | Title |
+| `description` | `string|null` | no | — | maxLength=32768 | Description |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | — |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent tree entity UID; null moves to the company root. |
+| `for_everyone_access_role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `sort_order` | `number` | no | — | exclusiveMinimum=0 | — |
+| `key` | `string|null` | no | — | — | Company-unique story map key; null clears the key. |
+
+**Examples**
+
+- Create a story map.: `kaiten --json story-maps create --title "Project roadmap" --access by_invite`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires the Story maps module. Reads use object read permission, updates use update permission (or entitiesTree for metadata); moves require source/destination move/create rights. Creation requires paid access and create permission at the destination; deletion requires object delete permission.
+- Listing includes only readable story maps. Moving an entity changes inherited access. Deletion refuses active child entities; there is no automatic force or self-grant fallback.
+- Creation supplies sort_order as the current Unix timestamp when omitted, matching document creation; this avoids HTTP 500 on server versions requiring an explicit position. Explicit sort_order is preserved.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed_with_runtime_fix`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-maps.delete`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-maps delete` |
+| MCP alias | `kaiten_story_maps_delete` |
+| Description | Delete a story map. |
+| Method | `DELETE` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps/{map_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+
+**Examples**
+
+- Delete a story map.: `kaiten --json story-maps delete --map-id 10`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires the Story maps module. Reads use object read permission, updates use update permission (or entitiesTree for metadata); moves require source/destination move/create rights. Creation requires paid access and create permission at the destination; deletion requires object delete permission.
+- Listing includes only readable story maps. Moving an entity changes inherited access. Deletion refuses active child entities; there is no automatic force or self-grant fallback.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-maps.get`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-maps get` |
+| MCP alias | `kaiten_story_maps_get` |
+| Description | Get a story map. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/story-maps/{map_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+
+**Examples**
+
+- Get a story map.: `kaiten --json story-maps get --map-id 10`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires the Story maps module. Reads use object read permission, updates use update permission (or entitiesTree for metadata); moves require source/destination move/create rights. Creation requires paid access and create permission at the destination; deletion requires object delete permission.
+- Listing includes only readable story maps. Moving an entity changes inherited access. Deletion refuses active child entities; there is no automatic force or self-grant fallback.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-maps.list`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-maps list` |
+| MCP alias | `kaiten_story_maps_list` |
+| Description | List readable story maps. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `direct_http` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/story-maps` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `query` | `string` | no | — | — | — |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | — |
+| `offset` | `integer` | no | — | minimum=0 | — |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- List readable story maps.: `kaiten --json story-maps list --limit 100 --offset 0`
+
+**Notes**
+
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires the Story maps module. Reads use object read permission, updates use update permission (or entitiesTree for metadata); moves require source/destination move/create rights. Creation requires paid access and create permission at the destination; deletion requires object delete permission.
+- Listing includes only readable story maps. Moving an entity changes inherited access. Deletion refuses active child entities; there is no automatic force or self-grant fallback.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
+
+### `story-maps.update`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten story-maps update` |
+| MCP alias | `kaiten_story_maps_update` |
+| Description | Update or move a story map. |
+| Method | `PATCH` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `no` |
+| Remote side effects | `yes` |
+| Execution mode | `direct_http` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/story-maps/{map_id}` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `map_id` | `integer` | yes | — | minimum=1 | Story map ID. |
+| `title` | `string` | no | — | minLength=1, maxLength=256 | Title |
+| `description` | `string|null` | no | — | maxLength=32768 | Description |
+| `access` | `string` | no | `for_everyone`, `by_invite` | — | — |
+| `parent_entity_uid` | `string|null` | no | — | — | Parent tree entity UID; null moves to the company root. |
+| `for_everyone_access_role_id` | `string` | no | — | — | Tree entity role ID (UUID). |
+| `sort_order` | `number` | no | — | exclusiveMinimum=0 | — |
+| `key` | `string|null` | no | — | — | Company-unique story map key; null clears the key. |
+
+**Examples**
+
+- Update or move a story map.: `kaiten --json story-maps update --map-id 10 --parent-entity-uid null`
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- Requires the Story maps module. Reads use object read permission, updates use update permission (or entitiesTree for metadata); moves require source/destination move/create rights. Creation requires paid access and create permission at the destination; deletion requires object delete permission.
+- Listing includes only readable story maps. Moving an entity changes inherited access. Deletion refuses active child entities; there is no automatic force or self-grant fallback.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
 
 <a id="module-cards"></a>
 ## Cards (`cards`) — 15 commands
@@ -14111,7 +15369,7 @@ _No tool-specific arguments._
 - Live note: When sprint creation is unavailable or the created sprint id cannot be resolved, sandbox may return 403/404/405 or 500 on a sentinel sprint id; the live suite validates that documented defect contract explicitly.
 
 <a id="module-roles-and-groups"></a>
-## Roles and groups (`roles_and_groups`) — 31 commands
+## Roles and groups (`roles_and_groups`) — 32 commands
 
 Roles, groups and permission-related operations.
 
@@ -14136,6 +15394,7 @@ group-admins
 group-entities
   add
   list
+  list-all
   remove
   update
 group-users
@@ -14184,6 +15443,7 @@ user-roles
 |---|---|---|---|---|---|
 | `name` | `string` | yes | — | — | Group name |
 | `permissions` | `integer` | no | — | — | Group permissions |
+| `named_permissions` | `object` | no | — | — | Named company permissions: partial name-to-boolean map. Send separately from the numeric permissions mask. |
 | `add_to_cards_and_spaces_enabled` | `boolean` | no | — | — | Should add cards and spaces |
 
 **Examples**
@@ -14197,6 +15457,10 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Documented company permissions: https://developers.kaiten.ru/company-permissions. Named PATCH preserves omitted names; false removes a direct grant, not access through another group. Requires company members permission; profile probe checks authentication only.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Named company permissions were granted and revoked on a temporary group with readback and cleanup on 2026-11-04.
 
 ### `company-groups.delete`
 
@@ -14234,6 +15498,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-groups.get`
 
@@ -14271,6 +15536,7 @@ user-roles
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-groups.list`
 
@@ -14314,6 +15580,7 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-groups.update`
 
@@ -14341,6 +15608,7 @@ user-roles
 | `group_uid` | `string` | yes | — | — | Group UID |
 | `name` | `string` | no | — | — | New group name |
 | `permissions` | `integer` | no | — | — | Group permissions(bit mask) |
+| `named_permissions` | `object` | no | — | — | Named company permissions: partial name-to-boolean map. Send separately from the numeric permissions mask. |
 | `add_to_cards_and_spaces_enabled` | `boolean` | no | — | — | Ability to add all users of the group to cards, placed in group spaces. Ability to filter logs by group in «Timesheets» |
 
 **Examples**
@@ -14354,6 +15622,10 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Documented company permissions: https://developers.kaiten.ru/company-permissions. Named PATCH preserves omitted names; false removes a direct grant, not access through another group. Requires company members permission; profile probe checks authentication only.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: Named company permissions were granted and revoked on a temporary group with readback and cleanup on 2026-11-04.
 
 ### `company-users.list`
 
@@ -14410,6 +15682,7 @@ user-roles
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - Use this command for paginated administrative member exports. `users.list` is a generic users endpoint and may not be reliable for full member paging.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-users.list-all`
 
@@ -14461,6 +15734,7 @@ user-roles
 - Uses at most 100 users per request for forward compatibility.
 - Legacy endpoints that ignore pagination are accepted when the first page is oversized or the second page is identical; duplicate users are not appended.
 - If max_pages is reached on a full page, the command fails instead of returning a partial list.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-users.remove-virtual`
 
@@ -14498,6 +15772,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `company-users.update`
 
@@ -14525,6 +15800,8 @@ user-roles
 | `user_id` | `integer` | yes | — | — | User ID |
 | `full_name` | `string` | no | — | — | Full name |
 | `email` | `string` | no | — | — | Email |
+| `permissions` | `integer` | no | — | minimum=0 | Direct company permissions bit mask; excludes named-only permissions. |
+| `named_permissions` | `object` | no | — | — | Named company permissions: partial name-to-boolean map. Send separately from the numeric permissions mask. |
 | `payload` | `object` | no | — | — | Extra JSON body fields from the Kaiten API docs. |
 | `apps_permissions` | `integer` | no | — | — | User access.<br> 0 - no access,<br> 1 - full access to Kaiten, access to service desk denied.<br> 2 - guest access to Kaiten, access to service desk denied.<br> 4 - access only to service desk.<br> 5 - full access to Kaiten and service desk.<br> 6 - guest access to Kaiten, access to service desk |
 | `temporarily_inactive` | `boolean` | no | — | — | Temporarily inactive: user is still in company, but can't sign in and doesn't need a license |
@@ -14540,6 +15817,10 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Documented company permissions: https://developers.kaiten.ru/company-permissions. Named PATCH preserves omitted names; false removes a direct grant, not access through another group. Requires company members permission; profile probe checks authentication only.
+- Live contract: `live_not_validated`; expected statuses: —
+- Live note: On 2026-11-04 the test company returned HTTP 500 for named company permissions on a temporary virtual user. The CLI reported an uncertain mutation without retrying; cleanup was verified. Company-user permission success remains unvalidated.
 
 ### `group-admins.add`
 
@@ -14578,6 +15859,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `group-admins.list`
 
@@ -14616,6 +15898,7 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `group-admins.remove`
 
@@ -14654,6 +15937,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `group-entities.add`
 
@@ -14694,6 +15978,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `group-entities.list`
 
@@ -14701,7 +15987,7 @@ user-roles
 |---|---|
 | CLI command | `kaiten group-entities list` |
 | MCP alias | `kaiten_list_group_entities` |
-| Description | List tree entities attached to a company group. |
+| Description | List one page of tree entities attached to a company group. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -14710,8 +15996,8 @@ user-roles
 | Cache policy | `request_scope` |
 | Cache strategy | `request_scope` |
 | Path template | `/company/groups/{group_uid}/entities` |
-| Compact | `no` |
-| Fields | `no` |
+| Compact | `yes` |
+| Fields | `yes` |
 | Heavy | `no` |
 
 **Arguments**
@@ -14719,10 +16005,61 @@ user-roles
 | Argument | Type | Required | Enum | Constraints | Description |
 |---|---|---|---|---|---|
 | `group_uid` | `string` | yes | — | — | Group UID |
+| `limit` | `integer` | no | — | minimum=1, maximum=100 | Max results (max 100); omitted keeps the server default. |
+| `offset` | `integer` | no | — | minimum=0 | Pagination offset |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
 
 **Examples**
 
 - List group entities.: `kaiten --json group-entities list --group-uid grp-1`
+
+**Notes**
+
+- Bulk alternative: `group-entities.list-all`
+- Cache guidance: Identical safe GETs are deduplicated inside one CLI execution; use bulk/snapshot tools for repeated cross-process analytics.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No disk cache is read by default for this command.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Reads one page. Use group-entities.list-all for a bounded complete group assignment listing.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: On 2026-11-04 an ordinary API token read three temporary group assignments as pages of two and one, verified list-all parity, revoked all assignments and confirmed cleanup.
+
+### `group-entities.list-all`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten group-entities list-all` |
+| MCP alias | `kaiten_list_all_group_entities` |
+| Description | List all tree entities attached to a company group with bounded pagination. |
+| Method | `GET` |
+| Mutation | `no` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `aggregated` |
+| Cache policy | `request_scope` |
+| Cache strategy | `request_scope` |
+| Path template | `/company/groups/{group_uid}/entities` |
+| Compact | `yes` |
+| Fields | `yes` |
+| Heavy | `yes` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `group_uid` | `string` | yes | — | — | Group UID |
+| `page_size` | `integer` | no | — | minimum=1, maximum=100 | Page size (default 100, max 100). |
+| `max_pages` | `integer` | no | — | minimum=1, maximum=1000 | Maximum pages (default 100, max 1000). |
+| `compact` | `boolean` | no | — | — | Return compact output without heavy nested fields. |
+| `fields` | `string` | no | — | — | Comma-separated field names to return. |
+
+**Examples**
+
+- Read every entity assignment of a group within an explicit page cap.: `kaiten --json group-entities list-all --group-uid grp-1 --page-size 100 --max-pages 100 --fields uid,title --compact`
 
 **Notes**
 
@@ -14731,6 +16068,13 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Uses documented GET /company/groups/{group_uid}/entities; requires company members permission and the groups module.
+- Requires a server that honors limit/offset. Repeated entities, malformed or oversized pages and a full final page at max_pages fail instead of returning a partial list. No legacy fallback is used.
+- Concurrent assignment changes can shift offset pages; this listing is not an atomic snapshot. fields and compact only shape local output after all pages are read.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
+- Live contract: `live_passed`; expected statuses: —
+- Live note: On 2026-11-04 an ordinary API token read three temporary group assignments as pages of two and one, verified list-all parity, revoked all assignments and confirmed cleanup.
 
 ### `group-entities.remove`
 
@@ -14769,6 +16113,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `group-entities.update`
 
@@ -14809,6 +16155,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `group-users.add`
 
@@ -14849,6 +16197,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `group-users.list`
 
@@ -14890,6 +16239,7 @@ user-roles
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This direct command returns one page; increase offset to read subsequent pages.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `group-users.remove`
 
@@ -14928,6 +16278,7 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
 
 ### `roles.get`
 
@@ -14965,6 +16316,9 @@ user-roles
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Undocumented API-token extension derived from Kaiten server routes and controllers; validated on an authorized test company on 2026-11-04. Availability still depends on server version, permissions and modules. No browser or Superadmin authentication is used.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `roles.list`
 
@@ -15004,6 +16358,8 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `space-users.add`
 
@@ -15047,6 +16403,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `space-users.get`
 
@@ -15086,6 +16444,8 @@ user-roles
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `space-users.list`
 
@@ -15129,6 +16489,8 @@ user-roles
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 - This direct command returns one page; increase offset to read subsequent pages.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `space-users.remove`
 
@@ -15167,6 +16529,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `space-users.update`
 
@@ -15209,6 +16573,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- Removing a direct assignment does not revoke access inherited from ancestors, groups, or everyone access.
 
 ### `user-roles.create`
 
@@ -15248,6 +16614,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `user-roles.delete`
 
@@ -15286,6 +16654,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `user-roles.get`
 
@@ -15323,6 +16693,8 @@ user-roles
 - Refresh hint: Use --cache-mode refresh once to force a fresh API read and rewrite the cache; do not put refresh inside an entity loop.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `user-roles.list`
 
@@ -15362,6 +16734,8 @@ user-roles
 - Refresh hint: No disk cache is read by default for this command.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 ### `user-roles.update`
 
@@ -15402,6 +16776,8 @@ user-roles
 - Refresh hint: No cache refresh is needed.
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+- Access management reference: https://github.com/ViktorOgnev/kaiten-cli/blob/master/docs/ACCESS_MANAGEMENT.md; agent skill: skills/kaiten-cli-access-management/SKILL.md.
+- roles uses UUID tree-entity access roles; user-roles uses numeric timesheet roles and cannot assign entity permissions.
 
 <a id="module-scim"></a>
 ## SCIM (`scim`) — 8 commands

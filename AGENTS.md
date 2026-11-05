@@ -17,6 +17,9 @@ For optimized LLM workflows, start with:
 - [skills/kaiten-cli-heavy-data/SKILL.md](skills/kaiten-cli-heavy-data/SKILL.md)
 - [skills/kaiten-cli-metrics/SKILL.md](skills/kaiten-cli-metrics/SKILL.md)
 - [skills/kaiten-cli-mutations/SKILL.md](skills/kaiten-cli-mutations/SKILL.md)
+- [skills/kaiten-cli-access-management/SKILL.md](skills/kaiten-cli-access-management/SKILL.md)
+  for entity operations, users, groups, roles and access API parameters. External
+  specification interpretation and reconciliation belong to the calling harness.
 
 ## Conversation locale
 

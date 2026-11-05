@@ -33,6 +33,13 @@ Main layers:
 
 ## Registry vs Runtime
 
+The `access_management` registry module exposes API-token routes for entity
+metadata, assignments, UUID access roles and story maps. Its only aggregated
+operation is bounded flat administrative-tree pagination; it does not implement
+specification parsing, access-policy evaluation, reconciliation or orchestration.
+Undocumented routes carry explicit compatibility notes and unvalidated live
+contracts. Sensitive new reads use request-scoped caching by default.
+
 This repo does not have two different sets of tools.
 
 - `registry` defines the tools.
