@@ -18,6 +18,9 @@ MODULE_SPECS: tuple[ModuleDocSpec, ...] = (
         "Entity access management",
         "Administrative tree metadata, entity users, group access, access roles and story maps.",
     ),
+    ModuleDocSpec(
+        "imports", "Migration imports", "Import plans, staged packages and Convertinator workflows."
+    ),
     ModuleDocSpec("cards", "Cards", "Cards, bulk reads and card workflows."),
     ModuleDocSpec("comments", "Comments", "Card comments and bulk comment reads."),
     ModuleDocSpec(

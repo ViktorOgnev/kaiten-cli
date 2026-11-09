@@ -60,6 +60,17 @@ kaiten --json snapshot build --name team-basic --space-id 10 --preset basic
 kaiten --json query cards --snapshot team-basic --view summary --fields id,title,state
 ```
 
+## Migration imports
+
+Use `import sources` and `import plan` to identify the source, target and required inputs.
+For a local interactive session use `import run`. In chat use the JSON steps and follow
+`next_action`, showing the exact target, scope and omissions. Tell users how to enter
+missing credentials in their own terminal. Ask them to approve server validation before
+uploading the package, and to approve the checked plan before starting the import.
+A GUI handoff leaves the outcome unconfirmed. Use `import status` to reconcile it.
+See the [migration workflow](docs/USAGE.md#миграция-в-kaiten).
+
+
 ## Config and precedence
 
 Credential resolution order:
