@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
-import hashlib
 import json
-import os
 import re
 import shutil
 import shlex
 import tempfile
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -18,7 +14,7 @@ from zipfile import BadZipFile, ZipFile
 
 import click
 
-from kaiten_cli.errors import CliError, TransportError, ValidationError
+from kaiten_cli.errors import CliError, ValidationError
 from kaiten_cli.i18n import get_locale, tr
 from kaiten_cli.runtime.fs_security import open_private_append, secure_directory
 from kaiten_cli.runtime.imports import convertinator, trello
@@ -53,7 +49,6 @@ SOURCES = {
 }
 FILE_SOURCES = {"package", "jira-zip", "notion", "csv"}
 TERMINAL = {"completed", "completed_with_losses", "failed", "cancelled"}
-ACTIVE = {"start_unknown", "queued", "running"}
 REPORT_NAME = re.compile(
     r"kaiten-company-import-(completed|partial|failed|cancelled)-([a-f0-9-]{36})\.json"
 )
@@ -84,8 +79,6 @@ def _save(path: Path, run: dict, state: str, action: str | None = None) -> dict:
     run["next_action"] = (
         {"command": _command(path, action, run.get("profile_name"))} if action else None
     )
-    if action in {"preflight", "start"}:
-        run["next_action"]["requires_approval"] = True
     atomic_json(path / "run.json", run)
     with open_private_append(path / "events.jsonl") as log:
         log.write(json.dumps({"at": datetime.now(timezone.utc).isoformat(), "state": state}) + "\n")
@@ -341,37 +334,15 @@ def credentials(path: Path, run: dict, *, interactive: bool) -> dict:
     )
 
 
-async def prepare(client, path: Path, run: dict, *, install: bool) -> dict:
-    if run["state"] in ACTIVE | TERMINAL | {
-        "cleaned",
-        "operator_reported",
-        "gui_pending",
-        "awaiting_start",
-        "preflight_unknown",
-        "blocked",
-    }:
+async def prepare(client, path: Path, run: dict) -> dict:
+    if run["state"] not in {"planned", "needs_credentials", "preparing", "prepared"}:
         return _public(run)
     await _check_target(client, run)
-    if run["state"] == "prepared":
-        return _public(run)
-    if run["mode"] == "package":
+    if run["state"] != "prepared" and run["mode"] == "package":
         await _prepare_package(client, path, run)
         if not run.get("package"):
             return _public(load_run(path))
-    run["install_allowed"] = install
-    if run["mode"] != "web":
-        run["desktop_app"] = None
-        if not os.environ.get(convertinator.RUNNER_ENV):
-            try:
-                entry = (
-                    await convertinator.ensure_desktop() if install else convertinator.desktop_app()
-                )
-                run["desktop_app"] = str(entry) if entry else None
-            except CliError as exc:
-                run["setup_warning"] = exc.message
-    run["approval_context"] = approval(run)
-    run["approval"] = run["approval_context"]
-    return _save(path, run, "prepared", "preflight")
+    return _save(path, run, "prepared", "open")
 
 
 async def _prepare_package(client, path: Path, run: dict) -> None:
@@ -432,249 +403,83 @@ def _pages(path: Path, count: int):
         yield read_json(path / f"{index:06}.json", trello.MAX_RESPONSE * 2)["cards"]
 
 
-def approval(run: dict, preflight: dict | None = None) -> str:
-    return hashlib.sha256(
-        json.dumps(
-            {
-                "run": run["run_id"],
-                "target": run["target"],
-                "source": run["source"],
-                "package": run.get("package_sha256"),
-                "preflight": preflight,
-                "mode": "strict",
-            },
-            sort_keys=True,
-        ).encode()
-    ).hexdigest()
-
-
-def _approved(run: dict, supplied: str | None, *, interactive: bool, preflight: bool) -> bool:
-    if supplied is not None:
-        return supplied == run["approval_context"]
-    if not interactive:
-        return False
-    click.echo(
-        json.dumps(
-            {
-                k: run.get(k)
-                for k in ("target", "source", "package_summary", "preflight", "access_notice")
-            },
-            ensure_ascii=False,
-            indent=2,
-        ),
-        err=True,
-    )
-    prompt = (
-        tr("Allow this package to be sent to Kaiten for server validation?")
-        if preflight
-        else tr("Start the import into this exact Kaiten space?")
-    )
-    return click.confirm(prompt, default=False, err=True)
-
-
 def _check_package(run: dict) -> None:
     if run.get("package") and fingerprint(Path(run["package"])) != run["package_sha256"]:
         raise ValidationError(tr("The prepared package changed. Create a new import plan."))
 
 
-def _machine_payload(run: dict) -> dict:
-    return {
-        "run_id": run["run_id"],
-        "target": {k: run["target"][k] for k in ("origin", "company_id", "space_uid", "space_id")},
-        "package": run.get("package"),
-        "package_sha256": run.get("package_sha256"),
-        "work_path": run["work_path"],
-        "strict": True,
-        "job_id": run.get("job_id"),
-    }
-
-
-def _machine_result(run: dict, result: dict, states: set[str]) -> tuple[str, str | None]:
-    state = result.get("state")
-    job = result.get("job_id")
-    try:
-        if job is not None and str(UUID(job)) != job:
-            raise ValueError
-        if state not in states or result.get("target") != _machine_payload(run)["target"]:
-            raise ValueError
-        if run.get("job_id") and run["job_id"] != job:
-            raise ValueError
-        if state in {"validated", "warnings", "queued", "running", *TERMINAL} and job is None:
-            raise ValueError
-    except (TypeError, ValueError, AttributeError):
-        raise TransportError(
-            tr("Convertinator returned an unexpected target, operation or state.")
-        ) from None
-    return state, job
-
-
-async def preflight(client, path: Path, run: dict, options: dict, interactive: bool) -> dict:
-    if run["state"] not in {"prepared", "preflight_unknown"}:
+async def open_import(client, path: Path, run: dict, options: dict) -> dict:
+    if run["state"] not in {"prepared", "gui_pending"}:
         return _public(run)
     await _check_target(client, run)
     _check_package(run)
-    if not _approved(run, options.get("approval"), interactive=interactive, preflight=True):
-        return {
-            **_public(run),
-            "state": "needs_preflight_approval",
-            "next_action": {
-                "command": _command(path, "preflight", run.get("profile_name")),
-                "requires_approval": True,
-            },
-        }
-    if run["mode"] == "package" and os.environ.get(convertinator.RUNNER_ENV):
-        payload = _machine_payload(run)
-        try:
-            capability = await convertinator.machine("capabilities", payload, token=client.token)
-        except CliError:
-            if run["state"] == "preflight_unknown":
-                raise
-            capability = None
-        if (
-            capability
-            and capability.get("state") == "supported"
-            and capability.get("target") == payload["target"]
-        ):
-            _save(path, run, "preflight_unknown", "preflight")
-            result = await convertinator.machine("preflight", payload, token=client.token)
-            state, job = _machine_result(run, result, {"validated", "warnings", "blocked"})
-            atomic_json(path / "preflight-report.json", result.get("report"))
-            run["preflight"] = {
-                "state": state,
-                "report_path": str(path / "preflight-report.json"),
-                "sha256": hashlib.sha256((path / "preflight-report.json").read_bytes()).hexdigest(),
-            }
-            run["job_id"] = job
-            run["approval_context"] = approval(run, run["preflight"])
-            run["approval"] = run["approval_context"]
-            return _save(
-                path,
-                run,
-                "blocked" if state == "blocked" else "awaiting_start",
-                None if state == "blocked" else "start",
-            )
-        if run["state"] == "preflight_unknown":
-            raise TransportError(tr("Convertinator could not resume the server validation."))
-        run["setup_warning"] = tr(
-            "The machine interface cannot import into this target. Use the desktop app."
+    target_url = run["target"]["url"]
+    if options.get("_interactive"):
+        click.echo(
+            json.dumps(
+                {key: run.get(key) for key in ("target", "package", "input", "access_notice")},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            err=True,
         )
+
+    app_opened = False
+    browser_opened = False
+    install_guide = None
     if run["mode"] == "web":
-        launched = convertinator.launch_browser(run["target"]["url"])
+        browser_opened = convertinator.launch_browser(target_url)
         instructions = tr("Open Add → Import in the target space and select the source.")
     else:
-        entry = convertinator.desktop_app()
-        if entry is None and run.get("install_allowed", True):
-            try:
-                entry = await convertinator.ensure_desktop()
-            except CliError as exc:
-                run["setup_warning"] = exc.message
-        launched = convertinator.launch_desktop(entry)
-        instructions = (
-            tr(
-                "Sign in to the displayed Kaiten company, choose Universal Import, open the prepared package, select the exact target space, and run the check before importing."
+        app = convertinator.desktop_app(options.get("app_path"))
+        if app is not None:
+            app_opened = convertinator.launch_desktop(app)
+        if app_opened:
+            instructions = (
+                tr(
+                    "Sign in to the displayed Kaiten company, choose Universal Import, open the prepared package, select the exact target space, and run the check before importing."
+                )
+                if run["mode"] == "package"
+                else tr(
+                    "Sign in to the displayed Kaiten company, choose the source in Convertinator and follow the linked instructions."
+                )
             )
-            if run["mode"] == "package"
-            else tr(
-                "Sign in to the displayed Kaiten company, choose the source in Convertinator and follow the linked instructions."
+        elif app is None:
+            browser_opened = convertinator.launch_browser(target_url)
+            install_guide = convertinator.INSTALL_GUIDE
+            instructions = tr(
+                "In the target space, open Add → Import → Universal Import to download Convertinator. In a closed network, contact Kaiten support if the download links are unavailable."
             )
-        )
+        else:
+            instructions = tr("Open the installed Convertinator from your desktop to continue.")
     run["handoff"] = {
-        "app_opened": launched,
+        "app_opened": app_opened,
+        "browser_opened": browser_opened,
         "instructions": instructions,
-        "installer": convertinator.INSTALL_GUIDE if run["mode"] != "web" else None,
+        "installer": install_guide,
     }
-    return _save(path, run, "gui_pending", "status")
-
-
-async def start(client, path: Path, run: dict, options: dict, interactive: bool) -> dict:
-    if run["state"] == "start_unknown":
-        return await status(client, path, run, options)
-    if run["state"] != "awaiting_start":
-        return _public(run)
-    await _check_target(client, run)
-    _check_package(run)
-    if not _approved(run, options.get("approval"), interactive=interactive, preflight=False):
-        return {
-            **_public(run),
-            "state": "needs_start_approval",
-            "next_action": {
-                "command": _command(path, "start", run.get("profile_name")),
-                "requires_approval": True,
-            },
-        }
-    report_file = path / "preflight-report.json"
-    if (
-        not report_file.is_file()
-        or hashlib.sha256(report_file.read_bytes()).hexdigest() != run["preflight"]["sha256"]
-    ):
-        raise ValidationError(tr("The preflight report changed. Create a new import plan."))
-    payload = _machine_payload(run)
-    if not os.environ.get(convertinator.RUNNER_ENV):
-        raise ValidationError(tr("Use the same Convertinator runner to resume this operation."))
-    _save(path, run, "start_unknown", "status")
-    result = await convertinator.machine(
-        "start",
-        {**payload, "tolerate_warnings": run["preflight"]["state"] == "warnings"},
-        token=client.token,
-    )
-    state, _ = _machine_result(run, result, {"queued", "running", *TERMINAL})
-    return _save(path, run, state, "status")
+    action = "status" if run["mode"] == "web" or app_opened else "open"
+    return _save(path, run, "gui_pending", action)
 
 
 async def status(client, path: Path, run: dict, options: dict) -> dict:
-    if run["state"] in ACTIVE | TERMINAL | {"gui_pending", "operator_reported"} or options.get(
+    if run["state"] not in TERMINAL | {"gui_pending", "operator_reported"} and not options.get(
         "report"
     ):
-        await _check_target(client, run)
+        return _public(run)
+    await _check_target(client, run)
     if options.get("report"):
-        require_writable()
         _operator_report(path, run, Path(options["report"]).expanduser())
-    if run["state"] in ACTIVE and run.get("job_id"):
-        deadline = time.monotonic() + options.get("wait_seconds", 300)
-        while True:
-            result = await convertinator.machine(
-                "status", _machine_payload(run), token=client.token
-            )
-            if result is None:
-                return {**_public(run), "next_action": {"input": "same_convertinator_runner"}}
-            state, _ = _machine_result(
-                run, result, {"queued", "running", "start_unknown", "not_queued", *TERMINAL}
-            )
-            if state == "not_queued":
-                if writable():
-                    return _save(path, run, "awaiting_start", "start")
-                return {**_public(run), "state": "not_queued"}
-            run["state"] = state
-            if isinstance(result.get("progress"), dict):
-                run["progress"] = {
-                    k: v
-                    for k, v in result["progress"].items()
-                    if isinstance(k, str) and type(v) is int
-                }
-            if isinstance(result.get("phase"), str):
-                run["phase"] = result["phase"]
-            if result.get("report") is not None and writable():
-                atomic_json(path / "server-report.json", result["report"])
-                run["report_path"] = str(path / "server-report.json")
-            if not options.get("wait") or state not in ACTIVE or time.monotonic() >= deadline:
-                break
-            await asyncio.sleep(3)
-    if (
-        run["state"] in {"completed", "completed_with_losses", "gui_pending", "operator_reported"}
-        and run["source"] == "trello"
-    ):
+    if run["state"] in {"completed", "completed_with_losses", "gui_pending", "operator_reported"}:
         try:
             run["reconciliation"] = await _reconcile(client, run)
         except CliError:
             run["reconciliation"] = {"state": "unavailable"}
-    if run["state"] in TERMINAL | ACTIVE | {"operator_reported", "gui_pending"} and writable():
-        return _save(
-            path,
-            run,
-            run["state"],
-            "status" if run["state"] in ACTIVE | {"gui_pending"} else "cleanup",
-        )
-    return _public(run)
+    if run["state"] == "gui_pending":
+        action = "status" if run["mode"] == "web" or run["handoff"]["app_opened"] else "open"
+    else:
+        action = "cleanup"
+    return _save(path, run, run["state"], action)
 
 
 def _operator_report(path: Path, run: dict, file: Path) -> None:
@@ -713,8 +518,12 @@ async def _reconcile(client, run: dict) -> dict:
     for file in manifest["resource_files"]:
         if file["resource"] in {"boards", "columns", "cards"}:
             expected.setdefault(file["resource"], set()).update(
-                row["external_id"] for row in read_json(root / file["path"])
+                row["external_id"]
+                for row in read_json(root / file["path"])
+                if isinstance(row, dict) and isinstance(row.get("external_id"), str)
             )
+    if not any(expected.values()):
+        return {"state": "unavailable"}
     space = run["target"]["space_id"]
     boards = await client.get(f"/spaces/{space}/boards")
     matching = [
@@ -766,7 +575,7 @@ def cleanup(path: Path, run: dict) -> dict:
     }:
         raise ValidationError(tr("Cleanup is available before upload or after an import result."))
     for child in path.iterdir():
-        if child.name in {"package", "machine"} or child.name.startswith(("trello-", ".stage-")):
+        if child.name == "package" or child.name.startswith(("trello-", ".stage-")):
             if child.is_symlink() or not child.is_dir():
                 child.unlink()
             else:
@@ -810,13 +619,10 @@ async def wizard(client, options: dict) -> dict:
         run = load_run(path)
         if run["state"] == "needs_credentials":
             credentials(path, run, interactive=True)
-        result = await prepare(client, path, run, install=True)
+        result = await prepare(client, path, run)
         if result["state"] != "prepared":
             return result
-        result = await preflight(client, path, run, {}, True)
-        if result["state"] != "awaiting_start":
-            return result
-        return await start(client, path, run, {}, True)
+        return await open_import(client, path, run, options)
 
 
 async def execute(client, tool, options, _request, _query, _body, _timeout, _reporter):
@@ -835,11 +641,9 @@ async def execute(client, tool, options, _request, _query, _body, _timeout, _rep
     with lock_run(path):
         run = load_run(path)
         if action == "prepare":
-            return await prepare(client, path, run, install=options.get("install", True))
-        if action == "preflight":
-            return await preflight(client, path, run, options, options.get("_interactive", False))
-        if action == "start":
-            return await start(client, path, run, options, options.get("_interactive", False))
+            return await prepare(client, path, run)
+        if action == "open":
+            return await open_import(client, path, run, options)
         if action == "status":
             return await status(client, path, run, options)
         if action == "credentials":

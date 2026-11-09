@@ -237,12 +237,11 @@ kaiten_get_webhook
 kaiten_get_workflow
 kaiten_import_cleanup
 kaiten_import_credentials
+kaiten_import_open
 kaiten_import_plan
-kaiten_import_preflight
 kaiten_import_prepare
 kaiten_import_run
 kaiten_import_sources
-kaiten_import_start
 kaiten_import_status
 kaiten_install_space_addon
 kaiten_list_addons

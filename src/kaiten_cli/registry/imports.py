@@ -29,12 +29,9 @@ RUN_FIELDS = {
     "run": {"type": "string", "description": "Import run ID returned by import plan."},
     "work_dir": WORK_DIR,
 }
-APPROVAL = {"type": "string", "description": "Approval ID from the reviewed import step."}
 
 
-def _command(
-    action, description, fields, *, method="GET", profile=True, remote=False, example=None
-):
+def _command(action, description, fields, *, method="GET", profile=True, example=None):
     return make_tool(
         canonical_name=f"import.{action}",
         mcp_alias=f"kaiten_import_{action}",
@@ -50,8 +47,8 @@ def _command(
             custom_executor=execute,
             cache_policy="none",
             requires_profile=profile,
-            enforce_mutation_guard=remote,
-            remote_side_effects=remote,
+            enforce_mutation_guard=False,
+            remote_side_effects=False,
             apply_common_transforms=False,
         ),
         examples=(ExampleSpec(command=example, description=description),) if example else (),
@@ -77,7 +74,6 @@ TOOLS = (
         "Guide a migration in an interactive terminal.",
         PLAN_FIELDS,
         method="POST",
-        remote=True,
         example="kaiten import run",
     ),
     _command(
@@ -89,48 +85,27 @@ TOOLS = (
     ),
     _command(
         "prepare",
-        "Stage the import package and prepare Convertinator.",
+        "Prepare the local import package.",
+        RUN_FIELDS,
+        method="POST",
+    ),
+    _command(
+        "open",
+        "Open the official Convertinator or the Kaiten import interface.",
         {
             **RUN_FIELDS,
-            "install": {
-                "type": "boolean",
-                "description": "Install a verified Convertinator build when needed.",
+            "app_path": {
+                "type": "string",
+                "description": "Path to the installed Convertinator application.",
             },
         },
         method="POST",
-    ),
-    _command(
-        "preflight",
-        "Authorize server validation or open the official import interface.",
-        {
-            **RUN_FIELDS,
-            "approval": APPROVAL,
-        },
-        method="POST",
-        remote=True,
-    ),
-    _command(
-        "start",
-        "Start the validated migration after explicit approval.",
-        {
-            **RUN_FIELDS,
-            "approval": APPROVAL,
-        },
-        method="POST",
-        remote=True,
     ),
     _command(
         "status",
-        "Inspect import progress and reconcile target data.",
+        "Read the import report and reconcile target data.",
         {
             **RUN_FIELDS,
-            "wait": {"type": "boolean", "description": "Wait for a queued import to finish."},
-            "wait_seconds": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 3600,
-                "description": "Maximum polling time in seconds.",
-            },
             "report": {"type": "string", "description": "Path to a terminal Convertinator report."},
         },
     ),

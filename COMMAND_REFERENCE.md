@@ -2,14 +2,14 @@
 
 > This file is generated from the local registry. Do not edit by hand.
 
-`kaiten-cli` currently exposes **459** canonical commands across **38** registry modules.
+`kaiten-cli` currently exposes **458** canonical commands across **38** registry modules.
 
 ## Module Index
 
 | Area | Module | Count | Section |
 |---|---|---:|---|
 | Entity access management | `access_management` | 26 | [Open](#module-access-management) |
-| Migration imports | `imports` | 9 | [Open](#module-imports) |
+| Migration imports | `imports` | 8 | [Open](#module-imports) |
 | Cards | `cards` | 15 | [Open](#module-cards) |
 | Comments | `comments` | 5 | [Open](#module-comments) |
 | Members and users | `members` | 7 | [Open](#module-members) |
@@ -46,7 +46,7 @@
 | Utilities | `utilities` | 15 | [Open](#module-utilities) |
 | Local snapshots | `snapshot` | 5 | [Open](#module-snapshot) |
 | Local queries | `query` | 2 | [Open](#module-query) |
-| **Total** | **38** | **459** | |
+| **Total** | **38** | **458** | |
 
 ## Conventions
 
@@ -1323,7 +1323,7 @@ story-maps
 - Live note: Validated with an ordinary API token on a user-authorized test company on 2026-11-04; temporary grants, revocations and cleanup were verified. Story-map creation supplies a missing sort_order in the CLI.
 
 <a id="module-imports"></a>
-## Migration imports (`imports`) — 9 commands
+## Migration imports (`imports`) — 8 commands
 
 Import plans, staged packages and Convertinator workflows.
 
@@ -1333,12 +1333,11 @@ Import plans, staged packages and Convertinator workflows.
 import
   cleanup
   credentials
+  open
   plan
-  preflight
   prepare
   run
   sources
-  start
   status
 ```
 
@@ -1410,6 +1409,41 @@ import
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
+### `import.open`
+
+| Field | Value |
+|---|---|
+| CLI command | `kaiten import open` |
+| MCP alias | `kaiten_import_open` |
+| Description | Open the official Convertinator or the Kaiten import interface. |
+| Method | `POST` |
+| Mutation | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
+| Execution mode | `custom` |
+| Cache policy | `none` |
+| Cache strategy | `none` |
+| Path template | `/local/import/open` |
+| Compact | `no` |
+| Fields | `no` |
+| Heavy | `no` |
+
+**Arguments**
+
+| Argument | Type | Required | Enum | Constraints | Description |
+|---|---|---|---|---|---|
+| `run` | `string` | yes | — | — | Import run ID returned by import plan. |
+| `work_dir` | `string` | no | — | — | Private import workspace parent directory. |
+| `app_path` | `string` | no | — | — | Path to the installed Convertinator application. |
+
+**Notes**
+
+- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
+- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
+- Refresh hint: No cache refresh is needed.
+- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
+- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
+
 ### `import.plan`
 
 | Field | Value |
@@ -1454,48 +1488,13 @@ import
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
-### `import.preflight`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten import preflight` |
-| MCP alias | `kaiten_import_preflight` |
-| Description | Authorize server validation or open the official import interface. |
-| Method | `POST` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/local/import/preflight` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Constraints | Description |
-|---|---|---|---|---|---|
-| `run` | `string` | yes | — | — | Import run ID returned by import plan. |
-| `work_dir` | `string` | no | — | — | Private import workspace parent directory. |
-| `approval` | `string` | no | — | — | Approval ID from the reviewed import step. |
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-
 ### `import.prepare`
 
 | Field | Value |
 |---|---|
 | CLI command | `kaiten import prepare` |
 | MCP alias | `kaiten_import_prepare` |
-| Description | Stage the import package and prepare Convertinator. |
+| Description | Prepare the local import package. |
 | Method | `POST` |
 | Mutation | `yes` |
 | Allowed in read-only mode | `yes` |
@@ -1514,7 +1513,6 @@ import
 |---|---|---|---|---|---|
 | `run` | `string` | yes | — | — | Import run ID returned by import plan. |
 | `work_dir` | `string` | no | — | — | Private import workspace parent directory. |
-| `install` | `boolean` | no | — | — | Install a verified Convertinator build when needed. |
 
 **Notes**
 
@@ -1533,8 +1531,8 @@ import
 | Description | Guide a migration in an interactive terminal. |
 | Method | `POST` |
 | Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
+| Allowed in read-only mode | `yes` |
+| Remote side effects | `no` |
 | Execution mode | `custom` |
 | Cache policy | `none` |
 | Cache strategy | `none` |
@@ -1603,48 +1601,13 @@ _No tool-specific arguments._
 - Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
 - Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
 
-### `import.start`
-
-| Field | Value |
-|---|---|
-| CLI command | `kaiten import start` |
-| MCP alias | `kaiten_import_start` |
-| Description | Start the validated migration after explicit approval. |
-| Method | `POST` |
-| Mutation | `yes` |
-| Allowed in read-only mode | `no` |
-| Remote side effects | `yes` |
-| Execution mode | `custom` |
-| Cache policy | `none` |
-| Cache strategy | `none` |
-| Path template | `/local/import/start` |
-| Compact | `no` |
-| Fields | `no` |
-| Heavy | `no` |
-
-**Arguments**
-
-| Argument | Type | Required | Enum | Constraints | Description |
-|---|---|---|---|---|---|
-| `run` | `string` | yes | — | — | Import run ID returned by import plan. |
-| `work_dir` | `string` | no | — | — | Private import workspace parent directory. |
-| `approval` | `string` | no | — | — | Approval ID from the reviewed import step. |
-
-**Notes**
-
-- Cache guidance: This command does not use persistent cache; use it for mutations, polling, downloads, or local-only reads.
-- Cache modes: `auto`, `off`, `readwrite`, `refresh`; default/recommended: `auto`.
-- Refresh hint: No cache refresh is needed.
-- Off hint: Use --cache-mode off only for cache debugging, privacy-sensitive reads, or high-churn polling.
-- Readwrite hint: Use --cache-mode readwrite with an explicit --cache-ttl-seconds value when a fixed TTL is required.
-
 ### `import.status`
 
 | Field | Value |
 |---|---|
 | CLI command | `kaiten import status` |
 | MCP alias | `kaiten_import_status` |
-| Description | Inspect import progress and reconcile target data. |
+| Description | Read the import report and reconcile target data. |
 | Method | `GET` |
 | Mutation | `no` |
 | Allowed in read-only mode | `yes` |
@@ -1663,8 +1626,6 @@ _No tool-specific arguments._
 |---|---|---|---|---|---|
 | `run` | `string` | yes | — | — | Import run ID returned by import plan. |
 | `work_dir` | `string` | no | — | — | Private import workspace parent directory. |
-| `wait` | `boolean` | no | — | — | Wait for a queued import to finish. |
-| `wait_seconds` | `integer` | no | — | minimum=1, maximum=3600 | Maximum polling time in seconds. |
 | `report` | `string` | no | — | — | Path to a terminal Convertinator report. |
 
 **Notes**

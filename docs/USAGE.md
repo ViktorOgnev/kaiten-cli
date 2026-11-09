@@ -561,19 +561,16 @@ kaiten --locale ru --profile sandbox --read-only profile probe
 kaiten --locale ru --profile sandbox --json import plan --source trello \
   --input ./trello-board.json --space-id 123
 kaiten --locale ru --profile sandbox --json import prepare --run <run-id>
-kaiten --locale ru --profile sandbox --json import preflight --run <run-id> \
-  --approval <approval-из-prepare>
-kaiten --locale ru --profile sandbox --json import start --run <run-id> \
-  --approval <approval-из-preflight>
-kaiten --locale ru --profile sandbox --json import status --run <run-id> --wait
+kaiten --locale ru --profile sandbox --json import open --run <run-id>
+kaiten --locale ru --profile sandbox --json import status --run <run-id> \
+  --report /путь/к/отчёту.json
 ```
 
-Передайте `--approval` после того, как пользователь подтвердит соответствующий
-шаг. Серверная проверка отправляет пакет в Kaiten. Если CLI передал управление
-веб-мастеру или Convertinator и вернул `gui_pending`, завершите перенос там и
-запустите `import status`. Для отчёта, скачанного из Convertinator, добавьте
-`--report /путь/к/отчёту.json`. CLI сохраняет его как результат оператора и
-отдельно показывает, какие сущности удалось найти через API Kaiten.
+`import open` показывает путь к подготовленному пакету и целевое пространство.
+Завершите проверку пакета и запуск импорта в Convertinator. Если для источника
+предусмотрен веб-мастер, CLI откроет целевое пространство в браузере.
+`import status` сохраняет скачанный отчёт и отдельно показывает, какие доски,
+колонки и карточки удалось сверить через публичный API Kaiten.
 Для цепочки из нескольких команд используйте общий `--trace-file`.
 
 Для чтения Trello через API передайте `--boards '["https://trello.com/b/AbCd1234"]'`
@@ -597,28 +594,19 @@ CLI складывает материалы в приватный каталог
 После завершения `import cleanup` удаляет подготовленные CLI промежуточные файлы.
 Исходный экспорт и итоговый отчёт можно открыть по указанным путям.
 
-В графической сессии `prepare` может установить проверенную сборку Convertinator
-в каталог пользователя. Чтобы подготовить пакет без установки, используйте
-`--no-install`. В закрытом контуре можно открыть готовый пакет на машине
-с официальным Convertinator. Для облачных компаний текущий запуск выполняется
-через интерфейс и его авторизацию.
+Если Convertinator ещё не установлен, `import open` откроет целевое
+пространство Kaiten в браузере. В меню **Добавить → Импортировать → Универсальный импорт**
+выберите установщик для своей системы. Если в закрытом контуре ссылки
+недоступны, обратитесь в поддержку Kaiten. После установки повторите
+`import open`. Если приложение лежит вне стандартного каталога macOS или
+не доступно через `PATH` на Windows и Linux, передайте `--app-path`.
+[Где скачать Convertinator](https://faq-ru.kaiten.site/import-iz-jira-cherez-convertinator)
 
 На macOS официальный Convertinator может запросить запись
 `convertinator Safe Storage` в связке `login` для шифрования cookies.
 Разрешение относится к записи, названной в окне. `Allow` даёт разовый
 доступ. Если имя приложения или записи отличается, нажмите `Deny`.
 Вход в Kaiten запрашивается отдельно и использует права вошедшего аккаунта.
-Машинный режим on-prem запускается с временным профилем Electron и
-не требует доступа к вашей связке ключей.
-
-Экспериментальный запуск из CLI требует тестовой сборки Convertinator с
-машинным интерфейсом версии 1. Укажите абсолютный путь к её исполняемому файлу
-в `KAITEN_IMPORT_CONVERTINATOR_RUNNER`. Этот режим в первой версии рассчитан
-на on-prem с API на том же origin, явными ID компании и пространства и
-включённым Universal Import 2.0. Если API не возвращает идентификаторы,
-передайте `--company-id` и `--space-uid` при планировании. Если сборка или назначение несовместимы,
-CLI предложит сценарий через настольное приложение. При обрыве после запуска
-используйте `import status`, чтобы проверить существующий запуск.
 
 См. [формат пакета](https://developers.kaiten.ru/imports/bundle-format) и
 [проверку в Convertinator](https://developers.kaiten.ru/imports/convertinator).

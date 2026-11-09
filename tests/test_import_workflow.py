@@ -50,7 +50,6 @@ def command(runner, monkeypatch, tmp_path):
     monkeypatch.setenv("KAITEN_TOKEN", "test-kaiten-token")
     monkeypatch.delenv("KAITEN_CLI_READ_ONLY", raising=False)
     monkeypatch.delenv("KAITEN_CLI_STORAGE_READ_ONLY", raising=False)
-    monkeypatch.delenv(convertinator.RUNNER_ENV, raising=False)
     company = {"id": 17}
 
     async def get(_self, path, **_kwargs):
@@ -63,7 +62,7 @@ def command(runner, monkeypatch, tmp_path):
         }[path]
 
     monkeypatch.setattr(KaitenClient, "get", get)
-    monkeypatch.setattr(convertinator, "desktop_app", lambda: None)
+    monkeypatch.setattr(convertinator, "desktop_app", lambda _app_path=None: None)
     monkeypatch.setattr(convertinator, "has_desktop", lambda: False)
     source = tmp_path / "trello.json"
     storage.atomic_json(source, export())
@@ -93,10 +92,10 @@ def _prepare(command):
         json.dumps({LIST: "in_progress"}),
     )
     run = planned["run_id"]
-    return run, invoke("prepare", "--run", run, "--no-install")
+    return run, invoke("prepare", "--run", run)
 
 
-def test_trello_export_and_gui_handoff(command):
+def test_trello_export_and_gui_handoff(command, monkeypatch):
     invoke, source, _company = command
     run, prepared = _prepare(command)
     path = Path(prepared["work_path"])
@@ -111,24 +110,16 @@ def test_trello_export_and_gui_handoff(command):
     assert prepared["package_summary"]["omitted_observed"]["archived_cards"] == 1
     assert prepared["package_summary"]["omitted_observed"]["attachments"] == 1
     assert invoke("prepare", "--run", run)["package_sha256"] == prepared["package_sha256"]
-    assert invoke("preflight", "--run", run)["state"] == "needs_preflight_approval"
-    assert (
-        invoke(
-            "preflight",
-            "--run",
-            run,
-            "--approval",
-            prepared["approval"],
-            expected=6,
-            read_only=True,
-        )["type"]
-        == "mutation_blocked"
-    )
-    launched = invoke("preflight", "--run", run, "--approval", prepared["approval"])
+    assert "import open" in prepared["next_action"]["command"]
+    opened_urls = []
+    monkeypatch.setattr(convertinator, "launch_browser", lambda url: not opened_urls.append(url))
+    launched = invoke("open", "--run", run)
     assert launched["state"] == "gui_pending"
-    assert launched["handoff"]["app_opened"] is False
+    assert not launched["handoff"]["app_opened"]
+    assert launched["handoff"]["browser_opened"]
+    assert launched["handoff"]["installer"] == convertinator.INSTALL_GUIDE
+    assert opened_urls == [launched["target"]["url"]]
     assert invoke("status", "--run", run)["reconciliation"]["state"] == "matched"
-    assert invoke("start", "--run", run, expected=6, read_only=True)["type"] == "mutation_blocked"
     report = path / f"kaiten-company-import-completed-{uuid4()}.json"
     storage.atomic_json(report, {"report_complete": True})
     status = invoke("status", "--run", run, "--report", str(report))
@@ -140,60 +131,57 @@ def test_trello_export_and_gui_handoff(command):
     assert (path / "events.jsonl").exists()
 
 
-def test_target_and_package_mutation_invalidate_approval(command):
+def test_target_and_package_mutation_prevent_opening(command):
     invoke, _source, company = command
     run, prepared = _prepare(command)
     company["id"] = 18
-    assert (
-        invoke("preflight", "--run", run, "--approval", prepared["approval"], expected=2)["type"]
-        == "validation_error"
-    )
+    assert invoke("open", "--run", run, expected=2)["type"] == "validation_error"
     company["id"] = 17
     package = Path(prepared["package"])
     (package / "resources/boards.json").write_text("[]")
-    assert (
-        invoke("preflight", "--run", run, "--approval", prepared["approval"], expected=2)["type"]
-        == "validation_error"
-    )
+    assert invoke("open", "--run", run, expected=2)["type"] == "validation_error"
 
 
-def test_machine_preflight_and_ambiguous_start_resume(command, monkeypatch):
+def test_ready_zip_opens_installed_app_without_package_or_credentials(
+    command, monkeypatch, tmp_path
+):
     invoke, _source, _company = command
-    run, prepared = _prepare(command)
-    monkeypatch.setenv(convertinator.RUNNER_ENV, "/local/test-runner")
-    job = str(uuid4())
-    calls = []
+    _run, generated = _prepare(command)
+    package = Path(generated["package"])
+    archive = tmp_path / "ready.zip"
+    with ZipFile(archive, "w") as bundle:
+        for entry in package.rglob("*.json"):
+            bundle.write(entry, entry.relative_to(package))
 
-    async def machine(action, payload, *, token):
-        assert token == "test-kaiten-token"
-        assert payload["target"]["space_uid"] == SPACE_UID
-        calls.append(action)
-        if action == "start":
-            assert payload["tolerate_warnings"] is True
-            assert payload["job_id"] == job
-            raise TransportError("Lost response")
-        states = {"capabilities": "supported", "preflight": "warnings", "status": "completed"}
-        return {
-            "state": states[action],
-            "target": payload["target"],
-            "job_id": job,
-            "report": {"has_warning_violations": True},
-        }
+    planned = invoke("plan", "--input", str(archive), "--space-id", "7")
+    run = planned["run_id"]
+    prepared = invoke("prepare", "--run", run)
+    assert prepared["source"] == "package"
+    assert prepared["package_sha256"] == generated["package_sha256"]
 
-    monkeypatch.setattr(convertinator, "machine", machine)
-    checked = invoke("preflight", "--run", run, "--approval", prepared["approval"])
-    assert checked["state"] == "awaiting_start"
-    assert checked["approval"] != prepared["approval"]
-    assert (
-        invoke("start", "--run", run, "--approval", prepared["approval"])["state"]
-        == "needs_start_approval"
+    installed = tmp_path / ("Convertinator.app" if sys.platform == "darwin" else "convertinator")
+    monkeypatch.setattr(
+        convertinator, "desktop_app", lambda app_path: installed if app_path else None
     )
-    invoke("start", "--run", run, "--approval", checked["approval"], expected=5)
-    resumed = invoke("start", "--run", run, "--approval", checked["approval"])
-    assert resumed["state"] == "completed"
-    assert resumed["job_id"] == job
-    assert resumed["reconciliation"]["state"] == "matched"
-    assert calls == ["capabilities", "preflight", "start", "status"]
+    monkeypatch.setattr(convertinator, "has_desktop", lambda: True)
+    monkeypatch.setenv(trello.TOKEN_ENV, "local-trello-token")
+    launches = []
+
+    def popen(args, **options):
+        launches.append(args)
+        assert "KAITEN_TOKEN" not in options["env"]
+        assert trello.TOKEN_ENV not in options["env"]
+
+    monkeypatch.setattr(convertinator.subprocess, "Popen", popen)
+    opened = invoke("open", "--run", run, "--app-path", str(installed))
+    expected = (
+        ["/usr/bin/open", "-a", str(installed)] if sys.platform == "darwin" else [str(installed)]
+    )
+    assert launches == [expected]
+    assert opened["package"] == prepared["package"]
+    assert opened["handoff"]["app_opened"]
+    assert not opened["handoff"]["browser_opened"]
+    assert invoke("status", "--run", run)["reconciliation"]["state"] == "matched"
 
 
 def test_secret_instructions_and_read_only_gateway(command, monkeypatch):
@@ -206,7 +194,7 @@ def test_secret_instructions_and_read_only_gateway(command, monkeypatch):
     assert planned["state"] == "needs_credentials"
     run = planned["run_id"]
     assert invoke("credentials", "--run", run)["next_action"]["interactive"]
-    assert invoke("prepare", "--run", run, "--no-install")["credential_env"] == [
+    assert invoke("prepare", "--run", run)["credential_env"] == [
         trello.KEY_ENV,
         trello.TOKEN_ENV,
     ]
@@ -297,32 +285,3 @@ def test_workspace_files_are_private(command):
     assert path.stat().st_mode & 0o777 == 0o700
     assert (path / "run.json").stat().st_mode & 0o777 == 0o600
     assert "test-kaiten-token" not in (path / "run.json").read_text()
-
-
-@pytest.mark.skipif(os.name == "nt", reason="POSIX fixture runner")
-def test_machine_uses_private_session_and_does_not_inherit_credentials(tmp_path, monkeypatch):
-    runner = tmp_path / "machine"
-    runner.write_text(
-        f"#!{sys.executable}\n"
-        + """
-import json, os, sys
-from pathlib import Path
-request = json.load(sys.stdin)
-profile = Path(next(arg.split("=", 1)[1] for arg in sys.argv if arg.startswith("--user-data-dir=")))
-assert profile.is_dir() and profile.stat().st_mode & 0o777 == 0o700
-if sys.platform == "darwin":
-    assert "--use-mock-keychain" in sys.argv
-assert "--kaiten-import-machine" in sys.argv
-assert "KAITEN_TOKEN" not in os.environ and "KAITEN_IMPORT_TRELLO_TOKEN" not in os.environ
-assert "UNRELATED_SECRET" not in os.environ
-assert request["kaiten_token"] == "only-stdin"
-print(json.dumps({"protocol": 1, "profile": str(profile)}))
-"""
-    )
-    runner.chmod(0o700)
-    monkeypatch.setenv(convertinator.RUNNER_ENV, str(runner))
-    monkeypatch.setenv("KAITEN_TOKEN", "not-inherited")
-    monkeypatch.setenv(trello.TOKEN_ENV, "not-inherited")
-    monkeypatch.setenv("UNRELATED_SECRET", "not-inherited")
-    response = asyncio.run(convertinator.machine("capabilities", {}, token="only-stdin"))
-    assert not Path(response["profile"]).exists()

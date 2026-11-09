@@ -542,7 +542,7 @@ def _agent_help_payload() -> dict[str, Any]:
             tr("Inspect one tool: kaiten describe cards.list-all"),
             tr("Check examples: kaiten examples cards.list-all"),
             tr(
-                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and request approval before upload and import."
+                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and complete the import in the official interface."
             ),
             tr("For repeated analytics or report runs, build a local snapshot first."),
             tr(
@@ -689,7 +689,7 @@ def _agent_help_text() -> str:
             tr("15. summarize: kaiten --json trace summarize --file <trace.jsonl>"),
             tr("16. before mutations: kaiten --json --profile <name> --read-only profile probe"),
             tr(
-                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and request approval before upload and import."
+                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and complete the import in the official interface."
             ),
             tr("17. live validation only runs when KAITEN_LIVE=1|true"),
             tr(
