@@ -541,6 +541,9 @@ def _agent_help_payload() -> dict[str, Any]:
             tr('Discover once per unfamiliar family: kaiten search-tools "wip cards"'),
             tr("Inspect one tool: kaiten describe cards.list-all"),
             tr("Check examples: kaiten examples cards.list-all"),
+            tr(
+                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and complete the import in the official interface."
+            ),
             tr("For repeated analytics or report runs, build a local snapshot first."),
             tr(
                 "Use query cards --view summary by default; switch to detail/evidence only for narrowed candidates."
@@ -685,6 +688,9 @@ def _agent_help_text() -> str:
             tr("14. trace wrappers with 3+ CLI commands, >10 expected HTTP requests, or a loop"),
             tr("15. summarize: kaiten --json trace summarize --file <trace.jsonl>"),
             tr("16. before mutations: kaiten --json --profile <name> --read-only profile probe"),
+            tr(
+                "For migrations, begin with import sources and import plan. Follow next_action, keep credentials out of chat, and complete the import in the official interface."
+            ),
             tr("17. live validation only runs when KAITEN_LIVE=1|true"),
             tr(
                 "18. dashboards are experimental; iterations/Restricted Access Files are beta, so discover and probe before use"
@@ -790,19 +796,25 @@ def _dynamic_callback(tool: ToolSpec):
         stdin_text = click.get_text_stream("stdin").read() if options.stdin_json else None
         reporter = _make_debug_reporter(ctx)
         try:
+            payload = merge_inputs(
+                tool,
+                kwargs,
+                from_file=options.from_file,
+                stdin_json=options.stdin_json,
+                stdin_text=stdin_text,
+            )
+            if tool.namespace == "import":
+                payload["_profile_name"] = options.profile_name
+                payload["_interactive"] = (
+                    not options.json_mode and click.get_text_stream("stdin").isatty()
+                )
             result = _run_traced(
                 ctx,
                 tool.canonical_name,
                 tool.execution_mode,
                 lambda: execute_tool_sync_with_diagnostics(
                     tool,
-                    merge_inputs(
-                        tool,
-                        kwargs,
-                        from_file=options.from_file,
-                        stdin_json=options.stdin_json,
-                        stdin_text=stdin_text,
-                    ),
+                    payload,
                     profile_name=options.profile_name,
                     cache_mode=options.cache_mode,
                     cache_ttl_seconds=options.cache_ttl_seconds,
@@ -1278,9 +1290,7 @@ def profile_group() -> None:
     type=click.STRING,
     help="Kaiten tenant subdomain or full base URL, for example acme or https://acme.kaiten.ru.",
 )
-@click.option(
-    "--token", required=True, type=click.STRING, help="Kaiten API token for this profile."
-)
+@click.option("--token", type=click.STRING, help="Kaiten API token for this profile.")
 @click.option(
     "--cache-mode",
     type=click.Choice(["auto", "off", "readwrite", "refresh"]),
@@ -1303,12 +1313,18 @@ def profile_add_command(
     ctx: click.Context,
     name: str,
     domain: str,
-    token: str,
+    token: str | None,
     cache_mode: str | None,
     cache_ttl_seconds: int | None,
     set_active: bool,
 ) -> None:
     try:
+        if token is None:
+            if _ctx_options(ctx).json_mode or not click.get_text_stream("stdin").isatty():
+                raise ValidationError(
+                    tr("Run profile add in a local terminal to enter the Kaiten token securely.")
+                )
+            token = click.prompt(tr("Kaiten API token"), hide_input=True)
         result = _run_traced(
             ctx,
             "profile.add",

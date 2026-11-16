@@ -549,3 +549,64 @@ kaiten --locale ru --json trace summarize --file ./kaiten-trace.jsonl
 ```
 
 Трассировка не заменяет ответ команды в стандартном выводе: режим `--json` по-прежнему возвращает `data` и `stats`, а дополнительные сведения записываются в отдельный JSONL-файл.
+
+## Миграция в Kaiten
+
+`kaiten --locale ru import run` проводит по настройке в терминале. Для агента или
+скрипта используйте `--json` и продолжайте по полю `next_action`. Доступные
+источники и штатные инструкции показывает `kaiten --locale ru import sources`.
+
+```bash
+kaiten --locale ru --profile sandbox --read-only profile probe
+kaiten --locale ru --profile sandbox --json import plan --source trello \
+  --input ./trello-board.json --space-id 123
+kaiten --locale ru --profile sandbox --json import prepare --run <run-id>
+kaiten --locale ru --profile sandbox --json import open --run <run-id>
+kaiten --locale ru --profile sandbox --json import status --run <run-id> \
+  --report /путь/к/отчёту.json
+```
+
+`import open` показывает путь к подготовленному пакету и целевое пространство.
+Завершите проверку пакета и запуск импорта в Convertinator. Если для источника
+предусмотрен веб-мастер, CLI откроет целевое пространство в браузере.
+`import status` сохраняет скачанный отчёт и отдельно показывает, какие доски,
+колонки и карточки удалось сверить через публичный API Kaiten.
+Для цепочки из нескольких команд используйте общий `--trace-file`.
+
+Для чтения Trello через API передайте `--boards '["https://trello.com/b/AbCd1234"]'`
+вместо `--input`. CLI предложит ввести ключ и токен со scope `read` через
+`import credentials --run <run-id>` в локальном терминале. Для автоматизации
+передавайте `KAITEN_IMPORT_TRELLO_KEY` и `KAITEN_IMPORT_TRELLO_TOKEN` через
+менеджер секретов. Токен профиля Kaiten можно ввести в скрытом запросе
+`kaiten --locale ru profile add <name> --domain <домен>`. Для запуска укажите
+профиль этого пользователя с доступом к целевому пространству.
+
+Адаптер Trello переносит активные доски, списки и карточки, порядок, названия,
+описания, сроки и именованные метки. `--column-types` принимает JSON-объект
+с ID списков Trello и значениями `queued`, `in_progress` или `done`.
+По умолчанию списки получают `queued`, а владельцем карточек становится
+пользователь целевого профиля. Отчёт перечисляет категории данных за рамками
+переноса и наблюдённые пропуски. Для готового пакета формата 2.0 используйте
+`--source package --input <папка-или-zip>`.
+
+CLI складывает материалы в приватный каталог и показывает его в `work_path`.
+Если нужен другой диск, задайте одинаковый `--work-dir` для всех шагов.
+После завершения `import cleanup` удаляет подготовленные CLI промежуточные файлы.
+Исходный экспорт и итоговый отчёт можно открыть по указанным путям.
+
+Если Convertinator ещё не установлен, `import open` откроет целевое
+пространство Kaiten в браузере. В меню **Добавить → Импортировать → Универсальный импорт**
+выберите установщик для своей системы. Если в закрытом контуре ссылки
+недоступны, обратитесь в поддержку Kaiten. После установки повторите
+`import open`. Если приложение лежит вне стандартного каталога macOS или
+не доступно через `PATH` на Windows и Linux, передайте `--app-path`.
+[Где скачать Convertinator](https://faq-ru.kaiten.site/import-iz-jira-cherez-convertinator)
+
+На macOS официальный Convertinator может запросить запись
+`convertinator Safe Storage` в связке `login` для шифрования cookies.
+Разрешение относится к записи, названной в окне. `Allow` даёт разовый
+доступ. Если имя приложения или записи отличается, нажмите `Deny`.
+Вход в Kaiten запрашивается отдельно и использует права вошедшего аккаунта.
+
+См. [формат пакета](https://developers.kaiten.ru/imports/bundle-format) и
+[проверку в Convertinator](https://developers.kaiten.ru/imports/convertinator).

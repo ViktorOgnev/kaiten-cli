@@ -35,6 +35,7 @@ from kaiten_cli.registry.documents import TOOLS as DOCUMENT_TOOLS
 from kaiten_cli.registry.external_links import TOOLS as EXTERNAL_LINK_TOOLS
 from kaiten_cli.registry.files import TOOLS as FILE_TOOLS
 from kaiten_cli.registry.github_addon import TOOLS as GITHUB_ADDON_TOOLS
+from kaiten_cli.registry.imports import TOOLS as IMPORT_TOOLS
 from kaiten_cli.registry.iterations import TOOLS as ITERATION_TOOLS
 from kaiten_cli.registry.lanes import TOOLS as LANE_TOOLS
 from kaiten_cli.registry.live_contracts import get_live_contract, has_special_live_contract
@@ -56,6 +57,7 @@ from kaiten_cli.registry.webhooks import TOOLS as WEBHOOK_TOOLS
 
 REGISTRY_MODULES: tuple[tuple[str, tuple[ToolSpec, ...]], ...] = (
     ("access_management", ACCESS_MANAGEMENT_TOOLS),
+    ("imports", IMPORT_TOOLS),
     ("spaces", SPACE_TOOLS),
     ("automations", AUTOMATION_TOOLS),
     ("restrictions", RESTRICTION_TOOLS),
